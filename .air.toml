@@ -1,0 +1,40 @@
+# Air 热重载配置文件 (https://github.com/air-verse/air)
+# 专为 InkLore 纯净 Go 后端热重载定制
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/main.exe ./cmd/server"
+  bin = "./tmp/main.exe"
+  entrypoint = "./tmp/main.exe"
+  include_ext = ["go", "yaml", "env"]
+  exclude_dir = ["assets", "tmp", "vendor", "frontend", "docs", ".git", "bin"]
+  include_dir = ["cmd", "internal", "configs"]
+  exclude_regex = ["_test\\.go$"]
+  exclude_unchanged = true
+  follow_symlink = false
+  log = "air.log"
+  poll = false
+  poll_interval = 0
+  delay = 800
+  stop_on_error = true
+  send_interrupt = true
+  kill_delay = "500ms"
+
+[log]
+  time = true
+  main_only = false
+
+[color]
+  main = "yellow"
+  watcher = "cyan"
+  build = "green"
+  runner = "magenta"
+
+[misc]
+  clean_on_exit = true
+
+[screen]
+  clear_on_rebuild = true
+  keep_scroll = true

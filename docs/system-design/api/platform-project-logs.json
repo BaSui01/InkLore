@@ -1,0 +1,69 @@
+{
+  "paths": {
+    "/v1/platform/project-logs": {
+      "get": {
+        "operationId": "platformListProjectLogs",
+        "summary": "按租户查询脱敏项目运行日志",
+        "tags": ["platform"],
+        "x-permission": {
+          "audience": "admin",
+          "roles": ["operator", "auditor"],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-24 platform.project_logs",
+        "x-errors": [],
+        "parameters": [
+          {"$ref": "./common.json#/components/parameters/Limit"},
+          {"$ref": "./common.json#/components/parameters/Cursor"},
+          {"name": "level", "in": "query", "schema": {"type": "string", "enum": ["DEBUG", "INFO", "WARN", "ERROR"]}},
+          {"name": "domain", "in": "query", "schema": {"type": "string", "maxLength": 80}},
+          {"name": "operation", "in": "query", "schema": {"type": "string", "maxLength": 160}},
+          {"name": "search", "in": "query", "schema": {"type": "string", "maxLength": 200}},
+          {"name": "from", "in": "query", "schema": {"$ref": "./common.json#/components/schemas/Timestamp"}},
+          {"name": "to", "in": "query", "schema": {"$ref": "./common.json#/components/schemas/Timestamp"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "当前租户的安全日志游标页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {"$ref": "./common.json#/components/schemas/SuccessMeta"},
+                    {"type": "object", "required": ["data"], "properties": {
+                      "data": {"allOf": [
+                        {"$ref": "./common.json#/components/schemas/PageMeta"},
+                        {"type": "object", "required": ["items"], "properties": {
+                          "items": {"type": "array", "maxItems": 100, "items": {
+                            "type": "object", "required": ["id", "created_at", "level", "event", "domain", "operation", "error_code", "request_id", "trace_id", "status", "duration_ms"],
+                            "properties": {
+                              "id": {"type": "string", "format": "uuid"},
+                              "created_at": {"$ref": "./common.json#/components/schemas/Timestamp"},
+                              "level": {"type": "string", "enum": ["DEBUG", "INFO", "WARN", "ERROR"]},
+                              "event": {"type": "string", "maxLength": 80},
+                              "domain": {"type": "string", "maxLength": 80},
+                              "operation": {"type": "string", "maxLength": 160},
+                              "error_code": {"type": "string", "maxLength": 100},
+                              "request_id": {"type": "string"},
+                              "trace_id": {"type": "string"},
+                              "status": {"type": ["integer", "null"]},
+                              "duration_ms": {"type": ["integer", "null"]}
+                            }
+                          }}
+                        }}
+                      ]}
+                    }}
+                  ]
+                }
+              }
+            }
+          },
+          "400": {"$ref": "./common.json#/components/responses/BadRequest"},
+          "401": {"$ref": "./common.json#/components/responses/Unauthorized"},
+          "403": {"$ref": "./common.json#/components/responses/Forbidden"},
+          "500": {"$ref": "./common.json#/components/responses/InternalError"}
+        }
+      }
+    }
+  }
+}

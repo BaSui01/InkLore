@@ -1,0 +1,1357 @@
+{
+  "paths": {},
+  "components": {
+    "schemas": {
+      "Character": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "maxItems": 20
+          },
+          "role_type": {
+            "type": "string",
+            "enum": [
+              "protagonist",
+              "supporting",
+              "antagonist",
+              "other"
+            ]
+          },
+          "life_status": {
+            "type": "string",
+            "enum": [
+              "alive",
+              "missing",
+              "dead",
+              "revived"
+            ]
+          },
+          "realm_rank": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived"
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "name",
+          "description",
+          "aliases",
+          "role_type",
+          "life_status",
+          "realm_rank",
+          "status",
+          "deleted_at"
+        ],
+        "additionalProperties": false
+      },
+      "Lore": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "faction",
+              "place",
+              "system",
+              "item",
+              "history",
+              "other"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived"
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "title",
+          "description",
+          "category",
+          "status",
+          "deleted_at"
+        ],
+        "additionalProperties": false
+      },
+      "Relation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "subject_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "predicate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "object_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "retired"
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "subject_id",
+          "predicate",
+          "object_id",
+          "description",
+          "weight",
+          "status",
+          "deleted_at"
+        ],
+        "additionalProperties": false
+      },
+      "GraphNode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "character",
+              "lore"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "Graph": {
+        "type": "object",
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "./worldview-types.json#/components/schemas/GraphNode"
+            },
+            "maxItems": 500
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "$ref": "./worldview-types.json#/components/schemas/Relation"
+            },
+            "maxItems": 1000
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "world_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "nodes",
+          "edges",
+          "truncated",
+          "world_revision"
+        ],
+        "additionalProperties": false
+      },
+      "WorldRevision": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id"
+        ],
+        "additionalProperties": false
+      },
+      "FactValue": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "text"
+                ]
+              },
+              "text_value": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              }
+            },
+            "required": [
+              "kind",
+              "text_value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "number"
+                ]
+              },
+              "number_value": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              }
+            },
+            "required": [
+              "kind",
+              "number_value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "boolean"
+                ]
+              },
+              "boolean_value": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "kind",
+              "boolean_value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "entity"
+                ]
+              },
+              "entity_id": {
+                "$ref": "./common.json#/components/schemas/UUID"
+              }
+            },
+            "required": [
+              "kind",
+              "entity_id"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "FactProposal": {
+        "type": "object",
+        "properties": {
+          "subject_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "predicate": {
+            "type": "string",
+            "enum": [
+              "life_status",
+              "realm_rank",
+              "item_status",
+              "location",
+              "relationship",
+              "custom"
+            ]
+          },
+          "fact_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "pattern": "^[a-z][a-z0-9_]{0,119}$"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "$ref": "./worldview-types.json#/components/schemas/FactValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "assert",
+              "supersede",
+              "retract"
+            ]
+          },
+          "target_event_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolution": {
+            "type": "string",
+            "enum": [
+              "none",
+              "correction",
+              "retcon"
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "subject_id",
+          "predicate",
+          "fact_key",
+          "value",
+          "action",
+          "target_event_id",
+          "resolution",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "FactEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "seq": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "world_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "subject_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "predicate": {
+            "type": "string",
+            "enum": [
+              "life_status",
+              "realm_rank",
+              "item_status",
+              "location",
+              "relationship",
+              "custom"
+            ]
+          },
+          "fact_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "pattern": "^[a-z][a-z0-9_]{0,119}$"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "$ref": "./worldview-types.json#/components/schemas/FactValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "assert",
+              "supersede",
+              "retract"
+            ]
+          },
+          "target_event_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolution": {
+            "type": "string",
+            "enum": [
+              "none",
+              "correction",
+              "retcon"
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_chapter_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_version_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_content_hash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "actor_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "payload_erased": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "novel_id",
+          "seq",
+          "world_revision",
+          "subject_id",
+          "predicate",
+          "fact_key",
+          "value",
+          "action",
+          "target_event_id",
+          "resolution",
+          "reason",
+          "source_chapter_id",
+          "source_version_id",
+          "source_content_hash",
+          "actor_id",
+          "payload_erased"
+        ],
+        "additionalProperties": false
+      },
+      "FactHead": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "subject_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "predicate": {
+            "type": "string",
+            "enum": [
+              "life_status",
+              "realm_rank",
+              "item_status",
+              "location",
+              "relationship",
+              "custom"
+            ]
+          },
+          "fact_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "pattern": "^[a-z][a-z0-9_]{0,119}$"
+          },
+          "event_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "retracted"
+            ]
+          },
+          "value": {
+            "anyOf": [
+              {
+                "$ref": "./worldview-types.json#/components/schemas/FactValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "subject_id",
+          "predicate",
+          "fact_key",
+          "event_id",
+          "status",
+          "value"
+        ],
+        "additionalProperties": false
+      },
+      "FactMutation": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "$ref": "./worldview-types.json#/components/schemas/FactEvent"
+          },
+          "head": {
+            "$ref": "./worldview-types.json#/components/schemas/FactHead"
+          },
+          "world_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "event",
+          "head",
+          "world_revision"
+        ],
+        "additionalProperties": false
+      },
+      "Conflict": {
+        "type": "object",
+        "properties": {
+          "fact_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "subject_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "current_event_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "proposal_index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "head_changed",
+              "different_value",
+              "invalid_transition",
+              "rank_regression",
+              "missing_entity",
+              "invalid_resolution"
+            ]
+          }
+        },
+        "required": [
+          "fact_key",
+          "subject_id",
+          "current_event_id",
+          "proposal_index",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "CheckResult": {
+        "type": "object",
+        "properties": {
+          "world_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "conflicts": {
+            "type": "array",
+            "items": {
+              "$ref": "./worldview-types.json#/components/schemas/Conflict"
+            },
+            "maxItems": 100
+          },
+          "valid": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "world_revision",
+          "conflicts",
+          "valid"
+        ],
+        "additionalProperties": false
+      },
+      "CreateCharacter": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "maxItems": 20
+          },
+          "role_type": {
+            "type": "string",
+            "enum": [
+              "protagonist",
+              "supporting",
+              "antagonist",
+              "other"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "aliases",
+          "role_type"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateCharacter": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "maxItems": 20
+          },
+          "role_type": {
+            "type": "string",
+            "enum": [
+              "protagonist",
+              "supporting",
+              "antagonist",
+              "other"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived"
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "name",
+          "description",
+          "aliases",
+          "role_type",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "CreateLore": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "faction",
+              "place",
+              "system",
+              "item",
+              "history",
+              "other"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "category"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateLore": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "faction",
+              "place",
+              "system",
+              "item",
+              "history",
+              "other"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived"
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "title",
+          "description",
+          "category",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "CreateRelation": {
+        "type": "object",
+        "properties": {
+          "subject_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "predicate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "object_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "subject_id",
+          "predicate",
+          "object_id",
+          "description",
+          "weight"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateRelation": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "subject_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "predicate": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "object_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "retired"
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "subject_id",
+          "predicate",
+          "object_id",
+          "description",
+          "weight",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "RetractFact": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "expected_world_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "expected_revision",
+          "expected_world_revision",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "description": "fact_id为FactHead.id；expected_revision绑定head.revision，expected_world_revision绑定作品世界观revision。"
+      },
+      "SupersedeFact": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "expected_world_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "value": {
+            "$ref": "./worldview-types.json#/components/schemas/FactValue"
+          },
+          "resolution": {
+            "type": "string",
+            "enum": [
+              "correction",
+              "retcon"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "expected_revision",
+          "expected_world_revision",
+          "value",
+          "resolution",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "description": "fact_id为FactHead.id；expected_revision绑定head.revision，expected_world_revision绑定作品世界观revision。"
+      },
+      "CheckFacts": {
+        "type": "object",
+        "properties": {
+          "expected_world_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "fact_proposals": {
+            "type": "array",
+            "items": {
+              "$ref": "./worldview-types.json#/components/schemas/FactProposal"
+            },
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "expected_world_revision",
+          "fact_proposals"
+        ],
+        "additionalProperties": false
+      },
+      "CharacterPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./worldview-types.json#/components/schemas/Character"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "LorePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./worldview-types.json#/components/schemas/Lore"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "RelationPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./worldview-types.json#/components/schemas/Relation"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "FactPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./worldview-types.json#/components/schemas/FactHead"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "FactEventPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./worldview-types.json#/components/schemas/FactEvent"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "RevisionCommand": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

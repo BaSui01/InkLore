@@ -1,0 +1,1643 @@
+{
+ "paths": {
+  "/v1/content/novels/{novel_id}/archive": {
+   "post": {
+    "operationId": "content_archiveNovel",
+    "tags": [
+     "content"
+    ],
+    "summary": "archiveNovel",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-02 content.archiveNovel",
+    "x-errors": [
+     {
+      "code": "content.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "content.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "content.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "content.invalid_state",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "platform.idempotency_conflict",
+      "http_status": 409,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.operation_in_progress",
+      "http_status": 409,
+      "recovery": "read_status"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "novel_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "./common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "./common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "./content-types.json#/components/schemas/Novel"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "./common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "./common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "./common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "./common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "./content-types.json#/components/schemas/RevisionCommand"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/content/novels/{novel_id}/restore": {
+   "post": {
+    "operationId": "content_restoreNovel",
+    "tags": [
+     "content"
+    ],
+    "summary": "restoreNovel",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-03 content.restoreNovel",
+    "x-errors": [
+     {
+      "code": "content.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "content.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "content.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "content.invalid_state",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "platform.idempotency_conflict",
+      "http_status": 409,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.operation_in_progress",
+      "http_status": 409,
+      "recovery": "read_status"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "novel_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "./common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "./common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "./content-types.json#/components/schemas/Novel"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "./common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "./common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "./common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "./common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "./content-types.json#/components/schemas/RevisionCommand"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/content/volumes/{volume_id}/restore": {
+   "post": {
+    "operationId": "content_restoreVolume",
+    "tags": [
+     "content"
+    ],
+    "summary": "restoreVolume",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-03 content.restoreVolume",
+    "x-errors": [
+     {
+      "code": "content.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "content.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "content.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "content.invalid_state",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "platform.idempotency_conflict",
+      "http_status": 409,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.operation_in_progress",
+      "http_status": 409,
+      "recovery": "read_status"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "volume_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "./common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "./common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "./content-types.json#/components/schemas/Volume"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "./common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "./common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "./common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "./common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "./content-types.json#/components/schemas/RevisionCommand"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/content/chapters/{chapter_id}/restore": {
+   "post": {
+    "operationId": "content_restoreChapter",
+    "tags": [
+     "content"
+    ],
+    "summary": "restoreChapter",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-03 content.restoreChapter",
+    "x-errors": [
+     {
+      "code": "content.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "content.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "content.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "content.invalid_state",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "platform.idempotency_conflict",
+      "http_status": 409,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.operation_in_progress",
+      "http_status": 409,
+      "recovery": "read_status"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "chapter_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "./common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "./common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "./content-types.json#/components/schemas/Chapter"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "./common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "./common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "./common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "./common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "./content-types.json#/components/schemas/RevisionCommand"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/content/novels/{novel_id}/organization": {
+   "get": {
+    "operationId": "content_getOrganization",
+    "tags": [
+     "content"
+    ],
+    "summary": "getOrganization",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-04 content.getOrganization",
+    "x-errors": [
+     {
+      "code": "content.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "content.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "novel_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "./common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "./content-types.json#/components/schemas/Organization"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "./common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "./common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "./common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "./common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
+     }
+    }
+   }
+  },
+  "/v1/content/novels/{novel_id}/organization/reorder": {
+   "post": {
+    "operationId": "content_reorderOrganization",
+    "tags": [
+     "content"
+    ],
+    "summary": "reorderOrganization",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-04 content.reorderOrganization",
+    "x-errors": [
+     {
+      "code": "content.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "content.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "content.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "content.invalid_state",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "platform.idempotency_conflict",
+      "http_status": 409,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.operation_in_progress",
+      "http_status": 409,
+      "recovery": "read_status"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "novel_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "./common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "./common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "./content-types.json#/components/schemas/Organization"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "./common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "./common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "./common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "./common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "./content-types.json#/components/schemas/Reorder"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/content/chapters/{chapter_id}/body": {
+   "get": {
+    "operationId": "content_getBody",
+    "tags": [
+     "content"
+    ],
+    "summary": "getBody",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-05 content.getBody",
+    "x-errors": [
+     {
+      "code": "content.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "content.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "chapter_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "./common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "./content-types.json#/components/schemas/Body"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "./common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "./common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "./common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "./common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
+     }
+    }
+   },
+   "put": {
+    "operationId": "content_saveBody",
+    "tags": [
+     "content"
+    ],
+    "summary": "saveBody",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-05 content.saveBody",
+    "x-errors": [
+     {
+      "code": "content.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "content.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "content.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "content.invalid_state",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "platform.idempotency_conflict",
+      "http_status": 409,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.operation_in_progress",
+      "http_status": 409,
+      "recovery": "read_status"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "chapter_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "./common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "./common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "./content-types.json#/components/schemas/Body"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "./common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "./common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "./common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "./common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "./content-types.json#/components/schemas/SaveBody"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/content/chapters/{chapter_id}/versions": {
+   "get": {
+    "operationId": "content_listVersions",
+    "tags": [
+     "content"
+    ],
+    "summary": "listVersions",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-06 content.listVersions",
+    "x-errors": [
+     {
+      "code": "content.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "content.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "chapter_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "./common.json#/components/parameters/Limit"
+     },
+     {
+      "$ref": "./common.json#/components/parameters/Cursor"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "./common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "./content-types.json#/components/schemas/VersionPage"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "./common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "./common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "./common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "./common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
+     }
+    }
+   }
+  },
+  "/v1/content/chapters/{chapter_id}/versions/{version_id}": {
+   "get": {
+    "operationId": "content_getVersion",
+    "tags": [
+     "content"
+    ],
+    "summary": "getVersion",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-06 content.getVersion",
+    "x-errors": [
+     {
+      "code": "content.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "content.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "chapter_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "name": "version_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "./common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "./content-types.json#/components/schemas/Version"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "./common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "./common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "./common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "./common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
+     }
+    }
+   }
+  },
+  "/v1/content/chapters/{chapter_id}/diff": {
+   "get": {
+    "operationId": "content_diffVersions",
+    "tags": [
+     "content"
+    ],
+    "summary": "diffVersions",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-06 content.diffVersions",
+    "x-errors": [
+     {
+      "code": "content.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "content.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "chapter_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "name": "from_version_id",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "name": "to_version_id",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "./common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "./content-types.json#/components/schemas/Diff"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "./common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "./common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "./common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "./common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
+     }
+    }
+   }
+  },
+  "/v1/content/chapters/{chapter_id}/rollback": {
+   "post": {
+    "operationId": "content_rollbackChapter",
+    "tags": [
+     "content"
+    ],
+    "summary": "rollbackChapter",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-06 content.rollbackChapter",
+    "x-errors": [
+     {
+      "code": "content.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "content.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "content.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "content.invalid_state",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "platform.idempotency_conflict",
+      "http_status": 409,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.operation_in_progress",
+      "http_status": 409,
+      "recovery": "read_status"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "chapter_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "./common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "./common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "./content-types.json#/components/schemas/Body"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "./common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "./common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "./common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "./common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "./content-types.json#/components/schemas/Rollback"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/content/chapters/{chapter_id}/confirm": {
+   "post": {
+    "operationId": "content_confirmChapter",
+    "tags": [
+     "content"
+    ],
+    "summary": "confirmChapter",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-07 content.confirmChapter",
+    "x-errors": [
+     {
+      "code": "content.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "content.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "content.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "content.invalid_state",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "platform.idempotency_conflict",
+      "http_status": 409,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.operation_in_progress",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "worldview.fact_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "chapter_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "./common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "./common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "./content-types.json#/components/schemas/Confirmation"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "./common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "./common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "./common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "./common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "./content-types.json#/components/schemas/Confirm"
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {}
+ }
+}

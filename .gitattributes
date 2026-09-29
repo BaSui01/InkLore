@@ -1,0 +1,23 @@
+# 统一换行符，避免 Windows / Linux 协作时整文件 diff
+* text=auto eol=lf
+
+# 二进制文件不做文本转换
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.pptx binary
+*.xlsx binary
+*.woff binary
+*.woff2 binary
+
+# 锁文件折叠在 diff 中展示
+frontend/package-lock.json -diff linguist-generated=true
+pnpm-lock.yaml -diff linguist-generated=true

@@ -1,0 +1,47 @@
+# PG16既有卷须先备份并迁移至新PG17数据目录，禁止原卷直接更换主版本启动。
+# 本地开发基础设施：PostgreSQL 17（含 pgvector / pg_trgm）与 Redis 7。
+#
+# 由 scripts/dev-stack.ps1 管理生命周期；手工执行亦可：
+#   docker compose -f docker-compose.dev.yml up -d --wait
+#
+# 两点约定（INK-107）：
+#   1. 两个服务都带 healthcheck：--wait 因此能真正等到「可接连接」，而不是「容器已创建」；
+#   2. restart: unless-stopped：Docker 引擎重启后数据服务自动回来，不必每次手工 up。
+#      数据落在命名卷里，down 不会删数据（除非显式 -v）。
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: ai_novel
+      POSTGRES_USER: ai_novel
+      POSTGRES_PASSWORD: change-me
+    ports:
+      - "5432:5432"
+    volumes:
+      - ai-novel-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ai_novel -d ai_novel"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 10s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - ai-novel-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  ai-novel-postgres:
+  ai-novel-redis:

@@ -1,0 +1,1417 @@
+{
+ "paths": {},
+ "components": {
+  "schemas": {
+   "CatalogDefinition": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "title": {
+      "type": "string",
+      "maxLength": 120
+     },
+     "version_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "task_kinds": {
+      "type": "array",
+      "maxItems": 7,
+      "items": {
+       "type": "string",
+       "maxLength": 64
+      }
+     }
+    },
+    "required": [
+     "id",
+     "title",
+     "version_id",
+     "task_kinds"
+    ],
+    "additionalProperties": false
+   },
+   "CatalogWorkflow": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "title": {
+      "type": "string",
+      "maxLength": 120
+     },
+     "version_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     }
+    },
+    "required": [
+     "id",
+     "title",
+     "version_id"
+    ],
+    "additionalProperties": false
+   },
+   "CatalogDefinitionPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/CatalogDefinition"
+      }
+     },
+     "next_cursor": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 2048
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+   "CatalogWorkflowPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/CatalogWorkflow"
+      }
+     },
+     "next_cursor": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 2048
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+   "DefinitionInput": {
+    "type": "object",
+    "properties": {
+     "definition_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "system_instruction": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8000
+     },
+     "tool_version_ids": {
+      "type": "array",
+      "items": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      },
+      "maxItems": 64
+     },
+     "task_kinds": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "enum": [
+        "chapter_draft",
+        "chapter_rewrite",
+        "outline_suggest",
+        "worldview_suggest",
+        "inspiration_analyze",
+        "compliance_audit",
+        "compliance_rewrite"
+       ]
+      },
+      "maxItems": 7
+     }
+    },
+    "required": [
+     "definition_key",
+     "title",
+     "enabled",
+     "system_instruction",
+     "tool_version_ids",
+     "task_kinds"
+    ],
+    "additionalProperties": false
+   },
+   "Definition": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "definition_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "system_instruction": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8000
+     },
+     "tool_version_ids": {
+      "type": "array",
+      "items": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      },
+      "maxItems": 64
+     },
+     "task_kinds": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "enum": [
+        "chapter_draft",
+        "chapter_rewrite",
+        "outline_suggest",
+        "worldview_suggest",
+        "inspiration_analyze",
+        "compliance_audit",
+        "compliance_rewrite"
+       ]
+      },
+      "maxItems": 7
+     },
+     "current_version_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+     },
+     "publication_status": {
+      "type": "string",
+      "enum": [
+       "draft",
+       "published"
+      ]
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "definition_key",
+     "title",
+     "enabled",
+     "system_instruction",
+     "tool_version_ids",
+     "task_kinds",
+     "current_version_id",
+     "version",
+     "publication_status"
+    ],
+    "additionalProperties": false
+   },
+   "Binding": {
+    "type": "object",
+    "properties": {
+     "target_parameter": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "source_node": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+     },
+     "source_pointer": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 256
+     }
+    },
+    "required": [
+     "target_parameter",
+     "source_node",
+     "source_pointer"
+    ],
+    "additionalProperties": false
+   },
+   "ManifestNode": {
+    "type": "object",
+    "properties": {
+     "node_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "role": {
+      "type": "string",
+      "enum": [
+       "supervisor",
+       "structure",
+       "writer",
+       "polisher",
+       "reviewer",
+       "tool"
+      ]
+     },
+     "depends_on": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 64
+      },
+      "maxItems": 64
+     },
+     "required": {
+      "type": "boolean"
+     },
+     "definition_version_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "tool_version_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "input_bindings": {
+      "type": "array",
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/Binding"
+      },
+      "maxItems": 64
+     }
+    },
+    "required": [
+     "node_key",
+     "role",
+     "depends_on",
+     "required",
+     "input_bindings"
+    ],
+    "additionalProperties": false
+   },
+   "Manifest": {
+    "type": "object",
+    "properties": {
+     "nodes": {
+      "type": "array",
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/ManifestNode"
+      },
+      "maxItems": 64,
+      "minItems": 1
+     }
+    },
+    "required": [
+     "nodes"
+    ],
+    "additionalProperties": false
+   },
+   "WorkflowInput": {
+    "type": "object",
+    "properties": {
+     "workflow_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "manifest": {
+      "$ref": "./agent-schemas.json#/components/schemas/Manifest"
+     }
+    },
+    "required": [
+     "workflow_key",
+     "title",
+     "enabled",
+     "manifest"
+    ],
+    "additionalProperties": false
+   },
+   "Workflow": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "workflow_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "manifest": {
+      "$ref": "./agent-schemas.json#/components/schemas/Manifest"
+     },
+     "current_version_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+     },
+     "manifest_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "workflow_key",
+     "title",
+     "enabled",
+     "manifest",
+     "current_version_id",
+     "version",
+     "manifest_hash"
+    ],
+    "additionalProperties": false
+   },
+   "MCPServerInput": {
+    "type": "object",
+    "properties": {
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "endpoint": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048,
+      "pattern": "^https://"
+     },
+     "env_ref": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{0,127}$",
+      "description": "只能选择部署批准的endpoint/env组合，禁止任意环境变量引用。"
+     },
+     "allowed_methods": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "enum": [
+        "tools/list",
+        "tools/call"
+       ]
+      },
+      "maxItems": 2,
+      "uniqueItems": true,
+      "minItems": 1
+     },
+     "enabled": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "title",
+     "endpoint",
+     "env_ref",
+     "allowed_methods",
+     "enabled"
+    ],
+    "additionalProperties": false
+   },
+   "MCPServer": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "endpoint": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048,
+      "pattern": "^https://"
+     },
+     "env_ref": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{0,127}$",
+      "description": "只能选择部署批准的endpoint/env组合，禁止任意环境变量引用。"
+     },
+     "allowed_methods": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "enum": [
+        "tools/list",
+        "tools/call"
+       ]
+      },
+      "maxItems": 2,
+      "uniqueItems": true,
+      "minItems": 1
+     },
+     "enabled": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "title",
+     "endpoint",
+     "env_ref",
+     "allowed_methods",
+     "enabled"
+    ],
+    "additionalProperties": false
+   },
+   "JsonValue": {
+    "oneOf": [
+     {
+      "type": "null"
+     },
+     {
+      "type": "boolean"
+     },
+     {
+      "type": "number"
+     },
+     {
+      "type": "string"
+     },
+     {
+      "type": "array",
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/JsonValue"
+      }
+     },
+     {
+      "type": "object",
+      "additionalProperties": {
+       "$ref": "./agent-schemas.json#/components/schemas/JsonValue"
+      }
+     }
+    ],
+    "description": "仅用于JSON Schema enum/const/default元数据，不用于任意领域响应。"
+   },
+   "JSONSchema": {
+    "oneOf": [
+     {
+      "type": "boolean"
+     },
+     {
+      "type": "object",
+      "properties": {
+       "$schema": {
+        "type": "string",
+        "const": "https://json-schema.org/draft/2020-12/schema"
+       },
+       "$id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+       },
+       "$ref": {
+        "type": "string",
+        "pattern": "^#"
+       },
+       "$defs": {
+        "type": "object",
+        "additionalProperties": {
+         "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+        }
+       },
+       "title": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+       },
+       "description": {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 2000
+       },
+       "type": {
+        "oneOf": [
+         {
+          "type": "string",
+          "enum": [
+           "object",
+           "array",
+           "string",
+           "number",
+           "integer",
+           "boolean",
+           "null"
+          ]
+         },
+         {
+          "type": "array",
+          "items": {
+           "type": "string",
+           "enum": [
+            "object",
+            "array",
+            "string",
+            "number",
+            "integer",
+            "boolean",
+            "null"
+           ]
+          },
+          "maxItems": 7
+         }
+        ]
+       },
+       "properties": {
+        "type": "object",
+        "additionalProperties": {
+         "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+        }
+       },
+       "patternProperties": {
+        "type": "object",
+        "additionalProperties": {
+         "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+        }
+       },
+       "additionalProperties": {
+        "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+       },
+       "unevaluatedProperties": {
+        "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+       },
+       "required": {
+        "type": "array",
+        "items": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 120
+        },
+        "maxItems": 128
+       },
+       "items": {
+        "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+       },
+       "prefixItems": {
+        "type": "array",
+        "items": {
+         "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+        },
+        "maxItems": 128
+       },
+       "contains": {
+        "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+       },
+       "minContains": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+       },
+       "maxContains": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+       },
+       "minItems": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+       },
+       "maxItems": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+       },
+       "uniqueItems": {
+        "type": "boolean"
+       },
+       "minProperties": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+       },
+       "maxProperties": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+       },
+       "propertyNames": {
+        "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+       },
+       "dependentRequired": {
+        "type": "object",
+        "additionalProperties": {
+         "type": "array",
+         "items": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+         },
+         "maxItems": 128
+        }
+       },
+       "dependentSchemas": {
+        "type": "object",
+        "additionalProperties": {
+         "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+        }
+       },
+       "minimum": {
+        "type": "number"
+       },
+       "maximum": {
+        "type": "number"
+       },
+       "exclusiveMinimum": {
+        "type": "number"
+       },
+       "exclusiveMaximum": {
+        "type": "number"
+       },
+       "multipleOf": {
+        "type": "number",
+        "exclusiveMinimum": 0
+       },
+       "minLength": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+       },
+       "maxLength": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+       },
+       "pattern": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+       },
+       "format": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
+       },
+       "enum": {
+        "type": "array",
+        "items": {
+         "$ref": "./agent-schemas.json#/components/schemas/JsonValue"
+        },
+        "maxItems": 128
+       },
+       "const": {
+        "$ref": "./agent-schemas.json#/components/schemas/JsonValue"
+       },
+       "default": {
+        "$ref": "./agent-schemas.json#/components/schemas/JsonValue"
+       },
+       "allOf": {
+        "type": "array",
+        "items": {
+         "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+        },
+        "maxItems": 32
+       },
+       "anyOf": {
+        "type": "array",
+        "items": {
+         "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+        },
+        "maxItems": 32
+       },
+       "oneOf": {
+        "type": "array",
+        "items": {
+         "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+        },
+        "maxItems": 32
+       },
+       "not": {
+        "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+       },
+       "if": {
+        "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+       },
+       "then": {
+        "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+       },
+       "else": {
+        "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+       },
+       "readOnly": {
+        "type": "boolean"
+       },
+       "writeOnly": {
+        "type": "boolean"
+       },
+       "deprecated": {
+        "type": "boolean"
+       },
+       "examples": {
+        "type": "array",
+        "items": {
+         "$ref": "./agent-schemas.json#/components/schemas/JsonValue"
+        },
+        "maxItems": 16
+       }
+      },
+      "required": [],
+      "additionalProperties": false
+     }
+    ],
+    "description": "R1受控Draft2020-12文档。登记时编译全部提交关键字，拒绝未支持关键字，不默默忽略；深度16/32KiB/本地ref。"
+   },
+   "ToolInput": {
+    "type": "object",
+    "properties": {
+     "tool_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+      "enabled": {
+       "type": "boolean"
+      },
+      "input_schema": {
+      "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+     },
+     "output_schema": {
+      "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+     },
+     "side_effect": {
+      "type": "string",
+      "enum": [
+       "read_only",
+       "transactional",
+       "external"
+      ]
+     },
+     "approval_required": {
+      "type": "boolean"
+     },
+     "timeout_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120
+     },
+     "mcp_server_id": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "remote_tool_name": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+     "required": [
+      "tool_key",
+      "title",
+      "enabled",
+      "input_schema",
+      "output_schema",
+     "side_effect",
+     "approval_required",
+     "timeout_seconds",
+     "mcp_server_id",
+     "remote_tool_name"
+    ],
+    "additionalProperties": false
+   },
+    "Tool": {
+     "type": "object",
+     "properties": {
+      "id": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      },
+      "revision": {
+       "$ref": "./common.json#/components/schemas/Revision"
+      },
+      "created_at": {
+       "$ref": "./common.json#/components/schemas/Timestamp"
+      },
+      "updated_at": {
+       "$ref": "./common.json#/components/schemas/Timestamp"
+      },
+      "tool_key": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 64,
+       "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "title": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 120
+      },
+      "enabled": {
+       "type": "boolean"
+      },
+      "execution_status": {
+       "type": "string",
+        "enum": ["not_bound", "available"],
+        "description": "仅当前租户启用的工具版本与运行时执行器合同匹配且后台 Worker 已装配时为 available；其余为 not_bound。enabled 仅为配置开关。"
+      },
+      "input_schema": {
+      "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+     },
+     "output_schema": {
+      "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+     },
+     "side_effect": {
+      "type": "string",
+      "enum": [
+       "read_only",
+       "transactional",
+       "external"
+      ]
+     },
+     "approval_required": {
+      "type": "boolean"
+     },
+     "timeout_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120
+     },
+     "mcp_server_id": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "remote_tool_name": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "current_version_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "tool_key",
+     "title",
+     "enabled",
+     "input_schema",
+     "output_schema",
+     "side_effect",
+     "approval_required",
+     "timeout_seconds",
+     "mcp_server_id",
+     "remote_tool_name",
+      "current_version_id",
+      "version",
+      "execution_status"
+     ],
+    "additionalProperties": false
+   },
+   "DefinitionUpdate": {
+    "type": "object",
+    "properties": {
+     "definition_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "system_instruction": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8000
+     },
+     "tool_version_ids": {
+      "type": "array",
+      "items": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      },
+      "maxItems": 64
+     },
+     "task_kinds": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "enum": [
+        "chapter_draft",
+        "chapter_rewrite",
+        "outline_suggest",
+        "worldview_suggest",
+        "inspiration_analyze",
+        "compliance_audit",
+        "compliance_rewrite"
+       ]
+      },
+      "maxItems": 7
+     },
+     "expected_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     }
+    },
+    "required": [
+     "definition_key",
+     "title",
+     "enabled",
+     "system_instruction",
+     "tool_version_ids",
+     "task_kinds",
+     "expected_revision"
+    ],
+    "additionalProperties": false
+   },
+   "WorkflowUpdate": {
+    "type": "object",
+    "properties": {
+     "workflow_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "manifest": {
+      "$ref": "./agent-schemas.json#/components/schemas/Manifest"
+     },
+     "expected_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     }
+    },
+    "required": [
+     "workflow_key",
+     "title",
+     "enabled",
+     "manifest",
+     "expected_revision"
+    ],
+    "additionalProperties": false
+   },
+   "MCPServerUpdate": {
+    "type": "object",
+    "properties": {
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "endpoint": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048,
+      "pattern": "^https://"
+     },
+     "env_ref": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{0,127}$",
+      "description": "只能选择部署批准的endpoint/env组合，禁止任意环境变量引用。"
+     },
+     "allowed_methods": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "enum": [
+        "tools/list",
+        "tools/call"
+       ]
+      },
+      "maxItems": 2,
+      "uniqueItems": true,
+      "minItems": 1
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "expected_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     }
+    },
+    "required": [
+     "title",
+     "endpoint",
+     "env_ref",
+     "allowed_methods",
+     "enabled",
+     "expected_revision"
+    ],
+    "additionalProperties": false
+   },
+   "ToolUpdate": {
+    "type": "object",
+    "properties": {
+     "tool_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "input_schema": {
+      "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+     },
+     "output_schema": {
+      "$ref": "./agent-schemas.json#/components/schemas/JSONSchema"
+     },
+     "side_effect": {
+      "type": "string",
+      "enum": [
+       "read_only",
+       "transactional",
+       "external"
+      ]
+     },
+     "approval_required": {
+      "type": "boolean"
+     },
+     "timeout_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120
+     },
+     "mcp_server_id": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "remote_tool_name": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "expected_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     }
+    },
+    "required": [
+     "tool_key",
+     "title",
+     "enabled",
+     "input_schema",
+     "output_schema",
+     "side_effect",
+     "approval_required",
+     "timeout_seconds",
+     "mcp_server_id",
+     "remote_tool_name",
+     "expected_revision"
+    ],
+    "additionalProperties": false
+   },
+   "DefinitionPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/Definition"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+   "WorkflowPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/Workflow"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+   "MCPServerPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/MCPServer"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+    "BuiltinTool": {
+     "type": "object",
+     "description": "编译进 Agent ToolExecutor 且已装配 handler 的内置只读能力；元数据只取自代码，execution_status 按当前 Admin 租户的启用冻结版本及执行器绑定判定；不含租户工具配置或版本标识。",
+     "properties": {
+      "tool_key": { "type": "string", "minLength": 1, "maxLength": 64 },
+      "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+      "description": { "type": "string", "maxLength": 2000 },
+      "execution_status": { "enum": ["available", "not_bound"] },
+      "side_effect": { "const": "read_only" },
+      "input_schema": { "type": "object" },
+      "output_schema": { "type": "object" }
+     },
+     "required": ["tool_key", "title", "description", "execution_status", "side_effect", "input_schema", "output_schema"],
+     "additionalProperties": false
+    },
+    "BuiltinToolPage": {
+     "type": "object",
+     "properties": {
+      "items": {
+       "type": "array",
+       "maxItems": 100,
+       "items": { "$ref": "#/components/schemas/BuiltinTool" }
+      },
+      "next_cursor": { "type": ["string", "null"], "maxLength": 2048 },
+      "has_more": { "type": "boolean" }
+     },
+     "required": ["items", "next_cursor", "has_more"],
+     "additionalProperties": false
+    },
+    "ToolPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/Tool"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   }
+  }
+ }
+}

@@ -1,0 +1,1659 @@
+{
+ "x-generated": "build-contracts.cjs",
+ "paths": {
+  "/v1/agents/novel-guide": {
+   "post": {
+    "operationId": "agent_start_novel_guide",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-12 agent.start_novel_guide",
+    "x-errors": [],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "initial_idea": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+         }
+        },
+        "required": [
+         "initial_idea"
+        ],
+        "additionalProperties": false
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "持久化引导会话；由真实Agent工具调用返回首问或提案。"
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    },
+    "summary": "启动Agent小说引导"
+   }
+  },
+  "/v1/agents/novel-guide/{session_id}": {
+   "parameters": [
+    {
+     "in": "path",
+     "name": "session_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    }
+   ],
+   "get": {
+    "operationId": "agent_get_novel_guide",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-12 agent.get_novel_guide",
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "当前用户的持久引导状态。"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     }
+    },
+    "summary": "恢复Agent小说引导"
+   }
+  },
+  "/v1/agents/novel-guide/{session_id}/answers": {
+   "parameters": [
+    {
+     "in": "path",
+     "name": "session_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    }
+   ],
+   "post": {
+    "operationId": "agent_answer_novel_guide",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-12 agent.answer_novel_guide",
+    "x-errors": [
+     {
+      "code": "agent.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "properties": {
+         "expected_revision": {
+          "type": "integer",
+          "minimum": 1
+         },
+         "answer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+         }
+        },
+        "required": [
+         "expected_revision",
+         "answer"
+        ],
+        "additionalProperties": false
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "作者答案已持久化并由Agent继续处理。"
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    },
+    "summary": "回答Agent引导问题"
+   }
+  },
+  "/v1/agents/runs": {
+   "post": {
+    "operationId": "agent_create_run",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-12 FR-13 FR-15 FR-16 agent.create_run",
+    "x-errors": [
+     {
+      "code": "agent.invalid_dag",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "agent.context_budget_exceeded",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "agent.run_capacity_exceeded",
+      "http_status": 429,
+      "recovery": "retry_later"
+     },
+     {
+      "code": "agent.source_changed",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "agent.task_policy_version_changed",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../agent-schemas.json#/components/schemas/CreateRun"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "成功；code=ok，data为领域类型。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/Run"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "summary": "创建并排队运行",
+    "description": "同UoW创建run及唯一run级platform job；202仅在run/nodes/job/幂等提交后返回。"
+   },
+   "get": {
+    "operationId": "agent_list_runs",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-16 agent.list_runs",
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "成功；code=ok，data为领域类型。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/RunSummaryPage"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/Limit"
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Cursor"
+     },
+     {
+      "in": "query",
+      "name": "status",
+      "schema": {
+       "$ref": "../agent-schemas.json#/components/schemas/RunStatus"
+      }
+     }
+    ],
+    "summary": "分页查询本人运行"
+   }
+  },
+  "/v1/agents/runs/{run_id}": {
+   "parameters": [
+    {
+     "in": "path",
+     "name": "run_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    }
+   ],
+   "get": {
+    "operationId": "agent_get_run",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-16 agent.get_run",
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "成功；code=ok，data为领域类型。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/Run"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "summary": "读取运行与节点"
+   }
+  },
+  "/v1/agents/runs/{run_id}/artifacts": {
+   "parameters": [
+    {
+     "in": "path",
+     "name": "run_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    }
+   ],
+   "get": {
+    "operationId": "agent_list_artifacts",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-12 agent.list_artifacts",
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "成功；code=ok，data为领域类型。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/ArtifactPage"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/Limit"
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Cursor"
+     }
+    ],
+    "summary": "分页查询运行产物"
+   }
+  },
+  "/v1/agents/runs/{run_id}/cancel": {
+   "parameters": [
+    {
+     "in": "path",
+     "name": "run_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    }
+   ],
+   "post": {
+    "operationId": "agent_cancel_run",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-17 agent.cancel_run",
+    "x-errors": [
+     {
+      "code": "agent.version_conflict",
+      "http_status": 409,
+      "recovery": "read_status"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../agent-schemas.json#/components/schemas/CancelRun"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "成功；code=ok，data为领域类型。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/Run"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "summary": "取消本人运行",
+    "description": "通过共享RunService.Terminate终结；running先cancelling等待在途调用收敛。终态CAS赢家为准，幂等重放不新增终态事件。"
+   }
+  },
+  "/v1/agents/runs/{run_id}/events": {
+   "parameters": [
+    {
+     "in": "path",
+     "name": "run_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    }
+   ],
+   "get": {
+    "operationId": "agent_subscribe_events",
+    "summary": "回放与订阅运行事件",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-17 agent.subscribe_events",
+    "x-errors": [
+     {
+      "code": "agent.event_cursor_expired",
+      "http_status": 410,
+      "recovery": "read_status",
+      "delivery": "preflight"
+     },
+     {
+      "code": "agent.event_cursor_invalid",
+      "http_status": 400,
+      "recovery": "fix_input",
+      "delivery": "preflight"
+     },
+     {
+      "code": "agent.loop_detected",
+      "http_status": 422,
+      "recovery": "fix_input",
+      "delivery": "stream_or_preflight"
+     },
+     {
+      "code": "agent.execution_outcome_unknown",
+      "http_status": 409,
+      "recovery": "contact_operator",
+      "delivery": "stream",
+      "retryable": false
+     },
+     {
+      "code": "agent.approval_expired",
+      "http_status": 409,
+      "recovery": "read_status",
+      "delivery": "stream_or_preflight"
+     },
+     {
+      "code": "llm.structured_output_invalid",
+      "http_status": 502,
+      "recovery": "fix_input",
+      "delivery": "stream_or_preflight"
+     },
+     {
+      "code": "llm.upstream_protocol_error",
+      "http_status": 502,
+      "recovery": "contact_operator",
+      "delivery": "stream_or_preflight"
+     },
+     {
+      "code": "llm.upstream_timeout",
+      "http_status": 504,
+      "recovery": "retry_later",
+      "delivery": "stream_or_preflight"
+     },
+     {
+      "code": "llm.upstream_outcome_unknown",
+      "http_status": 502,
+      "recovery": "contact_operator",
+      "delivery": "internal_cause",
+      "public_code": "agent.execution_outcome_unknown",
+      "retryable": false
+     },
+     {
+      "code": "llm.capacity_exceeded",
+      "http_status": 429,
+      "recovery": "retry_later",
+      "delivery": "stream_or_preflight"
+     },
+     {
+      "code": "llm.budget_exceeded",
+      "http_status": 429,
+      "recovery": "contact_operator",
+      "delivery": "stream_or_preflight"
+     },
+     {
+      "code": "llm.capacity_unavailable",
+      "http_status": 503,
+      "recovery": "retry_later",
+      "delivery": "stream_or_preflight"
+     },
+     {
+      "code": "llm.secret_unavailable",
+      "http_status": 503,
+      "recovery": "contact_operator",
+      "delivery": "stream_or_preflight"
+     },
+     {
+      "code": "llm.policy_unavailable",
+      "http_status": 503,
+      "recovery": "contact_operator",
+      "delivery": "stream_or_preflight"
+     },
+     {
+      "code": "llm.pricing_missing",
+      "http_status": 422,
+      "recovery": "contact_operator",
+      "delivery": "stream_or_preflight"
+     },
+     {
+      "code": "llm.budget_not_configured",
+      "http_status": 429,
+      "recovery": "contact_operator",
+      "delivery": "stream_or_preflight"
+     },
+     {
+      "code": "agent.question_expired",
+      "http_status": 409,
+      "recovery": "read_status",
+      "delivery": "stream_or_preflight"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "持久RunEvent SSE，终态恰一条，无[DONE]。",
+      "content": {
+       "text/event-stream": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "410": {
+      "description": "事件游标超过7天保留窗口；先GET run。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "502": {
+      "description": "打开流前依赖失败；打开后同错误码仅通过run.failed终态事件传递，HTTP状态仍200。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     },
+     "504": {
+      "description": "打开流前依赖失败；打开后同错误码仅通过run.failed终态事件传递，HTTP状态仍200。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     }
+    },
+    "description": "GET仅回放/订阅已持久事件，不触发模型。7天回放，15秒注释心跳，事件ID是run内seq。 http_status扩展标示建流前的对应错误状态；HTTP200建立后，终态错误只写run.failed或run.cancelled持久事件，不改头、不发送JSON错误封包。",
+    "x-event-contract": "../21-REALTIME-JOBS-AND-RECOVERY.md",
+    "x-event-schema": {
+     "$ref": "../events.json#/components/schemas/RunEvent"
+    },
+    "parameters": [
+     {
+      "in": "header",
+      "name": "Last-Event-ID",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "pattern": "^[0-9]+$",
+       "maxLength": 19
+      }
+     }
+    ]
+   }
+  },
+  "/v1/agents/runs/{run_id}/questions/{question_id}": {
+   "parameters": [
+    {
+     "in": "path",
+     "name": "run_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    },
+    {
+     "in": "path",
+     "name": "question_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    }
+   ],
+   "get": {
+    "operationId": "agent_get_run_question",
+    "summary": "读取本人运行的澄清问题",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-17 agent.get_run_question",
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "Question安全投影；不包含原始答案。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/Question"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    }
+   }
+  },
+  "/v1/agents/runs/{run_id}/questions/{question_id}/answer": {
+   "parameters": [
+    {
+     "in": "path",
+     "name": "run_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    },
+    {
+     "in": "path",
+     "name": "question_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    }
+   ],
+   "post": {
+    "operationId": "agent_answer_run_question",
+    "summary": "回答澄清并恢复同一Run",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-17 agent.answer_run_question",
+    "x-errors": [
+     {
+      "code": "agent.question_expired",
+      "http_status": 409,
+      "recovery": "read_status",
+      "committed": true
+     },
+     {
+      "code": "agent.question_already_answered",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "agent.question_binding_mismatch",
+      "http_status": 409,
+      "recovery": "refresh_then_merge",
+      "committed": true
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../agent-schemas.json#/components/schemas/QuestionAnswer"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "原Run内原子回答Question并唤醒原PG job；回放重试不再次续跑。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/Question"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "description": "本人Answer同一UoW执行question CAS、来源复核、答案hash、原Run/job恢复、事件与幂等。若源revision/hash已变，先持久cancel question并fail同一Run、写run.failed，再缓存并返回409 agent.question_binding_mismatch；重放同键不重复恢复。",
+    "x-command-outcome": {
+     "committed_error_codes": [
+      "agent.question_expired",
+      "agent.question_binding_mismatch"
+     ],
+     "transaction": "commit_question_invalidation_run_failure_and_idempotent_409"
+    }
+   }
+  },
+  "/v1/agents/tools": {
+   "get": {
+    "operationId": "agent_list_tools",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-23 agent.list_tools",
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "成功；code=ok，data为领域类型。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/ToolPage"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/Limit"
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Cursor"
+     }
+    ],
+    "summary": "分页查询工具",
+    "description": "仅用于查询租户已有冻结工具版本以维持旧定义绑定；Admin 工具目录应使用 /v1/agents/builtin-tools。"
+   }
+  },
+  "/v1/agents/tools/{tool_id}": {
+   "parameters": [
+    {
+     "in": "path",
+     "name": "tool_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    }
+   ],
+   "get": {
+    "operationId": "agent_get_tool",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-23 agent.get_tool",
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "成功；code=ok，data为领域类型。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/Tool"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "summary": "读取工具"
+   }
+  },
+  "/v1/agents/workflows": {
+   "get": {
+    "operationId": "agent_list_workflows",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-23 agent.list_workflows",
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "成功；code=ok，data为领域类型。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/WorkflowPage"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/Limit"
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Cursor"
+     }
+    ],
+    "summary": "分页查询工作流"
+   },
+   "post": {
+    "operationId": "agent_create_workflow",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-23 agent.create_workflow",
+    "x-errors": [
+     {
+      "code": "agent.invalid_configuration",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../agent-schemas.json#/components/schemas/WorkflowInput"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "成功；code=ok，data为领域类型。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/Workflow"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "summary": "创建工作流"
+   }
+  },
+  "/v1/agents/workflows/{workflow_id}": {
+   "parameters": [
+    {
+     "in": "path",
+     "name": "workflow_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    }
+   ],
+   "get": {
+    "operationId": "agent_get_workflow",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-23 agent.get_workflow",
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "成功；code=ok，data为领域类型。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/Workflow"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "summary": "读取工作流"
+   },
+   "put": {
+    "operationId": "agent_update_workflow",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-23 agent.update_workflow",
+    "x-errors": [
+     {
+      "code": "agent.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "agent.invalid_configuration",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../agent-schemas.json#/components/schemas/WorkflowUpdate"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "成功；code=ok，data为领域类型。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/Workflow"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "summary": "更新工作流"
+   },
+   "delete": {
+    "operationId": "agent_delete_workflow",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-23 agent.delete_workflow",
+    "x-errors": [
+     {
+      "code": "agent.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "agent.resource_in_use",
+      "http_status": 409,
+      "recovery": "fix_input"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功；code=ok，data为领域类型。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../agent-schemas.json#/components/schemas/Deleted"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     },
+     {
+      "in": "query",
+      "name": "expected_revision",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/Revision"
+      }
+     }
+    ],
+    "summary": "删除工作流"
+   }
+  }
+ }
+}

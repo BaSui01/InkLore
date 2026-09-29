@@ -1,0 +1,162 @@
+{
+ "errors": [
+  {
+   "code": "inspiration.analysis_too_large",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.inspiration.analysis_too_large",
+   "operations": [
+    "inspiration_create_analysis"
+   ]
+  },
+  {
+   "code": "inspiration.asset_duplicate",
+   "http_status": 409,
+   "recovery": "read_status",
+   "message_key": "errors.inspiration.asset_duplicate",
+   "operations": [
+    "inspiration_create_asset"
+   ]
+  },
+  {
+   "code": "inspiration.budget_exhausted",
+   "http_status": 429,
+   "recovery": "retry_later",
+   "message_key": "errors.inspiration.budget_exhausted",
+   "operations": [
+    "inspiration_create_analysis"
+   ]
+  },
+  {
+   "code": "inspiration.card_duplicate",
+   "http_status": 409,
+   "recovery": "read_status",
+   "message_key": "errors.inspiration.card_duplicate",
+   "operations": [
+    "inspiration_create_card",
+    "inspiration_update_card"
+   ]
+  },
+  {
+   "code": "inspiration.invalid_evidence",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.inspiration.invalid_evidence",
+   "operations": [
+    "inspiration_create_card"
+   ]
+  },
+  {
+   "code": "inspiration.invalid_source",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.inspiration.invalid_source",
+   "operations": [
+    "inspiration_create_asset"
+   ]
+  },
+  {
+   "code": "inspiration.invalid_state",
+   "http_status": 409,
+   "recovery": "read_status",
+   "message_key": "errors.inspiration.invalid_state",
+   "operations": [
+    "inspiration_create_asset",
+    "inspiration_update_asset",
+    "inspiration_delete_asset",
+    "inspiration_restore_asset",
+    "inspiration_create_analysis",
+    "inspiration_create_style",
+    "inspiration_update_style",
+    "inspiration_delete_style",
+    "inspiration_restore_style",
+    "inspiration_create_card",
+    "inspiration_update_card",
+    "inspiration_delete_card",
+    "inspiration_restore_card",
+    "inspiration_set_card_state",
+    "inspiration_record_adoption",
+    "inspiration_revoke_adoption",
+    "inspiration_list_assets",
+    "inspiration_get_asset",
+    "inspiration_list_segments",
+    "inspiration_list_analyses",
+    "inspiration_get_analysis",
+    "inspiration_get_report",
+    "inspiration_list_styles",
+    "inspiration_get_style",
+    "inspiration_list_style_versions",
+    "inspiration_get_style_version",
+    "inspiration_list_cards",
+    "inspiration_get_card",
+    "inspiration_list_adoptions"
+   ]
+  },
+  {
+   "code": "inspiration.restore_conflict",
+   "http_status": 409,
+   "recovery": "fix_input",
+   "message_key": "errors.inspiration.restore_conflict",
+   "operations": [
+    "inspiration_restore_asset",
+    "inspiration_restore_style",
+    "inspiration_restore_card"
+   ]
+  },
+  {
+   "code": "inspiration.source_changed",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.inspiration.source_changed",
+   "operations": [
+    "inspiration_create_analysis"
+   ]
+  },
+  {
+   "code": "inspiration.target_revision_mismatch",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.inspiration.target_revision_mismatch",
+   "operations": [
+    "inspiration_record_adoption"
+   ]
+  },
+  {
+   "code": "inspiration.version_conflict",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.inspiration.version_conflict",
+   "operations": [
+    "inspiration_create_asset",
+    "inspiration_update_asset",
+    "inspiration_delete_asset",
+    "inspiration_restore_asset",
+    "inspiration_create_analysis",
+    "inspiration_create_style",
+    "inspiration_update_style",
+    "inspiration_delete_style",
+    "inspiration_restore_style",
+    "inspiration_create_card",
+    "inspiration_update_card",
+    "inspiration_delete_card",
+    "inspiration_restore_card",
+    "inspiration_set_card_state",
+    "inspiration_record_adoption",
+    "inspiration_revoke_adoption",
+    "inspiration_list_assets",
+    "inspiration_get_asset",
+    "inspiration_list_segments",
+    "inspiration_list_analyses",
+    "inspiration_get_analysis",
+    "inspiration_get_report",
+    "inspiration_list_styles",
+    "inspiration_get_style",
+    "inspiration_list_style_versions",
+    "inspiration_get_style_version",
+    "inspiration_list_cards",
+    "inspiration_get_card",
+    "inspiration_list_adoptions"
+   ]
+  }
+ ]
+}

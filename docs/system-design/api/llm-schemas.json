@@ -1,0 +1,1862 @@
+{
+ "paths": {},
+ "components": {
+  "schemas": {
+      "Capability": {
+       "type": "string",
+       "enum": [
+        "text",
+        "vision",
+        "image",
+        "embedding",
+        "rerank",
+        "video",
+        "audio",
+        "tools",
+        "structured",
+        "reasoning"
+       ]
+      },
+   "ProviderInput": {
+    "type": "object",
+    "properties": {
+     "code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "protocol": {
+      "type": "string",
+      "enum": [
+       "openai",
+       "deepseek",
+       "anthropic",
+       "gemini",
+       "ollama"
+      ]
+     },
+     "enabled": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "code",
+     "title",
+     "protocol",
+     "enabled"
+    ],
+    "additionalProperties": false
+   },
+   "Provider": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "protocol": {
+      "type": "string",
+      "enum": [
+       "openai",
+       "deepseek",
+       "anthropic",
+       "gemini",
+       "ollama"
+      ]
+     },
+     "enabled": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "code",
+     "title",
+     "protocol",
+     "enabled"
+    ],
+    "additionalProperties": false
+   },
+   "ModelInput": {
+    "type": "object",
+    "properties": {
+     "provider_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "upstream_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+      "capabilities": {
+       "type": "array",
+       "items": {
+        "$ref": "#/components/schemas/Capability"
+       },
+       "maxItems": 16,
+       "minItems": 1,
+       "uniqueItems": true
+      },
+     "context_window": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 2000000
+     },
+     "max_output_tokens": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16384
+     },
+     "embedding_dimensions": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "const": 1536
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "enabled": {
+      "type": "boolean"
+     }
+    },
+     "required": [
+      "provider_id",
+      "upstream_name",
+      "title",
+      "capabilities",
+      "context_window",
+      "max_output_tokens",
+      "enabled"
+     ],
+    "additionalProperties": false
+   },
+   "Model": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "provider_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "upstream_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+      "capabilities": {
+       "type": "array",
+       "items": {
+        "$ref": "#/components/schemas/Capability"
+       },
+       "maxItems": 16,
+       "minItems": 1,
+       "uniqueItems": true
+      },
+     "context_window": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 2000000
+     },
+     "max_output_tokens": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16384
+     },
+     "embedding_dimensions": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "const": 1536
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "enabled": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "provider_id",
+     "upstream_name",
+     "title",
+     "capabilities",
+     "context_window",
+     "max_output_tokens",
+     "embedding_dimensions",
+     "enabled"
+    ],
+    "additionalProperties": false
+   },
+   "ChannelInput": {
+    "type": "object",
+    "properties": {
+     "provider_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "model_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "model_ids": {
+      "type": "array",
+      "items": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     "models": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "model_id": {
+         "$ref": "./common.json#/components/schemas/UUID"
+        },
+        "upstream_model": {
+         "type": "string",
+         "maxLength": 120
+        },
+        "priority": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 100
+        },
+        "weight": {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 1000
+        },
+        "enabled": {
+         "type": "boolean"
+        }
+       },
+       "required": [
+        "model_id"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "base_url": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048,
+      "description": "部署allowlist内HTTPS；Ollama精确局域allowlist可HTTP。"
+     },
+     "upstream_model": {
+      "type": "string",
+      "maxLength": 120
+     },
+     "priority": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+     },
+     "weight": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+     },
+     "rpm": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+     },
+     "concurrency": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+     },
+     "enabled": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "provider_id",
+     "title",
+     "base_url",
+     "priority",
+     "weight",
+     "rpm",
+     "concurrency",
+     "enabled"
+    ],
+    "additionalProperties": false
+   },
+   "Channel": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "provider_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "model_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "model_ids": {
+      "type": "array",
+      "items": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      }
+     },
+     "models": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "$ref": "./common.json#/components/schemas/UUID"
+        },
+        "channel_id": {
+         "$ref": "./common.json#/components/schemas/UUID"
+        },
+        "model_id": {
+         "$ref": "./common.json#/components/schemas/UUID"
+        },
+        "upstream_model": {
+         "type": "string",
+         "maxLength": 120
+        },
+        "priority": {
+         "type": "integer"
+        },
+        "weight": {
+         "type": "integer"
+        },
+        "enabled": {
+         "type": "boolean"
+        }
+       }
+      }
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "base_url": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048,
+      "description": "部署allowlist内HTTPS；Ollama精确局域allowlist可HTTP。"
+     },
+     "upstream_model": {
+      "type": "string",
+      "maxLength": 120
+     },
+     "priority": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+     },
+     "weight": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+     },
+     "rpm": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+     },
+     "concurrency": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "breaker_state": {
+      "type": "string",
+      "enum": [
+       "closed",
+       "open",
+       "half_open"
+      ]
+     },
+     "inflight": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+     },
+     "remaining_rpm": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+     },
+     "capacity_observed_at": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/Timestamp"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "capacity_available": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "provider_id",
+     "title",
+     "base_url",
+     "priority",
+     "weight",
+     "rpm",
+     "concurrency",
+     "enabled",
+     "breaker_state",
+     "inflight",
+     "remaining_rpm",
+     "capacity_observed_at",
+     "capacity_available"
+    ],
+    "additionalProperties": false
+   },
+    "SecretRef": {
+     "type": "object",
+     "properties": {
+      "kind": {
+       "type": "string",
+       "enum": [
+        "env",
+        "secret_store",
+        "plain"
+       ]
+      },
+      "locator": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 1024
+      },
+      "version": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 64
+      }
+     },
+     "required": [
+      "kind",
+      "locator",
+      "version"
+     ],
+    "additionalProperties": false
+   },
+   "KeyInput": {
+    "type": "object",
+    "properties": {
+     "channel_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "secret_ref": {
+      "$ref": "#/components/schemas/SecretRef"
+     },
+     "weight": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+     },
+     "rpm": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+     },
+     "concurrency": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+     },
+     "enabled": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "channel_id",
+     "title",
+     "secret_ref",
+     "weight",
+     "rpm",
+     "concurrency",
+     "enabled"
+    ],
+    "additionalProperties": false
+   },
+   "Key": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "channel_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "secret_ref": {
+      "$ref": "#/components/schemas/SecretRef"
+     },
+     "weight": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+     },
+     "rpm": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+     },
+     "concurrency": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "fingerprint": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "health": {
+      "type": "string",
+      "enum": [
+       "unknown",
+       "healthy",
+       "degraded",
+       "invalid"
+      ]
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "channel_id",
+     "title",
+     "secret_ref",
+     "weight",
+     "rpm",
+     "concurrency",
+     "enabled",
+     "fingerprint",
+     "health"
+    ],
+    "additionalProperties": false
+   },
+   "PolicyInput": {
+    "type": "object",
+    "properties": {
+     "task_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "primary_model_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "fallback_model_ids": {
+      "type": "array",
+      "items": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      },
+      "maxItems": 3,
+      "uniqueItems": true
+     },
+     "max_output_tokens": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16384
+     },
+     "temperature": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2
+     },
+     "timeout_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 180
+     },
+     "max_retries": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+     },
+      "required_capabilities": {
+       "type": "array",
+       "items": {
+        "$ref": "#/components/schemas/Capability"
+       },
+       "maxItems": 16,
+       "uniqueItems": true,
+       "minItems": 1
+      },
+     "output_mode": {
+      "type": "string",
+      "enum": [
+       "text",
+       "structured",
+       "embedding"
+      ]
+     },
+     "task_kinds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 64,
+       "pattern": "^[a-z][a-z0-9_]*$"
+      }
+     }
+    },
+    "required": [
+     "task_key",
+     "task_kinds",
+     "title",
+     "enabled",
+     "primary_model_id",
+     "fallback_model_ids",
+     "max_output_tokens",
+     "temperature",
+     "timeout_seconds",
+     "max_retries",
+     "required_capabilities",
+     "output_mode"
+    ],
+    "additionalProperties": false
+   },
+   "Policy": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "task_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "primary_model_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "fallback_model_ids": {
+      "type": "array",
+      "items": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      },
+      "maxItems": 3,
+      "uniqueItems": true
+     },
+     "max_output_tokens": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16384
+     },
+     "temperature": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2
+     },
+     "timeout_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 180
+     },
+     "max_retries": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+     },
+      "required_capabilities": {
+       "type": "array",
+       "items": {
+        "$ref": "#/components/schemas/Capability"
+       },
+       "maxItems": 16,
+       "uniqueItems": true,
+       "minItems": 1
+      },
+     "output_mode": {
+      "type": "string",
+      "enum": [
+       "text",
+       "structured",
+       "embedding"
+      ]
+     },
+     "current_version_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+     },
+     "task_kinds": {
+      "type": "array",
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 64,
+       "pattern": "^[a-z][a-z0-9_]*$"
+      }
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "task_key",
+     "title",
+     "task_kinds",
+     "enabled",
+     "primary_model_id",
+     "fallback_model_ids",
+     "max_output_tokens",
+     "temperature",
+     "timeout_seconds",
+     "max_retries",
+     "required_capabilities",
+     "output_mode",
+     "current_version_id",
+     "version"
+    ],
+    "additionalProperties": false
+   },
+   "PricingInput": {
+    "type": "object",
+    "properties": {
+     "model_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "currency": {
+      "type": "string",
+      "const": "CNY"
+     },
+     "input_micros_per_million": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000000000
+     },
+     "output_micros_per_million": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000000000
+     },
+     "cache_micros_per_million": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000000000
+     },
+     "effective_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     }
+    },
+    "required": [
+     "model_id",
+     "currency",
+     "input_micros_per_million",
+     "output_micros_per_million",
+     "cache_micros_per_million",
+     "effective_at"
+    ],
+    "additionalProperties": false
+   },
+   "Pricing": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "model_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "currency": {
+      "type": "string",
+      "const": "CNY"
+     },
+     "input_micros_per_million": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000000000
+     },
+     "output_micros_per_million": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000000000
+     },
+     "cache_micros_per_million": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000000000
+     },
+     "effective_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+     }
+    },
+    "required": [
+     "id",
+     "created_at",
+     "updated_at",
+     "model_id",
+     "currency",
+     "input_micros_per_million",
+     "output_micros_per_million",
+     "cache_micros_per_million",
+     "effective_at",
+     "version"
+    ],
+    "additionalProperties": false
+   },
+   "Budget": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "daily_limit_micros": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9000000000000000
+     },
+     "business_date": {
+      "type": "string",
+      "format": "date"
+     },
+     "spent_micros": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9000000000000000
+     },
+     "reserved_micros": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9000000000000000
+     },
+     "remaining_micros": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9000000000000000
+     },
+     "over_budget": {
+      "type": "boolean"
+     },
+     "currency": {
+      "type": "string",
+      "const": "CNY"
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "daily_limit_micros",
+     "business_date",
+     "spent_micros",
+     "reserved_micros",
+     "remaining_micros",
+     "over_budget",
+     "currency"
+    ],
+    "additionalProperties": false
+   },
+   "BudgetUpdate": {
+    "type": "object",
+    "properties": {
+     "expected_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "daily_limit_micros": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9000000000000000
+     }
+    },
+    "required": [
+     "expected_revision",
+     "daily_limit_micros"
+    ],
+    "additionalProperties": false
+   },
+   "PriceSnapshot": {
+    "type": "object",
+    "properties": {
+     "input_micros_per_million": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000000000
+     },
+     "output_micros_per_million": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000000000
+     },
+     "cache_micros_per_million": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000000000
+     }
+    },
+    "required": [
+     "input_micros_per_million",
+     "output_micros_per_million",
+     "cache_micros_per_million"
+    ],
+    "additionalProperties": false
+   },
+   "Usage": {
+    "description": "不可变调用尝试用量及追加调账汇总。",
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "invocation_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "attempt": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4
+     },
+     "reservation_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "policy_version_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "model_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "channel_id": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "key_id": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "pricing_revision_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "business_date": {
+      "type": "string",
+      "format": "date"
+     },
+     "input_tokens": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+     },
+     "output_tokens": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+     },
+     "cached_input_tokens": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+     },
+     "cost_micros": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9000000000000000
+     },
+     "adjustment_micros": {
+      "type": "integer",
+      "minimum": -9000000000000000,
+      "maximum": 9000000000000000
+     },
+     "currency": {
+      "type": "string",
+      "const": "CNY"
+     },
+     "price_snapshot": {
+      "$ref": "#/components/schemas/PriceSnapshot"
+     },
+     "estimated": {
+      "type": "boolean"
+     },
+     "estimate_reason": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "missing_usage",
+         "disconnected",
+         "crash",
+         "invalid_usage",
+         "tokenizer_unavailable"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "succeeded",
+       "failed",
+       "cancelled",
+       "unknown"
+      ]
+     },
+     "error_code": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+     },
+     "trace_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+     }
+    },
+    "required": [
+     "id",
+     "created_at",
+     "updated_at",
+     "invocation_id",
+     "attempt",
+     "reservation_id",
+     "policy_version_id",
+     "model_id",
+     "channel_id",
+     "key_id",
+     "pricing_revision_id",
+     "business_date",
+     "input_tokens",
+     "output_tokens",
+     "cached_input_tokens",
+     "cost_micros",
+     "adjustment_micros",
+     "currency",
+     "price_snapshot",
+     "estimated",
+     "estimate_reason",
+     "status",
+     "error_code",
+     "duration_ms",
+     "trace_id"
+    ],
+    "additionalProperties": false
+   },
+   "Deleted": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "deleted": {
+      "type": "boolean",
+      "const": true
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "deleted"
+    ],
+    "additionalProperties": false
+   },
+   "ProviderUpdate": {
+    "type": "object",
+    "properties": {
+     "code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "protocol": {
+      "type": "string",
+      "enum": [
+       "openai",
+       "deepseek",
+       "anthropic",
+       "gemini",
+       "ollama"
+      ]
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "expected_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     }
+    },
+    "required": [
+     "code",
+     "title",
+     "protocol",
+     "enabled",
+     "expected_revision"
+    ],
+    "additionalProperties": false
+   },
+   "ModelUpdate": {
+    "type": "object",
+    "properties": {
+     "provider_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "upstream_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+      "capabilities": {
+       "type": "array",
+       "items": {
+        "$ref": "#/components/schemas/Capability"
+       },
+       "maxItems": 16,
+       "minItems": 1,
+       "uniqueItems": true
+      },
+     "context_window": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 2000000
+     },
+     "max_output_tokens": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16384
+     },
+     "embedding_dimensions": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "const": 1536
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "expected_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     }
+    },
+     "required": [
+      "provider_id",
+      "upstream_name",
+      "title",
+      "capabilities",
+      "context_window",
+      "max_output_tokens",
+      "enabled",
+      "expected_revision"
+     ],
+    "additionalProperties": false
+   },
+   "ChannelUpdate": {
+    "type": "object",
+    "properties": {
+     "provider_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "model_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "base_url": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048,
+      "description": "部署allowlist内HTTPS；Ollama精确局域allowlist可HTTP。"
+     },
+     "upstream_model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "priority": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+     },
+     "weight": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+     },
+     "rpm": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+     },
+     "concurrency": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "expected_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     }
+    },
+    "required": [
+     "provider_id",
+     "model_id",
+     "title",
+     "base_url",
+     "upstream_model",
+     "priority",
+     "weight",
+     "rpm",
+     "concurrency",
+     "enabled",
+     "expected_revision"
+    ],
+    "additionalProperties": false
+   },
+   "KeyUpdate": {
+    "type": "object",
+    "properties": {
+     "channel_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "secret_ref": {
+      "$ref": "#/components/schemas/SecretRef"
+     },
+     "weight": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+     },
+     "rpm": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+     },
+     "concurrency": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "expected_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     }
+    },
+    "required": [
+     "channel_id",
+     "title",
+     "secret_ref",
+     "weight",
+     "rpm",
+     "concurrency",
+     "enabled",
+     "expected_revision"
+    ],
+    "additionalProperties": false
+   },
+   "PolicyUpdate": {
+    "type": "object",
+    "properties": {
+     "task_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$"
+     },
+     "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     },
+     "enabled": {
+      "type": "boolean"
+     },
+     "primary_model_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "fallback_model_ids": {
+      "type": "array",
+      "items": {
+       "$ref": "./common.json#/components/schemas/UUID"
+      },
+      "maxItems": 3,
+      "uniqueItems": true
+     },
+     "max_output_tokens": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16384
+     },
+     "temperature": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2
+     },
+     "timeout_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 180
+     },
+     "max_retries": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+     },
+      "required_capabilities": {
+       "type": "array",
+       "items": {
+        "$ref": "#/components/schemas/Capability"
+       },
+       "maxItems": 16,
+       "uniqueItems": true,
+       "minItems": 1
+      },
+     "output_mode": {
+      "type": "string",
+      "enum": [
+       "text",
+       "structured",
+       "embedding"
+      ]
+     },
+     "expected_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "task_kinds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 64,
+       "pattern": "^[a-z][a-z0-9_]*$"
+      }
+     }
+    },
+    "required": [
+     "task_key",
+     "task_kinds",
+     "title",
+     "enabled",
+     "primary_model_id",
+     "fallback_model_ids",
+     "max_output_tokens",
+     "temperature",
+     "timeout_seconds",
+     "max_retries",
+     "required_capabilities",
+     "output_mode",
+     "expected_revision"
+    ],
+    "additionalProperties": false
+   },
+   "ProviderPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Provider"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+   "ModelPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Model"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+   "ChannelPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Channel"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+   "KeyPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Key"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+   "PolicyPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Policy"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+   "PricingPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Pricing"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+   "UsagePage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Usage"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+      "items",
+      "next_cursor",
+      "has_more"
+     ],
+     "additionalProperties": false
+    },
+    "FetchUpstreamModelsInput": {
+     "type": "object",
+     "properties": {
+      "protocol": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 64
+      },
+      "base_url": {
+       "type": "string",
+       "format": "uri",
+       "maxLength": 2048
+      },
+      "api_key": {
+       "type": "string",
+       "maxLength": 512
+      }
+     },
+     "required": [
+      "protocol",
+      "base_url"
+     ],
+     "additionalProperties": false
+    },
+    "UpstreamModelItem": {
+     "type": "object",
+     "properties": {
+      "id": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128
+      },
+      "name": {
+       "type": "string",
+       "maxLength": 128
+      }
+     },
+     "required": [
+      "id"
+     ],
+     "additionalProperties": false
+    },
+    "UpstreamModelListPage": {
+     "type": "object",
+     "properties": {
+      "items": {
+       "type": "array",
+       "items": {
+        "$ref": "#/components/schemas/UpstreamModelItem"
+       },
+       "maxItems": 1000
+      }
+     },
+     "required": [
+      "items"
+     ],
+     "additionalProperties": false
+    }
+   }
+  }
+}

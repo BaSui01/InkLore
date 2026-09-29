@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  project-skills:
+    name: 项目 Skills 与工程记忆校验
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 校验技能元数据与文档链接
+        run: node scripts/check-project-skills.mjs
+      - name: 校验工程笔记与历史归档封印
+        env:
+          NOTES_BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [[ -z "$NOTES_BASE" || "$NOTES_BASE" =~ ^0+$ ]]; then
+            echo "Notes bootstrap: no predecessor commit for this push"
+            node scripts/agent-notes.mjs check
+          else
+            node scripts/agent-notes.mjs check --base "$NOTES_BASE"
+          fi
+
+  backend:
+    name: 后端（构建 / vet / 格式 / 架构红线）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: 构建
+        run: go build ./...
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: 格式校验
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "以下文件未格式化，请运行 gofmt -w . ："
+            echo "$unformatted"
+            exit 1
+          fi
+          echo "gofmt 校验通过"
+
+      - name: 前端 i18n key 完整性
+        run: go run ./cmd/i18ncheck frontend/packages/i18n/src/locales/zh-CN.ts frontend/packages/i18n/src/locales/en-US.ts
+
+      - name: 架构红线校验（AGENTS.md R1-R5）
+        run: go run ./cmd/archguard -reachability
+
+  frontend:
+    name: 前端（类型检查 / 构建）
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建
+        run: npm run build

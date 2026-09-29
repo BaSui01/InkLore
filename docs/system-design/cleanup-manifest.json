@@ -1,0 +1,51 @@
+{
+  "task": "INK-141",
+  "reason": "用户要求删除旧文档并以system-design完成重构设计；替代后实际删除，不再次归档",
+  "deleted": [
+    "docs/api/README.md",
+    "docs/api/components/common.yaml",
+    "docs/api/components/schemas.yaml",
+    "docs/api/openapi.yaml",
+    "docs/api/paths/admin.yaml",
+    "docs/api/paths/agents.yaml",
+    "docs/api/paths/creator.yaml",
+    "docs/api/sse-streaming-contract.md",
+    "docs/archive/agent-capabilities.md",
+    "docs/archive/creator-admin-dual-app-and-responsive-architecture.md",
+    "docs/archive/database-architecture-postgres-vs-mongodb-analysis.md",
+    "docs/archive/ddd-modular-monolith-fullstack-architecture.md",
+    "docs/archive/editor-agent-copilot-deep-design-spec.md",
+    "docs/archive/maliang-refactoring-execution-plan.md",
+    "docs/archive/maliang-writer-ui-ux-design-blueprint.md",
+    "docs/archive/new-dual-app-maliang-architecture-design.md",
+    "docs/archive/product-feature-analysis.md",
+    "docs/archive/semantic-recall-evaluation.md",
+    "docs/release-and-rollback.md",
+    "docs/roadmap.md",
+    "docs/system-design/domains/05-DOMAIN-WORLDVIEW-CONTRACT.md",
+    "docs/system-design/domains/05-DOMAIN-WORLDVIEW-DDL.sql.md",
+    "docs/system-design/domains/06-DOMAIN-INSPIRATION-CONTRACT.md",
+    "docs/system-design/domains/06-DOMAIN-INSPIRATION-DDL.sql.md",
+    "docs/system-design/domains/07-DOMAIN-AGENT-CONTRACT.md",
+    "docs/system-design/domains/07-DOMAIN-AGENT-DDL.sql.md",
+    "docs/system-design/domains/08-DOMAIN-COMPLIANCE-CONTRACT.md",
+    "docs/system-design/domains/08-DOMAIN-COMPLIANCE-DDL.sql.md",
+    "docs/system-design/domains/09-DOMAIN-LLM-GATEWAY-CONTRACT.md",
+    "docs/system-design/domains/09-DOMAIN-LLM-GATEWAY-DDL.sql.md"
+  ],
+  "replacements": {
+    "docs/archive/": "docs/system-design/00-INDEX.md",
+    "docs/api/": "docs/system-design/api/openapi.json",
+    "domains/*DDL*": "docs/system-design/data/",
+    "domains/*CONTRACT*": "docs/system-design/api/",
+    "docs/roadmap.md": "docs/system-design/18-DELIVERY-AND-ACCEPTANCE-PLAN.md",
+    "docs/release-and-rollback.md": "docs/system-design/13-DEVOPS-OBSERVABILITY-AND-OPERATIONS.md"
+  },
+  "retained_governance": [
+    "docs/architecture.md",
+    "docs/backlog.md",
+    "docs/project-management.md",
+    "docs/decisions/"
+  ],
+  "notes": "治理记录只保存实现证据/任务/决策理由，不是旧施工设计"
+}

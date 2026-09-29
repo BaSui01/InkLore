@@ -1,0 +1,41 @@
+{
+  "name": "inklore-workspace",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev:creator": "vite --no-open",
+    "dev:admin": "vite --config vite.admin.config.ts --no-open",
+    "dev": "vite --no-open",
+    "build:creator": "tsc -b && vite build",
+    "build:admin": "tsc -b && vite build --config vite.admin.config.ts",
+    "build": "pnpm run build:creator && pnpm run build:admin",
+    "codegen": "node ../scripts/codegen.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.67.2",
+    "@tiptap/extension-bubble-menu": "^2.11.5",
+    "@tiptap/extension-character-count": "^2.11.5",
+    "@tiptap/extension-placeholder": "^2.11.5",
+    "@tiptap/pm": "^2.11.5",
+    "@tiptap/react": "^2.11.5",
+    "@tiptap/starter-kit": "^2.11.5",
+    "clsx": "^2.1.1",
+    "cytoscape": "^3.30.4",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.0.2",
+    "vite": "^7.1.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.9",
+    "@types/cytoscape": "^3.21.9",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^5.0.4",
+    "tailwindcss": "^4.0.9",
+    "typescript": "^5.8.3"
+  }
+}

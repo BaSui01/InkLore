@@ -1,0 +1,178 @@
+{
+ "errors": [
+  {
+   "code": "compliance.analysis_too_large",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.compliance.analysis_too_large",
+   "operations": [
+    "compliance_create_report"
+   ]
+  },
+  {
+   "code": "compliance.budget_exhausted",
+   "http_status": 429,
+   "recovery": "retry_later",
+   "message_key": "errors.compliance.budget_exhausted",
+   "operations": [
+    "compliance_create_rewrite"
+   ]
+  },
+  {
+   "code": "compliance.hash_mismatch",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.compliance.hash_mismatch",
+   "operations": [
+    "compliance_scan",
+    "compliance_create_report"
+   ]
+  },
+  {
+   "code": "compliance.invalid_issue_selection",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.compliance.invalid_issue_selection",
+   "operations": [
+    "compliance_create_rewrite"
+   ]
+  },
+  {
+   "code": "compliance.invalid_rule",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.compliance.invalid_rule",
+   "operations": [
+    "compliance_create_rule",
+    "compliance_update_rule",
+    "compliance_publish_rule_set"
+   ]
+  },
+  {
+   "code": "compliance.invalid_state",
+   "http_status": 409,
+   "recovery": "read_status",
+   "message_key": "errors.compliance.invalid_state",
+   "operations": [
+    "compliance_create_rule_set",
+    "compliance_create_rule",
+    "compliance_update_rule",
+    "compliance_delete_rule",
+    "compliance_publish_rule_set",
+    "compliance_scan",
+    "compliance_create_report",
+    "compliance_ignore_issue",
+    "compliance_reopen_issue",
+    "compliance_create_review",
+    "compliance_create_rewrite",
+    "compliance_list_rule_sets",
+    "compliance_get_rule_set",
+    "compliance_list_rules",
+    "compliance_list_reports",
+    "compliance_get_report",
+    "compliance_list_issues",
+    "compliance_list_issue_decisions",
+    "compliance_list_reviews",
+    "compliance_list_rewrites",
+    "compliance_get_rewrite"
+   ]
+  },
+  {
+   "code": "compliance.review_required",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.compliance.review_required",
+   "operations": [
+    "compliance_create_review"
+   ]
+  },
+  {
+   "code": "compliance.review_stale",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.compliance.review_stale",
+   "operations": [
+    "compliance_create_review"
+   ]
+  },
+  {
+   "code": "compliance.rule_duplicate",
+   "http_status": 409,
+   "recovery": "fix_input",
+   "message_key": "errors.compliance.rule_duplicate",
+   "operations": [
+    "compliance_create_rule",
+    "compliance_update_rule"
+   ]
+  },
+  {
+   "code": "compliance.rule_limit_exceeded",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.compliance.rule_limit_exceeded",
+   "operations": [
+    "compliance_create_rule"
+   ]
+  },
+  {
+   "code": "compliance.rule_snapshot_unavailable",
+   "http_status": 503,
+   "recovery": "retry_later",
+   "message_key": "errors.compliance.rule_snapshot_unavailable",
+   "operations": [
+    "compliance_publish_rule_set",
+    "compliance_scan",
+    "compliance_create_report"
+   ]
+  },
+  {
+   "code": "compliance.snapshot_mismatch",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.compliance.snapshot_mismatch",
+   "operations": [
+    "compliance_scan",
+    "compliance_create_report"
+   ]
+  },
+  {
+   "code": "compliance.too_many_issues",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.compliance.too_many_issues",
+   "operations": [
+    "compliance_scan",
+    "compliance_create_report"
+   ]
+  },
+  {
+   "code": "compliance.version_conflict",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.compliance.version_conflict",
+   "operations": [
+    "compliance_create_rule_set",
+    "compliance_create_rule",
+    "compliance_update_rule",
+    "compliance_delete_rule",
+    "compliance_publish_rule_set",
+    "compliance_scan",
+    "compliance_create_report",
+    "compliance_ignore_issue",
+    "compliance_reopen_issue",
+    "compliance_create_review",
+    "compliance_create_rewrite",
+    "compliance_list_rule_sets",
+    "compliance_get_rule_set",
+    "compliance_list_rules",
+    "compliance_list_reports",
+    "compliance_get_report",
+    "compliance_list_issues",
+    "compliance_list_issue_decisions",
+    "compliance_list_reviews",
+    "compliance_list_rewrites",
+    "compliance_get_rewrite"
+   ]
+  }
+ ]
+}

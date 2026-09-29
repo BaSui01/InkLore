@@ -1,0 +1,151 @@
+{
+ "paths": {},
+ "components": {
+  "schemas": {
+   "CatalogDefinition": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/CatalogDefinition"
+   },
+   "CatalogWorkflow": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/CatalogWorkflow"
+   },
+   "CatalogDefinitionPage": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/CatalogDefinitionPage"
+   },
+   "CatalogWorkflowPage": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/CatalogWorkflowPage"
+   },
+   "RunStatus": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/RunStatus"
+   },
+   "NodeStatus": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/NodeStatus"
+   },
+   "Resource": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/Resource"
+   },
+   "CreateRun": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/CreateRun"
+   },
+   "Node": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/Node"
+   },
+   "Run": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/Run"
+   },
+   "RunSummary": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/RunSummary"
+   },
+   "AuditRun": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/AuditRun"
+   },
+   "CancelRun": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/CancelRun"
+   },
+   "Approval": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/Approval"
+   },
+   "ApprovalDecision": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/ApprovalDecision"
+   },
+   "Artifact": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/Artifact"
+   },
+   "Deleted": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/Deleted"
+   },
+   "DiagnosticCreate": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/DiagnosticCreate"
+   },
+   "Diagnostic": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/Diagnostic"
+   },
+   "DefinitionInput": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/DefinitionInput"
+   },
+   "Definition": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/Definition"
+   },
+   "Binding": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/Binding"
+   },
+   "ManifestNode": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/ManifestNode"
+   },
+   "Manifest": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/Manifest"
+   },
+   "WorkflowInput": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/WorkflowInput"
+   },
+   "Workflow": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/Workflow"
+   },
+   "MCPServerInput": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/MCPServerInput"
+   },
+   "MCPServer": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/MCPServer"
+   },
+   "JsonValue": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/JsonValue"
+   },
+   "JSONSchema": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/JSONSchema"
+   },
+   "ToolInput": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/ToolInput"
+   },
+   "Tool": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/Tool"
+   },
+   "DefinitionUpdate": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/DefinitionUpdate"
+   },
+   "WorkflowUpdate": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/WorkflowUpdate"
+   },
+   "MCPServerUpdate": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/MCPServerUpdate"
+   },
+   "ToolUpdate": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/ToolUpdate"
+   },
+   "RunSummaryPage": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/RunSummaryPage"
+   },
+   "AuditRunPage": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/AuditRunPage"
+   },
+   "ApprovalPage": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/ApprovalPage"
+   },
+   "ArtifactPage": {
+    "$ref": "./agent-core-schemas.json#/components/schemas/ArtifactPage"
+   },
+   "DefinitionPage": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/DefinitionPage"
+   },
+   "WorkflowPage": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/WorkflowPage"
+   },
+   "MCPServerPage": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/MCPServerPage"
+   },
+   "ToolPage": {
+    "$ref": "./agent-governance-schemas.json#/components/schemas/ToolPage"
+   },
+   "CatalogTaskPolicy": {
+    "$ref": "./agent-r1x-schemas.json#/components/schemas/CatalogTaskPolicy"
+   },
+   "CatalogTaskPolicyPage": {
+    "$ref": "./agent-r1x-schemas.json#/components/schemas/CatalogTaskPolicyPage"
+   },
+   "Question": {
+    "$ref": "./agent-r1x-schemas.json#/components/schemas/Question"
+   },
+   "QuestionAnswer": {
+    "$ref": "./agent-r1x-schemas.json#/components/schemas/QuestionAnswer"
+   }
+  }
+ }
+}

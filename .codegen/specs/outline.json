@@ -1,0 +1,5494 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "InkLore OUTLINE API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/v1/outline/novels/{novel_id}/clues": {
+      "get": {
+        "operationId": "outline_listclues",
+        "tags": [
+          "outline"
+        ],
+        "summary": "listclues",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-09 outline.listclues",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "novel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "planned",
+                "planted",
+                "developing",
+                "revealed",
+                "closed",
+                "abandoned"
+              ]
+            }
+          },
+          {
+            "name": "planned_reveal_node_id",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "name": "deleted",
+            "in": "query",
+            "required": false,
+            "description": "默认false返回有效项；true仅原Owner查看该未删除作品的单项回收站。",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CluePage"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      },
+      "post": {
+        "operationId": "outline_createClue",
+        "tags": [
+          "outline"
+        ],
+        "summary": "createClue",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-09 outline.createClue",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "novel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Clue"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClue"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/outline/clues/{clue_id}": {
+      "get": {
+        "operationId": "outline_getClue",
+        "tags": [
+          "outline"
+        ],
+        "summary": "getClue",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-09 outline.getClue",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "clue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Clue"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      },
+      "put": {
+        "operationId": "outline_updateClue",
+        "tags": [
+          "outline"
+        ],
+        "summary": "updateClue",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-09 outline.updateClue",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "clue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Clue"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClue"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "outline_deleteClue",
+        "tags": [
+          "outline"
+        ],
+        "summary": "deleteClue",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-09 outline.deleteClue",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "clue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "name": "expected_revision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Revision"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Clue"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/outline/clues/{clue_id}/transition": {
+      "post": {
+        "operationId": "outline_transitionClue",
+        "tags": [
+          "outline"
+        ],
+        "summary": "transitionClue",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-09 outline.transitionClue",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "clue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Clue"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionClue"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/outline/clues/{clue_id}/events": {
+      "get": {
+        "operationId": "outline_listClueEvents",
+        "tags": [
+          "outline"
+        ],
+        "summary": "listClueEvents",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-09 outline.listClueEvents",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "clue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/ClueEventPage"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/outline/novels/{novel_id}/pacing": {
+      "get": {
+        "operationId": "outline_pacing",
+        "tags": [
+          "outline"
+        ],
+        "summary": "pacing",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-09 outline.pacing",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "novel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Pacing"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/outline/clues/{clue_id}/restore": {
+      "post": {
+        "operationId": "outline_restoreClue",
+        "tags": [
+          "outline"
+        ],
+        "summary": "outline_restoreClue",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-03 outline.restoreClue",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "clue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Clue"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisionCommand"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/outline/novels/{novel_id}/beats": {
+      "get": {
+        "operationId": "outline_listbeats",
+        "tags": [
+          "outline"
+        ],
+        "summary": "listbeats",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.listbeats",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "novel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "name": "node_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "name": "deleted",
+            "in": "query",
+            "required": false,
+            "description": "默认false返回有效项；true仅原Owner查看该未删除作品的单项回收站。",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/BeatPage"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      },
+      "post": {
+        "operationId": "outline_createBeat",
+        "tags": [
+          "outline"
+        ],
+        "summary": "createBeat",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.createBeat",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "novel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Beat"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBeat"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/outline/beats/{beat_id}": {
+      "get": {
+        "operationId": "outline_getBeat",
+        "tags": [
+          "outline"
+        ],
+        "summary": "getBeat",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.getBeat",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "beat_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Beat"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      },
+      "put": {
+        "operationId": "outline_updateBeat",
+        "tags": [
+          "outline"
+        ],
+        "summary": "updateBeat",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.updateBeat",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "beat_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Beat"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBeat"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "outline_deleteBeat",
+        "tags": [
+          "outline"
+        ],
+        "summary": "deleteBeat",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.deleteBeat",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "beat_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "name": "expected_revision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Revision"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Beat"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/outline/novels/{novel_id}/scenes": {
+      "get": {
+        "operationId": "outline_listscenes",
+        "tags": [
+          "outline"
+        ],
+        "summary": "listscenes",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.listscenes",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "novel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "name": "node_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "name": "deleted",
+            "in": "query",
+            "required": false,
+            "description": "默认false返回有效项；true仅原Owner查看该未删除作品的单项回收站。",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/ScenePage"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      },
+      "post": {
+        "operationId": "outline_createScene",
+        "tags": [
+          "outline"
+        ],
+        "summary": "createScene",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.createScene",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "novel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Scene"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateScene"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/outline/scenes/{scene_id}": {
+      "get": {
+        "operationId": "outline_getScene",
+        "tags": [
+          "outline"
+        ],
+        "summary": "getScene",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.getScene",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Scene"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      },
+      "put": {
+        "operationId": "outline_updateScene",
+        "tags": [
+          "outline"
+        ],
+        "summary": "updateScene",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.updateScene",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Scene"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateScene"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "outline_deleteScene",
+        "tags": [
+          "outline"
+        ],
+        "summary": "deleteScene",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.deleteScene",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "name": "expected_revision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Revision"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Scene"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/outline/beats/{beat_id}/restore": {
+      "post": {
+        "operationId": "outline_restoreBeat",
+        "tags": [
+          "outline"
+        ],
+        "summary": "outline_restoreBeat",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-03 outline.restoreBeat",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "beat_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Beat"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisionCommand"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/outline/scenes/{scene_id}/restore": {
+      "post": {
+        "operationId": "outline_restoreScene",
+        "tags": [
+          "outline"
+        ],
+        "summary": "outline_restoreScene",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-03 outline.restoreScene",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Scene"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisionCommand"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/outline/novels/{novel_id}/nodes": {
+      "get": {
+        "operationId": "outline_listnodes",
+        "tags": [
+          "outline"
+        ],
+        "summary": "listnodes",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.listnodes",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "novel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "name": "parent_id",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "master",
+                "volume",
+                "chapter"
+              ]
+            }
+          },
+          {
+            "name": "deleted",
+            "in": "query",
+            "required": false,
+            "description": "默认false返回有效项；true仅原Owner查看该未删除作品的单项回收站。",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/NodePage"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      },
+      "post": {
+        "operationId": "outline_createNode",
+        "tags": [
+          "outline"
+        ],
+        "summary": "createNode",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.createNode",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "novel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "资源已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Node"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNode"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/outline/nodes/{node_id}": {
+      "get": {
+        "operationId": "outline_getNode",
+        "tags": [
+          "outline"
+        ],
+        "summary": "getNode",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.getNode",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Node"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      },
+      "put": {
+        "operationId": "outline_updateNode",
+        "tags": [
+          "outline"
+        ],
+        "summary": "updateNode",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.updateNode",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Node"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNode"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "outline_deleteNode",
+        "tags": [
+          "outline"
+        ],
+        "summary": "deleteNode",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.deleteNode",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "name": "expected_revision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Revision"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Node"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/outline/nodes/{node_id}/reorder": {
+      "post": {
+        "operationId": "outline_reorder",
+        "tags": [
+          "outline"
+        ],
+        "summary": "reorder",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.reorder",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OrderResult"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Reorder"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/outline/nodes/{node_id}/restore": {
+      "post": {
+        "operationId": "outline_restoreNode",
+        "tags": [
+          "outline"
+        ],
+        "summary": "outline_restoreNode",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-03 outline.restoreNode",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Node"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisionCommand"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/outline/nodes/{node_id}/rebind": {
+      "post": {
+        "operationId": "outline_rebindNode",
+        "tags": [
+          "outline"
+        ],
+        "summary": "rebindNode",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-08 outline.rebindNode",
+        "x-errors": [
+          {
+            "code": "outline.not_found",
+            "http_status": 404,
+            "recovery": "none"
+          },
+          {
+            "code": "outline.validation_failed",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "outline.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "outline.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "platform.idempotency_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.operation_in_progress",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Node"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "请求或文件超出硬限制",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RebindNode"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UUID": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+      },
+      "Revision": {
+        "type": "integer",
+        "format": "int64",
+        "minimum": 1,
+        "maximum": 9007199254740991
+      },
+      "Timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "Z$"
+      },
+      "SuccessMeta": {
+        "type": "object",
+        "required": [
+          "code",
+          "request_id",
+          "trace_id"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "trace_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      },
+      "FieldError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "field",
+          "reason"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 120
+          }
+        }
+      },
+      "ErrorDetails": {
+        "type": "object",
+        "properties": {
+          "field_errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            },
+            "maxItems": 100
+          },
+          "current_revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "retry_after_seconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 86400
+          },
+          "operation_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "conflicts": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "required": [
+                "resource_id",
+                "reason"
+              ],
+              "properties": {
+                "resource_id": {
+                  "$ref": "#/components/schemas/UUID"
+                },
+                "reason": {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                "current_revision": {
+                  "$ref": "#/components/schemas/Revision"
+                }
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "message_key",
+          "details",
+          "request_id",
+          "trace_id"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^(platform|auth|content|outline|worldview|inspiration|compliance|agent|llm)\\.[a-z][a-z0-9_]+$"
+          },
+          "message_key": {
+            "type": "string",
+            "pattern": "^errors\\."
+          },
+          "details": {
+            "$ref": "#/components/schemas/ErrorDetails"
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "trace_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      },
+      "PageMeta": {
+        "type": "object",
+        "required": [
+          "next_cursor",
+          "has_more"
+        ],
+        "properties": {
+          "next_cursor": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Node": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "master",
+              "volume",
+              "chapter"
+            ]
+          },
+          "target_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1999
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "ready",
+              "archived"
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "parent_id",
+          "level",
+          "target_id",
+          "title",
+          "summary",
+          "position",
+          "status",
+          "deleted_at",
+          "content_hash"
+        ],
+        "additionalProperties": false
+      },
+      "Beat": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "node_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "beat_type": {
+            "type": "string",
+            "enum": [
+              "setup",
+              "conflict",
+              "turn",
+              "climax",
+              "resolution"
+            ]
+          },
+          "hook_type": {
+            "type": "string",
+            "enum": [
+              "none",
+              "danger",
+              "revelation",
+              "emotion"
+            ]
+          },
+          "tension": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "expected_words": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 199
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "written"
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "node_id",
+          "title",
+          "description",
+          "beat_type",
+          "hook_type",
+          "tension",
+          "expected_words",
+          "position",
+          "status",
+          "deleted_at"
+        ],
+        "additionalProperties": false
+      },
+      "Scene": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "node_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "pov_entity_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location_entity_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 199
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "written"
+            ]
+          },
+          "source_revision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Revision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_hash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "start_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "end_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "node_id",
+          "title",
+          "summary",
+          "pov_entity_id",
+          "location_entity_id",
+          "position",
+          "status",
+          "source_revision",
+          "source_hash",
+          "start_offset",
+          "end_offset",
+          "deleted_at"
+        ],
+        "additionalProperties": false
+      },
+      "Clue": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "planted",
+              "developing",
+              "revealed",
+              "closed",
+              "abandoned"
+            ]
+          },
+          "planted_node_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "planned_reveal_node_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_node_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "title",
+          "description",
+          "status",
+          "planted_node_id",
+          "planned_reveal_node_id",
+          "last_node_id",
+          "reason",
+          "deleted_at"
+        ],
+        "additionalProperties": false
+      },
+      "ClueEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "clue_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "novel_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "from_status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "planted",
+              "developing",
+              "revealed",
+              "closed",
+              "abandoned"
+            ]
+          },
+          "to_status": {
+            "type": "string",
+            "enum": [
+              "planted",
+              "developing",
+              "revealed",
+              "closed",
+              "abandoned"
+            ]
+          },
+          "node_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "actor_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "clue_revision": {
+            "$ref": "#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "clue_id",
+          "novel_id",
+          "from_status",
+          "to_status",
+          "node_id",
+          "reason",
+          "actor_id",
+          "clue_revision"
+        ],
+        "additionalProperties": false
+      },
+      "PacingPoint": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "chapter_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "ordinal": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1999
+          },
+          "tension": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "beat_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          }
+        },
+        "required": [
+          "node_id",
+          "chapter_id",
+          "ordinal",
+          "tension",
+          "beat_count"
+        ],
+        "additionalProperties": false
+      },
+      "PacingWarning": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "outline.low_tension",
+              "outline.high_tension",
+              "outline.clue_overdue",
+              "outline.clue_order_changed"
+            ]
+          },
+          "node_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UUID"
+            },
+            "maxItems": 2000
+          },
+          "clue_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "node_ids",
+          "clue_id"
+        ],
+        "additionalProperties": false
+      },
+      "Pacing": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PacingPoint"
+            },
+            "maxItems": 2000
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PacingWarning"
+            },
+            "maxItems": 2000
+          },
+          "outline_revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "warnings_truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "points",
+          "warnings",
+          "outline_revision",
+          "warnings_truncated"
+        ],
+        "additionalProperties": false
+      },
+      "CreateNode": {
+        "type": "object",
+        "properties": {
+          "parent_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "master",
+              "volume",
+              "chapter"
+            ]
+          },
+          "target_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          }
+        },
+        "required": [
+          "parent_id",
+          "level",
+          "target_id",
+          "title",
+          "summary"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateNode": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "ready",
+              "archived"
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "title",
+          "summary",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "Reorder": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "resource": {
+            "type": "string",
+            "enum": [
+              "nodes",
+              "beats",
+              "scenes"
+            ]
+          },
+          "ordered_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UUID"
+            },
+            "maxItems": 2000
+          }
+        },
+        "required": [
+          "expected_revision",
+          "resource",
+          "ordered_ids"
+        ],
+        "additionalProperties": false
+      },
+      "CreateBeat": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "beat_type": {
+            "type": "string",
+            "enum": [
+              "setup",
+              "conflict",
+              "turn",
+              "climax",
+              "resolution"
+            ]
+          },
+          "hook_type": {
+            "type": "string",
+            "enum": [
+              "none",
+              "danger",
+              "revelation",
+              "emotion"
+            ]
+          },
+          "tension": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "expected_words": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          }
+        },
+        "required": [
+          "node_id",
+          "title",
+          "description",
+          "beat_type",
+          "hook_type",
+          "tension",
+          "expected_words"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateBeat": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "node_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "beat_type": {
+            "type": "string",
+            "enum": [
+              "setup",
+              "conflict",
+              "turn",
+              "climax",
+              "resolution"
+            ]
+          },
+          "hook_type": {
+            "type": "string",
+            "enum": [
+              "none",
+              "danger",
+              "revelation",
+              "emotion"
+            ]
+          },
+          "tension": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "expected_words": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "written"
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "node_id",
+          "title",
+          "description",
+          "beat_type",
+          "hook_type",
+          "tension",
+          "expected_words",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "CreateScene": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "pov_entity_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location_entity_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_revision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Revision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_hash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "start_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "end_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "node_id",
+          "title",
+          "summary",
+          "pov_entity_id",
+          "location_entity_id",
+          "source_revision",
+          "source_hash",
+          "start_offset",
+          "end_offset"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateScene": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "node_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "pov_entity_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location_entity_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_revision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Revision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_hash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "start_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "end_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "written"
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "node_id",
+          "title",
+          "summary",
+          "pov_entity_id",
+          "location_entity_id",
+          "source_revision",
+          "source_hash",
+          "start_offset",
+          "end_offset",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "CreateClue": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "planned_reveal_node_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "planned_reveal_node_id"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateClue": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "planned_reveal_node_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "title",
+          "description",
+          "planned_reveal_node_id"
+        ],
+        "additionalProperties": false
+      },
+      "TransitionClue": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "to_status": {
+            "type": "string",
+            "enum": [
+              "planted",
+              "developing",
+              "revealed",
+              "closed",
+              "abandoned"
+            ]
+          },
+          "node_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "to_status",
+          "node_id",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "OrderResult": {
+        "type": "object",
+        "properties": {
+          "parent": {
+            "$ref": "#/components/schemas/Node"
+          },
+          "ordered_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UUID"
+            },
+            "maxItems": 2000
+          }
+        },
+        "required": [
+          "parent",
+          "ordered_ids"
+        ],
+        "additionalProperties": false
+      },
+      "NodePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Node"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "BeatPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Beat"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "ScenePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Scene"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "CluePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Clue"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "ClueEventPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClueEvent"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "RevisionCommand": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "RebindNode": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "parent_id": {
+            "$ref": "#/components/schemas/UUID"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "parent_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "400 请求格式、缺少前置或游标错误",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "401 会话无效/到期",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "403 明确权限不足",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "404 资源不存在或不可见",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "409 版本/状态/幂等冲突",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "description": "413 请求或文件体积超限",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "ValidationFailed": {
+        "description": "422 领域约束不满足",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "429 限流/预算不足",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "500 未知错误；不返回内部根因",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "BadGateway": {
+        "description": "502 上游协议错误",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unavailable": {
+        "description": "503 依赖不可用",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "GatewayTimeout": {
+        "description": "504 上游超时",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Gone": {
+        "description": "410 SSE游标已过期",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "MethodNotAllowed": {
+        "description": "已知路径不支持该HTTP方法；Allow列出允许方法",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "description": "每个逻辑副作用命令一个UUID，24小时同键重放",
+        "schema": {
+          "$ref": "#/components/schemas/UUID"
+        }
+      },
+      "Limit": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      },
+      "Cursor": {
+        "name": "cursor",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "maxLength": 2048
+        }
+      },
+      "ExpectedRevision": {
+        "name": "expected_revision",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/Revision"
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "CreatorRefreshCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "inklore_creator_refresh"
+      },
+      "AdminRefreshCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "inklore_admin_refresh"
+      }
+    }
+  }
+}

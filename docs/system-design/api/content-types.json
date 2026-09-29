@@ -1,0 +1,1607 @@
+{
+  "paths": {},
+  "components": {
+    "schemas": {
+      "Novel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "owner_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "category": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 60
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived",
+              "deleted"
+            ]
+          },
+          "previous_status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "archived"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target_words": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000000
+          },
+          "word_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 400000000
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "owner_id",
+          "title",
+          "summary",
+          "category",
+          "status",
+          "previous_status",
+          "target_words",
+          "word_count",
+          "deleted_at"
+        ],
+        "additionalProperties": false
+      },
+      "Volume": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "title",
+          "summary",
+          "position",
+          "deleted_at"
+        ],
+        "additionalProperties": false
+      },
+      "Chapter": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "volume_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1999
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "confirmed"
+            ]
+          },
+          "current_version_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "confirmed_version_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "word_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "volume_id",
+          "title",
+          "position",
+          "status",
+          "current_version_id",
+          "confirmed_version_id",
+          "content_hash",
+          "word_count",
+          "deleted_at"
+        ],
+        "additionalProperties": false
+      },
+      "Body": {
+        "type": "object",
+        "properties": {
+          "chapter": {
+            "$ref": "./content-types.json#/components/schemas/Chapter"
+          },
+          "body": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200000
+          }
+        },
+        "required": [
+          "chapter",
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "Version": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "chapter_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "chapter_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "body": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200000
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "word_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "create",
+              "save",
+              "rollback",
+              "import",
+              "copy"
+            ]
+          },
+          "actor_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "restored_from_version_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "chapter_id",
+          "novel_id",
+          "chapter_revision",
+          "title",
+          "body",
+          "content_hash",
+          "word_count",
+          "source",
+          "actor_id",
+          "restored_from_version_id"
+        ],
+        "additionalProperties": false
+      },
+      "DiffHunk": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "equal",
+              "insert",
+              "delete"
+            ]
+          },
+          "old_start": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "old_length": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "new_start": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "new_length": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "text": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 400000
+          }
+        },
+        "required": [
+          "kind",
+          "old_start",
+          "old_length",
+          "new_start",
+          "new_length",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "Diff": {
+        "type": "object",
+        "properties": {
+          "from_version_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "to_version_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "offset_unit": {
+            "type": "string",
+            "enum": [
+              "unicode_code_point"
+            ]
+          },
+          "hunks": {
+            "type": "array",
+            "items": {
+              "$ref": "./content-types.json#/components/schemas/DiffHunk"
+            },
+            "maxItems": 400000
+          },
+          "coarse": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "from_version_id",
+          "to_version_id",
+          "offset_unit",
+          "hunks",
+          "coarse"
+        ],
+        "additionalProperties": false
+      },
+      "Organization": {
+        "type": "object",
+        "properties": {
+          "novel_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "volumes": {
+            "type": "array",
+            "items": {
+              "$ref": "./content-types.json#/components/schemas/Volume"
+            },
+            "maxItems": 100
+          },
+          "chapters": {
+            "type": "array",
+            "items": {
+              "$ref": "./content-types.json#/components/schemas/Chapter"
+            },
+            "maxItems": 2000
+          }
+        },
+        "required": [
+          "novel_revision",
+          "volumes",
+          "chapters"
+        ],
+        "additionalProperties": false
+      },
+      "Placement": {
+        "type": "object",
+        "properties": {
+          "chapter_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "volume_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1999
+          }
+        },
+        "required": [
+          "chapter_id",
+          "volume_id",
+          "position"
+        ],
+        "additionalProperties": false
+      },
+      "SearchHit": {
+        "type": "object",
+        "properties": {
+          "chapter_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "version_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "chapter_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "snippet": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 500
+          },
+          "start_offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "end_offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          }
+        },
+        "required": [
+          "chapter_id",
+          "version_id",
+          "title",
+          "content_hash",
+          "chapter_revision",
+          "snippet",
+          "start_offset",
+          "end_offset"
+        ],
+        "additionalProperties": false
+      },
+      "SearchPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./content-types.json#/components/schemas/SearchHit"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "DailyStat": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "added_words": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "removed_words": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "net_words": {
+            "type": "integer"
+          },
+          "save_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "timezone": {
+            "type": "string",
+            "enum": [
+              "Asia/Shanghai"
+            ]
+          }
+        },
+        "required": [
+          "date",
+          "added_words",
+          "removed_words",
+          "net_words",
+          "save_count",
+          "timezone"
+        ],
+        "additionalProperties": false
+      },
+      "Statistics": {
+        "type": "object",
+        "properties": {
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "./content-types.json#/components/schemas/DailyStat"
+            },
+            "maxItems": 366
+          },
+          "current_word_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 400000000
+          }
+        },
+        "required": [
+          "novel_id",
+          "from",
+          "to",
+          "days",
+          "current_word_count"
+        ],
+        "additionalProperties": false
+      },
+      "Confirmation": {
+        "type": "object",
+        "properties": {
+          "chapter": {
+            "$ref": "./content-types.json#/components/schemas/Chapter"
+          },
+          "world_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "event_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            },
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "chapter",
+          "world_revision",
+          "event_ids"
+        ],
+        "additionalProperties": false
+      },
+      "Job": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "actor_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "import",
+              "export",
+              "copy"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "preview_ready",
+              "committing",
+              "cancelling",
+              "succeeded",
+              "failed",
+              "cancelled",
+              "expired"
+            ]
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "snapshot",
+              "parse",
+              "preview",
+              "commit",
+              "render",
+              "complete"
+            ]
+          },
+          "progress": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "source_file_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "output_file_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target_novel_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "txt",
+              "markdown",
+              "docx",
+              "epub",
+              "copy"
+            ]
+          },
+          "source_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "lease_until": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attempts": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "expires_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "result_chapter_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2000
+          },
+          "copy_title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "review_ticket": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "actor_id",
+          "kind",
+          "status",
+          "stage",
+          "progress",
+          "source_file_id",
+          "output_file_id",
+          "target_novel_id",
+          "format",
+          "source_revision",
+          "lease_until",
+          "attempts",
+          "expires_at",
+          "error_code",
+          "result_chapter_count",
+          "copy_title",
+          "review_ticket"
+        ],
+        "additionalProperties": false
+      },
+      "ImportItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "job_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "ordinal": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1999
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "body": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200000
+          },
+          "word_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "selected": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "empty_chapter",
+                "heading_inferred"
+              ]
+            },
+            "maxItems": 10
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "job_id",
+          "ordinal",
+          "title",
+          "body",
+          "word_count",
+          "content_hash",
+          "selected",
+          "warnings"
+        ],
+        "additionalProperties": false
+      },
+      "ImportPreview": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./content-types.json#/components/schemas/ImportItem"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "CreateNovel": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "category": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 60
+          },
+          "target_words": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000000
+          }
+        },
+        "required": [
+          "title",
+          "summary",
+          "category",
+          "target_words"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateNovel": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "category": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 60
+          },
+          "target_words": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000000
+          }
+        },
+        "required": [
+          "expected_revision",
+          "title",
+          "summary",
+          "category",
+          "target_words"
+        ],
+        "additionalProperties": false
+      },
+      "RevisionCommand": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "CopyNovel": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "include_planning": {
+            "type": "boolean"
+          },
+          "include_worldview": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "title",
+          "include_planning",
+          "include_worldview"
+        ],
+        "additionalProperties": false
+      },
+      "CreateVolume": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "title",
+          "summary"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateVolume": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "expected_revision",
+          "title",
+          "summary"
+        ],
+        "additionalProperties": false
+      },
+      "CreateChapter": {
+        "type": "object",
+        "properties": {
+          "volume_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "volume_id",
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateChapter": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "expected_revision",
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "SaveBody": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "body": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200000
+          }
+        },
+        "required": [
+          "expected_revision",
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "Reorder": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "volume_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            },
+            "maxItems": 100,
+            "uniqueItems": true
+          },
+          "chapters": {
+            "type": "array",
+            "items": {
+              "$ref": "./content-types.json#/components/schemas/Placement"
+            },
+            "maxItems": 2000
+          }
+        },
+        "required": [
+          "expected_revision",
+          "volume_ids",
+          "chapters"
+        ],
+        "additionalProperties": false
+      },
+      "Rollback": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "version_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "version_id"
+        ],
+        "additionalProperties": false
+      },
+      "Confirm": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "expected_world_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "fact_proposals": {
+            "type": "array",
+            "items": {
+              "$ref": "./worldview-types.json#/components/schemas/FactProposal"
+            },
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "expected_revision",
+          "expected_world_revision",
+          "fact_proposals"
+        ],
+        "additionalProperties": false
+      },
+      "CreateImport": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "file_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "txt",
+              "docx"
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "file_id",
+          "format"
+        ],
+        "additionalProperties": false,
+        "description": "expected_revision绑定作品当前revision。"
+      },
+      "CommitImport": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "expected_novel_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "volume_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "selected_item_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            },
+            "maxItems": 2000,
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "expected_revision",
+          "expected_novel_revision",
+          "volume_id",
+          "selected_item_ids"
+        ],
+        "additionalProperties": false
+      },
+      "CreateExport": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "txt",
+              "markdown",
+              "docx",
+              "epub"
+            ]
+          },
+          "volume_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            },
+            "maxItems": 100
+          },
+          "include_drafts": {
+            "type": "boolean"
+          },
+          "review_ticket": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "format",
+          "volume_ids",
+          "include_drafts",
+          "review_ticket"
+        ],
+        "additionalProperties": false,
+        "description": "expected_revision绑定作品当前revision。"
+      },
+      "NovelPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./content-types.json#/components/schemas/Novel"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "VolumePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./content-types.json#/components/schemas/Volume"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "ChapterPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./content-types.json#/components/schemas/Chapter"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "VersionPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./content-types.json#/components/schemas/VersionSummary"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "JobPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./content-types.json#/components/schemas/Job"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "VersionSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "chapter_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "chapter_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "word_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "create",
+              "save",
+              "rollback",
+              "import",
+              "copy"
+            ]
+          },
+          "actor_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "restored_from_version_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "chapter_id",
+          "novel_id",
+          "chapter_revision",
+          "title",
+          "content_hash",
+          "word_count",
+          "source",
+          "actor_id",
+          "restored_from_version_id"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

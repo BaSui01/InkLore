@@ -1,0 +1,682 @@
+{
+  "paths": {
+    "/v1/inspiration/assets": {
+      "post": {
+        "operationId": "inspiration_create_asset",
+        "summary": "导入文件或粘贴素材并确定性分片",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-13 inspiration.create_asset",
+        "x-errors": [
+          {
+            "code": "inspiration.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "inspiration.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "inspiration.asset_duplicate",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "inspiration.invalid_source",
+            "http_status": 422,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "./common.json#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "导入文件或粘贴素材并确定性分片",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./inspiration-schemas.json#/components/schemas/Asset"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./inspiration-schemas.json#/components/schemas/AssetCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/inspiration/assets/{asset_id}": {
+      "put": {
+        "operationId": "inspiration_update_asset",
+        "summary": "update_asset",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-13 inspiration.update_asset",
+        "x-errors": [
+          {
+            "code": "inspiration.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "inspiration.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "./common.json#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "update_asset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./inspiration-schemas.json#/components/schemas/Asset"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./inspiration-schemas.json#/components/schemas/AssetUpdate"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "inspiration_delete_asset",
+        "summary": "delete_asset",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-03 inspiration.delete_asset",
+        "x-errors": [
+          {
+            "code": "inspiration.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "inspiration.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "./common.json#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "expected_revision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/Revision"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "delete_asset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./inspiration-schemas.json#/components/schemas/Deleted"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/inspiration/assets/{asset_id}/restore": {
+      "post": {
+        "operationId": "inspiration_restore_asset",
+        "summary": "restore_asset",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-03 inspiration.restore_asset",
+        "x-errors": [
+          {
+            "code": "inspiration.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "inspiration.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "inspiration.restore_conflict",
+            "http_status": 409,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "./common.json#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "restore_asset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./inspiration-schemas.json#/components/schemas/Asset"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./inspiration-schemas.json#/components/schemas/Expected"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/inspiration/analyses": {
+      "post": {
+        "operationId": "inspiration_create_analysis",
+        "summary": "创建pending分析；UI另建Agent run",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-13 inspiration.create_analysis",
+        "x-errors": [
+          {
+            "code": "inspiration.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "inspiration.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          },
+          {
+            "code": "inspiration.source_changed",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "inspiration.analysis_too_large",
+            "http_status": 422,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "inspiration.budget_exhausted",
+            "http_status": 429,
+            "recovery": "retry_later"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "./common.json#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "创建pending分析；UI另建Agent run",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./inspiration-schemas.json#/components/schemas/Analysis"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./inspiration-schemas.json#/components/schemas/AnalysisCreate"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {}
+  }
+}

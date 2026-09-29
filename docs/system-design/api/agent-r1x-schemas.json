@@ -1,0 +1,33 @@
+{
+  "components": {
+    "schemas": {
+      "CatalogTaskPolicy": {
+        "type": "object",
+        "properties": {
+          "policy_id": {"$ref": "./common.json#/components/schemas/UUID"},
+          "policy_version_id": {"$ref": "./common.json#/components/schemas/UUID"},
+          "task_key": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-z][a-z0-9_]*$"},
+          "title": {"type": "string", "minLength": 1, "maxLength": 120},
+          "version": {"type": "integer", "minimum": 1},
+          "task_kinds": {"type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 64}},
+          "input_schema": {"$ref": "./agent-question-schemas.json#/components/schemas/SafeInputSchema"},
+          "budget": {"type": "object", "properties": {"max_output_tokens": {"type": "integer", "minimum": 1, "maximum": 16384}, "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 180}}, "required": ["max_output_tokens", "timeout_seconds"], "additionalProperties": false}
+        },
+        "required": ["policy_id", "policy_version_id", "task_key", "title", "version", "task_kinds", "input_schema", "budget"],
+        "additionalProperties": false
+      },
+      "CatalogTaskPolicyPage": {
+        "type": "object",
+        "properties": {
+          "items": {"type": "array", "maxItems": 100, "items": {"$ref": "#/components/schemas/CatalogTaskPolicy"}},
+          "next_cursor": {"anyOf": [{"type": "string", "minLength": 1, "maxLength": 2048}, {"type": "null"}]},
+          "has_more": {"type": "boolean"}
+        },
+        "required": ["items", "next_cursor", "has_more"],
+        "additionalProperties": false
+      },
+      "Question": {"$ref": "./agent-question-schemas.json#/components/schemas/Question"},
+      "QuestionAnswer": {"$ref": "./agent-question-schemas.json#/components/schemas/QuestionAnswer"}
+    }
+  }
+}

@@ -1,0 +1,1426 @@
+{
+  "paths": {},
+  "components": {
+    "schemas": {
+      "Node": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "master",
+              "volume",
+              "chapter"
+            ]
+          },
+          "target_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1999
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "ready",
+              "archived"
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "parent_id",
+          "level",
+          "target_id",
+          "title",
+          "summary",
+          "position",
+          "status",
+          "deleted_at",
+          "content_hash"
+        ],
+        "additionalProperties": false
+      },
+      "Beat": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "node_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "beat_type": {
+            "type": "string",
+            "enum": [
+              "setup",
+              "conflict",
+              "turn",
+              "climax",
+              "resolution"
+            ]
+          },
+          "hook_type": {
+            "type": "string",
+            "enum": [
+              "none",
+              "danger",
+              "revelation",
+              "emotion"
+            ]
+          },
+          "tension": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "expected_words": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 199
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "written"
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "node_id",
+          "title",
+          "description",
+          "beat_type",
+          "hook_type",
+          "tension",
+          "expected_words",
+          "position",
+          "status",
+          "deleted_at"
+        ],
+        "additionalProperties": false
+      },
+      "Scene": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "node_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "pov_entity_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location_entity_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 199
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "written"
+            ]
+          },
+          "source_revision": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Revision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_hash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "start_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "end_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "node_id",
+          "title",
+          "summary",
+          "pov_entity_id",
+          "location_entity_id",
+          "position",
+          "status",
+          "source_revision",
+          "source_hash",
+          "start_offset",
+          "end_offset",
+          "deleted_at"
+        ],
+        "additionalProperties": false
+      },
+      "Clue": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "planted",
+              "developing",
+              "revealed",
+              "closed",
+              "abandoned"
+            ]
+          },
+          "planted_node_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "planned_reveal_node_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_node_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "novel_id",
+          "title",
+          "description",
+          "status",
+          "planted_node_id",
+          "planned_reveal_node_id",
+          "last_node_id",
+          "reason",
+          "deleted_at"
+        ],
+        "additionalProperties": false
+      },
+      "ClueEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "clue_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "from_status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "planted",
+              "developing",
+              "revealed",
+              "closed",
+              "abandoned"
+            ]
+          },
+          "to_status": {
+            "type": "string",
+            "enum": [
+              "planted",
+              "developing",
+              "revealed",
+              "closed",
+              "abandoned"
+            ]
+          },
+          "node_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "actor_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "clue_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "clue_id",
+          "novel_id",
+          "from_status",
+          "to_status",
+          "node_id",
+          "reason",
+          "actor_id",
+          "clue_revision"
+        ],
+        "additionalProperties": false
+      },
+      "PacingPoint": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "chapter_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "ordinal": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1999
+          },
+          "tension": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "beat_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          }
+        },
+        "required": [
+          "node_id",
+          "chapter_id",
+          "ordinal",
+          "tension",
+          "beat_count"
+        ],
+        "additionalProperties": false
+      },
+      "PacingWarning": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "outline.low_tension",
+              "outline.high_tension",
+              "outline.clue_overdue",
+              "outline.clue_order_changed"
+            ]
+          },
+          "node_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            },
+            "maxItems": 2000
+          },
+          "clue_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "node_ids",
+          "clue_id"
+        ],
+        "additionalProperties": false
+      },
+      "Pacing": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "./outline-types.json#/components/schemas/PacingPoint"
+            },
+            "maxItems": 2000
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "./outline-types.json#/components/schemas/PacingWarning"
+            },
+            "maxItems": 2000
+          },
+          "outline_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "warnings_truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "points",
+          "warnings",
+          "outline_revision",
+          "warnings_truncated"
+        ],
+        "additionalProperties": false
+      },
+      "CreateNode": {
+        "type": "object",
+        "properties": {
+          "parent_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "master",
+              "volume",
+              "chapter"
+            ]
+          },
+          "target_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          }
+        },
+        "required": [
+          "parent_id",
+          "level",
+          "target_id",
+          "title",
+          "summary"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateNode": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "ready",
+              "archived"
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "title",
+          "summary",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "Reorder": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "resource": {
+            "type": "string",
+            "enum": [
+              "nodes",
+              "beats",
+              "scenes"
+            ]
+          },
+          "ordered_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            },
+            "maxItems": 2000
+          }
+        },
+        "required": [
+          "expected_revision",
+          "resource",
+          "ordered_ids"
+        ],
+        "additionalProperties": false
+      },
+      "CreateBeat": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "beat_type": {
+            "type": "string",
+            "enum": [
+              "setup",
+              "conflict",
+              "turn",
+              "climax",
+              "resolution"
+            ]
+          },
+          "hook_type": {
+            "type": "string",
+            "enum": [
+              "none",
+              "danger",
+              "revelation",
+              "emotion"
+            ]
+          },
+          "tension": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "expected_words": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          }
+        },
+        "required": [
+          "node_id",
+          "title",
+          "description",
+          "beat_type",
+          "hook_type",
+          "tension",
+          "expected_words"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateBeat": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "node_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "beat_type": {
+            "type": "string",
+            "enum": [
+              "setup",
+              "conflict",
+              "turn",
+              "climax",
+              "resolution"
+            ]
+          },
+          "hook_type": {
+            "type": "string",
+            "enum": [
+              "none",
+              "danger",
+              "revelation",
+              "emotion"
+            ]
+          },
+          "tension": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "expected_words": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "written"
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "node_id",
+          "title",
+          "description",
+          "beat_type",
+          "hook_type",
+          "tension",
+          "expected_words",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "CreateScene": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "pov_entity_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location_entity_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_revision": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Revision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_hash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "start_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "end_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "node_id",
+          "title",
+          "summary",
+          "pov_entity_id",
+          "location_entity_id",
+          "source_revision",
+          "source_hash",
+          "start_offset",
+          "end_offset"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateScene": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "node_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "pov_entity_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location_entity_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_revision": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Revision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_hash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "start_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "end_offset": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "written"
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "node_id",
+          "title",
+          "summary",
+          "pov_entity_id",
+          "location_entity_id",
+          "source_revision",
+          "source_hash",
+          "start_offset",
+          "end_offset",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "CreateClue": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "planned_reveal_node_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "planned_reveal_node_id"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateClue": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "planned_reveal_node_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "title",
+          "description",
+          "planned_reveal_node_id"
+        ],
+        "additionalProperties": false
+      },
+      "TransitionClue": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "to_status": {
+            "type": "string",
+            "enum": [
+              "planted",
+              "developing",
+              "revealed",
+              "closed",
+              "abandoned"
+            ]
+          },
+          "node_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "to_status",
+          "node_id",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "OrderResult": {
+        "type": "object",
+        "properties": {
+          "parent": {
+            "$ref": "./outline-types.json#/components/schemas/Node"
+          },
+          "ordered_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            },
+            "maxItems": 2000
+          }
+        },
+        "required": [
+          "parent",
+          "ordered_ids"
+        ],
+        "additionalProperties": false
+      },
+      "NodePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./outline-types.json#/components/schemas/Node"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "BeatPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./outline-types.json#/components/schemas/Beat"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "ScenePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./outline-types.json#/components/schemas/Scene"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "CluePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./outline-types.json#/components/schemas/Clue"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "ClueEventPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./outline-types.json#/components/schemas/ClueEvent"
+            },
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "RevisionCommand": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "RebindNode": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "parent_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "parent_id"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

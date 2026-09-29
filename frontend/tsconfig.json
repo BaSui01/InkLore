@@ -1,0 +1,66 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@inklore/contracts": [
+        "packages/contracts/src"
+      ],
+      "@inklore/contracts/*": [
+        "packages/contracts/src/*"
+      ],
+      "@inklore/transport": [
+        "packages/transport/src"
+      ],
+      "@inklore/transport/*": [
+        "packages/transport/src/*"
+      ],
+      "@inklore/recovery": [
+        "packages/recovery/src"
+      ],
+      "@inklore/recovery/*": [
+        "packages/recovery/src/*"
+      ],
+      "@inklore/i18n": [
+        "packages/i18n/src"
+      ],
+      "@inklore/i18n/*": [
+        "packages/i18n/src/*"
+      ],
+      "@inklore/ui": [
+        "packages/ui/src"
+      ],
+      "@inklore/ui/*": [
+        "packages/ui/src/*"
+      ],
+      "@inklore/run-ui": [
+        "packages/run-ui/src"
+      ],
+      "@inklore/run-ui/*": [
+        "packages/run-ui/src/*"
+      ]
+    }
+  },
+  "include": [
+    "apps",
+    "packages"
+  ]
+}

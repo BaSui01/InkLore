@@ -1,0 +1,130 @@
+{
+ "errors": [
+  {
+   "code": "worldview.fact_conflict",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.worldview.fact_conflict",
+   "operations": [
+    "content_confirmChapter",
+    "worldview_listFacts",
+    "worldview_listFactEvents",
+    "worldview_checkFacts",
+    "worldview_retractFact",
+    "worldview_supersedeFact"
+   ]
+  },
+  {
+   "code": "worldview.invalid_state",
+   "http_status": 409,
+   "recovery": "read_status",
+   "message_key": "errors.worldview.invalid_state",
+   "operations": [
+    "worldview_checkFacts",
+    "worldview_retractFact",
+    "worldview_supersedeFact",
+    "worldview_createRelation",
+    "worldview_updateRelation",
+    "worldview_deleteRelation",
+    "worldview_restoreRelation",
+    "worldview_createCharacter",
+    "worldview_updateCharacter",
+    "worldview_deleteCharacter",
+    "worldview_createLore",
+    "worldview_updateLore",
+    "worldview_deleteLore",
+    "worldview_restoreCharacter",
+    "worldview_restoreLore"
+   ]
+  },
+  {
+   "code": "worldview.not_found",
+   "http_status": 404,
+   "recovery": "none",
+   "message_key": "errors.worldview.not_found",
+   "operations": [
+    "worldview_graph",
+    "worldview_getWorldRevision",
+    "worldview_listFacts",
+    "worldview_listFactEvents",
+    "worldview_checkFacts",
+    "worldview_retractFact",
+    "worldview_supersedeFact",
+    "worldview_listrelations",
+    "worldview_createRelation",
+    "worldview_getRelation",
+    "worldview_updateRelation",
+    "worldview_deleteRelation",
+    "worldview_restoreRelation",
+    "worldview_listcharacters",
+    "worldview_createCharacter",
+    "worldview_getCharacter",
+    "worldview_updateCharacter",
+    "worldview_deleteCharacter",
+    "worldview_listlore",
+    "worldview_createLore",
+    "worldview_getLore",
+    "worldview_updateLore",
+    "worldview_deleteLore",
+    "worldview_restoreCharacter",
+    "worldview_restoreLore"
+   ]
+  },
+  {
+   "code": "worldview.validation_failed",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.worldview.validation_failed",
+   "operations": [
+    "worldview_graph",
+    "worldview_getWorldRevision",
+    "worldview_listFacts",
+    "worldview_listFactEvents",
+    "worldview_checkFacts",
+    "worldview_retractFact",
+    "worldview_supersedeFact",
+    "worldview_listrelations",
+    "worldview_createRelation",
+    "worldview_getRelation",
+    "worldview_updateRelation",
+    "worldview_deleteRelation",
+    "worldview_restoreRelation",
+    "worldview_listcharacters",
+    "worldview_createCharacter",
+    "worldview_getCharacter",
+    "worldview_updateCharacter",
+    "worldview_deleteCharacter",
+    "worldview_listlore",
+    "worldview_createLore",
+    "worldview_getLore",
+    "worldview_updateLore",
+    "worldview_deleteLore",
+    "worldview_restoreCharacter",
+    "worldview_restoreLore"
+   ]
+  },
+  {
+   "code": "worldview.version_conflict",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.worldview.version_conflict",
+   "operations": [
+    "worldview_checkFacts",
+    "worldview_retractFact",
+    "worldview_supersedeFact",
+    "worldview_createRelation",
+    "worldview_updateRelation",
+    "worldview_deleteRelation",
+    "worldview_restoreRelation",
+    "worldview_createCharacter",
+    "worldview_updateCharacter",
+    "worldview_deleteCharacter",
+    "worldview_createLore",
+    "worldview_updateLore",
+    "worldview_deleteLore",
+    "worldview_restoreCharacter",
+    "worldview_restoreLore"
+   ]
+  }
+ ]
+}

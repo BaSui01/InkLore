@@ -1,0 +1,196 @@
+{
+ "errors": [
+  {
+   "code": "llm.budget_below_committed",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.llm.budget_below_committed",
+   "operations": [
+    "llm_configure_budget"
+   ]
+  },
+  {
+   "code": "llm.budget_exceeded",
+   "http_status": 429,
+   "recovery": "contact_operator",
+   "delivery": "stream_or_preflight",
+   "message_key": "errors.llm.budget_exceeded",
+   "operations": [
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "llm.budget_not_configured",
+   "http_status": 429,
+   "recovery": "contact_operator",
+   "delivery": "stream_or_preflight",
+   "message_key": "errors.llm.budget_not_configured",
+   "operations": [
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "llm.capability_mismatch",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.llm.capability_mismatch",
+   "operations": [
+    "llm_update_provider",
+    "llm_update_model",
+    "llm_update_channel",
+    "llm_update_key",
+    "llm_create_policy",
+    "llm_publish_policy"
+   ]
+  },
+  {
+   "code": "llm.capacity_exceeded",
+   "http_status": 429,
+   "recovery": "retry_later",
+   "delivery": "stream_or_preflight",
+   "message_key": "errors.llm.capacity_exceeded",
+   "operations": [
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "llm.capacity_unavailable",
+   "http_status": 503,
+   "recovery": "retry_later",
+   "delivery": "stream_or_preflight",
+   "message_key": "errors.llm.capacity_unavailable",
+   "operations": [
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "llm.invalid_configuration",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.llm.invalid_configuration",
+   "operations": [
+    "llm_create_provider",
+    "llm_create_model",
+    "llm_create_channel",
+    "llm_create_key"
+   ]
+  },
+  {
+   "code": "llm.policy_unavailable",
+   "http_status": 503,
+   "recovery": "contact_operator",
+   "delivery": "stream_or_preflight",
+   "message_key": "errors.llm.policy_unavailable",
+   "operations": [
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "llm.pricing_effective_conflict",
+   "http_status": 409,
+   "recovery": "fix_input",
+   "message_key": "errors.llm.pricing_effective_conflict",
+   "operations": [
+    "llm_create_pricing"
+   ]
+  },
+  {
+   "code": "llm.pricing_missing",
+   "http_status": 422,
+   "recovery": "contact_operator",
+   "delivery": "stream_or_preflight",
+   "message_key": "errors.llm.pricing_missing",
+   "operations": [
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "llm.resource_in_use",
+   "http_status": 409,
+   "recovery": "fix_input",
+   "message_key": "errors.llm.resource_in_use",
+   "operations": [
+    "llm_delete_provider",
+    "llm_delete_model",
+    "llm_delete_channel",
+    "llm_delete_key",
+    "llm_delete_policy"
+   ]
+  },
+  {
+   "code": "llm.secret_unavailable",
+   "http_status": 503,
+   "recovery": "contact_operator",
+   "delivery": "stream_or_preflight",
+   "message_key": "errors.llm.secret_unavailable",
+   "operations": [
+    "agent_subscribe_events",
+    "llm_create_provider",
+    "llm_create_model",
+    "llm_create_channel",
+    "llm_create_key"
+   ]
+  },
+  {
+   "code": "llm.structured_output_invalid",
+   "http_status": 502,
+   "recovery": "fix_input",
+   "delivery": "stream_or_preflight",
+   "message_key": "errors.llm.structured_output_invalid",
+   "operations": [
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "llm.upstream_outcome_unknown",
+   "http_status": 502,
+   "recovery": "contact_operator",
+   "delivery": "internal_cause",
+   "public_code": "agent.execution_outcome_unknown",
+   "retryable": false,
+   "message_key": "errors.llm.upstream_outcome_unknown",
+   "operations": [
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "llm.upstream_protocol_error",
+   "http_status": 502,
+   "recovery": "contact_operator",
+   "delivery": "stream_or_preflight",
+   "message_key": "errors.llm.upstream_protocol_error",
+   "operations": [
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "llm.upstream_timeout",
+   "http_status": 504,
+   "recovery": "retry_later",
+   "delivery": "stream_or_preflight",
+   "message_key": "errors.llm.upstream_timeout",
+   "operations": [
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "llm.version_conflict",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.llm.version_conflict",
+   "operations": [
+    "llm_update_provider",
+    "llm_delete_provider",
+    "llm_update_model",
+    "llm_delete_model",
+    "llm_update_channel",
+    "llm_delete_channel",
+    "llm_update_key",
+    "llm_delete_key",
+    "llm_publish_policy",
+    "llm_delete_policy",
+    "llm_configure_budget"
+   ]
+  }
+ ]
+}

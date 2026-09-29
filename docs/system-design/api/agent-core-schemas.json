@@ -1,0 +1,1506 @@
+{
+ "paths": {},
+ "components": {
+  "schemas": {
+   "RunStatus": {
+    "type": "string",
+    "enum": [
+     "queued",
+     "running",
+     "waiting_approval",
+     "waiting_clarification",
+     "cancelling",
+     "succeeded",
+     "failed",
+     "cancelled"
+    ]
+   },
+   "NodeStatus": {
+    "type": "string",
+    "enum": [
+     "pending",
+     "ready",
+     "running",
+     "waiting_approval",
+     "waiting_clarification",
+     "retry_wait",
+     "succeeded",
+     "failed",
+     "cancelled",
+     "skipped"
+    ]
+   },
+   "Resource": {
+    "type": "object",
+    "properties": {
+     "novel_id": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "resource_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "resource_type": {
+      "type": "string",
+      "enum": [
+       "chapter",
+       "novel",
+       "analysis",
+       "report",
+       "rewrite"
+      ]
+     },
+     "source_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "source_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     },
+     "selection": {
+      "type": "object",
+      "properties": {
+       "start_offset": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 200000
+       },
+       "end_offset": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 200000
+       },
+       "source_hash": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+       }
+      },
+      "required": [
+       "start_offset",
+       "end_offset",
+       "source_hash"
+      ],
+      "additionalProperties": false,
+      "description": "Unicode码点半开选区；start<end且≤源正文长度，绑定source_revision/hash；省略表示全章。"
+     }
+    },
+    "required": [
+     "resource_id",
+     "resource_type",
+     "source_revision"
+    ],
+    "additionalProperties": false
+   },
+   "CreateRun": {
+    "description": "resource_id分别为chapter_id/novel_id/analysis_id/report_id/rewrite_id。先创建领域job，再创建run。",
+    "oneOf": [
+     {
+      "type": "object",
+      "properties": {
+       "task_kind": {
+        "const": "chapter_draft",
+        "type": "string"
+       },
+       "resource": {
+        "type": "object",
+        "properties": {
+         "novel_id": {
+          "$ref": "./common.json#/components/schemas/UUID"
+         },
+         "resource_id": {
+          "$ref": "./common.json#/components/schemas/UUID"
+         },
+         "resource_type": {
+          "const": "chapter",
+          "type": "string"
+         },
+         "source_revision": {
+          "$ref": "./common.json#/components/schemas/Revision"
+         },
+         "source_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+         },
+         "selection": {
+          "type": "object",
+          "properties": {
+           "start_offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+           },
+           "end_offset": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200000
+           },
+           "source_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+           }
+          },
+          "required": [
+           "start_offset",
+           "end_offset",
+           "source_hash"
+          ],
+          "additionalProperties": false,
+          "description": "Unicode码点半开选区；start<end且≤源正文长度，绑定source_revision/hash；省略表示全章。"
+         }
+        },
+        "required": [
+         "novel_id",
+         "resource_id",
+         "resource_type",
+         "source_revision"
+        ],
+        "additionalProperties": false
+       },
+       "instruction": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8000
+       },
+       "definition_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "workflow_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_key": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
+       },
+       "task_policy_version_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       }
+      },
+      "required": [
+       "task_kind",
+       "task_policy_version_id",
+       "resource",
+       "instruction",
+       "definition_id"
+      ],
+      "additionalProperties": false
+     },
+     {
+      "type": "object",
+      "properties": {
+       "task_kind": {
+        "const": "chapter_rewrite",
+        "type": "string"
+       },
+       "resource": {
+        "type": "object",
+        "properties": {
+         "novel_id": {
+          "$ref": "./common.json#/components/schemas/UUID"
+         },
+         "resource_id": {
+          "$ref": "./common.json#/components/schemas/UUID"
+         },
+         "resource_type": {
+          "const": "chapter",
+          "type": "string"
+         },
+         "source_revision": {
+          "$ref": "./common.json#/components/schemas/Revision"
+         },
+         "source_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+         },
+         "selection": {
+          "type": "object",
+          "properties": {
+           "start_offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200000
+           },
+           "end_offset": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200000
+           },
+           "source_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+           }
+          },
+          "required": [
+           "start_offset",
+           "end_offset",
+           "source_hash"
+          ],
+          "additionalProperties": false,
+          "description": "Unicode码点半开选区；start<end且≤源正文长度，绑定source_revision/hash；省略表示全章。"
+         }
+        },
+        "required": [
+         "novel_id",
+         "resource_id",
+         "resource_type",
+         "source_revision"
+        ],
+        "additionalProperties": false
+       },
+       "instruction": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8000
+       },
+       "definition_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "workflow_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_key": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
+       },
+       "task_policy_version_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       }
+      },
+      "required": [
+       "task_kind",
+       "task_policy_version_id",
+       "resource",
+       "instruction",
+       "definition_id"
+      ],
+      "additionalProperties": false
+     },
+     {
+      "type": "object",
+      "properties": {
+       "task_kind": {
+        "const": "outline_suggest",
+        "type": "string"
+       },
+       "resource": {
+        "type": "object",
+        "properties": {
+         "novel_id": {
+          "$ref": "./common.json#/components/schemas/UUID"
+         },
+         "resource_id": {
+          "$ref": "./common.json#/components/schemas/UUID"
+         },
+         "resource_type": {
+          "const": "novel",
+          "type": "string"
+         },
+         "source_revision": {
+          "$ref": "./common.json#/components/schemas/Revision"
+         },
+         "source_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+         }
+        },
+        "required": [
+         "novel_id",
+         "resource_id",
+         "resource_type",
+         "source_revision"
+        ],
+        "additionalProperties": false
+       },
+       "instruction": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8000
+       },
+       "definition_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "workflow_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_key": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
+       },
+       "task_policy_version_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       }
+      },
+      "required": [
+       "task_kind",
+       "task_policy_version_id",
+       "resource",
+       "instruction",
+       "definition_id"
+      ],
+      "additionalProperties": false
+     },
+     {
+      "type": "object",
+      "properties": {
+       "task_kind": {
+        "const": "worldview_suggest",
+        "type": "string"
+       },
+       "resource": {
+        "type": "object",
+        "properties": {
+         "novel_id": {
+          "$ref": "./common.json#/components/schemas/UUID"
+         },
+         "resource_id": {
+          "$ref": "./common.json#/components/schemas/UUID"
+         },
+         "resource_type": {
+          "const": "novel",
+          "type": "string"
+         },
+         "source_revision": {
+          "$ref": "./common.json#/components/schemas/Revision"
+         },
+         "source_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+         }
+        },
+        "required": [
+         "novel_id",
+         "resource_id",
+         "resource_type",
+         "source_revision"
+        ],
+        "additionalProperties": false
+       },
+       "instruction": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8000
+       },
+       "definition_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "workflow_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_key": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
+       },
+       "task_policy_version_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       }
+      },
+      "required": [
+       "task_kind",
+       "task_policy_version_id",
+       "resource",
+       "instruction",
+       "definition_id"
+      ],
+      "additionalProperties": false
+     },
+     {
+      "type": "object",
+      "properties": {
+       "task_kind": {
+        "const": "inspiration_analyze",
+        "type": "string"
+       },
+       "resource": {
+        "type": "object",
+        "properties": {
+         "novel_id": {
+          "anyOf": [
+           {
+            "$ref": "./common.json#/components/schemas/UUID"
+           },
+           {
+            "type": "null"
+           }
+          ]
+         },
+         "resource_id": {
+          "$ref": "./common.json#/components/schemas/UUID"
+         },
+         "resource_type": {
+          "const": "analysis",
+          "type": "string"
+         },
+         "source_revision": {
+          "$ref": "./common.json#/components/schemas/Revision"
+         },
+         "source_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+         }
+        },
+        "required": [
+         "resource_id",
+         "resource_type",
+         "source_revision"
+        ],
+        "additionalProperties": false
+       },
+       "instruction": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8000
+       },
+       "definition_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "workflow_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_key": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
+       },
+       "task_policy_version_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       }
+      },
+      "required": [
+       "task_kind",
+       "task_policy_version_id",
+       "resource",
+       "instruction",
+       "definition_id"
+      ],
+      "additionalProperties": false
+     },
+     {
+      "type": "object",
+      "properties": {
+       "task_kind": {
+        "const": "compliance_audit",
+        "type": "string"
+       },
+       "resource": {
+        "type": "object",
+        "properties": {
+         "novel_id": {
+          "$ref": "./common.json#/components/schemas/UUID"
+         },
+         "resource_id": {
+          "$ref": "./common.json#/components/schemas/UUID"
+         },
+         "resource_type": {
+          "const": "report",
+          "type": "string"
+         },
+         "source_revision": {
+          "$ref": "./common.json#/components/schemas/Revision"
+         },
+         "source_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+         }
+        },
+        "required": [
+         "novel_id",
+         "resource_id",
+         "resource_type",
+         "source_revision"
+        ],
+        "additionalProperties": false
+       },
+       "instruction": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8000
+       },
+       "definition_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "workflow_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_key": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
+       },
+       "task_policy_version_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       }
+      },
+      "required": [
+       "task_kind",
+       "task_policy_version_id",
+       "resource",
+       "instruction",
+       "definition_id"
+      ],
+      "additionalProperties": false
+     },
+     {
+      "type": "object",
+      "properties": {
+       "task_kind": {
+        "const": "compliance_rewrite",
+        "type": "string"
+       },
+       "resource": {
+        "type": "object",
+        "properties": {
+         "novel_id": {
+          "$ref": "./common.json#/components/schemas/UUID"
+         },
+         "resource_id": {
+          "$ref": "./common.json#/components/schemas/UUID"
+         },
+         "resource_type": {
+          "const": "rewrite",
+          "type": "string"
+         },
+         "source_revision": {
+          "$ref": "./common.json#/components/schemas/Revision"
+         },
+         "source_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+         }
+        },
+        "required": [
+         "novel_id",
+         "resource_id",
+         "resource_type",
+         "source_revision"
+        ],
+        "additionalProperties": false
+       },
+       "instruction": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8000
+       },
+       "definition_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "workflow_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       "model_key": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64
+       },
+       "task_policy_version_id": {
+        "$ref": "./common.json#/components/schemas/UUID"
+       }
+      },
+      "required": [
+       "task_kind",
+       "task_policy_version_id",
+       "resource",
+       "instruction",
+       "definition_id"
+      ],
+      "additionalProperties": false
+     }
+    ],
+    "discriminator": {
+     "propertyName": "task_kind"
+    }
+   },
+   "Node": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "run_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "node_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+     },
+     "role": {
+      "type": "string",
+      "enum": [
+       "supervisor",
+       "structure",
+       "writer",
+       "polisher",
+       "reviewer",
+       "tool"
+      ]
+     },
+     "depends_on": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 64
+      },
+      "maxItems": 64
+     },
+     "status": {
+      "$ref": "./agent-schemas.json#/components/schemas/NodeStatus"
+     },
+     "phase": {
+      "type": "string",
+      "enum": [
+       "think",
+       "act",
+       "observe"
+      ]
+     },
+     "iteration": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 15
+     },
+     "attempt": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4
+     },
+     "error_code": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "started_at": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/Timestamp"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "finished_at": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/Timestamp"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "run_id",
+     "node_key",
+     "role",
+     "depends_on",
+     "status",
+     "phase",
+     "iteration",
+     "attempt",
+     "error_code",
+     "started_at",
+     "finished_at"
+    ],
+    "additionalProperties": false
+   },
+   "Run": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "owner_user_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "creator",
+       "diagnostic"
+      ]
+     },
+     "task_kind": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+     },
+     "task_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+     },
+     "resource": {
+      "anyOf": [
+       {
+        "$ref": "./agent-schemas.json#/components/schemas/Resource"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "instruction": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 8000
+     },
+     "status": {
+      "$ref": "./agent-schemas.json#/components/schemas/RunStatus"
+     },
+     "policy_version_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "definition_version_id": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "workflow_version_id": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "nodes": {
+      "type": "array",
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/Node"
+      },
+      "maxItems": 64
+     },
+     "error_code": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "deadline_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "started_at": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/Timestamp"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "finished_at": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/Timestamp"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "terminal_reason": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 120,
+      "description": "取消原因如approval_rejected；终态后只读。"
+     },
+     "retryable": {
+      "type": "boolean",
+      "description": "仅提示人工新请求的可能性；未知模型/工具结果固定false，绝不表示可自动重发原run。"
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "owner_user_id",
+     "kind",
+     "task_kind",
+     "task_key",
+     "resource",
+     "instruction",
+     "status",
+     "policy_version_id",
+     "definition_version_id",
+     "workflow_version_id",
+     "nodes",
+     "error_code",
+     "deadline_at",
+     "started_at",
+     "finished_at",
+     "terminal_reason",
+     "retryable"
+    ],
+    "additionalProperties": false,
+    "description": "运行由唯一run级platform job调度；所有终态经同一Terminate CAS。实际审批来源变化的409也可伴随已提交failed状态，应重新GET。"
+   },
+   "RunSummary": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "task_kind": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+     },
+     "status": {
+      "$ref": "./agent-schemas.json#/components/schemas/RunStatus"
+     },
+     "resource": {
+      "anyOf": [
+       {
+        "$ref": "./agent-schemas.json#/components/schemas/Resource"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "error_code": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "task_kind",
+     "status",
+     "resource",
+     "error_code"
+    ],
+    "additionalProperties": false
+   },
+   "AuditRun": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "creator",
+       "diagnostic"
+      ]
+     },
+     "task_kind": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+     },
+     "status": {
+      "$ref": "./agent-schemas.json#/components/schemas/RunStatus"
+     },
+     "node_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 64
+     },
+     "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+     },
+     "cost_micros": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9000000000000000
+     },
+     "error_code": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "kind",
+     "task_kind",
+     "status",
+     "node_count",
+     "duration_ms",
+     "cost_micros",
+     "error_code"
+    ],
+    "additionalProperties": false
+   },
+   "CancelRun": {
+    "type": "object",
+    "properties": {
+     "expected_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     }
+    },
+    "required": [
+     "expected_revision"
+    ],
+    "additionalProperties": false
+   },
+   "Approval": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "run_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "node_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "owner_user_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "tool_version_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "arguments_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     },
+     "arguments_json": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 65536,
+      "description": "冻结工具参数的规范JSON文本，仅本人可读，依据注册Schema解释。"
+     },
+     "source_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "pending",
+       "consumed",
+       "rejected",
+       "expired",
+       "cancelled"
+      ]
+     },
+     "expires_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "decided_at": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/Timestamp"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "decision_reason": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 2000
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "run_id",
+     "node_id",
+     "owner_user_id",
+     "tool_version_id",
+     "arguments_hash",
+     "arguments_json",
+     "source_revision",
+     "status",
+     "expires_at",
+     "decided_at",
+     "decision_reason"
+    ],
+    "additionalProperties": false
+   },
+   "ApprovalDecision": {
+    "type": "object",
+    "properties": {
+     "expected_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "arguments_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     },
+     "source_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "reason": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 2000
+     }
+    },
+    "required": [
+     "expected_revision",
+     "arguments_hash",
+     "source_revision"
+    ],
+    "additionalProperties": false
+   },
+   "Artifact": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "run_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "node_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "chapter_draft",
+       "rewrite_suggestion",
+       "outline_suggestion",
+       "worldview_suggestion",
+       "analysis_result",
+       "audit_result"
+      ]
+     },
+     "target_resource_id": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "source_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "content_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     },
+     "text_content": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 200000
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "file_id": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/UUID"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "is_partial": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "created_at",
+     "updated_at",
+     "run_id",
+     "node_id",
+     "kind",
+     "target_resource_id",
+     "source_revision",
+     "content_hash",
+     "text_content",
+     "file_id",
+     "is_partial"
+    ],
+    "additionalProperties": false
+   },
+   "Deleted": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "deleted": {
+      "type": "boolean",
+      "const": true
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "deleted"
+    ],
+    "additionalProperties": false
+   },
+   "DiagnosticCreate": {
+    "type": "object",
+    "properties": {
+     "task_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+     },
+     "probe_key": {
+      "type": "string",
+      "enum": [
+       "text_connectivity",
+       "structured_validation"
+      ]
+     }
+    },
+    "required": [
+     "task_key",
+     "probe_key"
+    ],
+    "additionalProperties": false
+   },
+   "Diagnostic": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "created_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "updated_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "status": {
+      "$ref": "./agent-schemas.json#/components/schemas/RunStatus"
+     },
+     "probe_key": {
+      "type": "string",
+      "enum": [
+       "text_connectivity",
+       "structured_validation"
+      ]
+     },
+     "error_code": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "output_summary": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 0,
+        "maxLength": 2000
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "created_at",
+     "updated_at",
+     "status",
+     "probe_key",
+     "error_code",
+     "output_summary"
+    ],
+    "additionalProperties": false
+   },
+   "RunSummaryPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/RunSummary"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+   "AuditRunPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/AuditRun"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+   "ApprovalPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/Approval"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   },
+   "ArtifactPage": {
+    "type": "object",
+    "properties": {
+     "items": {
+      "type": "array",
+      "items": {
+       "$ref": "./agent-schemas.json#/components/schemas/Artifact"
+      },
+      "maxItems": 100
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "has_more": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "items",
+     "next_cursor",
+     "has_more"
+    ],
+    "additionalProperties": false
+   }
+  }
+ }
+}

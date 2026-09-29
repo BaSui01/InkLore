@@ -1,0 +1,1418 @@
+{
+  "paths": {},
+  "components": {
+    "schemas": {
+      "UUID": {
+        "$ref": "./common.json#/components/schemas/UUID"
+      },
+      "Expected": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "ReasonCommand": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "expected_revision",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "Deleted": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "deleted"
+        ],
+        "additionalProperties": false
+      },
+      "Usage": {
+        "type": "object",
+        "properties": {
+          "used_tokens": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "reserved_tokens": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "calls_used": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "used_tokens",
+          "reserved_tokens",
+          "calls_used"
+        ],
+        "additionalProperties": false
+      },
+      "Budget": {
+        "type": "object",
+        "properties": {
+          "total_tokens": {
+            "type": "integer",
+            "minimum": 1000,
+            "maximum": 120000,
+            "default": 30000
+          },
+          "max_output_tokens": {
+            "type": "integer",
+            "minimum": 256,
+            "maximum": 8000,
+            "default": 4000
+          },
+          "max_calls": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6,
+            "default": 6
+          }
+        },
+        "required": [
+          "total_tokens",
+          "max_output_tokens",
+          "max_calls"
+        ],
+        "additionalProperties": false
+      },
+      "RuleSetCreate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "base_rule_set_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "RuleSet": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "version_no": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "retired"
+            ]
+          },
+          "checksum": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_by": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "name",
+          "version_no",
+          "state",
+          "checksum",
+          "created_by",
+          "published_at"
+        ],
+        "additionalProperties": false
+      },
+      "RuleCreate": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sensitive_literal",
+              "ai_phrase",
+              "ai_pattern"
+            ]
+          },
+          "expression": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "warning",
+              "block"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "advice": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "kind",
+          "expression",
+          "severity",
+          "category",
+          "advice",
+          "weight",
+          "enabled"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "sensitive_literal",
+                    "ai_phrase"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "expression": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                }
+              }
+            }
+          }
+        ]
+      },
+      "RuleUpdate": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sensitive_literal",
+              "ai_phrase",
+              "ai_pattern"
+            ]
+          },
+          "expression": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "warning",
+              "block"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "advice": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "kind",
+          "expression",
+          "severity",
+          "category",
+          "advice",
+          "weight",
+          "enabled"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "sensitive_literal",
+                    "ai_phrase"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "expression": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Rule": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "rule_set_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sensitive_literal",
+              "ai_phrase",
+              "ai_pattern"
+            ]
+          },
+          "expression": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "warning",
+              "block"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "advice": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "rule_set_id",
+          "kind",
+          "expression",
+          "severity",
+          "category",
+          "advice",
+          "weight",
+          "enabled"
+        ],
+        "additionalProperties": false
+      },
+      "ScanCreate": {
+        "type": "object",
+        "properties": {
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "chapter_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "chapter_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200000
+          }
+        },
+        "required": [
+          "novel_id",
+          "chapter_id",
+          "chapter_revision",
+          "content_hash",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "ReportCreate": {
+        "type": "object",
+        "properties": {
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "chapter_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "chapter_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200000
+          },
+          "budget": {
+            "$ref": "./compliance-schemas.json#/components/schemas/Budget"
+          }
+        },
+        "required": [
+          "novel_id",
+          "chapter_id",
+          "chapter_revision",
+          "content_hash",
+          "text",
+          "budget"
+        ],
+        "additionalProperties": false
+      },
+      "Report": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "owner_user_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "chapter_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "chapter_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "rule_set_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "rules",
+              "deep"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "budget": {
+            "$ref": "./compliance-schemas.json#/components/schemas/Budget"
+          },
+          "usage": {
+            "$ref": "./compliance-schemas.json#/components/schemas/Usage"
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 4000
+          },
+          "ai_flavor_score": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "formula_version": {
+            "type": "string",
+            "const": "r1"
+          },
+          "risk_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "open_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "block_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expire_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "redacted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "owner_user_id",
+          "novel_id",
+          "chapter_id",
+          "chapter_revision",
+          "content_hash",
+          "rule_set_id",
+          "mode",
+          "state",
+          "run_id",
+          "budget",
+          "usage",
+          "summary",
+          "ai_flavor_score",
+          "formula_version",
+          "risk_count",
+          "open_count",
+          "block_count",
+          "failure_code",
+          "expire_at",
+          "redacted_at"
+        ],
+        "additionalProperties": false
+      },
+      "Issue": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "report_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "rule_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "detector": {
+            "type": "string",
+            "enum": [
+              "rule",
+              "llm"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sensitive",
+              "ai_flavor"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "warning",
+              "block"
+            ]
+          },
+          "start_offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 199999
+          },
+          "end_offset": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200000
+          },
+          "excerpt": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 500
+          },
+          "excerpt_truncated": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "suggestion": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "open",
+              "ignored"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "report_id",
+          "rule_id",
+          "detector",
+          "kind",
+          "severity",
+          "start_offset",
+          "end_offset",
+          "excerpt",
+          "excerpt_truncated",
+          "message",
+          "suggestion",
+          "confidence",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "IssueDecision": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "report_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "issue_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "actor_user_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "ignore",
+              "reopen"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "issue_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "report_id",
+          "issue_id",
+          "actor_user_id",
+          "action",
+          "reason",
+          "issue_revision"
+        ],
+        "additionalProperties": false
+      },
+      "ReviewCreate": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "acknowledged_risk": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "expected_revision",
+          "acknowledged_risk",
+          "note"
+        ],
+        "additionalProperties": false
+      },
+      "Review": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "report_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "report_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "chapter_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "chapter_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "rule_set_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "actor_user_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "acknowledged_risk": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "report_id",
+          "report_revision",
+          "chapter_id",
+          "chapter_revision",
+          "content_hash",
+          "rule_set_id",
+          "actor_user_id",
+          "acknowledged_risk",
+          "note"
+        ],
+        "additionalProperties": false
+      },
+      "RewriteCreate": {
+        "type": "object",
+        "properties": {
+          "report_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "selected_issue_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            },
+            "minItems": 1,
+            "maxItems": 100,
+            "uniqueItems": true
+          },
+          "max_rounds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+          },
+          "budget": {
+            "$ref": "./compliance-schemas.json#/components/schemas/Budget"
+          }
+        },
+        "required": [
+          "report_id",
+          "expected_revision",
+          "selected_issue_ids",
+          "max_rounds",
+          "budget"
+        ],
+        "additionalProperties": false
+      },
+      "Patch": {
+        "type": "object",
+        "properties": {
+          "start_offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 199999
+          },
+          "end_offset": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200000
+          },
+          "old_text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200000
+          },
+          "new_text": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 200000
+          }
+        },
+        "required": [
+          "start_offset",
+          "end_offset",
+          "old_text",
+          "new_text"
+        ],
+        "additionalProperties": false
+      },
+      "Rewrite": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "owner_user_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "report_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "report_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "selected_issue_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            },
+            "minItems": 1,
+            "maxItems": 100
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "max_rounds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+          },
+          "rounds_used": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "budget": {
+            "$ref": "./compliance-schemas.json#/components/schemas/Budget"
+          },
+          "usage": {
+            "$ref": "./compliance-schemas.json#/components/schemas/Usage"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "patches": {
+            "type": "array",
+            "items": {
+              "$ref": "./compliance-schemas.json#/components/schemas/Patch"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "candidate_text": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 200000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidate_hash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "remaining_risk_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stop_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "clean",
+                  "max_rounds",
+                  "budget",
+                  "no_improvement"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "redacted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "owner_user_id",
+          "report_id",
+          "report_revision",
+          "selected_issue_ids",
+          "state",
+          "max_rounds",
+          "rounds_used",
+          "budget",
+          "usage",
+          "run_id",
+          "patches",
+          "candidate_text",
+          "candidate_hash",
+          "remaining_risk_count",
+          "stop_reason",
+          "failure_code",
+          "redacted_at"
+        ],
+        "additionalProperties": false
+      },
+      "RuleSetPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./compliance-schemas.json#/components/schemas/RuleSet"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "RulePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./compliance-schemas.json#/components/schemas/Rule"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "ReportPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./compliance-schemas.json#/components/schemas/Report"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "IssuePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./compliance-schemas.json#/components/schemas/Issue"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "IssueDecisionPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./compliance-schemas.json#/components/schemas/IssueDecision"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "ReviewPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./compliance-schemas.json#/components/schemas/Review"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "RewritePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./compliance-schemas.json#/components/schemas/Rewrite"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

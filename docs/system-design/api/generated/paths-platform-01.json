@@ -1,0 +1,1559 @@
+{
+ "x-generated": "build-contracts.cjs",
+ "paths": {
+  "/v1/platform/audit-events": {
+   "get": {
+    "operationId": "platformListAudit",
+    "summary": "读取脱敏审计",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-24 platform.audit",
+    "x-errors": [],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/Limit"
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Cursor"
+     },
+     {
+      "name": "from",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/Timestamp"
+      }
+     },
+     {
+      "name": "to",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/Timestamp"
+      }
+     },
+     {
+      "name": "action",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "maxLength": 100
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "allOf": [
+              {
+               "$ref": "../common.json#/components/schemas/PageMeta"
+              },
+              {
+               "type": "object",
+               "required": [
+                "items"
+               ],
+               "properties": {
+                "items": {
+                 "type": "array",
+                 "maxItems": 100,
+                 "items": {
+                  "$ref": "../platform-schemas.json#/components/schemas/Audit"
+                 }
+                }
+               }
+              }
+             ]
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    }
+   }
+  },
+  "/v1/platform/audit-events/export": {
+   "get": {
+    "operationId": "platformExportAudit",
+    "summary": "导出31天内最多10000条脱敏审计",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-24 platform.audit_export",
+    "x-errors": [
+     {
+      "code": "platform.audit_export_limit_exceeded",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "from",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/Timestamp"
+      }
+     },
+     {
+      "name": "to",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/Timestamp"
+      }
+     },
+     {
+      "name": "action",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "maxLength": 100
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "每行Audit对象，无正文与凭据，超出上限422要求缩小时间窗",
+      "content": {
+       "application/x-ndjson": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "description": "审计导出超过31天或10000条上限",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    }
+   }
+  },
+  "/v1/platform/events": {
+   "get": {
+    "operationId": "platformEventsWebSocket",
+    "summary": "一次性票据升级低频通知WebSocket",
+    "tags": [
+     "platform"
+    ],
+    "security": [],
+    "x-permission": {
+     "audience": "either",
+     "roles": [
+      "creator",
+      "operator",
+      "auditor"
+     ],
+     "scope": "self"
+    },
+    "x-use-case": "FR-17 platform.events",
+    "x-errors": [
+     {
+      "code": "auth.ws_ticket_invalid",
+      "http_status": 401,
+      "recovery": "reauthenticate"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "ticket",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "minLength": 32,
+       "maxLength": 128
+      }
+     }
+    ],
+    "responses": {
+     "101": {
+      "description": "WebSocket升级；消息遵循Notification"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     }
+    },
+    "x-message-schema": {
+     "$ref": "../events.json#/components/schemas/Notification"
+    }
+   }
+  },
+  "/v1/platform/files": {
+   "post": {
+    "operationId": "platformUploadFile",
+    "summary": "上传20MiB以内文本或DOCX",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-18 platform.upload",
+    "x-errors": [
+     {
+      "code": "platform.file_too_large",
+      "http_status": 413,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.file_type_invalid",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "$ref": "../platform-schemas.json#/components/schemas/File"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "$ref": "../common.json#/components/responses/PayloadTooLarge"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "$ref": "../platform-schemas.json#/components/schemas/Upload"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/platform/files/{file_id}": {
+   "get": {
+    "operationId": "platformGetFile",
+    "summary": "读取文件描述符",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-18 platform.file",
+    "x-errors": [],
+    "parameters": [
+     {
+      "name": "file_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "$ref": "../platform-schemas.json#/components/schemas/File"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    }
+   },
+   "delete": {
+    "operationId": "platformDeleteFile",
+    "summary": "删除未绑定文件",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-03 platform.delete_file",
+    "x-errors": [
+     {
+      "code": "platform.file_in_use",
+      "http_status": 409,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "file_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     },
+     {
+      "$ref": "../common.json#/components/parameters/ExpectedRevision"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "$ref": "../platform-schemas.json#/components/schemas/File"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    }
+   }
+  },
+  "/v1/platform/files/{file_id}/download": {
+   "get": {
+    "operationId": "platformDownloadFile",
+    "summary": "鉴权下载完整文件或单段Range",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "either",
+     "roles": [
+      "creator",
+      "operator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-19 platform.download",
+    "x-errors": [],
+    "parameters": [
+     {
+      "name": "file_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "name": "Range",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "maxLength": 120
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "二进制下载；Range合法时206，错误JSON",
+      "content": {
+       "application/octet-stream": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     },
+     "206": {
+      "description": "单段部分内容",
+      "content": {
+       "application/octet-stream": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     },
+     "304": {
+      "description": "当前身份与文件授权通过且If-None-Match匹配；无响应体"
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "416": {
+      "description": "Range不合法",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    }
+   }
+  },
+  "/v1/platform/members": {
+   "get": {
+    "operationId": "platformListMembers",
+    "summary": "本租户成员列表",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-24 platform.members",
+    "x-errors": [],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/Limit"
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Cursor"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "allOf": [
+              {
+               "$ref": "../common.json#/components/schemas/PageMeta"
+              },
+              {
+               "type": "object",
+               "required": [
+                "items"
+               ],
+               "properties": {
+                "items": {
+                 "type": "array",
+                 "maxItems": 100,
+                 "items": {
+                  "$ref": "../platform-schemas.json#/components/schemas/Member"
+                 }
+                }
+               }
+              }
+             ]
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    }
+   },
+   "post": {
+    "operationId": "platformCreateMember",
+    "summary": "创建本租户账号与成员",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-24 platform.create_member",
+    "x-errors": [
+     {
+      "code": "auth.account_unavailable",
+      "http_status": 409,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "$ref": "../platform-schemas.json#/components/schemas/Member"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../platform-schemas.json#/components/schemas/CreateMember"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/platform/members/{member_id}": {
+   "get": {
+    "operationId": "platformGetMember",
+    "summary": "成员详情",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-24 platform.member",
+    "x-errors": [],
+    "parameters": [
+     {
+      "name": "member_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "$ref": "../platform-schemas.json#/components/schemas/Member"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    }
+   },
+   "put": {
+    "operationId": "platformUpdateMember",
+    "summary": "修改角色和启停状态",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-24 platform.update_member",
+    "x-errors": [
+     {
+      "code": "platform.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "auth.last_operator",
+      "http_status": 409,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "member_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "$ref": "../platform-schemas.json#/components/schemas/Member"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../platform-schemas.json#/components/schemas/UpdateMember"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/platform/members/{member_id}/reset-password": {
+   "post": {
+    "operationId": "platformResetPassword",
+    "summary": "单租户账号重置密码并吊销会话",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-24 platform.reset_password",
+    "x-errors": [
+     {
+      "code": "auth.cross_tenant_account",
+      "http_status": 403,
+      "recovery": "contact_operator"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "member_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "$ref": "../platform-schemas.json#/components/schemas/RevokeSessions"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../platform-schemas.json#/components/schemas/ResetPassword"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/platform/members/{member_id}/revoke-sessions": {
+   "post": {
+    "operationId": "platformRevokeSessions",
+    "summary": "吊销该租户成员所有会话",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-24 platform.revoke_sessions",
+    "x-errors": [],
+    "parameters": [
+     {
+      "name": "member_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "$ref": "../platform-schemas.json#/components/schemas/RevokeSessions"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../platform-schemas.json#/components/schemas/RevisionCommand"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/platform/project-logs": {
+   "get": {
+    "operationId": "platformListProjectLogs",
+    "summary": "按租户查询脱敏项目运行日志",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-24 platform.project_logs",
+    "x-errors": [],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/Limit"
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Cursor"
+     },
+     {
+      "name": "level",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "DEBUG",
+        "INFO",
+        "WARN",
+        "ERROR"
+       ]
+      }
+     },
+     {
+      "name": "domain",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "maxLength": 80
+      }
+     },
+     {
+      "name": "operation",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "maxLength": 160
+      }
+     },
+     {
+      "name": "search",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "maxLength": 200
+      }
+     },
+     {
+      "name": "from",
+      "in": "query",
+      "schema": {
+       "$ref": "../common.json#/components/schemas/Timestamp"
+      }
+     },
+     {
+      "name": "to",
+      "in": "query",
+      "schema": {
+       "$ref": "../common.json#/components/schemas/Timestamp"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "当前租户的安全日志游标页",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "allOf": [
+              {
+               "$ref": "../common.json#/components/schemas/PageMeta"
+              },
+              {
+               "type": "object",
+               "required": [
+                "items"
+               ],
+               "properties": {
+                "items": {
+                 "type": "array",
+                 "maxItems": 100,
+                 "items": {
+                  "type": "object",
+                  "required": [
+                   "id",
+                   "created_at",
+                   "level",
+                   "event",
+                   "domain",
+                   "operation",
+                   "error_code",
+                   "request_id",
+                   "trace_id",
+                   "status",
+                   "duration_ms"
+                  ],
+                  "properties": {
+                   "id": {
+                    "type": "string",
+                    "format": "uuid"
+                   },
+                   "created_at": {
+                    "$ref": "../common.json#/components/schemas/Timestamp"
+                   },
+                   "level": {
+                    "type": "string",
+                    "enum": [
+                     "DEBUG",
+                     "INFO",
+                     "WARN",
+                     "ERROR"
+                    ]
+                   },
+                   "event": {
+                    "type": "string",
+                    "maxLength": 80
+                   },
+                   "domain": {
+                    "type": "string",
+                    "maxLength": 80
+                   },
+                   "operation": {
+                    "type": "string",
+                    "maxLength": 160
+                   },
+                   "error_code": {
+                    "type": "string",
+                    "maxLength": 100
+                   },
+                   "request_id": {
+                    "type": "string"
+                   },
+                   "trace_id": {
+                    "type": "string"
+                   },
+                   "status": {
+                    "type": [
+                     "integer",
+                     "null"
+                    ]
+                   },
+                   "duration_ms": {
+                    "type": [
+                     "integer",
+                     "null"
+                    ]
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             ]
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    }
+   }
+  },
+  "/v1/platform/secret-references": {
+   "get": {
+    "operationId": "platformListSecretReferences",
+    "summary": "读取部署允许的凭据引用元数据",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-21 platform.secret_references",
+    "x-errors": [],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/Limit"
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Cursor"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "allOf": [
+              {
+               "$ref": "../common.json#/components/schemas/PageMeta"
+              },
+              {
+               "type": "object",
+               "required": [
+                "items"
+               ],
+               "properties": {
+                "items": {
+                 "type": "array",
+                 "maxItems": 100,
+                 "items": {
+                  "$ref": "../platform-schemas.json#/components/schemas/SecretReference"
+                 }
+                }
+               }
+              }
+             ]
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    }
+   }
+  },
+  "/v1/platform/status": {
+   "get": {
+    "operationId": "platformStatus",
+    "summary": "依赖队列与outbox只读概览",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-use-case": "FR-24 platform.status",
+    "x-errors": [],
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "$ref": "../platform-schemas.json#/components/schemas/Status"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    }
+   }
+  },
+  "/v1/platform/tenants": {
+   "get": {
+    "operationId": "platform_listTenants",
+    "summary": "列出全局管理员可切换的tenant",
+    "tags": [
+     "platform"
+    ],
+    "x-permission": {
+     "audience": "admin",
+     "roles": [],
+     "global_roles": [
+      "super_admin"
+     ],
+     "scope": "global"
+    },
+    "x-use-case": "FR-24 platform.list_tenants",
+    "x-errors": [
+     {
+      "code": "auth.unauthenticated",
+      "http_status": 401,
+      "recovery": "reauthenticate"
+     },
+     {
+      "code": "auth.forbidden",
+      "http_status": 403,
+      "recovery": "none"
+     }
+    ],
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "Active tenants",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "$ref": "../platform-schemas.json#/components/schemas/TenantCatalog"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ]
+   }
+  }
+ }
+}

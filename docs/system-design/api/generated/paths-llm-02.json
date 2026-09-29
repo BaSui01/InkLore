@@ -1,0 +1,966 @@
+{
+ "x-generated": "build-contracts.cjs",
+ "paths": {
+  "/v1/llm/providers/{provider_id}": {
+   "parameters": [
+    {
+     "in": "path",
+     "name": "provider_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    }
+   ],
+   "get": {
+    "operationId": "llm_get_provider",
+    "x-use-case": "FR-21 llm.get_provider",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "成功，typed data。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../llm-schemas.json#/components/schemas/Provider"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "summary": "读取供应商"
+   },
+   "put": {
+    "operationId": "llm_update_provider",
+    "x-use-case": "FR-21 llm.update_provider",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator"
+     ],
+     "scope": "tenant"
+    },
+    "x-errors": [
+     {
+      "code": "llm.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "llm.capability_mismatch",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../llm-schemas.json#/components/schemas/ProviderUpdate"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "成功，typed data。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../llm-schemas.json#/components/schemas/Provider"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "summary": "更新供应商"
+   },
+   "delete": {
+    "operationId": "llm_delete_provider",
+    "x-use-case": "FR-21 llm.delete_provider",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator"
+     ],
+     "scope": "tenant"
+    },
+    "x-errors": [
+     {
+      "code": "llm.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "llm.resource_in_use",
+      "http_status": 409,
+      "recovery": "fix_input"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功，typed data。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../llm-schemas.json#/components/schemas/Deleted"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     },
+     {
+      "in": "query",
+      "name": "expected_revision",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/Revision"
+      }
+     }
+    ],
+    "summary": "删除供应商"
+   }
+  },
+  "/v1/llm/task-policies": {
+   "get": {
+    "summary": "分页查询任务策略",
+    "operationId": "llm_list_policies",
+    "x-use-case": "FR-22 llm.list_policies",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "成功，typed data。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../llm-schemas.json#/components/schemas/PolicyPage"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/Limit"
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Cursor"
+     }
+    ]
+   },
+   "post": {
+    "operationId": "llm_create_policy",
+    "x-use-case": "FR-22 llm.create_policy",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator"
+     ],
+     "scope": "tenant"
+    },
+    "x-errors": [
+     {
+      "code": "llm.capability_mismatch",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../llm-schemas.json#/components/schemas/PolicyInput"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "成功，typed data。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../llm-schemas.json#/components/schemas/Policy"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "summary": "创建任务策略"
+   }
+  },
+  "/v1/llm/task-policies/{policy_id}": {
+   "parameters": [
+    {
+     "in": "path",
+     "name": "policy_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    }
+   ],
+   "get": {
+    "operationId": "llm_get_policy",
+    "x-use-case": "FR-22 llm.get_policy",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "成功，typed data。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../llm-schemas.json#/components/schemas/Policy"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "summary": "读取任务策略"
+   },
+   "put": {
+    "operationId": "llm_publish_policy",
+    "x-use-case": "FR-22 llm.publish_policy",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator"
+     ],
+     "scope": "tenant"
+    },
+    "x-errors": [
+     {
+      "code": "llm.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "llm.capability_mismatch",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../llm-schemas.json#/components/schemas/PolicyUpdate"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "成功，typed data。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../llm-schemas.json#/components/schemas/Policy"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "summary": "发布任务策略版本"
+   },
+   "delete": {
+    "operationId": "llm_delete_policy",
+    "x-use-case": "FR-22 llm.delete_policy",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator"
+     ],
+     "scope": "tenant"
+    },
+    "x-errors": [
+     {
+      "code": "llm.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "llm.resource_in_use",
+      "http_status": 409,
+      "recovery": "fix_input"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功，typed data。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../llm-schemas.json#/components/schemas/Deleted"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     },
+     {
+      "in": "query",
+      "name": "expected_revision",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/Revision"
+      }
+     }
+    ],
+    "summary": "删除任务策略"
+   }
+  },
+  "/v1/llm/upstream-models": {
+   "post": {
+    "operationId": "llm_fetch_upstream_models",
+    "x-use-case": "FR-21 llm.fetch_upstream_models",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-errors": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../llm-schemas.json#/components/schemas/FetchUpstreamModelsInput"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "成功，获取上游模型列表。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../llm-schemas.json#/components/schemas/UpstreamModelListPage"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     }
+    },
+    "summary": "从上游获取模型列表"
+   }
+  },
+  "/v1/llm/usage": {
+   "get": {
+    "operationId": "llm_list_usage",
+    "x-use-case": "FR-22 llm.list_usage",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "成功，typed data。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../llm-schemas.json#/components/schemas/UsagePage"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/Limit"
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Cursor"
+     },
+     {
+      "in": "query",
+      "name": "date_from",
+      "schema": {
+       "type": "string",
+       "format": "date"
+      }
+     },
+     {
+      "in": "query",
+      "name": "date_to",
+      "schema": {
+       "type": "string",
+       "format": "date"
+      }
+     },
+     {
+      "in": "query",
+      "name": "model_id",
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "in": "query",
+      "name": "channel_id",
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "in": "query",
+      "name": "status",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "succeeded",
+        "failed",
+        "cancelled",
+        "unknown"
+       ]
+      }
+     }
+    ],
+    "description": "北京时间日期闭区间，最多90天；默认今日。不可变usage按created_at DESC,id DESC。",
+    "summary": "分页查询模型用量"
+   }
+  },
+  "/v1/llm/usage/{usage_id}": {
+   "parameters": [
+    {
+     "in": "path",
+     "name": "usage_id",
+     "required": true,
+     "schema": {
+      "$ref": "../common.json#/components/schemas/UUID"
+     }
+    }
+   ],
+   "get": {
+    "operationId": "llm_get_usage",
+    "x-use-case": "FR-22 llm.get_usage",
+    "x-permission": {
+     "audience": "admin",
+     "roles": [
+      "operator",
+      "auditor"
+     ],
+     "scope": "tenant"
+    },
+    "x-errors": [],
+    "responses": {
+     "200": {
+      "description": "成功，typed data。",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../llm-schemas.json#/components/schemas/Usage"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "summary": "读取模型用量凭证"
+   }
+  }
+ }
+}

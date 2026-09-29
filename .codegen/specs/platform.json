@@ -1,0 +1,3918 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "InkLore PLATFORM API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/v1/platform/project-logs": {
+      "get": {
+        "operationId": "platformListProjectLogs",
+        "summary": "按租户查询脱敏项目运行日志",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator",
+            "auditor"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-24 platform.project_logs",
+        "x-errors": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DEBUG",
+                "INFO",
+                "WARN",
+                "ERROR"
+              ]
+            }
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 80
+            }
+          },
+          {
+            "name": "operation",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 160
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Timestamp"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Timestamp"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "当前租户的安全日志游标页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "allOf": [
+                            {
+                              "$ref": "#/components/schemas/PageMeta"
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "items"
+                              ],
+                              "properties": {
+                                "items": {
+                                  "type": "array",
+                                  "maxItems": 100,
+                                  "items": {
+                                    "type": "object",
+                                    "required": [
+                                      "id",
+                                      "created_at",
+                                      "level",
+                                      "event",
+                                      "domain",
+                                      "operation",
+                                      "error_code",
+                                      "request_id",
+                                      "trace_id",
+                                      "status",
+                                      "duration_ms"
+                                    ],
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                      },
+                                      "created_at": {
+                                        "$ref": "#/components/schemas/Timestamp"
+                                      },
+                                      "level": {
+                                        "type": "string",
+                                        "enum": [
+                                          "DEBUG",
+                                          "INFO",
+                                          "WARN",
+                                          "ERROR"
+                                        ]
+                                      },
+                                      "event": {
+                                        "type": "string",
+                                        "maxLength": 80
+                                      },
+                                      "domain": {
+                                        "type": "string",
+                                        "maxLength": 80
+                                      },
+                                      "operation": {
+                                        "type": "string",
+                                        "maxLength": 160
+                                      },
+                                      "error_code": {
+                                        "type": "string",
+                                        "maxLength": 100
+                                      },
+                                      "request_id": {
+                                        "type": "string"
+                                      },
+                                      "trace_id": {
+                                        "type": "string"
+                                      },
+                                      "status": {
+                                        "type": "integer",
+                                        "nullable": true
+                                      },
+                                      "duration_ms": {
+                                        "type": "integer",
+                                        "nullable": true
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "operationId": "authLogin",
+        "summary": "登录到指定应用",
+        "description": "email适用于Creator与Admin。保留用户名root也可选择任一audience登录，但仍须通过该audience对应的成员与资源授权。",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "public",
+          "roles": [],
+          "scope": "public"
+        },
+        "x-use-case": "FR-01 auth.login",
+        "x-errors": [
+          {
+            "code": "auth.invalid_credentials",
+            "http_status": 401,
+            "recovery": "reauthenticate"
+          },
+          {
+            "code": "auth.rate_limited",
+            "http_status": 429,
+            "recovery": "retry_later"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Session"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/auth/captcha": {
+      "get": {
+        "operationId": "authCaptcha",
+        "summary": "创建一次性验证码挑战",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "public",
+          "roles": [],
+          "scope": "public"
+        },
+        "x-use-case": "FR-01 auth.captcha",
+        "x-errors": [
+          {
+            "code": "platform.dependency_unavailable",
+            "http_status": 503,
+            "recovery": "retry_later"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store, no-cache, must-revalidate"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Captcha"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/auth/captcha/verify": {
+      "post": {
+        "operationId": "authVerifyCaptcha",
+        "summary": "验证并消费一次性验证码挑战",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "public",
+          "roles": [],
+          "scope": "public"
+        },
+        "x-use-case": "FR-01 auth.verify_captcha",
+        "x-errors": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CaptchaVerification"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyCaptcha"
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/auth/register": {
+      "post": {
+        "operationId": "authRegister",
+        "summary": "注册独立创作者租户并创建会话",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "public",
+          "roles": [],
+          "scope": "public"
+        },
+        "x-use-case": "FR-01 auth.register",
+        "x-errors": [
+          {
+            "code": "auth.account_unavailable",
+            "http_status": 409,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "auth.rate_limited",
+            "http_status": 429,
+            "recovery": "retry_later"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Session"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Register"
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/auth/forgot-password": {
+      "post": {
+        "operationId": "authForgotPassword",
+        "summary": "请求密码重置令牌",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "public",
+          "roles": [],
+          "scope": "public"
+        },
+        "x-use-case": "FR-01 auth.forgot_password",
+        "x-errors": [
+          {
+            "code": "platform.dependency_unavailable",
+            "http_status": 503,
+            "recovery": "retry_later"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "开发环境未投递邮件，返回短期重置令牌；生产环境仅在投递器可用后返回成功。",
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/ForgotPasswordResult"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPassword"
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/auth/reset-password": {
+      "post": {
+        "operationId": "authResetPassword",
+        "summary": "使用重置令牌修改密码并吊销全部会话",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "public",
+          "roles": [],
+          "scope": "public"
+        },
+        "x-use-case": "FR-01 auth.reset_password",
+        "x-errors": [
+          {
+            "code": "auth.invalid_token",
+            "http_status": 400,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/ResetPasswordResult"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordWithToken"
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/auth/session-csrf": {
+      "get": {
+        "operationId": "authSessionCSRF",
+        "summary": "同源读取恢复会话所需CSRF",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "session",
+          "roles": [],
+          "scope": "self"
+        },
+        "x-use-case": "FR-01 auth.csrf",
+        "x-errors": [],
+        "parameters": [
+          {
+            "name": "audience",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "creator",
+                "admin"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/CSRF"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "security": [
+          {
+            "CreatorRefreshCookie": []
+          },
+          {
+            "AdminRefreshCookie": []
+          }
+        ]
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "operationId": "authRefresh",
+        "summary": "轮换刷新令牌并恢复access",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "session",
+          "roles": [],
+          "scope": "self"
+        },
+        "x-use-case": "FR-01 auth.refresh",
+        "x-errors": [
+          {
+            "code": "auth.refresh_reused",
+            "http_status": 401,
+            "recovery": "reauthenticate"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Session"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Refresh"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "CreatorRefreshCookie": []
+          },
+          {
+            "AdminRefreshCookie": []
+          }
+        ]
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "operationId": "authLogout",
+        "summary": "吊销当前应用会话",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "session",
+          "roles": [],
+          "scope": "self"
+        },
+        "x-use-case": "FR-01 auth.logout",
+        "x-errors": [],
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/LogoutResult"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Refresh"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "CreatorRefreshCookie": []
+          },
+          {
+            "AdminRefreshCookie": []
+          }
+        ]
+      }
+    },
+    "/v1/auth/me": {
+      "get": {
+        "operationId": "authMe",
+        "summary": "当前有效主体及权限",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "either",
+          "roles": [],
+          "scope": "self"
+        },
+        "x-use-case": "FR-01 auth.me",
+        "x-errors": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Principal"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/auth/ws-ticket": {
+      "post": {
+        "operationId": "authWSTicket",
+        "summary": "签发一次性60秒WS票据",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "either",
+          "roles": [],
+          "scope": "self"
+        },
+        "x-use-case": "FR-17 auth.ws_ticket",
+        "x-errors": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/WSTicket"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "audience"
+                ],
+                "properties": {
+                  "audience": {
+                    "enum": [
+                      "creator",
+                      "admin"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/password": {
+      "put": {
+        "operationId": "authChangePassword",
+        "summary": "本人修改密码并吊销全部会话",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "either",
+          "roles": [],
+          "scope": "self"
+        },
+        "x-use-case": "FR-01 auth.change_password",
+        "x-errors": [
+          {
+            "code": "auth.invalid_credentials",
+            "http_status": 401,
+            "recovery": "reauthenticate"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/LogoutResult"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePassword"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform/members": {
+      "get": {
+        "operationId": "platformListMembers",
+        "summary": "本租户成员列表",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator",
+            "auditor"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-24 platform.members",
+        "x-errors": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "allOf": [
+                            {
+                              "$ref": "#/components/schemas/PageMeta"
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "items"
+                              ],
+                              "properties": {
+                                "items": {
+                                  "type": "array",
+                                  "maxItems": 100,
+                                  "items": {
+                                    "$ref": "#/components/schemas/Member"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "platformCreateMember",
+        "summary": "创建本租户账号与成员",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-24 platform.create_member",
+        "x-errors": [
+          {
+            "code": "auth.account_unavailable",
+            "http_status": 409,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Member"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMember"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform/members/{member_id}": {
+      "get": {
+        "operationId": "platformGetMember",
+        "summary": "成员详情",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator",
+            "auditor"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-24 platform.member",
+        "x-errors": [],
+        "parameters": [
+          {
+            "name": "member_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Member"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "put": {
+        "operationId": "platformUpdateMember",
+        "summary": "修改角色和启停状态",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-24 platform.update_member",
+        "x-errors": [
+          {
+            "code": "platform.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "auth.last_operator",
+            "http_status": 409,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "member_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Member"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMember"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform/members/{member_id}/reset-password": {
+      "post": {
+        "operationId": "platformResetPassword",
+        "summary": "单租户账号重置密码并吊销会话",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-24 platform.reset_password",
+        "x-errors": [
+          {
+            "code": "auth.cross_tenant_account",
+            "http_status": 403,
+            "recovery": "contact_operator"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "member_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/RevokeSessions"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPassword"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform/members/{member_id}/revoke-sessions": {
+      "post": {
+        "operationId": "platformRevokeSessions",
+        "summary": "吊销该租户成员所有会话",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-24 platform.revoke_sessions",
+        "x-errors": [],
+        "parameters": [
+          {
+            "name": "member_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/RevokeSessions"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisionCommand"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform/secret-references": {
+      "get": {
+        "operationId": "platformListSecretReferences",
+        "summary": "读取部署允许的凭据引用元数据",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-21 platform.secret_references",
+        "x-errors": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "allOf": [
+                            {
+                              "$ref": "#/components/schemas/PageMeta"
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "items"
+                              ],
+                              "properties": {
+                                "items": {
+                                  "type": "array",
+                                  "maxItems": 100,
+                                  "items": {
+                                    "$ref": "#/components/schemas/SecretReference"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/platform/files": {
+      "post": {
+        "operationId": "platformUploadFile",
+        "summary": "上传20MiB以内文本或DOCX",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-18 platform.upload",
+        "x-errors": [
+          {
+            "code": "platform.file_too_large",
+            "http_status": 413,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "platform.file_type_invalid",
+            "http_status": 422,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/File"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Upload"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform/files/{file_id}": {
+      "get": {
+        "operationId": "platformGetFile",
+        "summary": "读取文件描述符",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-18 platform.file",
+        "x-errors": [],
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/File"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "platformDeleteFile",
+        "summary": "删除未绑定文件",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-03 platform.delete_file",
+        "x-errors": [
+          {
+            "code": "platform.file_in_use",
+            "http_status": 409,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ExpectedRevision"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/File"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/platform/files/{file_id}/download": {
+      "get": {
+        "operationId": "platformDownloadFile",
+        "summary": "鉴权下载完整文件或单段Range",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "either",
+          "roles": [
+            "creator",
+            "operator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-19 platform.download",
+        "x-errors": [],
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "二进制下载；Range合法时206，错误JSON",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "单段部分内容",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "当前身份与文件授权通过且If-None-Match匹配；无响应体"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "416": {
+            "description": "Range不合法",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/platform/audit-events": {
+      "get": {
+        "operationId": "platformListAudit",
+        "summary": "读取脱敏审计",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator",
+            "auditor"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-24 platform.audit",
+        "x-errors": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Timestamp"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Timestamp"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "allOf": [
+                            {
+                              "$ref": "#/components/schemas/PageMeta"
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "items"
+                              ],
+                              "properties": {
+                                "items": {
+                                  "type": "array",
+                                  "maxItems": 100,
+                                  "items": {
+                                    "$ref": "#/components/schemas/Audit"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/platform/audit-events/export": {
+      "get": {
+        "operationId": "platformExportAudit",
+        "summary": "导出31天内最多10000条脱敏审计",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator",
+            "auditor"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-24 platform.audit_export",
+        "x-errors": [
+          {
+            "code": "platform.audit_export_limit_exceeded",
+            "http_status": 422,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Timestamp"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Timestamp"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "每行Audit对象，无正文与凭据，超出上限422要求缩小时间窗",
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "description": "审计导出超过31天或10000条上限",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/platform/status": {
+      "get": {
+        "operationId": "platformStatus",
+        "summary": "依赖队列与outbox只读概览",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator",
+            "auditor"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-24 platform.status",
+        "x-errors": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Status"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/v1/auth/switch-tenant": {
+      "post": {
+        "operationId": "auth_switchTenant",
+        "summary": "切换全局管理员当前租户会话",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [],
+          "global_roles": [
+            "super_admin"
+          ],
+          "scope": "global"
+        },
+        "x-use-case": "FR-24 auth.switch_tenant",
+        "x-errors": [
+          {
+            "code": "auth.unauthenticated",
+            "http_status": 401,
+            "recovery": "reauthenticate"
+          },
+          {
+            "code": "auth.forbidden",
+            "http_status": 403,
+            "recovery": "none"
+          },
+          {
+            "code": "platform.validation_failed",
+            "http_status": 400,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchTenant"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tenant session switched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Session"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/platform/tenants": {
+      "get": {
+        "operationId": "platform_listTenants",
+        "summary": "列出全局管理员可切换的tenant",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [],
+          "global_roles": [
+            "super_admin"
+          ],
+          "scope": "global"
+        },
+        "x-use-case": "FR-24 platform.list_tenants",
+        "x-errors": [
+          {
+            "code": "auth.unauthenticated",
+            "http_status": 401,
+            "recovery": "reauthenticate"
+          },
+          {
+            "code": "auth.forbidden",
+            "http_status": 403,
+            "recovery": "none"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Active tenants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/TenantCatalog"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UUID": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+      },
+      "Revision": {
+        "type": "integer",
+        "format": "int64",
+        "minimum": 1,
+        "maximum": 9007199254740991
+      },
+      "Timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "Z$"
+      },
+      "SuccessMeta": {
+        "type": "object",
+        "required": [
+          "code",
+          "request_id",
+          "trace_id"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "trace_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      },
+      "FieldError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "field",
+          "reason"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 120
+          }
+        }
+      },
+      "ErrorDetails": {
+        "type": "object",
+        "properties": {
+          "field_errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            },
+            "maxItems": 100
+          },
+          "current_revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "retry_after_seconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 86400
+          },
+          "operation_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "conflicts": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "required": [
+                "resource_id",
+                "reason"
+              ],
+              "properties": {
+                "resource_id": {
+                  "$ref": "#/components/schemas/UUID"
+                },
+                "reason": {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                "current_revision": {
+                  "$ref": "#/components/schemas/Revision"
+                }
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "message_key",
+          "details",
+          "request_id",
+          "trace_id"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^(platform|auth|content|outline|worldview|inspiration|compliance|agent|llm)\\.[a-z][a-z0-9_]+$"
+          },
+          "message_key": {
+            "type": "string",
+            "pattern": "^errors\\."
+          },
+          "details": {
+            "$ref": "#/components/schemas/ErrorDetails"
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "trace_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        }
+      },
+      "PageMeta": {
+        "type": "object",
+        "required": [
+          "next_cursor",
+          "has_more"
+        ],
+        "properties": {
+          "next_cursor": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Principal": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "user_id",
+          "tenant_id",
+          "display_name",
+          "roles",
+          "global_roles",
+          "audience",
+          "session_id",
+          "user_revision"
+        ],
+        "properties": {
+          "user_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "display_name": {
+            "type": "string",
+            "maxLength": 60
+          },
+          "roles": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "creator",
+                "operator",
+                "auditor"
+              ]
+            }
+          },
+          "global_roles": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "super_admin"
+              ]
+            }
+          },
+          "audience": {
+            "enum": [
+              "creator",
+              "admin"
+            ]
+          },
+          "session_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "user_revision": {
+            "$ref": "#/components/schemas/Revision"
+          }
+        }
+      },
+      "TenantSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        }
+      },
+      "TenantCatalog": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TenantSummary"
+        }
+      },
+      "SwitchTenant": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenant_id"
+        ],
+        "properties": {
+          "tenant_id": {
+            "$ref": "#/components/schemas/UUID"
+          }
+        }
+      },
+      "Login": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "password",
+          "audience"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "username": {
+            "type": "string",
+            "enum": [
+              "root"
+            ],
+            "description": "Reserved identifier accepted for Creator and Admin login audiences."
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 72,
+            "writeOnly": true,
+            "x-max-utf8-bytes": 72
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "audience": {
+            "enum": [
+              "creator",
+              "admin"
+            ]
+          },
+          "captcha_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "captcha_code": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4,
+            "pattern": "^[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz]{4}$"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "email"
+            ],
+            "not": {
+              "required": [
+                "username"
+              ]
+            }
+          },
+          {
+            "required": [
+              "username"
+            ],
+            "not": {
+              "required": [
+                "email"
+              ]
+            }
+          }
+        ],
+        "dependentRequired": {
+          "captcha_id": [
+            "captcha_code"
+          ],
+          "captcha_code": [
+            "captcha_id"
+          ]
+        }
+      },
+      "Captcha": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "captcha_id",
+          "svg",
+          "expires_in"
+        ],
+        "properties": {
+          "captcha_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "svg": {
+            "type": "string",
+            "contentMediaType": "image/svg+xml"
+          },
+          "expires_in": {
+            "type": "number",
+            "enum": [
+              180
+            ]
+          }
+        }
+      },
+      "VerifyCaptcha": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "captcha_id",
+          "captcha_code"
+        ],
+        "properties": {
+          "captcha_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "captcha_code": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4,
+            "pattern": "^[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz]{4}$"
+          }
+        }
+      },
+      "CaptchaVerification": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "valid"
+        ],
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        }
+      },
+      "Register": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "password",
+          "pen_name"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 72,
+            "writeOnly": true,
+            "x-max-utf8-bytes": 72
+          },
+          "pen_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "captcha_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "captcha_code": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4,
+            "pattern": "^[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz]{4}$"
+          }
+        },
+        "dependentRequired": {
+          "captcha_id": [
+            "captcha_code"
+          ],
+          "captcha_code": [
+            "captcha_id"
+          ]
+        }
+      },
+      "ForgotPassword": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "captcha_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "captcha_code": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4,
+            "pattern": "^[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz]{4}$"
+          }
+        },
+        "dependentRequired": {
+          "captcha_id": [
+            "captcha_code"
+          ],
+          "captcha_code": [
+            "captcha_id"
+          ]
+        }
+      },
+      "ForgotPasswordResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sent",
+          "expires_in"
+        ],
+        "properties": {
+          "sent": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "expires_in": {
+            "type": "number",
+            "enum": [
+              900
+            ]
+          },
+          "dev_token": {
+            "type": "string",
+            "maxLength": 128,
+            "x-development-only": true,
+            "x-sensitive": true
+          }
+        }
+      },
+      "ResetPasswordWithToken": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "token",
+          "new_password"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 43,
+            "maxLength": 43,
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "writeOnly": true
+          },
+          "new_password": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 72,
+            "writeOnly": true,
+            "x-max-utf8-bytes": 72
+          }
+        }
+      },
+      "ResetPasswordResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reset"
+        ],
+        "properties": {
+          "reset": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "access_token",
+          "expires_in",
+          "csrf_token",
+          "principal"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "readOnly": true
+          },
+          "expires_in": {
+            "type": "number",
+            "enum": [
+              900
+            ]
+          },
+          "csrf_token": {
+            "type": "string",
+            "readOnly": true
+          },
+          "principal": {
+            "$ref": "#/components/schemas/Principal"
+          }
+        }
+      },
+      "Refresh": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "audience"
+        ],
+        "properties": {
+          "audience": {
+            "enum": [
+              "creator",
+              "admin"
+            ]
+          }
+        }
+      },
+      "LogoutResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "revoked"
+        ],
+        "properties": {
+          "revoked": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CSRF": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "csrf_token"
+        ],
+        "properties": {
+          "csrf_token": {
+            "type": "string",
+            "maxLength": 128
+          }
+        }
+      },
+      "WSTicket": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ticket",
+          "expires_in"
+        ],
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "expires_in": {
+            "type": "number",
+            "enum": [
+              60
+            ]
+          }
+        }
+      },
+      "Member": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "revision",
+          "created_at",
+          "updated_at",
+          "user_id",
+          "email",
+          "display_name",
+          "roles",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "user_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "display_name": {
+            "type": "string",
+            "maxLength": 60
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "creator",
+                "operator",
+                "auditor"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "status": {
+            "enum": [
+              "active",
+              "disabled"
+            ]
+          }
+        }
+      },
+      "CreateMember": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "display_name",
+          "password",
+          "roles"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 72,
+            "writeOnly": true,
+            "x-max-utf8-bytes": 72
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "creator",
+                "operator",
+                "auditor"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        }
+      },
+      "UpdateMember": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expected_revision",
+          "roles",
+          "status"
+        ],
+        "properties": {
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "creator",
+                "operator",
+                "auditor"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "status": {
+            "enum": [
+              "active",
+              "disabled"
+            ]
+          }
+        }
+      },
+      "ResetPassword": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expected_revision",
+          "new_password"
+        ],
+        "properties": {
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "new_password": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 72,
+            "writeOnly": true,
+            "x-max-utf8-bytes": 72
+          }
+        }
+      },
+      "RevisionCommand": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "RevokeSessions": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "revoked_count",
+          "revision"
+        ],
+        "properties": {
+          "revoked_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "revision": {
+            "$ref": "#/components/schemas/Revision"
+          }
+        }
+      },
+      "SecretReference": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "display_name",
+          "configured",
+          "allowed_consumers"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "kind": {
+            "enum": [
+              "env",
+              "secretstore"
+            ]
+          },
+          "display_name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "allowed_consumers": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "llm",
+                "mcp"
+              ]
+            }
+          }
+        }
+      },
+      "File": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "revision",
+          "created_at",
+          "updated_at",
+          "filename",
+          "media_type",
+          "purpose",
+          "size_bytes",
+          "sha256",
+          "expires_at",
+          "deleted_at"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "filename": {
+            "type": "string",
+            "maxLength": 180
+          },
+          "media_type": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "purpose": {
+            "enum": [
+              "import",
+              "inspiration_source",
+              "export",
+              "audit_export"
+            ]
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 104857600
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "Upload": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "file",
+          "purpose"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary"
+          },
+          "purpose": {
+            "enum": [
+              "import",
+              "inspiration_source"
+            ]
+          },
+          "novel_id": {
+            "$ref": "#/components/schemas/UUID"
+          }
+        }
+      },
+      "Audit": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "actor_id",
+          "audience",
+          "action",
+          "resource_id",
+          "outcome",
+          "request_id",
+          "trace_id",
+          "safe_changes",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "actor_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "audience": {
+            "enum": [
+              "creator",
+              "admin",
+              "system"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "resource_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "outcome": {
+            "enum": [
+              "succeeded",
+              "denied",
+              "failed"
+            ]
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "trace_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          },
+          "safe_changes": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "field",
+                "before",
+                "after"
+              ],
+              "properties": {
+                "field": {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                "before": {
+                  "type": "string",
+                  "nullable": true,
+                  "maxLength": 512
+                },
+                "after": {
+                  "type": "string",
+                  "nullable": true,
+                  "maxLength": 512
+                }
+              }
+            }
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          }
+        }
+      },
+      "Status": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "observed_at",
+          "service_version",
+          "state",
+          "dependencies",
+          "queue",
+          "outbox"
+        ],
+        "properties": {
+          "observed_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "service_version": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "state": {
+            "enum": [
+              "ready",
+              "degraded",
+              "not_ready"
+            ]
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "state",
+                "checked_at"
+              ],
+              "properties": {
+                "name": {
+                  "enum": [
+                    "postgres",
+                    "redis"
+                  ]
+                },
+                "state": {
+                  "enum": [
+                    "healthy",
+                    "unavailable"
+                  ]
+                },
+                "checked_at": {
+                  "$ref": "#/components/schemas/Timestamp"
+                }
+              }
+            }
+          },
+          "queue": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "queued",
+              "leased",
+              "failed",
+              "oldest_wait_seconds"
+            ],
+            "properties": {
+              "queued": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "leased": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "failed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "oldest_wait_seconds": {
+                "type": "integer",
+                "nullable": true,
+                "minimum": 0
+              }
+            }
+          },
+          "outbox": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "pending",
+              "dead_letter"
+            ],
+            "properties": {
+              "pending": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "dead_letter": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "ChangePassword": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "current_password",
+          "new_password",
+          "expected_revision"
+        ],
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "new_password": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 72,
+            "writeOnly": true,
+            "x-max-utf8-bytes": 72
+          },
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "400 请求格式、缺少前置或游标错误",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "401 会话无效/到期",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "403 明确权限不足",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "404 资源不存在或不可见",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "409 版本/状态/幂等冲突",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "description": "413 请求或文件体积超限",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "ValidationFailed": {
+        "description": "422 领域约束不满足",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "429 限流/预算不足",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "500 未知错误；不返回内部根因",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "BadGateway": {
+        "description": "502 上游协议错误",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unavailable": {
+        "description": "503 依赖不可用",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "GatewayTimeout": {
+        "description": "504 上游超时",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Gone": {
+        "description": "410 SSE游标已过期",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "MethodNotAllowed": {
+        "description": "已知路径不支持该HTTP方法；Allow列出允许方法",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "description": "每个逻辑副作用命令一个UUID，24小时同键重放",
+        "schema": {
+          "$ref": "#/components/schemas/UUID"
+        }
+      },
+      "Limit": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      },
+      "Cursor": {
+        "name": "cursor",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "maxLength": 2048
+        }
+      },
+      "ExpectedRevision": {
+        "name": "expected_revision",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/Revision"
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "CreatorRefreshCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "inklore_creator_refresh"
+      },
+      "AdminRefreshCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "inklore_admin_refresh"
+      }
+    }
+  }
+}

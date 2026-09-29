@@ -1,0 +1,73 @@
+# InkLore 运行配置模板
+#
+# 使用：cp configs/config.example.yaml configs/config.yaml 后按需修改。
+# configs/config.yaml 已被 .gitignore 忽略（可存放 encryption_key 等敏感项）。
+#
+# 优先级：环境变量 > 本文件 > 内置默认值。
+# 环境变量名与字段的对应关系见 .env.example。
+#
+# 生产环境（APP_ENV=production）必须提供本文件且通过完整校验，否则进程拒绝启动。
+
+app:
+  name: InkLore
+  env: development
+  host: 0.0.0.0
+  port: 8080
+  debug: false
+  http_read_timeout_seconds: 120
+  http_idle_timeout_seconds: 120
+
+database:
+  driver: postgres
+  dsn: "postgres://ai_novel:change-me@127.0.0.1:5432/ai_novel?sslmode=disable"
+  max_open_conns: 40
+  max_idle_conns: 10
+  conn_max_lifetime: 1800
+  conn_max_idle_time: 600
+  slow_threshold_ms: 200
+
+# 存储档位（INK-108 / ADR-0012）
+# 数据库是唯一权威存储：database.dsn 为空时进程直接拒绝启动（含开发环境）。
+# 仅当显式把 allow_memory_store 设为 true 时才允许降级为内存仓储
+# （数据只在进程内，重启即丢失，只可用于离线联调）。
+storage:
+  allow_memory_store: false
+
+redis:
+  enabled: true
+  host: 127.0.0.1
+  port: 6379
+  password: ""
+  db: 0
+
+security:
+  # 必须为 32 字节；生产环境请改用 ENCRYPTION_KEY 环境变量注入
+  encryption_key: ""
+  allowed_origins:
+    - http://127.0.0.1:3000
+    - http://localhost:3000
+  bcrypt_cost: 10
+
+auth:
+  cookie_secure: false
+  cookie_http_only: true
+  access_token_ttl: 3600
+  refresh_token_ttl: 2592000
+  session_ttl: 86400
+
+logging:
+  level: info
+  format: text
+  output: stdout
+
+# Agent 辅助任务绑定（INK-050）：上下文压缩的辅助模型。
+# 模型只按 model_key 声明，运行时到 Provider 注册表（llm_models/llm_providers）解析；
+# 注册表里没有该模型时会告警并降级为本地确定性交接文档，不影响主流程。
+agent_auxiliary:
+  compression:
+    enabled: false
+    model_key: gpt-4o
+    system_prompt: ""
+    user_prompt: ""
+    max_tokens: 1024
+    temperature: 0.2

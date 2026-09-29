@@ -1,0 +1,93 @@
+# PG16既有卷须先备份并迁移至新PG17数据目录，禁止原卷直接更换主版本启动。
+# InkLore 生产编排：PostgreSQL 17 (pgvector) + Redis 7 + 应用
+#
+# 使用：
+#   export POSTGRES_PASSWORD='强密码'
+#   export OPENAI_API_KEY='...'        # 也可换成 DEEPSEEK_API_KEY
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# 说明：所有模型密钥只经环境变量注入，不写入镜像、不进仓库（见 ADR-0004）。
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ai_novel}
+      POSTGRES_USER: ${POSTGRES_USER:-ai_novel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?必须设置 POSTGRES_PASSWORD}
+    volumes:
+      - ai-novel-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ai_novel} -d ${POSTGRES_DB:-ai_novel}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - ai-novel-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+        BUILD_TIME: ${BUILD_TIME:-unknown}
+    # 镜像来源：默认本地标签；指向镜像仓库时用 SERVER_IMAGE（如 registry.example.com/inklore/server），
+    # 这样「按版本一键回滚」是从仓库拉取不可变标签，而不是依赖本地缓存（INK-059）。
+    image: ${SERVER_IMAGE:-inklore/server}:${APP_VERSION:-dev}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # 健康检查：`docker compose up --wait` 会等到应用真正可用（而不是容器一启动就返回），
+    # 回滚后也能用同一条命令确认新容器已就绪（INK-059）。
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    # 运行配置：生产环境必须有 configs/config.yaml（ADR-0011）。
+    # 部署前：cp configs/config.example.yaml configs/config.yaml
+    volumes:
+      - ./configs:/app/configs:ro
+    environment:
+      APP_ENV: production
+      # 32 字节加密密钥：只允许环境变量注入（ADR-0004）。缺失时 compose 直接报错，
+      # 而不是让容器启动后因配置校验失败而反复重启。
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?必须设置 32 字节的 ENCRYPTION_KEY（见 ADR-0004 / ADR-0011）}
+      JWT_SECRET: ${JWT_SECRET:-}
+      # 生产安全开关：生产环境校验要求 cookie_secure 与回调签名验证同时启用，
+      # 否则服务会因配置校验失败而重启；此处给出安全默认值，可用同名环境变量覆盖。
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      CALLBACK_SIGNATURE_VERIFY: ${CALLBACK_SIGNATURE_VERIFY:-true}
+      HTTP_ADDR: ":8080"
+      DATABASE_DRIVER: postgres
+      DATABASE_DSN: postgres://${POSTGRES_USER:-ai_novel}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ai_novel}?sslmode=disable
+      REDIS_ENABLED: "true"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      # 密钥仅从宿主机环境注入
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+
+volumes:
+  ai-novel-postgres:
+  ai-novel-redis:

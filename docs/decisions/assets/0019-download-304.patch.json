@@ -1,0 +1,9 @@
+[
+  {
+    "op": "add",
+    "path": "/paths/~1v1~1platform~1files~1{file_id}~1download/get/responses/304",
+    "value": {
+      "description": "当前身份与文件授权通过且 If-None-Match 匹配；无响应体"
+    }
+  }
+]

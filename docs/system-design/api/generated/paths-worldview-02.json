@@ -1,0 +1,1119 @@
+{
+ "x-generated": "build-contracts.cjs",
+ "paths": {
+  "/v1/worldview/novels/{novel_id}/lore": {
+   "get": {
+    "operationId": "worldview_listlore",
+    "tags": [
+     "worldview"
+    ],
+    "summary": "listlore",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-10 worldview.listlore",
+    "x-errors": [
+     {
+      "code": "worldview.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "worldview.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "novel_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Limit"
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Cursor"
+     },
+     {
+      "name": "deleted",
+      "in": "query",
+      "required": false,
+      "description": "默认false返回有效项；true仅原Owner查看该未删除作品的单项回收站。",
+      "schema": {
+       "type": "boolean",
+       "default": false
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../worldview-types.json#/components/schemas/LorePage"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    }
+   },
+   "post": {
+    "operationId": "worldview_createLore",
+    "tags": [
+     "worldview"
+    ],
+    "summary": "createLore",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-10 worldview.createLore",
+    "x-errors": [
+     {
+      "code": "worldview.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "worldview.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "worldview.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "worldview.invalid_state",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "platform.idempotency_conflict",
+      "http_status": 409,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.operation_in_progress",
+      "http_status": 409,
+      "recovery": "read_status"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "novel_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../worldview-types.json#/components/schemas/Lore"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../worldview-types.json#/components/schemas/CreateLore"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/worldview/novels/{novel_id}/relations": {
+   "get": {
+    "operationId": "worldview_listrelations",
+    "tags": [
+     "worldview"
+    ],
+    "summary": "listrelations",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-10 worldview.listrelations",
+    "x-errors": [
+     {
+      "code": "worldview.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "worldview.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "novel_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Limit"
+     },
+     {
+      "$ref": "../common.json#/components/parameters/Cursor"
+     },
+     {
+      "name": "deleted",
+      "in": "query",
+      "required": false,
+      "description": "默认false返回有效项；true仅原Owner查看该未删除作品的单项回收站。",
+      "schema": {
+       "type": "boolean",
+       "default": false
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../worldview-types.json#/components/schemas/RelationPage"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    }
+   },
+   "post": {
+    "operationId": "worldview_createRelation",
+    "tags": [
+     "worldview"
+    ],
+    "summary": "createRelation",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-10 worldview.createRelation",
+    "x-errors": [
+     {
+      "code": "worldview.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "worldview.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "worldview.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "worldview.invalid_state",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "platform.idempotency_conflict",
+      "http_status": 409,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.operation_in_progress",
+      "http_status": 409,
+      "recovery": "read_status"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "novel_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "201": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../worldview-types.json#/components/schemas/Relation"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../worldview-types.json#/components/schemas/CreateRelation"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/worldview/novels/{novel_id}/world-revision": {
+   "get": {
+    "operationId": "worldview_getWorldRevision",
+    "tags": [
+     "worldview"
+    ],
+    "summary": "getWorldRevision",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-11 worldview.getWorldRevision",
+    "x-errors": [
+     {
+      "code": "worldview.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "worldview.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "novel_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../worldview-types.json#/components/schemas/WorldRevision"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    }
+   }
+  },
+  "/v1/worldview/relations/{relation_id}": {
+   "get": {
+    "operationId": "worldview_getRelation",
+    "tags": [
+     "worldview"
+    ],
+    "summary": "getRelation",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-10 worldview.getRelation",
+    "x-errors": [
+     {
+      "code": "worldview.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "worldview.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "relation_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../worldview-types.json#/components/schemas/Relation"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    }
+   },
+   "put": {
+    "operationId": "worldview_updateRelation",
+    "tags": [
+     "worldview"
+    ],
+    "summary": "updateRelation",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-10 worldview.updateRelation",
+    "x-errors": [
+     {
+      "code": "worldview.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "worldview.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "worldview.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "worldview.invalid_state",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "platform.idempotency_conflict",
+      "http_status": 409,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.operation_in_progress",
+      "http_status": 409,
+      "recovery": "read_status"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "relation_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../worldview-types.json#/components/schemas/Relation"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../worldview-types.json#/components/schemas/UpdateRelation"
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "operationId": "worldview_deleteRelation",
+    "tags": [
+     "worldview"
+    ],
+    "summary": "deleteRelation",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-10 worldview.deleteRelation",
+    "x-errors": [
+     {
+      "code": "worldview.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "worldview.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "worldview.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "worldview.invalid_state",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "platform.idempotency_conflict",
+      "http_status": 409,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.operation_in_progress",
+      "http_status": 409,
+      "recovery": "read_status"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "relation_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "name": "expected_revision",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/Revision"
+      }
+     },
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../worldview-types.json#/components/schemas/Relation"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    }
+   }
+  },
+  "/v1/worldview/relations/{relation_id}/restore": {
+   "post": {
+    "operationId": "worldview_restoreRelation",
+    "tags": [
+     "worldview"
+    ],
+    "summary": "worldview_restoreRelation",
+    "x-permission": {
+     "audience": "creator",
+     "roles": [
+      "creator"
+     ],
+     "scope": "owner"
+    },
+    "x-use-case": "FR-03 worldview.restoreRelation",
+    "x-errors": [
+     {
+      "code": "worldview.not_found",
+      "http_status": 404,
+      "recovery": "none"
+     },
+     {
+      "code": "worldview.validation_failed",
+      "http_status": 422,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "worldview.version_conflict",
+      "http_status": 409,
+      "recovery": "refresh_then_merge"
+     },
+     {
+      "code": "worldview.invalid_state",
+      "http_status": 409,
+      "recovery": "read_status"
+     },
+     {
+      "code": "platform.idempotency_conflict",
+      "http_status": 409,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "platform.operation_in_progress",
+      "http_status": 409,
+      "recovery": "read_status"
+     }
+    ],
+    "parameters": [
+     {
+      "name": "relation_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "../common.json#/components/schemas/UUID"
+      }
+     },
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功",
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "properties": {
+            "data": {
+             "$ref": "../worldview-types.json#/components/schemas/Relation"
+            }
+           },
+           "required": [
+            "data"
+           ]
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "404": {
+      "$ref": "../common.json#/components/responses/NotFound"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "413": {
+      "description": "请求或文件超出硬限制",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "../common.json#/components/schemas/Error"
+        }
+       }
+      }
+     },
+     "422": {
+      "$ref": "../common.json#/components/responses/ValidationFailed"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../worldview-types.json#/components/schemas/RevisionCommand"
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

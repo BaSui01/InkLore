@@ -1,0 +1,214 @@
+{
+ "errors": [
+  {
+   "code": "agent.approval_binding_mismatch",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.agent.approval_binding_mismatch",
+   "operations": [
+    "agent_approve_approval",
+    "agent_reject_approval"
+   ]
+  },
+  {
+   "code": "agent.approval_consumed",
+   "http_status": 409,
+   "recovery": "read_status",
+   "message_key": "errors.agent.approval_consumed",
+   "operations": [
+    "agent_approve_approval",
+    "agent_reject_approval"
+   ]
+  },
+  {
+   "code": "agent.approval_expired",
+   "http_status": 409,
+   "recovery": "read_status",
+   "delivery": "stream_or_preflight",
+   "message_key": "errors.agent.approval_expired",
+   "operations": [
+    "agent_subscribe_events",
+    "agent_approve_approval",
+    "agent_reject_approval"
+   ]
+  },
+  {
+   "code": "agent.approval_source_changed",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "committed": true,
+   "message_key": "errors.agent.approval_source_changed",
+   "operations": [
+    "agent_approve_approval",
+    "agent_reject_approval"
+   ]
+  },
+  {
+   "code": "agent.context_budget_exceeded",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.agent.context_budget_exceeded",
+   "operations": [
+    "agent_create_run"
+   ]
+  },
+  {
+   "code": "agent.diagnostic_not_allowed",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.agent.diagnostic_not_allowed",
+   "operations": [
+    "agent_create_diagnostic"
+   ]
+  },
+  {
+   "code": "agent.event_cursor_expired",
+   "http_status": 410,
+   "recovery": "read_status",
+   "message_key": "errors.agent.event_cursor_expired",
+   "operations": [
+    "global",
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "agent.event_cursor_invalid",
+   "http_status": 400,
+   "recovery": "fix_input",
+   "message_key": "errors.agent.event_cursor_invalid",
+   "operations": [
+    "global",
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "agent.execution_outcome_unknown",
+   "http_status": 409,
+   "recovery": "read_status",
+   "message_key": "errors.agent.execution_outcome_unknown",
+   "operations": [
+    "global",
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "agent.invalid_configuration",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.agent.invalid_configuration",
+   "operations": [
+    "agent_create_definition",
+    "agent_update_definition",
+    "agent_create_workflow",
+    "agent_update_workflow",
+    "agent_create_mcp_server",
+    "agent_update_mcp_server"
+   ]
+  },
+  {
+   "code": "agent.invalid_dag",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.agent.invalid_dag",
+   "operations": [
+    "agent_create_run"
+   ]
+  },
+  {
+   "code": "agent.loop_detected",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "delivery": "stream_or_preflight",
+   "message_key": "errors.agent.loop_detected",
+   "operations": [
+    "agent_subscribe_events"
+   ]
+  },
+  {
+   "code": "agent.question_already_answered",
+   "http_status": 409,
+   "recovery": "read_status",
+   "message_key": "errors.agent.question_already_answered",
+   "operations": [
+    "agent_answer_run_question"
+   ]
+  },
+  {
+   "code": "agent.question_binding_mismatch",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "committed": true,
+   "message_key": "errors.agent.question_binding_mismatch",
+   "operations": [
+    "agent_answer_run_question"
+   ]
+  },
+  {
+   "code": "agent.question_expired",
+   "http_status": 409,
+   "recovery": "read_status",
+   "delivery": "stream_or_preflight",
+   "message_key": "errors.agent.question_expired",
+   "operations": [
+    "agent_subscribe_events",
+    "agent_answer_run_question"
+   ]
+  },
+  {
+   "code": "agent.resource_in_use",
+   "http_status": 409,
+   "recovery": "fix_input",
+   "message_key": "errors.agent.resource_in_use",
+   "operations": [
+    "agent_delete_definition",
+    "agent_delete_workflow",
+    "agent_delete_mcp_server"
+   ]
+  },
+  {
+   "code": "agent.run_capacity_exceeded",
+   "http_status": 429,
+   "recovery": "retry_later",
+   "message_key": "errors.agent.run_capacity_exceeded",
+   "operations": [
+    "agent_create_run"
+   ]
+  },
+  {
+   "code": "agent.source_changed",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.agent.source_changed",
+   "operations": [
+    "agent_create_run"
+   ]
+  },
+  {
+   "code": "agent.task_policy_version_changed",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.agent.task_policy_version_changed",
+   "operations": [
+    "agent_create_run"
+   ]
+  },
+  {
+   "code": "agent.version_conflict",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.agent.version_conflict",
+   "operations": [
+    "agent_update_definition",
+    "agent_delete_definition",
+    "agent_update_workflow",
+    "agent_delete_workflow",
+    "agent_update_mcp_server",
+    "agent_delete_mcp_server",
+    "agent_answer_novel_guide",
+    "agent_cancel_run",
+    "agent_approve_approval",
+    "agent_reject_approval"
+   ]
+  }
+ ]
+}

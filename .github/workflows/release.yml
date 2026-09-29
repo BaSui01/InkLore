@@ -1,0 +1,65 @@
+name: Release
+
+# 打 tag 即发布：构建并推送**不可变**镜像（<版本> 与 sha-<短提交> 双标签）。
+# 版本标识与回滚流程见 docs/release-and-rollback.md（INK-059）。
+# 说明：本工作流只依赖 GitHub 自带凭据（GITHUB_TOKEN + packages: write），不需要额外密钥；
+# 若使用自建仓库，把 registry 与登录步骤替换为对应的 secrets 即可。
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    name: 构建并推送发布镜像
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 解析版本 / 提交 / 镜像名
+        id: meta
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          SHORT="$(git rev-parse --short HEAD)"
+          BUILT_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          IMAGE="ghcr.io/$(echo "${{ github.repository }}" | tr "[:upper:]" "[:lower:]")"
+          {
+            echo "version=$VERSION"
+            echo "short=$SHORT"
+            echo "built_at=$BUILT_AT"
+            echo "image=$IMAGE"
+          } >> "$GITHUB_OUTPUT"
+          echo "版本=$VERSION 提交=$SHORT 镜像=$IMAGE"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 构建并推送（双标签，不可变）
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.version }}
+            GIT_COMMIT=${{ steps.meta.outputs.short }}
+            BUILD_TIME=${{ steps.meta.outputs.built_at }}
+          tags: |
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}
+            ${{ steps.meta.outputs.image }}:sha-${{ steps.meta.outputs.short }}
+
+      - name: 冒烟提示
+        run: |
+          echo "部署：APP_VERSION=${{ steps.meta.outputs.version }} SERVER_IMAGE=${{ steps.meta.outputs.image }} docker compose -p inklore-prod -f docker-compose.prod.yml up -d --wait"
+          echo "验证：curl -s http://127.0.0.1:8080/healthz  # data.version 必须等于 ${{ steps.meta.outputs.version }}"
+          echo "回滚：APP_VERSION=<上一个版本> SERVER_IMAGE=${{ steps.meta.outputs.image }} docker compose -p inklore-prod -f docker-compose.prod.yml up -d --wait"
+          echo "失败版本：在 docs/release-and-rollback.md 第 4 节登记并把原标签标记为 deprecated（追加 -withdrawn 别名）"

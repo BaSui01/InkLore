@@ -1,0 +1,60 @@
+# ── 环境与密钥 ──────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ── 构建产物 ───────────────────────────────────────────────
+bin/
+dist/
+dist-admin/
+frontend/dist/
+frontend/dist-admin/
+build/
+# TypeScript 增量构建信息：每次 tsc -b 都会变，属于本地产物（INK-064）
+frontend/tsconfig.tsbuildinfo
+*.tsbuildinfo
+*.exe
+*.dll
+*.so
+*.dylib
+*.zip
+/server
+/admin
+
+# ── 运行时 ────────────────────────────────────────────────
+tmp/
+logs/
+*.log
+air.log
+# 工程笔记归档期间的排他锁，不属于工程记忆资产
+/.agents/notes-archive.lock
+
+# ── 依赖 ──────────────────────────────────────────────────
+node_modules/
+vendor/
+package-lock.json
+yarn.lock
+bun.lockb
+
+# ── 覆盖率 / 测试产物（本项目不写测试，仅保留忽略规则） ──────
+coverage/
+*.out
+*.prof
+
+# ── 本地运行配置（可能含 encryption_key，禁止入库）────────────
+configs/config.yaml
+
+# ── 编辑器与操作系统 ───────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ── 临时探针与工具 ────────────────────────────────────────
+.tmp*
+.codex/
+.snow/
+**/.snow/

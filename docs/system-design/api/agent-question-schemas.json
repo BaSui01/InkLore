@@ -1,0 +1,369 @@
+{
+ "components": {
+  "schemas": {
+   "SafeInputSchema": {
+    "type": "object",
+    "maxProperties": 4,
+    "properties": {
+     "type": {
+      "const": "object"
+     },
+     "properties": {
+      "type": "object",
+      "maxProperties": 24,
+      "propertyNames": {
+       "pattern": "^[a-zA-Z][a-zA-Z0-9_]{0,63}$"
+      },
+      "additionalProperties": {
+       "$ref": "#/components/schemas/SafeInputField"
+      }
+     },
+     "required": {
+      "type": "array",
+      "maxItems": 24,
+      "uniqueItems": true,
+      "items": {
+       "type": "string",
+       "maxLength": 64
+      }
+     },
+     "additionalProperties": {
+      "const": false
+     }
+    },
+    "required": [
+     "type",
+     "properties",
+     "additionalProperties"
+    ],
+    "additionalProperties": false,
+    "description": "仅白名单标量/有界enum字段；服务端投影去除内部字段，不含远程引用/default/条件/组合schema。"
+   },
+   "Question": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "question_version": {
+      "const": 1
+     },
+     "run_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "node_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "open",
+       "answered",
+       "expired",
+       "cancelled"
+      ]
+     },
+     "title_key": {
+      "type": "string",
+      "maxLength": 160
+     },
+     "help_key": {
+      "type": "string",
+      "maxLength": 160
+     },
+     "response_schema": {
+      "$ref": "#/components/schemas/QuestionResponseSchema"
+     },
+     "options": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+       "$ref": "#/components/schemas/QuestionOption"
+      }
+     },
+     "context_summary": {
+      "type": "string",
+      "maxLength": 1000
+     },
+     "source_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "source_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     },
+     "expires_at": {
+      "$ref": "./common.json#/components/schemas/Timestamp"
+     },
+     "answer_hash": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "answered_at": {
+      "anyOf": [
+       {
+        "$ref": "./common.json#/components/schemas/Timestamp"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "answer": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 4000
+       },
+       {
+        "type": "array",
+        "maxItems": 20,
+        "items": {
+         "type": "string",
+         "maxLength": 200
+        }
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "id",
+     "revision",
+     "question_version",
+     "run_id",
+     "node_id",
+     "status",
+     "title_key",
+     "help_key",
+     "response_schema",
+     "options",
+     "context_summary",
+     "source_revision",
+     "source_hash",
+     "expires_at",
+     "answer_hash",
+     "answered_at"
+    ],
+    "additionalProperties": false
+   },
+   "QuestionAnswer": {
+    "type": "object",
+    "properties": {
+     "expected_revision": {
+      "$ref": "./common.json#/components/schemas/Revision"
+     },
+     "question_version": {
+      "const": 1
+     },
+     "answer": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 4000
+       },
+       {
+        "type": "array",
+        "maxItems": 20,
+        "items": {
+         "type": "string",
+         "maxLength": 200
+        }
+       }
+      ]
+     }
+    },
+    "required": [
+     "expected_revision",
+     "question_version",
+     "answer"
+    ],
+    "additionalProperties": false
+   },
+   "SafeInputField": {
+    "type": "object",
+    "properties": {
+     "type": {
+      "type": "string",
+      "enum": [
+       "string",
+       "integer",
+       "number",
+       "boolean"
+      ]
+     },
+     "title_key": {
+      "type": "string",
+      "maxLength": 160
+     },
+     "enum": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+       "type": [
+        "string",
+        "number",
+        "integer",
+        "boolean"
+       ]
+      }
+     },
+     "minLength": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4000
+     },
+     "maxLength": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4000
+     },
+     "minimum": {
+      "type": "number"
+     },
+     "maximum": {
+      "type": "number"
+     }
+    },
+    "required": [
+     "type",
+     "title_key"
+    ],
+    "additionalProperties": false
+   },
+   "QuestionResponseSchema": {
+    "oneOf": [
+     {
+      "type": "object",
+      "properties": {
+       "type": {
+        "const": "string"
+       },
+       "enum": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 20,
+        "uniqueItems": true,
+        "items": {
+         "type": "string",
+         "maxLength": 200
+        }
+       }
+      },
+      "required": [
+       "type",
+       "enum"
+      ],
+      "additionalProperties": false
+     },
+     {
+      "type": "object",
+      "properties": {
+       "type": {
+        "const": "array"
+       },
+       "uniqueItems": {
+        "const": true
+       },
+       "items": {
+        "type": "object",
+        "properties": {
+         "type": {
+          "const": "string"
+         },
+         "enum": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {
+           "type": "string",
+           "maxLength": 200
+          }
+         }
+        },
+        "required": [
+         "type",
+         "enum"
+        ],
+        "additionalProperties": false
+       },
+       "minItems": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 20
+       },
+       "maxItems": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 20
+       }
+      },
+      "required": [
+       "type",
+       "uniqueItems",
+       "items",
+       "maxItems"
+      ],
+      "additionalProperties": false
+     },
+     {
+      "type": "object",
+      "properties": {
+       "type": {
+        "const": "string"
+       },
+       "minLength": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 4000
+       },
+       "maxLength": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 4000
+       }
+      },
+      "required": [
+       "type",
+       "maxLength"
+      ],
+      "additionalProperties": false
+     }
+    ]
+   },
+   "QuestionOption": {
+    "type": "object",
+    "properties": {
+     "value": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "label_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+     }
+    },
+    "required": [
+     "value",
+     "label_key"
+    ],
+    "additionalProperties": false
+   }
+  }
+ }
+}

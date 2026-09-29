@@ -1,0 +1,35 @@
+# 版本控制与元数据
+.git
+.gitignore
+.gitattributes
+.github
+
+# 构建产物与临时文件
+bin
+tmp
+dist
+coverage
+
+# 依赖（镜像内重新下载）
+node_modules
+vendor
+
+# 前端源码（后端镜像不需要，前端由 Vite 单独构建）
+frontend
+
+# 文档与开发工具
+docs
+*.md
+Makefile
+.golangci.yml
+scripts
+.air.toml
+docker-compose*.yml
+
+# 环境与密钥（严禁进入镜像）
+.env
+.env.*
+*.pem
+*.key
+# 运行配置可能含 encryption_key：只允许模板 config.example.yaml 进入镜像（ADR-0011 / INK-063）
+configs/config.yaml

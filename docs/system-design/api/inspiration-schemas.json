@@ -1,0 +1,1854 @@
+{
+  "paths": {},
+  "components": {
+    "schemas": {
+      "UUID": {
+        "$ref": "./common.json#/components/schemas/UUID"
+      },
+      "Expected": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "ReasonCommand": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "expected_revision",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "Deleted": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "deleted"
+        ],
+        "additionalProperties": false
+      },
+      "Usage": {
+        "type": "object",
+        "properties": {
+          "used_tokens": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "reserved_tokens": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "calls_used": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "used_tokens",
+          "reserved_tokens",
+          "calls_used"
+        ],
+        "additionalProperties": false
+      },
+      "Budget": {
+        "type": "object",
+        "properties": {
+          "total_tokens": {
+            "type": "integer",
+            "minimum": 1000,
+            "maximum": 120000,
+            "default": 30000
+          },
+          "max_output_tokens": {
+            "type": "integer",
+            "minimum": 256,
+            "maximum": 8000,
+            "default": 4000
+          },
+          "max_calls": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "default": 6
+          }
+        },
+        "required": [
+          "total_tokens",
+          "max_output_tokens",
+          "max_calls"
+        ],
+        "additionalProperties": false
+      },
+      "Evidence": {
+        "type": "object",
+        "properties": {
+          "asset_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "asset_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "segment_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "start_offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 199999
+          },
+          "end_offset": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200000
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "excerpt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "source_unavailable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "asset_id",
+          "asset_revision",
+          "segment_id",
+          "start_offset",
+          "end_offset",
+          "content_hash",
+          "excerpt",
+          "source_unavailable"
+        ],
+        "additionalProperties": false
+      },
+      "AssetCreate": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "source_kind": {
+            "type": "string",
+            "enum": [
+              "file",
+              "paste"
+            ]
+          },
+          "file_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "paste_text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200000
+          },
+          "author": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 120
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri",
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "rights_status": {
+            "type": "string",
+            "enum": [
+              "owned",
+              "licensed",
+              "public_domain",
+              "unknown"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "source_kind",
+          "author",
+          "source_note",
+          "rights_status"
+        ],
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "properties": {
+              "source_kind": {
+                "const": "file"
+              }
+            },
+            "required": [
+              "file_id"
+            ],
+            "not": {
+              "required": [
+                "paste_text"
+              ]
+            }
+          },
+          {
+            "properties": {
+              "source_kind": {
+                "const": "paste"
+              }
+            },
+            "required": [
+              "paste_text"
+            ],
+            "not": {
+              "required": [
+                "file_id"
+              ]
+            }
+          }
+        ]
+      },
+      "AssetUpdate": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "author": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 120
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri",
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "rights_status": {
+            "type": "string",
+            "enum": [
+              "owned",
+              "licensed",
+              "public_domain",
+              "unknown"
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "title",
+          "author",
+          "source_url",
+          "source_note",
+          "rights_status"
+        ],
+        "additionalProperties": false
+      },
+      "Asset": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "owner_user_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "file_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "source_kind": {
+            "type": "string",
+            "enum": [
+              "file",
+              "paste"
+            ]
+          },
+          "author": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 120
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "rights_status": {
+            "type": "string",
+            "enum": [
+              "owned",
+              "licensed",
+              "public_domain",
+              "unknown"
+            ]
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "codepoint_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200000
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "deleted"
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "redacted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "owner_user_id",
+          "file_id",
+          "title",
+          "source_kind",
+          "author",
+          "source_url",
+          "source_note",
+          "rights_status",
+          "content_hash",
+          "codepoint_count",
+          "state",
+          "deleted_at",
+          "redacted_at"
+        ],
+        "additionalProperties": false
+      },
+      "Segment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "asset_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "seq": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "start_offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 199999
+          },
+          "end_offset": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200000
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "asset_id",
+          "seq",
+          "start_offset",
+          "end_offset",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "AnalysisCreate": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "deconstruction",
+              "style",
+              "ideas"
+            ]
+          },
+          "asset_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "asset_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "brief": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 4000
+          },
+          "budget": {
+            "$ref": "./inspiration-schemas.json#/components/schemas/Budget"
+          }
+        },
+        "required": [
+          "kind",
+          "brief",
+          "budget"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "deconstruction",
+                    "style"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "asset_id",
+                "asset_revision"
+              ]
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "asset_id"
+              ]
+            },
+            "then": {
+              "required": [
+                "asset_revision"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "ideas"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "brief": {
+                  "type": "string",
+                  "minLength": 50,
+                  "maxLength": 4000
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "asset_revision"
+              ]
+            },
+            "then": {
+              "required": [
+                "asset_id"
+              ]
+            }
+          }
+        ]
+      },
+      "Analysis": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "owner_user_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "novel_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "asset_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "asset_revision": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Revision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "deconstruction",
+              "style",
+              "ideas"
+            ]
+          },
+          "brief": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 4000
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "budget": {
+            "$ref": "./inspiration-schemas.json#/components/schemas/Budget"
+          },
+          "usage": {
+            "$ref": "./inspiration-schemas.json#/components/schemas/Usage"
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "owner_user_id",
+          "novel_id",
+          "asset_id",
+          "asset_revision",
+          "kind",
+          "brief",
+          "state",
+          "run_id",
+          "budget",
+          "usage",
+          "failure_code"
+        ],
+        "additionalProperties": false
+      },
+      "StyleMetrics": {
+        "type": "object",
+        "properties": {
+          "mean_sentence_length": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 200000
+          },
+          "dialogue_ratio": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "sensory_bias": {
+            "type": "string",
+            "enum": [
+              "visual",
+              "auditory",
+              "tactile",
+              "olfactory",
+              "balanced"
+            ]
+          },
+          "instructions": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "mean_sentence_length",
+          "dialogue_ratio",
+          "sensory_bias",
+          "instructions"
+        ],
+        "additionalProperties": false
+      },
+      "Finding": {
+        "type": "object",
+        "properties": {
+          "dimension": {
+            "type": "string",
+            "enum": [
+              "opening_hook",
+              "conflict",
+              "pacing",
+              "character",
+              "cliffhanger"
+            ]
+          },
+          "observation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Evidence"
+            },
+            "minItems": 1,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "dimension",
+          "observation",
+          "confidence",
+          "evidence"
+        ],
+        "additionalProperties": false
+      },
+      "Pattern": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "minItems": 1,
+            "maxItems": 8
+          },
+          "applicability": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "counterexample": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Evidence"
+            },
+            "minItems": 1,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "name",
+          "steps",
+          "applicability",
+          "counterexample",
+          "evidence"
+        ],
+        "additionalProperties": false
+      },
+      "Idea": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "opening",
+              "conflict",
+              "twist",
+              "cliffhanger",
+              "setting"
+            ]
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Evidence"
+            },
+            "minItems": 0,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "title",
+          "category",
+          "body",
+          "rationale",
+          "evidence"
+        ],
+        "additionalProperties": false
+      },
+      "Report": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "analysis_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 4000
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Finding"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "patterns": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Pattern"
+            },
+            "minItems": 0,
+            "maxItems": 20
+          },
+          "style_metrics": {
+            "anyOf": [
+              {
+                "$ref": "./inspiration-schemas.json#/components/schemas/StyleMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ideas": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Idea"
+            },
+            "minItems": 0,
+            "maxItems": 10
+          },
+          "redacted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "analysis_id",
+          "summary",
+          "findings",
+          "patterns",
+          "style_metrics",
+          "ideas",
+          "redacted_at",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "StyleCreate": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "instructions": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "metrics": {
+            "$ref": "./inspiration-schemas.json#/components/schemas/StyleMetrics"
+          },
+          "source_report_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "instructions",
+          "metrics",
+          "source_report_id"
+        ],
+        "additionalProperties": false
+      },
+      "StyleUpdate": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "instructions": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "metrics": {
+            "$ref": "./inspiration-schemas.json#/components/schemas/StyleMetrics"
+          },
+          "source_report_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "title",
+          "instructions",
+          "metrics",
+          "source_report_id"
+        ],
+        "additionalProperties": false
+      },
+      "Style": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "owner_user_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "current_version_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "deleted"
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "redacted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "owner_user_id",
+          "title",
+          "current_version_id",
+          "state",
+          "deleted_at",
+          "redacted_at"
+        ],
+        "additionalProperties": false
+      },
+      "StyleVersion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "style_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "version_no": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "instructions": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "metrics": {
+            "$ref": "./inspiration-schemas.json#/components/schemas/StyleMetrics"
+          },
+          "source_report_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "redacted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "style_id",
+          "version_no",
+          "instructions",
+          "metrics",
+          "source_report_id",
+          "revision",
+          "redacted_at"
+        ],
+        "additionalProperties": false
+      },
+      "CardCreate": {
+        "type": "object",
+        "properties": {
+          "novel_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "opening",
+              "conflict",
+              "twist",
+              "cliffhanger",
+              "setting"
+            ]
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "source_kind": {
+            "type": "string",
+            "enum": [
+              "original",
+              "reference"
+            ]
+          },
+          "source_report_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Evidence"
+            },
+            "minItems": 0,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "novel_id",
+          "title",
+          "category",
+          "body",
+          "rationale",
+          "source_kind",
+          "source_report_id",
+          "evidence"
+        ],
+        "additionalProperties": false
+      },
+      "CardUpdate": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "novel_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "opening",
+              "conflict",
+              "twist",
+              "cliffhanger",
+              "setting"
+            ]
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "source_kind": {
+            "type": "string",
+            "enum": [
+              "original",
+              "reference"
+            ]
+          },
+          "source_report_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Evidence"
+            },
+            "minItems": 0,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "expected_revision",
+          "novel_id",
+          "title",
+          "category",
+          "body",
+          "rationale",
+          "source_kind",
+          "source_report_id",
+          "evidence"
+        ],
+        "additionalProperties": false
+      },
+      "Card": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "owner_user_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "novel_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "opening",
+              "conflict",
+              "twist",
+              "cliffhanger",
+              "setting"
+            ]
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 2000
+          },
+          "source_kind": {
+            "type": "string",
+            "enum": [
+              "original",
+              "reference"
+            ]
+          },
+          "source_report_id": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/UUID"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Evidence"
+            },
+            "minItems": 0,
+            "maxItems": 20
+          },
+          "fingerprint": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "suggested",
+              "archived",
+              "deleted"
+            ]
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "redacted_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "owner_user_id",
+          "novel_id",
+          "title",
+          "category",
+          "body",
+          "rationale",
+          "source_kind",
+          "source_report_id",
+          "evidence",
+          "fingerprint",
+          "state",
+          "deleted_at",
+          "redacted_at"
+        ],
+        "additionalProperties": false
+      },
+      "CardState": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "suggested",
+              "archived"
+            ]
+          }
+        },
+        "required": [
+          "expected_revision",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "AdoptionCreate": {
+        "type": "object",
+        "properties": {
+          "expected_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "target_domain": {
+            "type": "string",
+            "enum": [
+              "content",
+              "outline"
+            ]
+          },
+          "target_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "target_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "target_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "target_domain",
+          "target_id",
+          "target_revision",
+          "target_hash"
+        ],
+        "additionalProperties": false
+      },
+      "Adoption": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "tenant_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "created_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "updated_at": {
+            "$ref": "./common.json#/components/schemas/Timestamp"
+          },
+          "revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "card_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "actor_user_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "target_domain": {
+            "type": "string",
+            "enum": [
+              "content",
+              "outline"
+            ]
+          },
+          "target_id": {
+            "$ref": "./common.json#/components/schemas/UUID"
+          },
+          "target_revision": {
+            "$ref": "./common.json#/components/schemas/Revision"
+          },
+          "target_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "revoked"
+            ]
+          },
+          "revoke_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "$ref": "./common.json#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "created_at",
+          "updated_at",
+          "revision",
+          "card_id",
+          "actor_user_id",
+          "target_domain",
+          "target_id",
+          "target_revision",
+          "target_hash",
+          "state",
+          "revoke_reason",
+          "revoked_at"
+        ],
+        "additionalProperties": false
+      },
+      "AssetPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Asset"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "SegmentPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Segment"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "AnalysisPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Analysis"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "StylePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Style"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "StyleVersionPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/StyleVersion"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "CardPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Card"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      },
+      "AdoptionPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "./inspiration-schemas.json#/components/schemas/Adoption"
+            },
+            "minItems": 0,
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

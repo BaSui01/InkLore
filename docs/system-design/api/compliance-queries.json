@@ -1,0 +1,1289 @@
+{
+  "paths": {
+    "/v1/compliance/rule-sets": {
+      "get": {
+        "operationId": "compliance_list_rule_sets",
+        "summary": "list_rule_sets",
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-15 compliance.list_rule_sets",
+        "x-errors": [
+          {
+            "code": "compliance.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "compliance.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "./common.json#/components/parameters/Limit"
+          },
+          {
+            "$ref": "./common.json#/components/parameters/Cursor"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "published",
+                "retired"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "list_rule_sets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./compliance-schemas.json#/components/schemas/RuleSetPage"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/compliance/rule-sets/{rule_set_id}": {
+      "get": {
+        "operationId": "compliance_get_rule_set",
+        "summary": "get_rule_set",
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-15 compliance.get_rule_set",
+        "x-errors": [
+          {
+            "code": "compliance.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "compliance.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rule_set_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "get_rule_set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./compliance-schemas.json#/components/schemas/RuleSet"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/compliance/rule-sets/{rule_set_id}/rules": {
+      "get": {
+        "operationId": "compliance_list_rules",
+        "summary": "list_rules",
+        "x-permission": {
+          "audience": "admin",
+          "roles": [
+            "operator"
+          ],
+          "scope": "tenant"
+        },
+        "x-use-case": "FR-15 compliance.list_rules",
+        "x-errors": [
+          {
+            "code": "compliance.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "compliance.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rule_set_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "./common.json#/components/parameters/Limit"
+          },
+          {
+            "$ref": "./common.json#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "list_rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./compliance-schemas.json#/components/schemas/RulePage"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/compliance/reports": {
+      "get": {
+        "operationId": "compliance_list_reports",
+        "summary": "list_reports",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-15 compliance.list_reports",
+        "x-errors": [
+          {
+            "code": "compliance.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "compliance.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "./common.json#/components/parameters/Limit"
+          },
+          {
+            "$ref": "./common.json#/components/parameters/Cursor"
+          },
+          {
+            "name": "chapter_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "running",
+                "succeeded",
+                "failed",
+                "cancelled"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "list_reports",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./compliance-schemas.json#/components/schemas/ReportPage"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/compliance/reports/{report_id}": {
+      "get": {
+        "operationId": "compliance_get_report",
+        "summary": "get_report",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-15 compliance.get_report",
+        "x-errors": [
+          {
+            "code": "compliance.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "compliance.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "get_report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./compliance-schemas.json#/components/schemas/Report"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/compliance/reports/{report_id}/issues": {
+      "get": {
+        "operationId": "compliance_list_issues",
+        "summary": "list_issues",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-15 compliance.list_issues",
+        "x-errors": [
+          {
+            "code": "compliance.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "compliance.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "./common.json#/components/parameters/Limit"
+          },
+          {
+            "$ref": "./common.json#/components/parameters/Cursor"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "ignored"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "list_issues",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./compliance-schemas.json#/components/schemas/IssuePage"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/compliance/reports/{report_id}/issues/{issue_id}/decisions": {
+      "get": {
+        "operationId": "compliance_list_issue_decisions",
+        "summary": "list_issue_decisions",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-15 compliance.list_issue_decisions",
+        "x-errors": [
+          {
+            "code": "compliance.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "compliance.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            }
+          },
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "./common.json#/components/parameters/Limit"
+          },
+          {
+            "$ref": "./common.json#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "list_issue_decisions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./compliance-schemas.json#/components/schemas/IssueDecisionPage"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/compliance/reports/{report_id}/reviews": {
+      "get": {
+        "operationId": "compliance_list_reviews",
+        "summary": "list_reviews",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-15 compliance.list_reviews",
+        "x-errors": [
+          {
+            "code": "compliance.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "compliance.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            }
+          },
+          {
+            "$ref": "./common.json#/components/parameters/Limit"
+          },
+          {
+            "$ref": "./common.json#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "list_reviews",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./compliance-schemas.json#/components/schemas/ReviewPage"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/compliance/rewrites": {
+      "get": {
+        "operationId": "compliance_list_rewrites",
+        "summary": "list_rewrites",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-15 compliance.list_rewrites",
+        "x-errors": [
+          {
+            "code": "compliance.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "compliance.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "./common.json#/components/parameters/Limit"
+          },
+          {
+            "$ref": "./common.json#/components/parameters/Cursor"
+          },
+          {
+            "name": "report_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "list_rewrites",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./compliance-schemas.json#/components/schemas/RewritePage"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/compliance/rewrites/{rewrite_id}": {
+      "get": {
+        "operationId": "compliance_get_rewrite",
+        "summary": "get_rewrite",
+        "x-permission": {
+          "audience": "creator",
+          "roles": [
+            "creator"
+          ],
+          "scope": "owner"
+        },
+        "x-use-case": "FR-15 compliance.get_rewrite",
+        "x-errors": [
+          {
+            "code": "compliance.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh_then_merge"
+          },
+          {
+            "code": "compliance.invalid_state",
+            "http_status": 409,
+            "recovery": "read_status"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rewrite_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "./common.json#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "get_rewrite",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.json#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "./compliance-schemas.json#/components/schemas/Rewrite"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./common.json#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "./common.json#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "./common.json#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "./common.json#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "./common.json#/components/responses/Conflict"
+          },
+          "413": {
+            "description": "Request too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "./common.json#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "./common.json#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "./common.json#/components/responses/InternalError"
+          },
+          "502": {
+            "description": "Invalid upstream response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "./common.json#/components/responses/Unavailable"
+          },
+          "504": {
+            "description": "Upstream timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./common.json#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {}
+  }
+}

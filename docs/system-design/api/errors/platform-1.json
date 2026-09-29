@@ -1,0 +1,254 @@
+{
+ "errors": [
+  {
+   "code": "platform.audit_export_limit_exceeded",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.platform.audit_export_limit_exceeded",
+   "operations": [
+    "platformExportAudit"
+   ]
+  },
+  {
+   "code": "platform.cursor_invalid",
+   "http_status": 400,
+   "recovery": "fix_input",
+   "message_key": "errors.platform.cursor_invalid",
+   "operations": [
+    "global"
+   ]
+  },
+  {
+   "code": "platform.dependency_unavailable",
+   "http_status": 503,
+   "recovery": "retry_later",
+   "message_key": "errors.platform.dependency_unavailable",
+   "operations": [
+    "global",
+    "authCaptcha",
+    "authForgotPassword"
+   ]
+  },
+  {
+   "code": "platform.file_in_use",
+   "http_status": 409,
+   "recovery": "fix_input",
+   "message_key": "errors.platform.file_in_use",
+   "operations": [
+    "platformDeleteFile"
+   ]
+  },
+  {
+   "code": "platform.file_too_large",
+   "http_status": 413,
+   "recovery": "fix_input",
+   "message_key": "errors.platform.file_too_large",
+   "operations": [
+    "platformUploadFile"
+   ]
+  },
+  {
+   "code": "platform.file_type_invalid",
+   "http_status": 422,
+   "recovery": "fix_input",
+   "message_key": "errors.platform.file_type_invalid",
+   "operations": [
+    "platformUploadFile"
+   ]
+  },
+  {
+   "code": "platform.idempotency_conflict",
+   "http_status": 409,
+   "recovery": "fix_input",
+   "message_key": "errors.platform.idempotency_conflict",
+   "operations": [
+    "global",
+    "content_archiveNovel",
+    "content_restoreNovel",
+    "content_restoreVolume",
+    "content_restoreChapter",
+    "content_reorderOrganization",
+    "content_saveBody",
+    "content_rollbackChapter",
+    "content_confirmChapter",
+    "content_copyNovel",
+    "content_createImport",
+    "content_createExport",
+    "content_cancelJob",
+    "content_commitImport",
+    "content_createNovel",
+    "content_updateNovel",
+    "content_deleteNovel",
+    "content_createVolume",
+    "content_updateVolume",
+    "content_deleteVolume",
+    "content_createChapter",
+    "content_updateChapter",
+    "content_deleteChapter",
+    "outline_createClue",
+    "outline_updateClue",
+    "outline_deleteClue",
+    "outline_transitionClue",
+    "outline_restoreClue",
+    "outline_createBeat",
+    "outline_updateBeat",
+    "outline_deleteBeat",
+    "outline_createScene",
+    "outline_updateScene",
+    "outline_deleteScene",
+    "outline_restoreBeat",
+    "outline_restoreScene",
+    "outline_createNode",
+    "outline_updateNode",
+    "outline_deleteNode",
+    "outline_reorder",
+    "outline_restoreNode",
+    "outline_rebindNode",
+    "worldview_checkFacts",
+    "worldview_retractFact",
+    "worldview_supersedeFact",
+    "worldview_createRelation",
+    "worldview_updateRelation",
+    "worldview_deleteRelation",
+    "worldview_restoreRelation",
+    "worldview_createCharacter",
+    "worldview_updateCharacter",
+    "worldview_deleteCharacter",
+    "worldview_createLore",
+    "worldview_updateLore",
+    "worldview_deleteLore",
+    "worldview_restoreCharacter",
+    "worldview_restoreLore"
+   ]
+  },
+  {
+   "code": "platform.internal_error",
+   "http_status": 500,
+   "recovery": "read_status",
+   "message_key": "errors.platform.internal_error",
+   "operations": [
+    "global"
+   ]
+  },
+  {
+   "code": "platform.method_not_allowed",
+   "http_status": 405,
+   "recovery": "fix_input",
+   "message_key": "errors.platform.method_not_allowed",
+   "operations": [
+    "global"
+   ]
+  },
+  {
+   "code": "platform.operation_in_progress",
+   "http_status": 409,
+   "recovery": "read_status",
+   "message_key": "errors.platform.operation_in_progress",
+   "operations": [
+    "global",
+    "content_archiveNovel",
+    "content_restoreNovel",
+    "content_restoreVolume",
+    "content_restoreChapter",
+    "content_reorderOrganization",
+    "content_saveBody",
+    "content_rollbackChapter",
+    "content_confirmChapter",
+    "content_copyNovel",
+    "content_createImport",
+    "content_createExport",
+    "content_cancelJob",
+    "content_commitImport",
+    "content_createNovel",
+    "content_updateNovel",
+    "content_deleteNovel",
+    "content_createVolume",
+    "content_updateVolume",
+    "content_deleteVolume",
+    "content_createChapter",
+    "content_updateChapter",
+    "content_deleteChapter",
+    "outline_createClue",
+    "outline_updateClue",
+    "outline_deleteClue",
+    "outline_transitionClue",
+    "outline_restoreClue",
+    "outline_createBeat",
+    "outline_updateBeat",
+    "outline_deleteBeat",
+    "outline_createScene",
+    "outline_updateScene",
+    "outline_deleteScene",
+    "outline_restoreBeat",
+    "outline_restoreScene",
+    "outline_createNode",
+    "outline_updateNode",
+    "outline_deleteNode",
+    "outline_reorder",
+    "outline_restoreNode",
+    "outline_rebindNode",
+    "worldview_checkFacts",
+    "worldview_retractFact",
+    "worldview_supersedeFact",
+    "worldview_createRelation",
+    "worldview_updateRelation",
+    "worldview_deleteRelation",
+    "worldview_restoreRelation",
+    "worldview_createCharacter",
+    "worldview_updateCharacter",
+    "worldview_deleteCharacter",
+    "worldview_createLore",
+    "worldview_updateLore",
+    "worldview_deleteLore",
+    "worldview_restoreCharacter",
+    "worldview_restoreLore"
+   ]
+  },
+  {
+   "code": "platform.range_invalid",
+   "http_status": 416,
+   "recovery": "fix_input",
+   "message_key": "errors.platform.range_invalid",
+   "operations": [
+    "global"
+   ]
+  },
+  {
+   "code": "platform.request_too_large",
+   "http_status": 413,
+   "recovery": "fix_input",
+   "message_key": "errors.platform.request_too_large",
+   "operations": [
+    "global"
+   ]
+  },
+  {
+   "code": "platform.resource_not_found",
+   "http_status": 404,
+   "recovery": "none",
+   "message_key": "errors.platform.resource_not_found",
+   "operations": [
+    "global"
+   ]
+  },
+  {
+   "code": "platform.validation_failed",
+   "http_status": 400,
+   "recovery": "fix_input",
+   "message_key": "errors.platform.validation_failed",
+   "operations": [
+    "global",
+    "auth_switchTenant"
+   ]
+  },
+  {
+   "code": "platform.version_conflict",
+   "http_status": 409,
+   "recovery": "refresh_then_merge",
+   "message_key": "errors.platform.version_conflict",
+   "operations": [
+    "platformUpdateMember"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "provider": {"code":"openai","title":"OpenAI 官方通用网关","protocol":"openai"},
+  "model": {"upstream_name":"gpt-4o-mini","title":"GPT-4o Mini (小说推演与润色专用)","capabilities":["text","tools","structured"],"context_window":128000,"max_output_tokens":4096},
+  "tools": [
+    {"tool_key":"platform_utc_now","title":"读取当前 UTC 时间","input_schema":{"type":"object","additionalProperties":false,"properties":{}},"output_schema":{"type":"object","additionalProperties":false,"properties":{"utc_now":{"type":"string","format":"date-time"}},"required":["utc_now"]},"side_effect":"read_only","approval_required":false,"timeout_seconds":5}
+  ],
+  "policies": [
+    {"task_key":"chapter_rewrite","title":"正文划词润色与扩写策略","max_output_tokens":4096,"temperature":0.7,"timeout_seconds":60,"max_retries":2,"required_capabilities":["text"],"output_mode":"text"},
+    {"task_key":"outline_suggest","title":"小说大纲架构推演策略","max_output_tokens":4096,"temperature":0.7,"timeout_seconds":60,"max_retries":2,"required_capabilities":["text"],"output_mode":"text"},
+    {"task_key":"worldview_suggest","title":"世界观事实审查策略","max_output_tokens":4096,"temperature":0.7,"timeout_seconds":60,"max_retries":2,"required_capabilities":["text"],"output_mode":"text"}
+  ],
+  "definitions": [
+    {"definition_key":"inline_polisher","title":"正文划词润色与扩写助手","system_instruction":"你是一个专业的网文小说润色与扩写助手。请根据作者指令和上下文，对选区文本进行情节扩写、文风重塑或精简去水。严格保留作者的情节原意，杜绝说教与模板化AI味，直接输出纯净修改后段落。","task_kinds":["chapter_rewrite"]},
+    {"definition_key":"novel_architect","title":"小说架构师 Agent","system_instruction":"你是一个经验丰富的商业长篇网文总架构师。精通三级大纲编排、核心冲突递进、剧情节拍与黄金三章悬念设置。","task_kinds":["outline_suggest"],"tool_keys":["platform_utc_now"]},
+    {"definition_key":"worldview_extractor","title":"世界观与设定事实审查员","system_instruction":"你是世界观事实一致性守护者。负责从章节正文中抽取登场人物、修真实体、势力归属与关键事件，协助作者防吃书。","task_kinds":["worldview_suggest"]}
+  ],
+  "workflows": [
+    {"workflow_key":"workflow_inline_polish","title":"正文划词润色与智能扩写工作流","manifest":{"nodes":[{"node_key":"polisher","role":"writer","depends_on":[],"required":true,"definition_key":"inline_polisher","input_bindings":[]}]}}
+  ],
+  "compliance_rule_set_name": "出版级网文行文与去AI味规则集",
+  "compliance_rules": [
+    {"kind":"ai_phrase","expression":"如丝如缕","severity":"warning","category":"ai_flavor","advice":"AI高频修辞，建议重写为具体的神识感应或灵力流向描写","weight":25},
+    {"kind":"ai_phrase","expression":"不难看出","severity":"warning","category":"ai_flavor","advice":"说教评述句式，请使用白描叙事替换主观总结","weight":20},
+    {"kind":"ai_phrase","expression":"值得一提的是","severity":"warning","category":"ai_flavor","advice":"生硬过渡词，建议直接展开后续情节","weight":20},
+    {"kind":"ai_phrase","expression":"总而言之","severity":"warning","category":"ai_flavor","advice":"非小说行文常用语，建议去除","weight":20},
+    {"kind":"ai_phrase","expression":"众所周知","severity":"warning","category":"ai_flavor","advice":"打破第四面墙的说教，建议融入世界观对话中","weight":20},
+    {"kind":"ai_phrase","expression":"极度的","severity":"warning","category":"ai_flavor","advice":"空洞副词强化，建议通过动作或感官细节表现","weight":15},
+    {"kind":"ai_phrase","expression":"十分","severity":"warning","category":"ai_flavor","advice":"建议替换为具体的动作反应或环境烘托","weight":15}
+  ]
+}
