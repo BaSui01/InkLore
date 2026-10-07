@@ -6,7 +6,19 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Cpu, Plus, RefreshCw, Trash2, Edit3, Check, Eye } from "lucide-react";
+import {
+  Cpu,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Edit3,
+  Check,
+  Eye,
+  LayoutGrid,
+  List,
+  Sparkles,
+  Layers,
+} from "lucide-react";
 import { Button, Modal, Input, ConfirmDialog, Badge } from "@inklore/ui";
 import { safeErrorText } from "@inklore/transport";
 import { useTranslation } from "@inklore/i18n";
@@ -37,6 +49,19 @@ import {
 } from "../utils/modelCapabilities";
 import { navigateAdmin } from "../navigation";
 
+function formatTokensLabel(raw: string | number): string {
+  const num = typeof raw === "string" ? parseInt(raw, 10) : raw;
+  if (!num || isNaN(num)) return "";
+  const formatted = num.toLocaleString();
+  let approx = "";
+  if (num >= 1_000_000) {
+    approx = ` (约 ${(num / 1_000_000).toFixed(num % 1_000_000 === 0 ? 0 : 1)}M)`;
+  } else if (num >= 1_000) {
+    approx = ` (约 ${(num / 1_000).toFixed(num % 1_000 === 0 ? 0 : 1)}K)`;
+  }
+  return `${formatted} Tokens${approx}`;
+}
+
 export function ModelConfigRoute() {
   const { t } = useTranslation();
   const { isAuthenticated } = useAdminSession();
@@ -64,9 +89,19 @@ export function ModelConfigRoute() {
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("all");
   const [selectedChannelFilter, setSelectedChannelFilter] = useState("all");
 
+  // 视图模式与交互状态
+  const [viewModel, setViewModel] = useState<"grid" | "table">(() => {
+    return (localStorage.getItem("inklore_admin_models_view") as "grid" | "table") || "grid";
+  });
+
+  const handleToggleViewModel = (mode: "grid" | "table") => {
+    setViewModel(mode);
+    localStorage.setItem("inklore_admin_models_view", mode);
+  };
+
   // 分页状态
   const [modelPage, setModelPage] = useState(1);
-  const [modelPageSize, setModelPageSize] = useState(10);
+  const [modelPageSize, setModelPageSize] = useState(12);
 
   // 模型编辑/创建弹窗状态（通信协议严格归属渠道，模型页面绝不配置协议）
   const [modelModalOpen, setModelModalOpen] = useState(false);
@@ -136,6 +171,29 @@ export function ModelConfigRoute() {
     return map;
   }, [channels]);
 
+  // 模型统计概览
+  const modelStats = useMemo(() => {
+    const total = models.length;
+    let llmCount = 0;
+    let visionCount = 0;
+    let specializedCount = 0;
+    let unboundCount = 0;
+
+    models.forEach((m) => {
+      const parsed = resolveModelClassification(m.capabilities);
+      if (parsed.primaryType === "text") {
+        llmCount++;
+        if (parsed.supportsVision) visionCount++;
+      } else {
+        specializedCount++;
+      }
+      const boundChannels = modelChannelsMap.get(m.id) || [];
+      if (boundChannels.length === 0) unboundCount++;
+    });
+
+    return { total, llmCount, visionCount, specializedCount, unboundCount };
+  }, [models, modelChannelsMap]);
+
   // 打开创建模型弹窗
   const handleOpenCreateModelModal = () => {
     setEditingModel(null);
@@ -190,6 +248,21 @@ export function ModelConfigRoute() {
       return;
     }
 
+    const windowNum = parseInt(formModelContextWindow, 10);
+    const maxOutputNum = parseInt(formModelMaxOutput, 10);
+    if (!windowNum || windowNum < 1 || windowNum > 2000000) {
+      setModelFormError(t("admin.models.err_context_window_range") || "上下文窗口需在 1 ~ 2,000,000 Tokens 之间");
+      return;
+    }
+    if (!maxOutputNum || maxOutputNum < 1 || maxOutputNum > 16384) {
+      setModelFormError(t("admin.models.err_max_output_range") || "单次最大输出需在 1 ~ 16,384 Tokens 之间 (上限 16K)");
+      return;
+    }
+    if (maxOutputNum >= windowNum) {
+      setModelFormError(t("admin.models.err_output_less_than_window") || "单次最大输出必须小于上下文窗口大小");
+      return;
+    }
+
     setModelFormError(null);
     setActionError(null);
     setNoticeSuccess(null);
@@ -222,8 +295,8 @@ export function ModelConfigRoute() {
         upstream_name: formModelUpstreamName.trim(),
         title: formModelTitle.trim(),
         capabilities,
-        context_window: parseInt(formModelContextWindow, 10) || 128000,
-        max_output_tokens: parseInt(formModelMaxOutput, 10) || 8192,
+        context_window: windowNum,
+        max_output_tokens: maxOutputNum,
         enabled: formModelEnabled,
         embedding_dimensions: isEmbedding ? 1536 : null,
       };
@@ -400,6 +473,35 @@ export function ModelConfigRoute() {
         title={t("admin.models.title")}
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            {/* 视图模式切换 */}
+            <div className="flex items-center p-0.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-decorative)] mr-1">
+              <button
+                type="button"
+                onClick={() => handleToggleViewModel("grid")}
+                className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                  viewModel === "grid"
+                    ? "bg-[var(--bg-canvas)] text-[var(--action-primary)] shadow-xs font-semibold"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                }`}
+                title="卡片视图"
+                aria-label="卡片视图"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleViewModel("table")}
+                className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                  viewModel === "table"
+                    ? "bg-[var(--bg-canvas)] text-[var(--action-primary)] shadow-xs font-semibold"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                }`}
+                title="表格视图"
+                aria-label="表格视图"
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
             <Button
               size="sm"
               variant="outline"
@@ -422,6 +524,46 @@ export function ModelConfigRoute() {
         }
         className="px-6 py-3.5 bg-[var(--bg-surface)] border-b border-[var(--border-decorative)] shrink-0"
       />
+
+      {/* 模型指标统计概览 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-6 py-3 bg-[var(--bg-canvas)]/60 border-b border-[var(--border-decorative)] shrink-0">
+        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/70">
+          <div className="w-8 h-8 rounded-lg bg-[var(--action-primary)]/10 text-[var(--action-primary)] flex items-center justify-center shrink-0">
+            <Cpu className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-[11px] text-[var(--text-muted)] block">在册模型</span>
+            <span className="font-semibold text-sm text-[var(--text-primary)] font-mono">{modelStats.total}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/70">
+          <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-[11px] text-[var(--text-muted)] block">文本/对话模型</span>
+            <span className="font-semibold text-sm text-[var(--text-primary)] font-mono">{modelStats.llmCount}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/70">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <Eye className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-[11px] text-[var(--text-muted)] block">支持视觉识别</span>
+            <span className="font-semibold text-sm text-[var(--text-primary)] font-mono">{modelStats.visionCount}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/70">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <Layers className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-[11px] text-[var(--text-muted)] block">未接入渠道</span>
+            <span className="font-semibold text-sm text-[var(--text-primary)] font-mono">{modelStats.unboundCount}</span>
+          </div>
+        </div>
+      </div>
 
       {/* Search & Filter Bar */}
       <SearchFilterBar
@@ -500,6 +642,158 @@ export function ModelConfigRoute() {
                 )
               }
             />
+          </div>
+        ) : viewModel === "grid" ? (
+          /* 卡片网格视图 */
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {paginatedModels.map((m) => {
+                const prov = providerMap.get(m.provider_id);
+                const boundChannels = modelChannelsMap.get(m.id) || [];
+                const parsed = resolveModelClassification(m.capabilities);
+                const typeOpt = MODEL_TYPE_OPTIONS.find((t) => t.id === parsed.primaryType);
+
+                let iconColor = "bg-[var(--action-primary)]/10 text-[var(--action-primary)]";
+                if (parsed.primaryType === "text" && parsed.supportsVision) {
+                  iconColor = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+                } else if (parsed.primaryType === "embedding") {
+                  iconColor = "bg-purple-500/10 text-purple-600 dark:text-purple-400";
+                } else if (parsed.primaryType === "image") {
+                  iconColor = "bg-amber-500/10 text-amber-600 dark:text-amber-400";
+                } else if (parsed.primaryType === "rerank") {
+                  iconColor = "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400";
+                }
+
+                return (
+                  <div
+                    key={m.id}
+                    className="group rounded-2xl bg-[var(--bg-canvas)] border border-[var(--border-decorative)] hover:border-[var(--action-primary)]/50 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden"
+                  >
+                    {/* 卡片头部 */}
+                    <div className="p-4 sm:p-5 border-b border-[var(--border-decorative)]/60 bg-[var(--bg-surface)] flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconColor}`}>
+                          {parsed.supportsVision ? (
+                            <Eye className="w-5 h-5" />
+                          ) : parsed.primaryType === "text" ? (
+                            <Sparkles className="w-5 h-5" />
+                          ) : (
+                            <Cpu className="w-5 h-5" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-sm text-[var(--text-primary)] truncate" title={m.title}>
+                            {m.title}
+                          </h3>
+                          <p className="text-[11px] font-mono text-[var(--text-muted)] truncate mt-0.5" title={m.upstream_name}>
+                            {m.upstream_name}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <StatusBadge status={m.enabled ? "enabled" : "disabled"} />
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-[var(--bg-subtle)] text-[var(--text-secondary)] border border-[var(--border-decorative)] truncate max-w-[100px]">
+                          {prov ? prov.title || prov.code : "未知厂商"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 卡片主体 */}
+                    <div className="p-4 sm:p-5 space-y-3 flex-1 text-xs">
+                      {/* 能力徽章标签区 */}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge variant="default" size="sm" className="font-medium">
+                          {typeOpt ? t(typeOpt.labelKey) : parsed.primaryType}
+                        </Badge>
+                        {parsed.primaryType === "text" && (
+                          <Badge
+                            variant={parsed.supportsVision ? "success" : "secondary"}
+                            size="sm"
+                            className="gap-1 font-semibold"
+                          >
+                            {parsed.supportsVision && <Eye className="w-3 h-3" />}
+                            <span>
+                              {parsed.supportsVision
+                                ? t("admin.models.vision_supported")
+                                : t("admin.models.vision_unsupported")}
+                            </span>
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* 规格参数格 */}
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[var(--border-decorative)]/50">
+                        <div className="p-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/40">
+                          <span className="text-[10px] text-[var(--text-muted)] block">
+                            {t("admin.models.col_context_window")}
+                          </span>
+                          <span className="font-mono font-semibold text-xs text-[var(--text-primary)]">
+                            {m.context_window >= 1_000_000
+                              ? `${(m.context_window / 1_000_000).toFixed(m.context_window % 1_000_000 === 0 ? 0 : 1)}M`
+                              : `${Math.round(m.context_window / 1024)}K`}{" "}
+                            Tokens
+                          </span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/40">
+                          <span className="text-[10px] text-[var(--text-muted)] block">
+                            {t("admin.models.col_max_output")}
+                          </span>
+                          <span className="font-mono font-semibold text-xs text-[var(--text-primary)]">
+                            {m.max_output_tokens >= 1_000_000
+                              ? `${(m.max_output_tokens / 1_000_000).toFixed(m.max_output_tokens % 1_000_000 === 0 ? 0 : 1)}M`
+                              : `${Math.round(m.max_output_tokens / 1024)}K`}{" "}
+                            Tokens
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 关联渠道状态 */}
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <span className="text-[11px] text-[var(--text-muted)] font-medium">接入渠道</span>
+                        {boundChannels.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => navigateAdmin("channels")}
+                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-[var(--action-primary)]/10 text-[var(--action-primary)] border border-[var(--action-primary)]/20 hover:bg-[var(--action-primary)]/20 transition-colors cursor-pointer"
+                            title={boundChannels.map((c) => c.title).join(", ")}
+                          >
+                            <span>{t("admin.models.channels_count", String(boundChannels.length))}</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => navigateAdmin("channels")}
+                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-[var(--status-warning)]/10 text-[var(--status-warning)] border border-[var(--status-warning)]/30 hover:bg-[var(--status-warning)]/20 transition-colors cursor-pointer"
+                            title={t("admin.models.no_channels")}
+                          >
+                            <span>{t("admin.models.no_channels")}</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 卡片底部操作栏 */}
+                    <div className="p-3 px-4 bg-[var(--bg-subtle)]/40 border-t border-[var(--border-decorative)] flex items-center justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        icon={<Edit3 className="w-3.5 h-3.5" />}
+                        onClick={() => handleOpenEditModelModal(m)}
+                      >
+                        {t("common.edit")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        icon={<Trash2 className="w-3.5 h-3.5 text-[var(--status-danger)]" />}
+                        onClick={() => handleDeleteModelClick(m)}
+                        className="hover:bg-[var(--status-danger)]/10 text-[var(--status-danger)]"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ) : (
           <div className="flex-1 min-h-0 overflow-auto">
@@ -776,24 +1070,71 @@ export function ModelConfigRoute() {
           {/* Context Window & Max Output */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="font-semibold text-[var(--text-secondary)]">
-                {t("admin.models.modal_context_window")}
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-[var(--text-secondary)]">
+                  {t("admin.models.modal_context_window")}
+                </label>
+                {formModelContextWindow && (
+                  <span className="text-[10px] font-mono text-[var(--action-primary)] font-medium">
+                    {formatTokensLabel(formModelContextWindow)}
+                  </span>
+                )}
+              </div>
               <Input
                 type="number"
                 value={formModelContextWindow}
                 onChange={(e) => setFormModelContextWindow(e.target.value)}
               />
+              <div className="flex items-center gap-1.5 pt-0.5">
+                {["128000", "200000", "1000000", "2000000"].map((val) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setFormModelContextWindow(val)}
+                    className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--bg-canvas)] hover:bg-[var(--bg-subtle)] border border-[var(--border-decorative)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                  >
+                    {val === "1000000" ? "1M" : val === "2000000" ? "2M" : `${parseInt(val, 10) / 1000}K`}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="space-y-1">
-              <label className="font-semibold text-[var(--text-secondary)]">
-                {t("admin.models.modal_max_output")}
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-[var(--text-secondary)]">
+                  {t("admin.models.modal_max_output")}
+                  <span className="text-[10px] font-normal text-[var(--text-muted)] ml-1">(上限 16K)</span>
+                </label>
+                {formModelMaxOutput && (
+                  <span
+                    className={`text-[10px] font-mono font-medium ${
+                      parseInt(formModelMaxOutput, 10) > 16384
+                        ? "text-[var(--status-danger)]"
+                        : "text-[var(--action-primary)]"
+                    }`}
+                  >
+                    {parseInt(formModelMaxOutput, 10) > 16384
+                      ? "超过上限 16,384"
+                      : formatTokensLabel(formModelMaxOutput)}
+                  </span>
+                )}
+              </div>
               <Input
                 type="number"
                 value={formModelMaxOutput}
                 onChange={(e) => setFormModelMaxOutput(e.target.value)}
               />
+              <div className="flex items-center gap-1.5 pt-0.5">
+                {["2048", "4096", "8192", "16384"].map((val) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setFormModelMaxOutput(val)}
+                    className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--bg-canvas)] hover:bg-[var(--bg-subtle)] border border-[var(--border-decorative)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                  >
+                    {val === "16384" ? "16K (最大)" : `${parseInt(val, 10) / 1024}K`}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

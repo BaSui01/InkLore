@@ -5,8 +5,8 @@
  */
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Activity, RefreshCw, Cpu, Database, Layers, Clock, CheckCircle2, AlertTriangle, Box } from "lucide-react";
-import { Card, Badge, Button } from "@inklore/ui";
+import { Activity, Cpu, Database, Layers, Clock, Box } from "lucide-react";
+import { Card, Badge } from "@inklore/ui";
 import { useTranslation } from "@inklore/i18n";
 import { useAdminSession } from "../context/AdminSessionContext";
 import { AdminHeader } from "../components/AdminHeader";
@@ -68,7 +68,6 @@ export function LlmDashboardRoute() {
   // 计算动态统计值
   const activeChannelsCount = channels.filter((c) => c.enabled && c.breaker_state !== "open").length;
   const totalChannelsCount = channels.length;
-  const coolingChannelsCount = channels.filter((c) => c.breaker_state === "open" || c.breaker_state === "cooling").length;
 
   const totalInputTokens = usages.reduce((acc, cur) => acc + (cur.input_tokens || 0), 0);
   const totalOutputTokens = usages.reduce((acc, cur) => acc + (cur.output_tokens || 0), 0);
@@ -111,38 +110,8 @@ export function LlmDashboardRoute() {
     <div className="flex-1 flex flex-col h-full min-h-0 w-full overflow-hidden bg-[var(--bg-surface)] text-[var(--text-primary)]">
       <AdminNotice error={loadError} onRetry={() => void loadData()} onDismiss={() => setLoadError(null)} />
 
-      {/* 头部标题与操作 */}
-      <AdminHeader
-        title={t("admin.dashboard.title")}
-        actions={
-          <div className="flex items-center gap-3 flex-wrap">
-            {hasLoaded && <Badge variant={coolingChannelsCount > 0 ? "warning" : "success"} size="sm" className="gap-1.5 py-1 px-2.5 font-medium">
-              {coolingChannelsCount > 0 ? (
-                <>
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                  <span>{t("admin.dashboard.badge_warning")}</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>{t("admin.dashboard.badge_healthy")}</span>
-                </>
-              )}
-              </Badge>}
-            <Button
-              size="sm"
-              variant="outline"
-              icon={<RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />}
-              onClick={loadData}
-              title={t("common.refresh")}
-              aria-label={t("common.refresh")}
-            >
-              {t("common.refresh")}
-            </Button>
-          </div>
-        }
-        className="px-6 py-3.5 bg-[var(--bg-surface)] border-b border-[var(--border-decorative)] shrink-0"
-      />
+      {/* 头部标题栏 */}
+      <AdminHeader title={t("admin.dashboard.title")} />
 
       {loading || hasLoaded ? <>
       {/* 实时网关状态指示条 */}

@@ -13,22 +13,25 @@ export interface AdminHeaderProps {
   className?: string;
 }
 
-export function AdminHeader({ title, badge, actions, className = "" }: AdminHeaderProps) {
+export function AdminHeader({ title, subtitle, badge, actions, className = "" }: AdminHeaderProps) {
   return (
-    <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pb-4 sm:pb-5 border-b border-[var(--border-decorative)] shrink-0 ${className}`}>
-      <div className="space-y-1 min-w-0">
-        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-          <h2 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] tracking-tight">
-            {title}
-          </h2>
-          {badge}
-        </div>
+    <header className={`h-16 px-6 flex items-center justify-between gap-4 bg-[var(--bg-surface)] border-b border-[var(--border-decorative)] shrink-0 ${className}`}>
+      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] tracking-tight truncate">
+          {title}
+        </h2>
+        {badge}
+        {subtitle && (
+          <span className="text-xs text-[var(--text-muted)] truncate hidden md:inline">
+            {subtitle}
+          </span>
+        )}
       </div>
       {actions && (
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap sm:justify-end shrink-0 w-full sm:w-auto">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {actions}
         </div>
       )}
-    </div>
+    </header>
   );
 }

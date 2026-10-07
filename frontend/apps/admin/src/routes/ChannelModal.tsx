@@ -562,6 +562,7 @@ export function ChannelModal({
       return;
     }
     setFormError(null);
+    setUpstreamNotice(null);
     setSubmitting(true);
 
     try {

@@ -5,7 +5,21 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Layers, Plus, RefreshCw, Trash2, Edit3, KeyRound } from "lucide-react";
+import {
+  Layers,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Edit3,
+  KeyRound,
+  LayoutGrid,
+  List,
+  Copy,
+  Check,
+  Activity,
+  Cpu,
+  Key,
+} from "lucide-react";
 import { Button, ConfirmDialog } from "@inklore/ui";
 import { safeErrorText } from "@inklore/transport";
 import { useTranslation } from "@inklore/i18n";
@@ -53,9 +67,27 @@ export function ChannelsRoute() {
   const [selectedProviderFilter, setSelectedProviderFilter] = useState("all");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("all");
 
+  // 视图模式与交互状态
+  const [viewMode, setViewMode] = useState<"grid" | "table">(() => {
+    return (localStorage.getItem("inklore_admin_channels_view") as "grid" | "table") || "grid";
+  });
+  const [copiedChannelId, setCopiedChannelId] = useState<string | null>(null);
+
+  const handleCopyEndpoint = (id: string, url: string) => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedChannelId(id);
+      setTimeout(() => setCopiedChannelId(null), 1500);
+    });
+  };
+
+  const handleToggleViewMode = (mode: "grid" | "table") => {
+    setViewMode(mode);
+    localStorage.setItem("inklore_admin_channels_view", mode);
+  };
+
   // Pagination state
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(12);
 
   // Modal State (Create / Edit via ChannelModal)
   const [modalOpen, setModalOpen] = useState(false);
@@ -127,6 +159,20 @@ export function ChannelsRoute() {
     });
     return map;
   }, [keys]);
+
+  // 渠道统计概览
+  const channelStats = useMemo(() => {
+    const total = channels.length;
+    const enabled = channels.filter((c) => c.enabled).length;
+    const allBoundModelNames = new Set<string>();
+    channels.forEach((c) => {
+      if (c.models) c.models.forEach((m) => allBoundModelNames.add(m.model_id));
+      if (c.model_ids) c.model_ids.forEach((id) => allBoundModelNames.add(id));
+      if (c.model_id) allBoundModelNames.add(c.model_id);
+    });
+    const totalKeys = keys.length;
+    return { total, enabled, mappedModels: allBoundModelNames.size, totalKeys };
+  }, [channels, keys]);
 
   // 打开创建弹窗
   const handleOpenCreateModal = () => {
@@ -253,6 +299,35 @@ export function ChannelsRoute() {
         title={t("admin.channels.title")}
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            {/* 视图模式切换 */}
+            <div className="flex items-center p-0.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-decorative)] mr-1">
+              <button
+                type="button"
+                onClick={() => handleToggleViewMode("grid")}
+                className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                  viewMode === "grid"
+                    ? "bg-[var(--bg-canvas)] text-[var(--action-primary)] shadow-xs font-semibold"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                }`}
+                title="卡片视图"
+                aria-label="卡片视图"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleViewMode("table")}
+                className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                  viewMode === "table"
+                    ? "bg-[var(--bg-canvas)] text-[var(--action-primary)] shadow-xs font-semibold"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                }`}
+                title="表格视图"
+                aria-label="表格视图"
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
             <Button
               size="sm"
               variant="outline"
@@ -274,6 +349,47 @@ export function ChannelsRoute() {
         }
         className="px-6 py-3.5 bg-[var(--bg-surface)] border-b border-[var(--border-decorative)] shrink-0"
       />
+
+      {/* 渠道概览统计指标条 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-6 py-3 bg-[var(--bg-canvas)]/60 border-b border-[var(--border-decorative)] shrink-0">
+        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/70">
+          <div className="w-8 h-8 rounded-lg bg-[var(--action-primary)]/10 text-[var(--action-primary)] flex items-center justify-center shrink-0">
+            <Layers className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-[11px] text-[var(--text-muted)] block">接入渠道</span>
+            <span className="font-semibold text-sm text-[var(--text-primary)] font-mono">{channelStats.total}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/70">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <Activity className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-[11px] text-[var(--text-muted)] block">正常启用</span>
+            <span className="font-semibold text-sm text-[var(--text-primary)] font-mono">{channelStats.enabled}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/70">
+          <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <Cpu className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-[11px] text-[var(--text-muted)] block">绑定模型</span>
+            <span className="font-semibold text-sm text-[var(--text-primary)] font-mono">{channelStats.mappedModels}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/70">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <Key className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-[11px] text-[var(--text-muted)] block">配置密钥</span>
+            <span className="font-semibold text-sm text-[var(--text-primary)] font-mono">{channelStats.totalKeys}</span>
+          </div>
+        </div>
+      </div>
+
       {/* 搜索与筛选控制栏 */}
       <SearchFilterBar
         searchQuery={searchQuery}
@@ -325,7 +441,173 @@ export function ChannelsRoute() {
               }
             />
           </div>
+        ) : viewMode === "grid" ? (
+          /* 卡片网格视图 */
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {paginatedChannels.map((ch) => {
+                const prov = providerMap.get(ch.provider_id);
+                const boundKeys = keyMap.get(ch.id) || [];
+                const isCooling = ch.breaker_state === "open" || ch.breaker_state === "cooling";
+                const breakerKey = "admin.dashboard.breaker_" + (ch.breaker_state || "closed");
+                const isCopied = copiedChannelId === ch.id;
+
+                const modelBadges: { id: string; name: string }[] = [];
+                if (ch.models && ch.models.length > 0) {
+                  ch.models.forEach((bm) => {
+                    const m = modelMap.get(bm.model_id);
+                    modelBadges.push({
+                      id: bm.id || bm.model_id,
+                      name: m?.title || bm.upstream_model || bm.model_id,
+                    });
+                  });
+                } else if (ch.model_ids && ch.model_ids.length > 0) {
+                  ch.model_ids.forEach((mid) => {
+                    const m = modelMap.get(mid);
+                    modelBadges.push({ id: mid, name: m?.title || mid });
+                  });
+                } else if (ch.upstream_model || ch.model_id) {
+                  const m = ch.model_id ? modelMap.get(ch.model_id) : undefined;
+                  modelBadges.push({
+                    id: ch.model_id || "single",
+                    name: m?.title || ch.upstream_model || "-",
+                  });
+                }
+
+                return (
+                  <div
+                    key={ch.id}
+                    className="group rounded-2xl bg-[var(--bg-canvas)] border border-[var(--border-decorative)] hover:border-[var(--action-primary)]/50 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden"
+                  >
+                    {/* 卡片头部 */}
+                    <div className="p-4 sm:p-5 border-b border-[var(--border-decorative)]/60 bg-[var(--bg-surface)] flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-[var(--action-primary)]/10 text-[var(--action-primary)] flex items-center justify-center shrink-0">
+                          <Layers className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-sm text-[var(--text-primary)] truncate" title={ch.title}>
+                            {ch.title}
+                          </h3>
+                          <p className="text-[11px] text-[var(--text-muted)] truncate mt-0.5">
+                            {prov?.title || prov?.code || ch.provider_id}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <StatusBadge status={ch.enabled ? "enabled" : "disabled"} />
+                        <StatusBadge
+                          status={isCooling ? "cooling" : "healthy"}
+                          label={t(breakerKey)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* 卡片主体 */}
+                    <div className="p-4 sm:p-5 space-y-3.5 flex-1 text-xs">
+                      {/* 网关端点 */}
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-medium text-[var(--text-muted)] block">
+                          {t("admin.channels.col_endpoint")}
+                        </span>
+                        <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-decorative)] font-mono text-[11px] text-[var(--text-secondary)]">
+                          <span className="truncate" title={ch.base_url}>{ch.base_url}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyEndpoint(ch.id, ch.base_url)}
+                            className="p-1 hover:text-[var(--action-primary)] text-[var(--text-muted)] transition-colors cursor-pointer shrink-0"
+                            title={isCopied ? "已复制" : "复制端点"}
+                          >
+                            {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 绑定模型 */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] font-medium">
+                          <span>{t("admin.channels.col_model")}</span>
+                          <span className="font-mono">{modelBadges.length} 个模型</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto pr-1">
+                          {modelBadges.length === 0 ? (
+                            <span className="text-[11px] text-[var(--text-muted)] italic">未绑定模型</span>
+                          ) : (
+                            modelBadges.slice(0, 4).map((b) => (
+                              <span
+                                key={b.id}
+                                className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono bg-[var(--action-primary)]/10 text-[var(--action-primary)] border border-[var(--action-primary)]/20"
+                              >
+                                {b.name}
+                              </span>
+                            ))
+                          )}
+                          {modelBadges.length > 4 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-mono bg-[var(--bg-subtle)] text-[var(--text-muted)] border border-[var(--border-decorative)]">
+                              +{modelBadges.length - 4}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 调度指标微仪表 */}
+                      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[var(--border-decorative)]/50 text-center">
+                        <div className="p-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/40">
+                          <span className="text-[10px] text-[var(--text-muted)] block">{t("admin.channels.col_weight")}</span>
+                          <span className="font-mono font-semibold text-xs text-[var(--text-primary)]">{ch.weight}</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/40">
+                          <span className="text-[10px] text-[var(--text-muted)] block">{t("admin.channels.col_rpm")}</span>
+                          <span className="font-mono font-semibold text-xs text-[var(--text-primary)]">{ch.rpm}</span>
+                        </div>
+                        <div className="p-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/40">
+                          <span className="text-[10px] text-[var(--text-muted)] block">{t("admin.channels.col_concurrency")}</span>
+                          <span className="font-mono font-semibold text-xs text-[var(--text-primary)]">{ch.concurrency}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 卡片底部操作栏 */}
+                    <div className="p-3 px-4 bg-[var(--bg-subtle)]/40 border-t border-[var(--border-decorative)] flex items-center justify-between gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        icon={<KeyRound className="w-3.5 h-3.5 text-[var(--action-primary)]" />}
+                        onClick={() => handleManageKeys(ch)}
+                        className="text-xs"
+                      >
+                        <span>{t("admin.channels.keys_manage")}</span>
+                        {boundKeys.length > 0 && (
+                          <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-[var(--action-primary)]/10 text-[var(--action-primary)] font-bold">
+                            {boundKeys.length}
+                          </span>
+                        )}
+                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          icon={<Edit3 className="w-3.5 h-3.5" />}
+                          onClick={() => handleOpenEditModal(ch)}
+                        >
+                          {t("admin.channels.edit_btn")}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          icon={<Trash2 className="w-3.5 h-3.5 text-[var(--status-danger)]" />}
+                          onClick={() => handleDeleteClick(ch)}
+                          className="hover:bg-[var(--status-danger)]/10 text-[var(--status-danger)]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         ) : (
+          /* 表格视图 */
           <div className="flex-1 min-h-0 overflow-auto">
             <table className="w-full min-w-[1080px] text-xs text-left">
               <thead className="bg-[var(--bg-subtle)]/80 text-[var(--text-secondary)] border-b border-[var(--border-decorative)] font-mono uppercase tracking-wider sticky top-0 z-10">
@@ -349,6 +631,7 @@ export function ChannelsRoute() {
                   const boundKeys = keyMap.get(ch.id) || [];
                   const isCooling = ch.breaker_state === "open" || ch.breaker_state === "cooling";
                   const breakerKey = "admin.dashboard.breaker_" + (ch.breaker_state || "closed");
+                  const isCopied = copiedChannelId === ch.id;
 
                   return (
                     <tr key={ch.id} className="hover:bg-[var(--bg-subtle)]/60 transition-colors">
@@ -427,10 +710,20 @@ export function ChannelsRoute() {
 
                       {/* Base URL */}
                       <td
-                        className="px-4 py-3.5 font-mono text-[var(--text-muted)] max-w-xs truncate"
+                        className="px-4 py-3.5 font-mono text-[var(--text-muted)] max-w-xs"
                         title={ch.base_url}
                       >
-                        <span className="truncate">{ch.base_url}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate">{ch.base_url}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyEndpoint(ch.id, ch.base_url)}
+                            className="p-1 hover:text-[var(--action-primary)] text-[var(--text-muted)] transition-colors cursor-pointer shrink-0"
+                            title={isCopied ? "已复制" : "复制端点"}
+                          >
+                            {isCopied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                          </button>
+                        </div>
                       </td>
 
                       {/* 权重 */}
@@ -503,7 +796,7 @@ export function ChannelsRoute() {
             setPageSize(newSize);
             setPage(1);
           }}
-          pageSizeOptions={[10, 20, 50, 100]}
+          pageSizeOptions={[12, 24, 48, 96]}
         />
       </div>
 

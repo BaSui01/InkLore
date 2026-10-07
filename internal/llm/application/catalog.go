@@ -385,7 +385,7 @@ func (s *Catalog) validate(ctx context.Context, tenant string, kind d.Kind, old 
 		}
 		window, _ := data["context_window"].(float64)
 		output, _ := data["max_output_tokens"].(float64)
-		if output >= window {
+		if output < 1 || output > 16384 || window < 1 || window > 2000000 || output >= window {
 			return d.ErrCapability
 		}
 		embedding := false
@@ -399,17 +399,13 @@ func (s *Catalog) validate(ctx context.Context, tenant string, kind d.Kind, old 
 			return d.ErrCapability
 		}
 		if len(old) > 0 {
-			used, err := s.opts.Repository.InUse(ctx, tenant, kind, strFrom(previous, "id"))
-			if err != nil {
-				return err
-			}
-			if used {
-				for _, field := range []string{"provider_id", "capabilities", "context_window", "max_output_tokens", "embedding_dimensions"} {
-					a, _ := json.Marshal(data[field])
-					b, _ := json.Marshal(previous[field])
-					if string(a) != string(b) {
-						return d.ErrInUse
-					}
+			if strFrom(previous, "provider_id") != strFrom(data, "provider_id") {
+				used, err := s.opts.Repository.InUse(ctx, tenant, kind, strFrom(previous, "id"))
+				if err != nil {
+					return err
+				}
+				if used {
+					return d.ErrInUse
 				}
 			}
 		}

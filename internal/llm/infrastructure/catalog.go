@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"net"
 	"net/url"
 	"regexp"
 	"strings"
@@ -596,7 +597,7 @@ func NewSecrets(o SecretOptions) (*Secrets, error) {
 	for protocol, urls := range o.Endpoints {
 		for _, endpoint := range urls {
 			u, err := url.Parse(endpoint)
-			if err != nil || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || (u.Scheme != "https" && !(protocol == "ollama" && u.Scheme == "http")) {
+			if err != nil || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || (u.Scheme != "https" && u.Scheme != "http") {
 				return nil, d.ErrInvalid
 			}
 			if s.endpoints[protocol] == nil {
@@ -607,6 +608,21 @@ func NewSecrets(o SecretOptions) (*Secrets, error) {
 	}
 	return s, nil
 }
+
+func isLocalOrPrivateHost(host string) bool {
+	h := strings.ToLower(strings.TrimSpace(host))
+	if sh, _, err := net.SplitHostPort(h); err == nil {
+		h = sh
+	}
+	if h == "localhost" || h == "127.0.0.1" || h == "::1" || h == "[::1]" || strings.HasSuffix(h, ".local") {
+		return true
+	}
+	if ip := net.ParseIP(h); ip != nil {
+		return ip.IsLoopback() || ip.IsPrivate()
+	}
+	return false
+}
+
 func (s *Secrets) ValidateEndpoint(protocol, endpoint string) error {
 	if s == nil {
 		return d.ErrInvalid
@@ -618,7 +634,7 @@ func (s *Secrets) ValidateEndpoint(protocol, endpoint string) error {
 	if err != nil || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 		return d.ErrInvalid
 	}
-	if u.Scheme == "https" || (protocol == "ollama" && u.Scheme == "http") {
+	if u.Scheme == "https" || (u.Scheme == "http" && (protocol == "ollama" || isLocalOrPrivateHost(u.Host))) {
 		return nil
 	}
 	return d.ErrInvalid
