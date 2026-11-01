@@ -789,3 +789,7 @@ Docker 守护进程可用后，此前三条阻塞的验收全部在真实 Postgr
 
 - INK-201/203：补齐安全HTTP日志request_id白名单；真实PG17只读完整App启动与11HTTP场景通过，中间件panic/流后恢复/日志脱敏探针通过。
 - INK-199/200/201：修复Agent及文件DELETE忽略未声明body，拒绝重复/额外revision查询；删除SSE的last_event_id查询后备。公共guard七请求场景通过。
+
+### INK-248 补充：dot 本地构建入口（待完整验收）
+
+复用 Makefile 聚合全包构建、文档/架构护栏、pnpm 冻结安装与双端构建；显式支持已核验快照的 BUILDVCS=false，不跳过 notes 历史基线。dot 单项构建通过，完整门禁和独立验收仍阻塞，未合并或发布。

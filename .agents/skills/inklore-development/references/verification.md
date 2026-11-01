@@ -19,3 +19,5 @@
 运行路径：业务改动可比较 go list -deps ./cmd/server 前后结果；纯文档与离线检查工具明确“没有修改 Go 包、启动入口、依赖和接线，运行路径不受本任务影响”。不要把其他并行改动算作自己的变化。
 
 完整工作区已有失败时，记录原始命令及归因；任务保持 review 或说明外部阻塞，不能降低 DoD。通过的编译无需无理由重复；文档终态更新后重跑轻量文档校验即可。
+
+Linux / dot 入口：`make ci NOTES_BASE=<交付前真实commit>`。复用 Makefile，包含 frozen-lockfile 安装及 Creator/Admin 双端构建，不部署、不调用付费模型。已核验 blob 来源但无 Git 元数据的快照可显式设置 `BUILDVCS=false` 运行单项目标；这仅禁用 Go VCS stamping，不能代替真实历史封印检查。无真实 Git 基线时 make ci 必须失败，不可标记全绿。可用 `PNPM='pnpm --config.store-dir=<获准可写路径>'` 指定已有 store，不修改系统权限。构建通过不等于 API / DB / 浏览器 / Agent 行为验收通过。

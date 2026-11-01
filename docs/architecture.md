@@ -316,4 +316,4 @@ Admin `AgentGovernanceRoute.tsx` 经 `adminApi.ts` 分页读取 definitions/work
 
 ## INK-248：pnpm 与 dev 持续集成配置
 
-`.github/workflows/ci.yml` 的前端任务先安装固定 pnpm 11.25.0，再由 Node 22 配合 pnpm store 缓存和 `frontend/pnpm-lock.yaml` 执行 `pnpm install --frozen-lockfile`、`pnpm run build`。push 触发包含 main/dev，PR 触发与原有后端、Skills、notes 门禁不变。仅调整离线 CI 配置与验证指南，未修改 Go 包、启动入口、领域依赖、业务接线或锁文件。配置已做静态检查，完整构建及远端 workflow 行为待独立验收，不能视作门禁已通过。
+`.github/workflows/ci.yml` 的前端任务先安装固定 pnpm 11.25.0，再由 Node 22 配合 pnpm store 缓存和 `frontend/pnpm-lock.yaml` 执行 `pnpm install --frozen-lockfile`、`pnpm run build`。push 触发包含 main/dev，PR 触发与原有后端、Skills、notes 门禁不变。仅调整离线 CI 配置与验证指南，未修改 Go 包、启动入口、领域依赖、业务接线或锁文件。make ci 复用本地完整构建与静态检查，dot 可直接运行，不依赖 Actions。Go 默认 VCS stamping 保持 auto；核验来源的无 Git 快照必须显式 BUILDVCS=false，历史 notes 仍须真实基线。dot 单项 Go build/vet、Skills/i18n、冻结安装和双端构建已通过；notes 基线不可用及既存 fmt/guard 失败仍阻止完整门禁通过，独立验收未完成。
