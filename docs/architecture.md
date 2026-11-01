@@ -1,5 +1,7 @@
 # InkLore 重构实施事实
 
+> 当前源码文件大小规则由 [ADR-0037](decisions/0037-source-file-size-limit-500kib.md) 更新为500KiB（512000字节）。下文历史50KB验收描述保留为当时事实，不再表示现行源码阈值；独立文档长度和冻结治理不变。
+
 本文件只记录实现证据，不维护第二份目标架构。唯一目标设计：[R1索引](system-design/00-INDEX.md)，契约：[00基线](system-design/00-CONTRACT-BASELINE.md)。
 
 ## INK-245 · 接入模型渠道弹窗移除供应商下拉框（review）
@@ -313,3 +315,7 @@ Admin `AgentGovernanceRoute.tsx` 经 `adminApi.ts` 分页读取 definitions/work
 `setTimeout` 检索命中的是 Creator 自动保存、Admin 复制状态清除、渠道探测超时和 SSE 心跳/重连，不是伪造 Agent 进度；工作流进度由真实 SSE/持久状态产生。事件联合仅含冻结事件（无 `ask_question`/隐藏推理 delta），UI 只显示 `reasoning.summary`。Creator 产物采纳核 target/source revision、当前正文快照与选区后更新草稿，随后走既有保存 CAS；artifact read 有 RunAuthorizer/owner 检查。该客户端可见流程并未证明服务端 Owner 写回 CAS/stale 竞争实测。`scheduler.go` 当前把所有 `Gateway.Generate` 错误归并为 `agent.execution_outcome_unknown`，包括尚未确认已发出外呼的配置/授权错误；应按可确定拒绝与上游不确定结果分类，具体映射未在实网验证。静态设计检查 `node docs/system-design/tools/check-design.cjs` 退出1：`api/agent-core-schemas.json` 有继承工作区修改，增加七个 CreateRun 创作分支可选 `model_id` / `model_key`（生成的 runtime request schema 也有对应修改）；这是模型自选所需但尚未见 R1.x 裁决的冻结契约增量，ADR-0027 提议的是 task-policy catalog/version binding，并不裁决这两个 model 字段。检查器还报告 `09-DOMAIN-LLM-GATEWAY-SPEC.md` freeze drift，但 `git diff` 对该文件未见工作区差异，故仅能确认 manifest 校验不一致，不能确认差异何时引入；本节点未编辑这两项冻结资产。
 
 本轮 `go build ./...`、`go vet ./...`、`go run ./cmd/archguard -reachability`、`pnpm run build:creator`、`pnpm run build:admin`、i18n、notes、Skills 与 `git diff --check` 均退出 0。未在用户/生产数据库执行 seed；没有隔离 PG/认证 API 会话，因此 seed 重复执行与不覆盖人工版本、run 快照、worker 执行、SSE 断开重连调用次数、取消竞争、跨租户隔离、artifact Owner CAS 均未做运行验收。Chrome 仅能打开本地首页；前序已记录 session-CSRF 403，不能宣称 Creator/Admin 登录后闭环已浏览器验证。详见 [INK-226 工程笔记](../.agents/notes/implemented/feature/2026-09-24-agent-configuration-driven-integration.md)。
+
+## INK-251：用户裁决的源码大小上限
+
+archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，扫描生成源码，不增加忽略项。跨域/基座依赖、禁测试文件、Go解析不变；无运行服务/业务包/契约/生成器变化。新规则Go构建、R1–R5护栏及512000/512001边界通过，不代表旧规则通过。PR9页面拆分保持可独立审查，未回滚。
