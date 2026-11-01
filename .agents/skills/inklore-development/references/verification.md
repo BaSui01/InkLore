@@ -6,8 +6,8 @@
 | --- | --- | --- |
 | 所有交付 | go build ./...；git diff --check | 当前工作区可构建、已跟踪 diff 无空白错误；不证明行为正确 |
 | Go / 分层 / 装配 | go vet ./...；go run ./cmd/archguard -reachability；gofmt -l internal cmd | 静态质量、护栏与可达性；配置仍需核对消费方 |
-| 前端 | npm --prefix frontend run build | 当前脚本分别构建 Creator/Admin；之后必须在真实应用地址核对行为 |
-| i18n | go run ./cmd/i18ncheck frontend/src/shared/i18n/locales/zh-CN.ts frontend/src/shared/i18n/locales/en-US.ts | 词条对齐；还需检查页面是否使用词条 |
+| 前端 | pnpm --dir frontend run build | 当前脚本分别构建 Creator/Admin；之后必须在真实应用地址核对行为 |
+| i18n | go run ./cmd/i18ncheck frontend/packages/i18n/src/locales/zh-CN.ts frontend/packages/i18n/src/locales/en-US.ts | 词条对齐；还需检查页面是否使用词条 |
 | 技能与指南 | node scripts/check-project-skills.mjs | 技能元数据、长度、Emoji 与本地文件链接；不验证外站与语义 |
 | 工程笔记 | node scripts/agent-notes.mjs check；归档变动另执行 node scripts/agent-notes.mjs check --base HEAD | 格式/任务关联/链接/哈希；基线检查拒绝旧封印变化，不判定理由真假或漏写笔记 |
 | API / DB | 在已授权的开发环境发真实请求，查返回与持久化结果 | 正常、非法输入、跨租户、重启留存、并发冲突按任务选择；不操作生产样本 |
