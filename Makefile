@@ -116,4 +116,3 @@ down: ## 停止本地开发依赖
 .PHONY: clean
 clean: ## 清理构建产物
 	rm -rf bin tmp
-
