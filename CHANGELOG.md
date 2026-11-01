@@ -784,3 +784,7 @@ Docker 守护进程可用后，此前三条阻塞的验收全部在真实 Postgr
 
 - INK-201/203：补齐安全HTTP日志request_id白名单；真实PG17只读完整App启动与11HTTP场景通过，中间件panic/流后恢复/日志脱敏探针通过。
 - INK-199/200/201：修复Agent及文件DELETE忽略未声明body，拒绝重复/额外revision查询；删除SSE的last_event_id查询后备。公共guard七请求场景通过。
+
+### INK-249：五个 Go 文件机械格式修复（review）
+
+只调整已记录的五个 Go 源文件格式，未改业务语义；保留 INK-236 doing 文件不动，不声明全仓门禁通过。
