@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	d "InkLore/internal/agent/domain"
 	"InkLore/internal/platform/identity"
@@ -101,7 +102,7 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 	}
 
 	// Validate instruction
-	if len(in.Instruction) < 1 || len(in.Instruction) > MaxInstructionLen {
+	if length := utf8.RuneCountInString(in.Instruction); length < 1 || length > MaxInstructionLen {
 		return nil, d.ErrValidationFailed(map[string]any{"reason": "instruction must be between 1 and 8000 codepoints"})
 	}
 

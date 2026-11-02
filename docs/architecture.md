@@ -316,6 +316,10 @@ Admin `AgentGovernanceRoute.tsx` 经 `adminApi.ts` 分页读取 definitions/work
 
 本轮 `go build ./...`、`go vet ./...`、`go run ./cmd/archguard -reachability`、`pnpm run build:creator`、`pnpm run build:admin`、i18n、notes、Skills 与 `git diff --check` 均退出 0。未在用户/生产数据库执行 seed；没有隔离 PG/认证 API 会话，因此 seed 重复执行与不覆盖人工版本、run 快照、worker 执行、SSE 断开重连调用次数、取消竞争、跨租户隔离、artifact Owner CAS 均未做运行验收。Chrome 仅能打开本地首页；前序已记录 session-CSRF 403，不能宣称 Creator/Admin 登录后闭环已浏览器验证。详见 [INK-226 工程笔记](../.agents/notes/implemented/feature/2026-09-24-agent-configuration-driven-integration.md)。
 
+## INK-250：模型配置 Token 字段组件边界
+
+Admin App 的 models 视图仍挂载 ModelConfigRoute；该路由保留认证上下文、数据加载、创建/编辑默认值、表单状态与校验、createLlmModel/updateLlmModel 调用及编辑 expected_revision。仅将上下文与最大输出输入区域、预设按钮和原格式化展示函数移至 components/ModelTokenFields，通过两个字符串值与两个 setter 回调受控连接；无新增API、依赖、Go包或业务接线。路由与组件均低于既有50KB限制；archguard仍报告16项生成契约超限，未变更规则或冻结设计。
+
 ## INK-249：机械 Go 格式修复
 
 仅标准 gofmt 调整 llm/domain/catalog.go、credit_estimator.go、platform/captcha/captcha.go、platform/membership/write.go、app/adapters/agent_task_model_gateway.go 及 agent/domain/novel_creation.go、agent/application/novel_creation.go 的空白与对齐；去空白前后完全相同，未改包、依赖、接口、业务逻辑或运行接线。补齐后全仓格式与 Go 构建通过。两个 novel_creation.go 经 dev/开放 PR/远端 blob 核对未见并发修改，格式处理不接管 INK-236 功能、不改变其 doing 状态。其他门禁与独立验收仍待完成。
