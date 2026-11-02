@@ -42,6 +42,7 @@ type FilePort interface {
 }
 
 type GenerationRequest struct {
+	TenantID        string
 	TaskKind        string
 	ContextSegments []string
 	Brief           string
