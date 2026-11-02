@@ -2,7 +2,7 @@
 
 Status: implemented
 
-Task: INK-253
+Task: INK-254
 Scope: .github/workflows/safe-auto-merge.yml、PR 标签、分支门禁与仓库治理
 
 ## Problem
