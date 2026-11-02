@@ -9,17 +9,15 @@
 
 ## 自动合并策略
 
-开启仓库级 auto-merge，使用 GitHub 分支保护检查作为最终合并门槛。自动启用只针对 **同仓库、目标为 dev、非 Draft** 的 PR，且不得带有 `manual-review` / `do-not-merge` 标签。
+仓库开启 GitHub 原生 auto-merge 与合并后删除来源分支。运行在默认分支 `private` 的可信 `pull_request_target` 工作流只评估 **同仓库、目标为 `dev`、非 Draft** 的 PR；不会 checkout 或执行 PR 代码。
 
-发现以下路径变化时不自动启用，必须人工审阅：
+- **普通文档自动化**：仅 `README.md`、`CONTRIBUTING.md`、开发指南/项目管理入口等明确白名单文件可以自动开启 auto-merge。
+- **普通代码需授权**：其他非敏感变更必须由维护者添加 `auto-merge-approved` 标签；仅 CI 通过不足以授权自动合并。
+- **始终人工**：包含 `SECURITY.md`、本地环境/凭据文件、`.github/`、`AGENTS.md`、ADR、冻结设计、迁移、平台安全与底层 LLM/Agent 基础设施的 PR；即便加授权标签也不会自动合并。
+- **强制阻止**：`manual-review` 或 `do-not-merge` 标签、跨仓库来源、Draft、文件过多或目标非 dev。
+- **动态撤销**：PR 改为 Draft、修改目标、添加阻止标签或新增敏感路径时撤销此前开启的 auto-merge。陈旧 head 事件不允许撤销新版本的决定，重命名同时检查原路径和目标路径。
 
-- `migrations/`、`docs/system-design/`、`docs/decisions/`
-- `AGENTS.md`、`.github/workflows/`、`.github/CODEOWNERS`
-- 身份认证、授权、加密、支付、计费相关敏感目录
-
-自动启用 auto-merge 不代表跳过 CI 或立即合并。GitHub 仅在最新 head 所要求的检查均通过、没有冲突且满足分支规则后执行合并。新提交会重新检查。禁止管理员绕过规则、禁止 Draft 自动合并。
-
-向 `private` 的发布 PR 必须人工决策，不纳入此自动规则。
+自动合并只在 GitHub 要求的最新三项 CI、PR 无冲突且 Review 对话解决后执行；不得用机器人绕过保护或把代码构建当作业务验收。目标 `private` 的发布 PR 必须人工审查。
 
 ## 仓库设置
 

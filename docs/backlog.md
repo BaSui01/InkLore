@@ -140,4 +140,6 @@ INK-001–140已使用，永不复用；旧任务涉及的旧路由、兼容方�
 
 | INK-252 | 公开仓库前的凭据治理与安全核验 | 仓库安全 | blocked | 当前文档中的宿主机数据库及缓存密码、机器专属连接信息改为安全模板；后续仍须轮换已记载的 PostgreSQL/Redis 凭据，完成所有可达历史与 PR diff 的秘密扫描和历史暴露处置，最后再验证 Actions / 分支保护并切换 Public。仅清理当前文件不视为公开安全验收；本任务不执行数据库密码轮换或强推重写历史。 | 用户授权公开仓库；阻塞：实际凭据轮换与历史公开风险验收 |
 
+| INK-253 | 安全自动合并的事件竞态、权限和敏感路径治理 | 仓库 CI / 安全 | review | 对 dev 非 Draft PR 采用实时状态与路径复核、旧 head 无操作、标签撤销、重命名原路径、低风险文档白名单和源码显式授权标签；敏感目录一律人工合并，private 不自动合并。GitHub 默认分支需部署此策略，合并后仍要运行实际事件验收。[工程笔记](../.agents/notes/implemented/process/2026-11-03-safe-pr-automerge-gates.md) | 用户授权维护仓库自动合并；PR #22、#26 |
+
 | INK-253 | GitHub Issues / Projects / Wiki / 依赖与洞察治理 | 仓库协作 | review | 已创建 GitHub Projects 协作看板；在独立 PR 配置三类 Issue 表单、Dependabot Go/pnpm/Actions/Docker 周更、只读每周 Issue/PR 健康摘要及 Wiki 导航草稿。需核对 YAML、分支差异、CI、默认分支生效与 Wiki 独立发布；不修改业务运行路径，不代替依赖漏洞验收。详见 [GitHub 运维入口](github-platform.md) | 用户明确授权完善仓库；INK-252 公开前安全前置条件 |
