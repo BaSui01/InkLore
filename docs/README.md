@@ -4,6 +4,7 @@
 
 - [冻结契约与范围](system-design/00-CONTRACT-BASELINE.md)：路由、ID、错误、并发、事务、权限、实时和复用规则。
 - [机读API](system-design/api/openapi.json) / [API目录](system-design/api/README.md) / [真实DDL设计](system-design/data/README.md)。
+- [双端 UI/UX 优化实施包](ui-ux/README.md)：基于现有代码与冻结契约的管理端/创作者端优化方案、组件验收和未来视觉稿交接（INK-259，规划中）。
 - [作者功能UI/UX](system-design/15-CREATOR-FUNCTION-UX-SPEC.md)、[管理端UI/UX](system-design/16-ADMIN-FUNCTION-UX-SPEC.md)、[复用与状态](system-design/20-FRONTEND-REUSE-AND-STATE-CONTRACTS.md)。
 - [实施计划](system-design/18-DELIVERY-AND-ACCEPTANCE-PLAN.md) / [文档清理](system-design/19-LEGACY-CLEANUP-AND-FREEZE.md) / [LLM供应商官方协议规范](llm-provider-specifications.md)。
 - [任务看板](backlog.md)、[代码实施现状](architecture.md)、[决策理由](decisions/README.md)只记录执行事实与选择依据，不形成第二套目标设计。
