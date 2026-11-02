@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### INK-228 隔离 PG17/Redis7 数据库结构冒烟门禁（review）
+
+- 新增面向 Agent/LLM 变更的临时 PostgreSQL 迁移与租户外键检查，固定当前 17 个迁移基线、重复迁移和无持久化服务凭据验证；不执行真实模型或 Supabase 写入。
+- 静态 Schema 门禁不代表 INK-228 的真实多租户路由、冻结策略和 Worker 行为已完成验收。
+
+
 ### Qodana 工作流有效性修复（INK-257，review）
 
 - 将无效的 step `secrets` 条件换成 Token 可用性布尔输出，保留凭据只在受限环境变量中；更新 push 到 private/dev，令工作流可正常解析。
