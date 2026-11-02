@@ -135,4 +135,51 @@ jobs:
           PY
           status=$(curl --silent --max-time 4 --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18080/does-not-exist)
           test "$status" = 404
+          python3 - <<'PY'
+          import json, secrets, urllib.error, urllib.request
+
+          base = 'http://127.0.0.1:18080'
+          payload = {
+              'email': 'ci-' + secrets.token_hex(12) + '@example.invalid',
+              'password': secrets.token_urlsafe(24),
+              'pen_name': 'CiCreator',
+          }
+
+          def request(path, method='GET', body=None, headers=None):
+              data = None if body is None else json.dumps(body).encode('utf-8')
+              req = urllib.request.Request(base + path, method=method, data=data, headers={
+                  'Content-Type': 'application/json', **(headers or {})
+              })
+              try:
+                  with urllib.request.urlopen(req, timeout=5) as response:
+                      return response.status, json.load(response)
+              except urllib.error.HTTPError as error:
+                  return error.code, json.loads(error.read().decode('utf-8'))
+
+          code, anonymous = request('/v1/auth/me')
+          assert code == 401, 'unauthenticated session unexpectedly accessible'
+
+          code, registered = request('/v1/auth/register', method='POST', body=payload,
+              headers={'Origin': 'http://127.0.0.1:3000'})
+          assert code == 200, 'creator registration failed'
+          session = registered['data']
+          assert session['principal']['audience'] == 'creator'
+          assert session['principal']['tenant_id']
+          assert session['access_token']
+
+          code, principal = request('/v1/auth/me',
+              headers={'Authorization': 'Bearer ' + session['access_token']})
+          assert code == 200, 'creator session not usable'
+          assert principal['data']['user_id'] == session['principal']['user_id']
+
+          code, duplicate = request('/v1/auth/register', method='POST', body=payload,
+              headers={'Origin': 'http://127.0.0.1:3000'})
+          assert code == 409, 'duplicate registration should be rejected'
+          print('API creator registration, persisted session, anonymous deny and duplicate guards passed.')
+          PY
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_ci PGDATABASE=inklore_ci PGPASSWORD=ci-only-not-production
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_users" | grep -qx 1
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_tenants" | grep -qx 1
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_memberships" | grep -qx 1
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_sessions" | grep -qx 1
           echo "Real Go API health, dependencies and unknown-route checks passed."
