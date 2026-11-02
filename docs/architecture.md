@@ -316,6 +316,10 @@ Admin `AgentGovernanceRoute.tsx` 经 `adminApi.ts` 分页读取 definitions/work
 
 本轮 `go build ./...`、`go vet ./...`、`go run ./cmd/archguard -reachability`、`pnpm run build:creator`、`pnpm run build:admin`、i18n、notes、Skills 与 `git diff --check` 均退出 0。未在用户/生产数据库执行 seed；没有隔离 PG/认证 API 会话，因此 seed 重复执行与不覆盖人工版本、run 快照、worker 执行、SSE 断开重连调用次数、取消竞争、跨租户隔离、artifact Owner CAS 均未做运行验收。Chrome 仅能打开本地首页；前序已记录 session-CSRF 403，不能宣称 Creator/Admin 登录后闭环已浏览器验证。详见 [INK-226 工程笔记](../.agents/notes/implemented/feature/2026-09-24-agent-configuration-driven-integration.md)。
 
+## INK-250：模型配置 Token 字段组件边界
+
+Admin App 的 models 视图仍挂载 ModelConfigRoute；该路由保留认证上下文、数据加载、创建/编辑默认值、表单状态与校验、createLlmModel/updateLlmModel 调用及编辑 expected_revision。仅将上下文与最大输出输入区域、预设按钮和原格式化展示函数移至 components/ModelTokenFields，通过两个字符串值与两个 setter 回调受控连接；无新增API、依赖、Go包或业务接线。路由与组件均低于既有50KB限制；archguard仍报告16项生成契约超限，未变更规则或冻结设计。
+
 ## INK-251：用户裁决的源码大小上限
 
 archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，扫描生成源码，不增加忽略项。跨域/基座依赖、禁测试文件、Go解析不变；无运行服务/业务包/契约/生成器变化。新规则Go构建、R1–R5护栏及512000/512001边界通过，不代表旧规则通过。PR9页面拆分保持可独立审查，未回滚。
