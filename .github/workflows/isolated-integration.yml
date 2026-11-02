@@ -81,8 +81,57 @@ jobs:
         run: |
           go run ./cmd/migrate -cmd up -timeout 180s
           go run ./cmd/migrate -cmd status -timeout 60s
+      - name: Verify transaction rollback has no persistent side effects
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_ci PGDATABASE=inklore_ci PGPASSWORD=ci-only-not-production
+          psql -v ON_ERROR_STOP=1 -c "BEGIN; INSERT INTO platform_tenants(name) VALUES ('ci-rollback-guard'); ROLLBACK;"
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) FROM platform_tenants WHERE name='ci-rollback-guard'" | grep -qx 0
       - name: Build API and inspect code
         run: |
           go build ./...
           go vet ./...
           go run ./cmd/archguard -reachability
+      - name: Start actual API and check health, readiness and public access boundaries
+        shell: bash
+        env:
+          HTTP_ADDR: 127.0.0.1:18080
+          CREATOR_ORIGIN: http://127.0.0.1:3000
+          ADMIN_ORIGIN: http://127.0.0.1:3001
+        run: |
+          set -euo pipefail
+          export JWT_SIGNING_KEY="$(openssl rand -hex 32)"
+          export CSRF_KEY="$(openssl rand -hex 32)"
+          export IDEMPOTENCY_HASH_KEY="$(openssl rand -hex 32)"
+          export CURSOR_SIGNING_KEY="$(openssl rand -hex 32)"
+          go build -o /tmp/inklore-ci-server ./cmd/server
+          /tmp/inklore-ci-server >/tmp/inklore-ci-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 45); do
+            if curl --silent --fail --max-time 2 http://127.0.0.1:18080/healthz -o /tmp/inklore-health.json; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              echo "::error::InkLore API exited before healthy startup."
+              tail -n 35 /tmp/inklore-ci-server.log | sed -E 's#(postgres(ql)?://)[^[:space:]]+#\1[REDACTED]#g'
+              exit 1
+            fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+          curl --silent --fail --max-time 4 http://127.0.0.1:18080/readyz -o /tmp/inklore-ready.json
+          python3 - <<'PY'
+          import json
+          health = json.load(open('/tmp/inklore-health.json'))
+          ready = json.load(open('/tmp/inklore-ready.json'))
+          assert health.get('data', {}).get('status') == 'ok', 'unexpected health response'
+          assert ready.get('data', {}).get('database') == 'ok', 'database not ready'
+          assert ready.get('data', {}).get('state') == 'ready', 'redis is unexpectedly degraded'
+          PY
+          status=$(curl --silent --max-time 4 --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18080/does-not-exist)
+          test "$status" = 404
+          echo "Real Go API health, dependencies and unknown-route checks passed."
