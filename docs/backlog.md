@@ -140,6 +140,9 @@ INK-001–140已使用，永不复用；旧任务涉及的旧路由、兼容方�
 
 | INK-252 | 公开仓库前的凭据治理与安全核验 | 仓库安全 | blocked | 当前文档中的宿主机数据库及缓存密码、机器专属连接信息改为安全模板；后续仍须轮换已记载的 PostgreSQL/Redis 凭据，完成所有可达历史与 PR diff 的秘密扫描和历史暴露处置，最后再验证 Actions / 分支保护并切换 Public。仅清理当前文件不视为公开安全验收；本任务不执行数据库密码轮换或强推重写历史。 | 用户授权公开仓库；阻塞：实际凭据轮换与历史公开风险验收 |
 
+| INK-253 | 安全自动合并的事件竞态、权限和敏感路径治理 | 仓库 CI / 安全 | review | 对 dev 非 Draft PR 采用实时状态与路径复核、旧 head 无操作、标签撤销、重命名原路径、低风险文档白名单和源码显式授权标签；敏感目录一律人工合并，private 不自动合并。GitHub 默认分支需部署此策略，合并后仍要运行实际事件验收。[工程笔记](../.agents/notes/implemented/process/2026-11-03-safe-pr-automerge-gates.md) | 用户授权维护仓库自动合并；PR #22、#26 |
+
 | INK-254 | 安全自动合并的事件竞态、权限和敏感路径治理 | 仓库 CI / 安全 | review | 对 dev 非 Draft PR 采用实时状态与路径复核、旧 head 无操作、标签撤销、重命名原路径、低风险文档白名单和源码显式授权标签；敏感目录一律人工合并，private 不自动合并。GitHub 默认分支需部署此策略，合并后仍要运行实际事件验收。[工程笔记](../.agents/notes/implemented/process/2026-11-03-safe-pr-automerge-gates.md) | 用户授权维护仓库自动合并；PR #22、#26 |
 
-| INK-255 | GitHub 临时 PG17/Redis7 集成门禁与 Supabase 私有预检 | 持续集成 / 数据库 | review | 交付 isolated-integration.yml（PR 临时 PG17+Redis7，真实 R1 迁移、重复迁移与编译）和手动只读 supabase-staging-preflight.yml，文档记录专属 inklore_ci schema、服务角色权限及后续数据 API/Agent/双端真实验收。Supabase 已创建隔离 schema 并验证 anon/authenticated 无访问权，vector 已启用；pg_trgm 及 CI 实际运行、受限连接串、Supabase R1 迁移和在线服务均尚待验收，不宣称完成。 | 用户授权，依赖：INK-160、Supabase pgsql；云端 Supabase 密钥未配置 |
+| INK-255 | GitHub 临时 PG17/Redis7 集成门禁与 Supabase 私有预检 | 持续集成 / 数据库 | review | 交付 isolated-integration.yml（PR 临时 PG17+Redis7，真实 R1 迁移、重复迁移与编译）和手动只读 supabase-staging-preflight.yml，文档记录专属 inklore_ci schema、服务角色权限及后续数据 API/Agent/双端真实验收。Supabase inklore_ci 已执行17组 R1 迁移（80张私有业务表、public零业务表）、三个所需扩展及 schema/NOLOGIN 权限覆盖并独立复核；GitHub 临时 PG/Redis 的迁移和 Go API 健康/就绪检查已有成功运行，新增 Creator 注册/会话持久化用例待新 head CI 验证。受限远程连接串及长期在线服务未就绪，不宣称完整跨租户、Agent 或浏览器验收。 | 用户授权，依赖：INK-160、Supabase pgsql；云端 Supabase 密钥未配置 |
+| INK-257 | 修复 Qodana Workflow 无效条件和旧分支触发 | CI/安全质量 | review | 已找到 `.github/workflows/qodana_code_quality.yml` 在 step if 中直接访问 secrets 的配置错误（actionlint 两处报错）；独立 PR 改为无密钥泄漏的 token 可用性步骤输出，更新触发到 dev/private 并收紧 contents 只读。需在最终 PR head 静态校验和真实 Actions 再运行核实；没有 Token 不声明云端扫描通过。[Issue #33](https://github.com/BaSui01/InkLore/issues/33) | 用户授权改善 GitHub 安全质量；区别于 INK-186 静态检查修复 |

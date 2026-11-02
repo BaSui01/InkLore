@@ -1,0 +1,46 @@
+name: "实施 / 独立验收"
+description: "基于已有 INK 编号登记实施或独立验收入口"
+title: "[INK-xxx] "
+body:
+  - type: markdown
+    attributes:
+      value: "docs/backlog.md 是任务状态唯一权威。先核对编号与依赖，不重复创建同义任务；实施与独立验收分开。"
+  - type: input
+    id: id
+    attributes:
+      label: "唯一 INK 编号"
+      placeholder: "INK-253"
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: "本轮边界与明确不做的内容"
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: "依赖及阻塞条件"
+      description: "哪些前置任务已 done？哪些尚未获准？"
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: "独立验收步骤"
+      description: "命令、基准 SHA、退出码、真实 API/PG/浏览器证据与失败路径"
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: "现有证据与 PR"
+      description: "仅填写亲自核实的结果；未运行写未运行"
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: "工程边界"
+      options:
+        - label: "不绕过冻结设计、CI、敏感路径人工审阅与凭据限制"
+          required: true

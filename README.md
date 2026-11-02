@@ -64,6 +64,12 @@ make ci NOTES_BASE=<base-commit>
 
 详见 [贡献指南](CONTRIBUTING.md) 与 [仓库治理策略](docs/repository-governance.md)。
 
+## GitHub 协作入口
+
+[Issues](https://github.com/BaSui01/InkLore/issues) · [Pull Requests](https://github.com/BaSui01/InkLore/pulls) · [Projects 看板](https://github.com/users/BaSui01/projects/1) · [Actions](https://github.com/BaSui01/InkLore/actions) · [Insights](https://github.com/BaSui01/InkLore/pulse) · [依赖关系](https://github.com/BaSui01/InkLore/network/dependencies) · [安全](https://github.com/BaSui01/InkLore/security) · [Wiki](https://github.com/BaSui01/InkLore/wiki)
+
+[GitHub 功能与安全治理指南](docs/github-platform.md)；Wiki 发布前的页面草稿见 [docs/wiki](docs/wiki/Home.md)。
+
 ## 状态声明
 
 InkLore 持续开发中。文档中的目标能力不代表全部已上线；涉及数据库迁移、跨租户授权、计费、模型调用与 Agent 恢复的功能必须以独立可复现验收为准。

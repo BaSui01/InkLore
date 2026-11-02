@@ -10,7 +10,18 @@
 
 - 增加 GitHub Actions 临时 PG17+pgvector/Redis7 集成作业，验证 R1 迁移、幂等重放及后端构建规则；不读取真实 Supabase 凭据。
 - 增加可信人工触发的 Supabase 私有 schema 只读验证工作流，需另行配置最小权限数据库连接与 GitHub Environment。
-- 东京 pgsql 创建隔离 schema，撤销 Data API 角色的 schema 权限并启用 vector；完整业务迁移、pg_trgm、真实后端和浏览器验收未完成。
+- 东京 pgsql 的 inklore_ci 私有 schema 已完成17组 R1 迁移（80张业务表，public 零业务表），pgcrypto/vector/pg_trgm 统一位于 extensions；已执行独立的私有角色权限覆盖并验证 Data API 角色无 schema 访问权。
+
+### Qodana 工作流有效性修复（INK-257，review）
+
+- 将无效的 step `secrets` 条件换成 Token 可用性布尔输出，保留凭据只在受限环境变量中；更新 push 到 private/dev，令工作流可正常解析。
+- 保留缺少 QODANA_TOKEN 时的安全跳过行为，扫描仍须真实 Token/平台执行验收；不将跳过视为安全通过。
+
+
+### GitHub 协作与依赖维护（INK-253，review）
+
+- 新增 Issues 表单、Dependabot 四类依赖周更配置、只读仓库健康周报工作流，准备 Wiki 首页与开发/架构/治理导航。
+- 建立 Projects 看板与 GitHub 页面入口；不修改业务运行路径。配置进入默认分支前周报定时任务和依赖版本更新不声称已启动，Wiki 需独立首次发布与复核。
 
 
 ### INK-254：安全自动合并门禁加固（review）

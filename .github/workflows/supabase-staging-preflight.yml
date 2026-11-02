@@ -40,4 +40,8 @@ jobs:
           psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname='inklore_ci')" | grep -qx t
           psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT NOT has_schema_privilege('anon','inklore_ci','USAGE') AND NOT has_schema_privilege('authenticated','inklore_ci','USAGE')" | grep -qx t
           psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='vector')" | grep -qx t
+          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT count(*) FROM inklore_ci.schema_migrations" | grep -qx 17
+          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT count(*) FROM pg_tables WHERE schemaname='inklore_ci'" | grep -qx 80
+          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='pg_trgm')" | grep -qx t
+          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT NOT has_schema_privilege('service_role','inklore_ci','USAGE')" | grep -qx t
           echo 'Supabase staging schema preflight OK (no schema migration performed).'
