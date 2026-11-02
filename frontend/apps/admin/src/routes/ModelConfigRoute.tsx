@@ -17,7 +17,6 @@ import {
   LayoutGrid,
   List,
   Sparkles,
-  Layers,
 } from "lucide-react";
 import { Button, Modal, Input, ConfirmDialog, Badge } from "@inklore/ui";
 import { safeErrorText } from "@inklore/transport";
@@ -48,6 +47,7 @@ import {
   composeModelCapabilities,
 } from "../utils/modelCapabilities";
 import { navigateAdmin } from "../navigation";
+import { ModelStatsOverview } from "../components/ModelStatsOverview";
 
 function formatTokensLabel(raw: string | number): string {
   const num = typeof raw === "string" ? parseInt(raw, 10) : raw;
@@ -525,45 +525,7 @@ export function ModelConfigRoute() {
         className="px-6 py-3.5 bg-[var(--bg-surface)] border-b border-[var(--border-decorative)] shrink-0"
       />
 
-      {/* 模型指标统计概览 */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-6 py-3 bg-[var(--bg-canvas)]/60 border-b border-[var(--border-decorative)] shrink-0">
-        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/70">
-          <div className="w-8 h-8 rounded-lg bg-[var(--action-primary)]/10 text-[var(--action-primary)] flex items-center justify-center shrink-0">
-            <Cpu className="w-4 h-4" />
-          </div>
-          <div>
-            <span className="text-[11px] text-[var(--text-muted)] block">在册模型</span>
-            <span className="font-semibold text-sm text-[var(--text-primary)] font-mono">{modelStats.total}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/70">
-          <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4" />
-          </div>
-          <div>
-            <span className="text-[11px] text-[var(--text-muted)] block">文本/对话模型</span>
-            <span className="font-semibold text-sm text-[var(--text-primary)] font-mono">{modelStats.llmCount}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/70">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-            <Eye className="w-4 h-4" />
-          </div>
-          <div>
-            <span className="text-[11px] text-[var(--text-muted)] block">支持视觉识别</span>
-            <span className="font-semibold text-sm text-[var(--text-primary)] font-mono">{modelStats.visionCount}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/70">
-          <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <Layers className="w-4 h-4" />
-          </div>
-          <div>
-            <span className="text-[11px] text-[var(--text-muted)] block">未接入渠道</span>
-            <span className="font-semibold text-sm text-[var(--text-primary)] font-mono">{modelStats.unboundCount}</span>
-          </div>
-        </div>
-      </div>
+      <ModelStatsOverview stats={modelStats} />
 
       {/* Search & Filter Bar */}
       <SearchFilterBar
