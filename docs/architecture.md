@@ -323,3 +323,7 @@ archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，�
 ## INK-254：仓库 PR 自动合并策略
 
 只涉及默认分支的 GitHub Actions 和仓库治理文档；未修改 Go 包、Creator/Admin、运行装配、数据或模型请求路径。自动合并决策先检查实时 PR、敏感路径和标签，再交由 GitHub CI/分支保护执行，不以静态 CI 证明真实 PR 事件场景全部通过。
+
+## INK-256：dev 向 private 的受保护提交批量同步
+
+仅增加默认分支 GitHub Actions 与治理文档，不改变业务 Go/React 运行路径、数据库迁移或发布镜像。基于 Compare ahead_by≥20 创建 release 源快照；只有 GitHub 的最新检查和保护条件都满足才允许 Merge Commit 自动合入 private，保留 dev 继续开发。当前分支存在 42/6 双向提交分叉以及未完成业务验收，默认阻止无审查发布。
