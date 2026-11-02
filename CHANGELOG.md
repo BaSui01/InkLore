@@ -6,6 +6,11 @@
 
 ## [Unreleased]
 
+### Go 加密依赖安全升级（INK-258，待独立验收）
+
+- 以 Dependabot PR #28 为版本来源，在 dev 提交 x/crypto 0.48.0→0.52.0，联动 x/net、x/text、x/sys、x/sync 的必要版本与校验和更新；未直接更改业务源代码。
+- 加密、认证与网络依赖图变化需要最新 CI 和隔离服务的实际认证/租户回归证据。稳定 private 分支暂不直接合入，仍须受保护发布 PR。
+
 ### 在线隔离 CI / Supabase 预检（INK-255，待验收）
 
 - 增加 GitHub Actions 临时 PG17+pgvector/Redis7 集成作业，验证 R1 迁移、幂等重放及后端构建规则；不读取真实 Supabase 凭据。

@@ -350,3 +350,7 @@ INK-253 的 GitHub 自动化权限、默认分支生效约束与取舍见 [工�
 `.github/workflows/qodana_code_quality.yml` 原有直接用于步骤 `if` 的 `secrets.QODANA_TOKEN` 表达式不在受支持上下文内，导致 GitHub 工作流初始化失败且 job 为空。本变更通过仅向布尔输出传递 Token 是否存在的信息，保持真实 Token 只在环境变量中；Qodana 扫描仍通过原有 Action 接入。按当前分支职责把推送触发从 main/main-r1 更新到 private/dev，降低 contents 权限为只读。无 Go、React 或数据库业务运行路径变化。实际可用 Token 的云端扫描仍需独立确认，不把工作流解析通过等同 Qodana 代码质量验收。
 
 对应错误的机制、替代方案与真实验收限制见 [工程笔记](../.agents/notes/implemented/bug-fix/2026-11-03-qodana-invalid-step-condition.md)。
+
+## INK-258 · Go 加密与网络依赖安全更新（review）
+
+基于原 Dependabot PR #28 的模块解析快照，将 golang.org/x/crypto 从 v0.48.0 升至 v0.52.0，同步更新 x/net、x/text、x/sys、x/sync；本阶段只改 go.mod/go.sum，原 Go 应用源代码、SQL 和前端运行路径不变。依赖图变更仍可能影响加密、密码校验、JWT、传输安全等可达运行行为，因此不能仅根据静态构建认定功能兼容；必须在隔离环境验收实际授权与失败路径，再经受保护发布 PR 同步 private。详情见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-go-crypto-security-upgrade.md)。
