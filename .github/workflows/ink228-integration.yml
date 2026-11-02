@@ -66,7 +66,7 @@ jobs:
           test "$PGDATABASE" = "inklore_ci"
           test "$PGHOST" = "127.0.0.1"
           pg_isready -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE"
-          timeout 5 bash -c 'exec 3<>/dev/tcp/127.0.0.1/6379; printf "*1\r\n\$4\r\nPING\r\n" >&3; read -r line <&3; [[ "$line" == "+PONG" ]]'
+          python3 -c 'import socket; s=socket.create_connection(("127.0.0.1",6379), timeout=5); s.sendall(b"*1\r\n$4\r\nPING\r\n"); assert s.recv(32).startswith(b"+PONG"), "Redis PING failed"; s.close()'
       - name: Apply InkLore embedded migrations
         run: go run ./cmd/migrate -cmd up -dsn "$DATABASE_DSN" -timeout 150s
       - name: Verify migration replay is idempotent
