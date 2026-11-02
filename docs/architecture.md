@@ -8,7 +8,7 @@
 
 PR #18 已合入 dev：Run Scheduler、小说引导和 LLM Catalog 查询链携带冻结 PolicyVersionID，不再由 Agent 适配器直接访问 LLM 私表。PR #19 是独立 Draft：通过已授权 Model ID 在 LLM Infrastructure 查询同租户 llm_channel_models/llm_channels/llm_models/llm_providers/llm_keys，所有关联限定 tenant，排除停用或删除资源；路由使用实际渠道协议和 upstream_model；数据库渠道不再向全局密钥/其他租户回退。非事务模型调用读 GORM DB；CreateRun 在现有 Run/Job/事件 UoW 内用 PostgreSQL FOR SHARE 获取 current_version_id 与发布操作序列化。
 
-跨租户通道/失效 Key、真实费用、策略并发发布、真实 Provider/WS/SSE 和登录浏览器尚未在隔离环境穿透；CI 构建通过不等于模型调用成功。当前非租户域调用仅保留显式全局 pool/env 路径，灵感/质检需按租户策略补齐后验收；Creator 安全策略目录、task_policy_version_id 创建与兼容 sunset 仍待实施。根因与测试门禁见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-02-tenant-model-routing.md)。
+跨租户通道/失效 Key、真实费用、策略并发发布、真实 Provider/WS/SSE 和登录浏览器尚未在隔离环境穿透；CI 构建通过不等于模型调用成功。灵感/质检现已按当前租户启用的 inspiration/review 策略提供 Model ID/版本/预算上限；缺策略直接失败，真实生成仍需验收。无租户调用仅保留显式全局 pool/env 路径；Creator 安全策略目录、task_policy_version_id 创建与兼容 sunset 仍待实施。根因与测试门禁见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-02-tenant-model-routing.md)。
 
 ## INK-245 · 接入模型渠道弹窗移除供应商下拉框（review）
 
