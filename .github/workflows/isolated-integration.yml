@@ -95,6 +95,10 @@ jobs:
           CREATE EXTENSION pg_trgm WITH SCHEMA extensions;
           CREATE EXTENSION pgcrypto WITH SCHEMA extensions;
           CREATE SCHEMA inklore_ci;
+          -- Ephemeral, no-login stand-ins for Supabase Data API roles.
+          CREATE ROLE anon NOLOGIN;
+          CREATE ROLE authenticated NOLOGIN;
+          CREATE ROLE service_role NOLOGIN;
           REVOKE ALL ON SCHEMA inklore_ci FROM PUBLIC;
           CREATE TABLE public.ci_unrelated_data(id bigint PRIMARY KEY);
           CREATE SEQUENCE public.ci_unrelated_sequence;
