@@ -137,3 +137,5 @@ INK-001–140已使用，永不复用；旧任务涉及的旧路由、兼容方�
 | INK-248 | 修复 pnpm 前端 CI 与 dot 本地持续集成入口 | 工程维护 | review | 复用 make ci，显式 BUILDVCS 快照选项，保留 workflow 与全部门禁。dot 单项 Go build/vet、Skills、920键 i18n、冻结依赖安装与双端构建通过；历史 notes 缺真实 Git 基线，fmt/guard 保留既存失败，完整门禁与独立验收未完成，不合并。运行路径不变。[Issue #1](https://github.com/BaSui01/InkLore/issues/1)；[工程笔记](../.agents/notes/implemented/process/2026-11-01-pnpm-ci-dev-gates.md) | 用户授权；INK-143,173 |
 
 | INK-251 | 按用户裁决将源码文件上限改为500KiB | 工程规则 | review | [ADR-0037](decisions/0037-source-file-size-limit-500kib.md) 将既有源码扫描范围阈值改为512000字节，其他门禁/ignore不变。Go构建和archguard含可达性报告通过；独立CLI边界夹具512000通过、512001拒绝。是新规则通过而非旧50KB满足；独立复核/业务验收未完成，不合并。[Issue #10](https://github.com/BaSui01/InkLore/issues/10)；[笔记](../.agents/notes/implemented/process/2026-11-01-source-file-size-limit.md) | 用户2026-11-01明确决策 |
+
+| INK-252 | 公开仓库前的凭据治理与安全核验 | 仓库安全 | blocked | 当前文档中的宿主机数据库及缓存密码、机器专属连接信息改为安全模板；后续仍须轮换已记载的 PostgreSQL/Redis 凭据，完成所有可达历史与 PR diff 的秘密扫描和历史暴露处置，最后再验证 Actions / 分支保护并切换 Public。仅清理当前文件不视为公开安全验收；本任务不执行数据库密码轮换或强推重写历史。 | 用户授权公开仓库；阻塞：实际凭据轮换与历史公开风险验收 |
