@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### Agent 模型渠道租户安全与策略冻结（INK-228，待隔离验收）
+
+- Agent 的请求由冻结的 PolicyVersionID 与所属租户的精确 Model ID 选择数据库渠道、协议和上游模型名称；停用、缺失和凭据失败不回退到其他租户或全局密钥；不再于组合根无 tenant 读取 LLM 业务表。
+- CreateRun 将策略当前版本读取放入原有 Run/Job/事件 PostgreSQL 事务，用 FOR SHARE 防止发布竞争时产生无授权版本漂移。
+- PR #19 GitHub CI 只覆盖静态工程门禁。真实 PG 多租户/并发、模型和计费验收以及 Creator 策略目录、兼容 sunset 仍未完成，不能据此标记整体任务完成。
+
 ### pnpm 与 dev 持续集成配置（INK-248，待完整验收）
 
 - 前端 CI 改用固定 pnpm 11.25.0、已有 pnpm 锁文件及 frozen-lockfile 安装，保留 Creator/Admin 构建；push 增加 dev，保留 main 与 PR 触发。
