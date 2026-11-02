@@ -6,6 +6,13 @@
 
 ## [Unreleased]
 
+### 在线隔离 CI / Supabase 预检（INK-255，待验收）
+
+- 增加 GitHub Actions 临时 PG17+pgvector/Redis7 集成作业，验证 R1 迁移、幂等重放及后端构建规则；不读取真实 Supabase 凭据。
+- 增加可信人工触发的 Supabase 私有 schema 只读验证工作流，需另行配置最小权限数据库连接与 GitHub Environment。
+- 东京 pgsql 创建隔离 schema，撤销 Data API 角色的 schema 权限并启用 vector；完整业务迁移、pg_trgm、真实后端和浏览器验收未完成。
+
+
 ### INK-254：安全自动合并门禁加固（review）
 
 - 自动合并收紧为普通文档白名单和非敏感源码显式授权，默认分支 private 仍需人工合并。修复 Draft/标签撤销、旧 head 事件竞态和重命名原路径覆盖；不绕过 GitHub 必需 CI 或 Review 对话，实际事件行为仍待复核。
