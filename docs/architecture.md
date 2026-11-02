@@ -341,3 +341,9 @@ archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，�
 本轮仅增加 GitHub Issues 表单、Dependabot 版本更新计划、独立 Wiki 页面草稿与只读周报工作流，并在 README / 治理文档建立项目看板与原生 Insights 导航。无 Go/前端/数据库/Agent 运行路径改动，无外部运行时依赖。项目看板已在 GitHub 创建；正式 Wiki 首次发布、默认分支 Dependabot 读取与定时触发须完成平台侧验证。此处的配置就绪不等同于软件依赖漏洞已修复或业务功能验收通过。
 
 INK-253 的 GitHub 自动化权限、默认分支生效约束与取舍见 [工程笔记](../.agents/notes/implemented/process/2026-11-03-github-collaboration-governance.md)。
+
+## INK-257 · Qodana Actions 工作流解析错误（review）
+
+`.github/workflows/qodana_code_quality.yml` 原有直接用于步骤 `if` 的 `secrets.QODANA_TOKEN` 表达式不在受支持上下文内，导致 GitHub 工作流初始化失败且 job 为空。本变更通过仅向布尔输出传递 Token 是否存在的信息，保持真实 Token 只在环境变量中；Qodana 扫描仍通过原有 Action 接入。按当前分支职责把推送触发从 main/main-r1 更新到 private/dev，降低 contents 权限为只读。无 Go、React 或数据库业务运行路径变化。实际可用 Token 的云端扫描仍需独立确认，不把工作流解析通过等同 Qodana 代码质量验收。
+
+对应错误的机制、替代方案与真实验收限制见 [工程笔记](../.agents/notes/implemented/bug-fix/2026-11-03-qodana-invalid-step-condition.md)。

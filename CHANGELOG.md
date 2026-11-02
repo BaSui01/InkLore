@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### Qodana 工作流有效性修复（INK-257，review）
+
+- 将无效的 step `secrets` 条件换成 Token 可用性布尔输出，保留凭据只在受限环境变量中；更新 push 到 private/dev，令工作流可正常解析。
+- 保留缺少 QODANA_TOKEN 时的安全跳过行为，扫描仍须真实 Token/平台执行验收；不将跳过视为安全通过。
+
+
 ### GitHub 协作与依赖维护（INK-253，review）
 
 - 新增 Issues 表单、Dependabot 四类依赖周更配置、只读仓库健康周报工作流，准备 Wiki 首页与开发/架构/治理导航。

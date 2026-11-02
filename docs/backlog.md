@@ -143,3 +143,5 @@ INK-001–140已使用，永不复用；旧任务涉及的旧路由、兼容方�
 | INK-253 | 安全自动合并的事件竞态、权限和敏感路径治理 | 仓库 CI / 安全 | review | 对 dev 非 Draft PR 采用实时状态与路径复核、旧 head 无操作、标签撤销、重命名原路径、低风险文档白名单和源码显式授权标签；敏感目录一律人工合并，private 不自动合并。GitHub 默认分支需部署此策略，合并后仍要运行实际事件验收。[工程笔记](../.agents/notes/implemented/process/2026-11-03-safe-pr-automerge-gates.md) | 用户授权维护仓库自动合并；PR #22、#26 |
 
 | INK-254 | 安全自动合并的事件竞态、权限和敏感路径治理 | 仓库 CI / 安全 | review | 对 dev 非 Draft PR 采用实时状态与路径复核、旧 head 无操作、标签撤销、重命名原路径、低风险文档白名单和源码显式授权标签；敏感目录一律人工合并，private 不自动合并。GitHub 默认分支需部署此策略，合并后仍要运行实际事件验收。[工程笔记](../.agents/notes/implemented/process/2026-11-03-safe-pr-automerge-gates.md) | 用户授权维护仓库自动合并；PR #22、#26 |
+
+| INK-257 | 修复 Qodana Workflow 无效条件和旧分支触发 | CI/安全质量 | review | 已找到 `.github/workflows/qodana_code_quality.yml` 在 step if 中直接访问 secrets 的配置错误（actionlint 两处报错）；独立 PR 改为无密钥泄漏的 token 可用性步骤输出，更新触发到 dev/private 并收紧 contents 只读。需在最终 PR head 静态校验和真实 Actions 再运行核实；没有 Token 不声明云端扫描通过。[Issue #33](https://github.com/BaSui01/InkLore/issues/33) | 用户授权改善 GitHub 安全质量；区别于 INK-186 静态检查修复 |
