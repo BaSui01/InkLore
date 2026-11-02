@@ -5,7 +5,7 @@ on:
     types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
@@ -21,8 +21,21 @@ jobs:
           script: |
             const pr = context.payload.pull_request;
             const labels = new Set(pr.labels.map(label => label.name.toLowerCase()));
+            const reject = async (reason) => {
+              core.info(reason);
+              const current = await github.rest.pulls.get({
+                owner: context.repo.owner, repo: context.repo.repo, pull_number: pr.number
+              });
+              if (current.data.auto_merge) {
+                await github.graphql(
+                  `mutation($id: ID!) { disablePullRequestAutoMerge(input: {pullRequestId: $id}) { clientMutationId } }`,
+                  { id: current.data.node_id }
+                );
+                core.info('Existing auto-merge request revoked.');
+              }
+            };
             if (labels.has('manual-review') || labels.has('do-not-merge')) {
-              core.info('Manual review requested; automatic merge disabled.');
+              await reject('Manual review requested; automatic merge disabled.');
               return;
             }
             const protectedPaths = [
@@ -39,9 +52,13 @@ jobs:
               owner: context.repo.owner, repo: context.repo.repo,
               pull_number: pr.number, per_page: 100
             });
-            const unsafe = files.some(file => protectedPaths.some(pattern => pattern.test(file.filename)));
+            const unsafe = files.some(file =>
+              [file.filename, file.previous_filename].filter(Boolean).some(path =>
+                protectedPaths.some(pattern => pattern.test(path))
+              )
+            );
             if (unsafe) {
-              core.info('Sensitive source or governance paths changed; manual merge required.');
+              await reject('Sensitive source or governance paths changed; manual merge required.');
               return;
             }
             const current = await github.rest.pulls.get({
@@ -51,7 +68,7 @@ jobs:
                 current.data.head.repo.full_name !== context.repo.owner + '/' + context.repo.repo ||
                 current.data.head.sha !== pr.head.sha ||
                 current.data.state !== 'open') {
-              core.info('PR state changed. Skipping auto-merge.');
+              await reject('PR state changed. Skipping auto-merge.');
               return;
             }
             const nodeId = current.data.node_id;
