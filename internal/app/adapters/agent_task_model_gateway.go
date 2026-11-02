@@ -140,10 +140,10 @@ func (g *AgentTaskModelGateway) ResolvePolicySnapshot(ctx context.Context, tenan
 		return out, err
 	}
 	var row struct {
-		VersionID      string
-		ModelName      string
+		VersionID       string
+		ModelName       string
 		MaxOutputTokens int
-		Temperature    float64
+		Temperature     float64
 	}
 	result := db.Raw(`SELECT v.id::text AS version_id,m.upstream_name AS model_name,v.max_output_tokens,v.temperature
 		FROM llm_task_policies p
