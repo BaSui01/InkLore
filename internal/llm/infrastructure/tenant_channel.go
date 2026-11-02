@@ -50,6 +50,7 @@ func NewTenantChannelResolver(manager *uow.Manager) (TenantChannelResolver, erro
 			JOIN llm_providers pr ON pr.tenant_id=c.tenant_id AND pr.id=c.provider_id
 			JOIN llm_keys k ON k.tenant_id=c.tenant_id AND k.channel_id=c.id
 			WHERE cm.tenant_id=? AND cm.model_id=?
+			  AND (m.provider_id=c.provider_id OR btrim(cm.upstream_model)<>'')
 			  AND cm.enabled=TRUE AND cm.deleted_at IS NULL
 			  AND c.enabled=TRUE AND c.deleted_at IS NULL
 			  AND m.enabled=TRUE AND m.deleted_at IS NULL
