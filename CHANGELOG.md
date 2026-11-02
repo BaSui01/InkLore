@@ -13,13 +13,24 @@
 - 灵感分析和合规质检改为使用本租户现行启用的任务策略查询 Model ID/冻结版本；缺少策略明确失败，避免复活原跨租户查询。
 - PR #19 GitHub CI 只覆盖静态工程门禁。真实 PG 多租户/并发、模型和计费验收以及 Creator 策略目录、兼容 sunset 仍未完成，不能据此标记整体任务完成。
 
-### INK-253：安全自动合并门禁加固（review）
+
+### Go 加密依赖安全升级（INK-258，待独立验收）
+
+- 以 Dependabot PR #28 为版本来源，在 dev 提交 x/crypto 0.48.0→0.52.0，联动 x/net、x/text、x/sys、x/sync 的必要版本与校验和更新；未直接更改业务源代码。
+- 加密、认证与网络依赖图变化需要最新 CI 和隔离服务的实际认证/租户回归证据。稳定 private 分支暂不直接合入，仍须受保护发布 PR。
+
+### 在线隔离 CI / Supabase 预检（INK-255，待验收）
+
+- 增加 GitHub Actions 临时 PG17+pgvector/Redis7 集成作业，验证 R1 迁移、幂等重放及后端构建规则；不读取真实 Supabase 凭据。
+- 增加可信人工触发的 Supabase 私有 schema 只读验证工作流，需另行配置最小权限数据库连接与 GitHub Environment。
+- 东京 pgsql 的 inklore_ci 私有 schema 已完成17组 R1 迁移（80张业务表，public 零业务表），pgcrypto/vector/pg_trgm 统一位于 extensions；已执行独立的私有角色权限覆盖并验证 Data API 角色无 schema 访问权。
+- Supabase 四个不可变触发器 search_path 已固定并通过安全 Advisor 零告警验证；独立脚本保留原 R1 迁移 SQL 与 SHA256 不变。临时 CI 新增实际 Creator 注册/会话持久化 HTTP 验证，按最新 PR head 检查证据。
+- 临时 PostgreSQL 模拟 Supabase 已存在的 public 表/序列，修复并验证旧权限迁移的对象授权残留，最新隔离 Actions #41490710935 全绿。修正版暂未在共享 Supabase 再次执行。
 
 ### INK-228 隔离 PG17/Redis7 数据库结构冒烟门禁（review）
 
 - 新增面向 Agent/LLM 变更的临时 PostgreSQL 迁移与租户外键检查，固定当前 17 个迁移基线、重复迁移和无持久化服务凭据验证；不执行真实模型或 Supabase 写入。
 - 静态 Schema 门禁不代表 INK-228 的真实多租户路由、冻结策略和 Worker 行为已完成验收。
-
 
 ### Qodana 工作流有效性修复（INK-257，review）
 
@@ -34,7 +45,6 @@
 
 
 ### INK-254：安全自动合并门禁加固（review）
-
 
 - 自动合并收紧为普通文档白名单和非敏感源码显式授权，默认分支 private 仍需人工合并。修复 Draft/标签撤销、旧 head 事件竞态和重命名原路径覆盖；不绕过 GitHub 必需 CI 或 Review 对话，实际事件行为仍待复核。
 
