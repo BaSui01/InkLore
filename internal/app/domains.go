@@ -158,7 +158,7 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 		Idempotency: p.Idempotency,
 		Cursor:      p.Cursor,
 		Files:       adapters.InspirationFiles{Service: p.Files, Content: content},
-		Generation:  adapters.NewInspirationGeneration(llmGateway),
+		Generation:  adapters.NewInspirationGeneration(llmGateway, llmCatalog),
 	})
 	if err != nil {
 		return err
@@ -182,7 +182,7 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 		Repositories:  compRepos,
 		UoW:           p.UoW,
 		Scope:         p.Scope,
-		Generation:    adapters.NewComplianceGeneration(llmGateway),
+		Generation:    adapters.NewComplianceGeneration(llmGateway, llmCatalog),
 		Outbox:        adapters.ComplianceOutboxAdapter{Outbox: events},
 		SnapshotCache: compCache,
 	})
