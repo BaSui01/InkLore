@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 18
     services:
       postgres:
-        image: postgres:17
+        image: pgvector/pgvector:0.8.7-pg17
         env:
           POSTGRES_DB: inklore_ci
           POSTGRES_USER: inklore_ci
