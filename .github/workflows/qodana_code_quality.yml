@@ -25,6 +25,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - name: 'Qodana Scan'
+        if: ${{ secrets.QODANA_TOKEN != '' }}
         uses: JetBrains/qodana-action@v2026.2
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
@@ -38,3 +39,6 @@ jobs:
           upload-result: false
           # quick-fixes available in Ultimate and Ultimate Plus plans
           push-fixes: 'none'
+      - name: 'Qodana Scan Skipped'
+        if: ${{ secrets.QODANA_TOKEN == '' }}
+        run: echo "QODANA_TOKEN is not available in this workflow context; skipping Qodana scan."

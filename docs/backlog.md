@@ -131,3 +131,5 @@ INK-001–140已使用，永不复用；旧任务涉及的旧路由、兼容方�
 | INK-245 | 移除接入模型渠道弹窗的供应商下拉框 | Admin 渠道体验 | review | 有/无已注册供应商时，弹窗不再渲染“选择供应商”及“自动预设供应商”下拉框；接口协议与渠道别名保留，创建仍沿原有协议匹配/自动注册路径，编辑沿用原绑定。`lsp-diagnostics` 零问题，`pnpm run build:admin`、`go build ./...`、i18ncheck（905/905）和 notes check 均退出0；用户明确要求自行手动测试，浏览器呈现与实际保存未作为验收通过。 | 用户截图要求；INK-237 |
 
 | INK-248 | 修复 pnpm 前端 CI 与 dot 本地持续集成入口 | 工程维护 | review | 复用 make ci，显式 BUILDVCS 快照选项，保留 workflow 与全部门禁。dot 单项 Go build/vet、Skills、920键 i18n、冻结依赖安装与双端构建通过；历史 notes 缺真实 Git 基线，fmt/guard 保留既存失败，完整门禁与独立验收未完成，不合并。运行路径不变。[Issue #1](https://github.com/BaSui01/InkLore/issues/1)；[工程笔记](../.agents/notes/implemented/process/2026-11-01-pnpm-ci-dev-gates.md) | 用户授权；INK-143,173 |
+
+| INK-251 | 按用户裁决将源码文件上限改为500KiB | 工程规则 | review | [ADR-0037](decisions/0037-source-file-size-limit-500kib.md) 将既有源码扫描范围阈值改为512000字节，其他门禁/ignore不变。Go构建和archguard含可达性报告通过；独立CLI边界夹具512000通过、512001拒绝。是新规则通过而非旧50KB满足；独立复核/业务验收未完成，不合并。[Issue #10](https://github.com/BaSui01/InkLore/issues/10)；[笔记](../.agents/notes/implemented/process/2026-11-01-source-file-size-limit.md) | 用户2026-11-01明确决策 |

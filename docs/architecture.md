@@ -1,5 +1,7 @@
 # InkLore 重构实施事实
 
+> 当前源码文件大小规则由 [ADR-0037](decisions/0037-source-file-size-limit-500kib.md) 更新为500KiB（512000字节）。下文历史50KB验收描述保留为当时事实，不再表示现行源码阈值；独立文档长度和冻结治理不变。
+
 本文件只记录实现证据，不维护第二份目标架构。唯一目标设计：[R1索引](system-design/00-INDEX.md)，契约：[00基线](system-design/00-CONTRACT-BASELINE.md)。
 
 ## INK-245 · 接入模型渠道弹窗移除供应商下拉框（review）
@@ -317,3 +319,7 @@ Admin `AgentGovernanceRoute.tsx` 经 `adminApi.ts` 分页读取 definitions/work
 ## INK-248：pnpm 与 dev 持续集成配置
 
 `.github/workflows/ci.yml` 的前端任务先安装固定 pnpm 11.25.0，再由 Node 22 配合 pnpm store 缓存和 `frontend/pnpm-lock.yaml` 执行 `pnpm install --frozen-lockfile`、`pnpm run build`。push 触发包含 main/dev，PR 触发与原有后端、Skills、notes 门禁不变。仅调整离线 CI 配置与验证指南，未修改 Go 包、启动入口、领域依赖、业务接线或锁文件。make ci 复用本地完整构建与静态检查，dot 可直接运行，不依赖 Actions。Go 默认 VCS stamping 保持 auto；核验来源的无 Git 快照必须显式 BUILDVCS=false，历史 notes 仍须真实基线。dot 单项 Go build/vet、Skills/i18n、冻结安装和双端构建已通过；notes 基线不可用及既存 fmt/guard 失败仍阻止完整门禁通过，独立验收未完成。
+
+## INK-251：用户裁决的源码大小上限
+
+archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，扫描生成源码，不增加忽略项。跨域/基座依赖、禁测试文件、Go解析不变；无运行服务/业务包/契约/生成器变化。新规则Go构建、R1–R5护栏及512000/512001边界通过，不代表旧规则通过。PR9页面拆分保持可独立审查，未回滚。
