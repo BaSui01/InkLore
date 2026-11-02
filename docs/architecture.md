@@ -335,3 +335,9 @@ archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，�
 ## INK-254：仓库 PR 自动合并策略
 
 只涉及默认分支的 GitHub Actions 和仓库治理文档；未修改 Go 包、Creator/Admin、运行装配、数据或模型请求路径。自动合并决策先检查实时 PR、敏感路径和标签，再交由 GitHub CI/分支保护执行，不以静态 CI 证明真实 PR 事件场景全部通过。
+
+## INK-253 · GitHub 协作、依赖与只读周报（review）
+
+本轮仅增加 GitHub Issues 表单、Dependabot 版本更新计划、独立 Wiki 页面草稿与只读周报工作流，并在 README / 治理文档建立项目看板与原生 Insights 导航。无 Go/前端/数据库/Agent 运行路径改动，无外部运行时依赖。项目看板已在 GitHub 创建；正式 Wiki 首次发布、默认分支 Dependabot 读取与定时触发须完成平台侧验证。此处的配置就绪不等同于软件依赖漏洞已修复或业务功能验收通过。
+
+INK-253 的 GitHub 自动化权限、默认分支生效约束与取舍见 [工程笔记](../.agents/notes/implemented/process/2026-11-03-github-collaboration-governance.md)。
