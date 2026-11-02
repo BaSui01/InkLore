@@ -1,4 +1,5 @@
 name: Safe PR Auto Merge
+# Hardened: opt-out labels and sensitive paths revoke previously enabled auto-merge.
 
 on:
   pull_request_target:
