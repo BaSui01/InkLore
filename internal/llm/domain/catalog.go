@@ -94,18 +94,18 @@ type ChannelModelBindingInput struct {
 }
 
 type ChannelInput struct {
-	ProviderID    string                      `json:"provider_id"`
-	ModelID       string                      `json:"model_id,omitempty"`
-	ModelIDs      []string                    `json:"model_ids,omitempty"`
-	Models        []ChannelModelBindingInput  `json:"models,omitempty"`
-	Title         string                      `json:"title"`
-	BaseURL       string                      `json:"base_url"`
-	UpstreamModel string                      `json:"upstream_model,omitempty"`
-	Priority      int64                       `json:"priority"`
-	Weight        int64                       `json:"weight"`
-	RPM           int64                       `json:"rpm"`
-	Concurrency   int64                       `json:"concurrency"`
-	Enabled       bool                        `json:"enabled"`
+	ProviderID    string                     `json:"provider_id"`
+	ModelID       string                     `json:"model_id,omitempty"`
+	ModelIDs      []string                   `json:"model_ids,omitempty"`
+	Models        []ChannelModelBindingInput `json:"models,omitempty"`
+	Title         string                     `json:"title"`
+	BaseURL       string                     `json:"base_url"`
+	UpstreamModel string                     `json:"upstream_model,omitempty"`
+	Priority      int64                      `json:"priority"`
+	Weight        int64                      `json:"weight"`
+	RPM           int64                      `json:"rpm"`
+	Concurrency   int64                      `json:"concurrency"`
+	Enabled       bool                       `json:"enabled"`
 }
 
 type UpstreamModelItem struct {

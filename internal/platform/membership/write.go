@@ -144,7 +144,7 @@ func (s *Service) Update(ctx context.Context, p identity.Principal, id string, i
 		if err = db.Exec("UPDATE platform_sessions SET revoked_at=clock_timestamp(),revision=revision+1,updated_at=clock_timestamp() WHERE tenant_id=? AND user_id=? AND revoked_at IS NULL", p.TenantID, current.UserID).Error; err != nil {
 			return err
 		}
-	out, err = readMember(db, p.TenantID, id, false)
+		out, err = readMember(db, p.TenantID, id, false)
 		return err
 	})
 	if err != nil {
