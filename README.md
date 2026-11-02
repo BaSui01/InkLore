@@ -1,26 +1,73 @@
-# InkLore 墨境
+<div align="center">
 
-模块化单体AI小说创作平台。当前工作阶段是 **R1完整重构设计已定稿、业务实现待按契约重构**。
+# InkLore · 墨境
 
-设计唯一入口：[docs/system-design/00-INDEX.md](docs/system-design/00-INDEX.md)。先读 [00全局契约](docs/system-design/00-CONTRACT-BASELINE.md)，再读领域功能、SQL、OpenAPI和双端UI分册。不要把旧代码行为当作新接口标准。
+**让创作拥有结构，让灵感自由生长。**
 
-| 入口 | 内容 |
+基于 Go、React、PostgreSQL 的模块化 AI 小说创作平台，面向小说作者、创作智能体与多模型治理。
+
+[架构设计](docs/system-design/00-INDEX.md) · [开发指南](docs/development-guide.md) · [任务看板](docs/backlog.md) · [贡献指南](CONTRIBUTING.md)
+
+</div>
+
+---
+
+## 项目概览
+
+InkLore 采用 **模块化单体架构**，以七个业务领域和统一平台基座组织创作与 AI 能力。设计目标、已实现代码与实际验收进度严格区分；不以编译通过代替真实业务验收。
+
+| 子系统 | 职责 |
 | --- | --- |
-| [AGENTS](AGENTS.md) | 工程红线与协作规则 |
-| [OpenAPI](docs/system-design/api/openapi.json) | 类型化接口、权限、幂等、错误 |
-| [DDL](docs/system-design/data/README.md) | 七域与平台表、约束和执行顺序 |
-| [创作者端](docs/system-design/15-CREATOR-FUNCTION-UX-SPEC.md) / [管理端](docs/system-design/16-ADMIN-FUNCTION-UX-SPEC.md) | 页面字段、状态、操作、异常恢复 |
-| [复用设计](docs/system-design/20-FRONTEND-REUSE-AND-STATE-CONTRACTS.md) | 组件与控制器输入输出、缓存、状态所有权 |
-| [实施与验收](docs/system-design/18-DELIVERY-AND-ACCEPTANCE-PLAN.md) | 分阶段任务与端到端门禁 |
-| [看板](docs/backlog.md) / [实现事实](docs/architecture.md) | 实际进度与证据，不是第二套设计 |
-| [决策](docs/decisions/README.md) / [开发维护](docs/development-guide.md) | 取舍依据、Skills和工程记忆 |
+| Creator Studio | 小说创作、章节编辑、大纲、世界观与智能体交互 |
+| Admin Console | 模型、渠道、任务策略、运行审计与平台治理 |
+| Go API / Worker | 领域用例、HTTP 接口、持久任务、Agent 调度与流式事件 |
+| PostgreSQL / Redis | 业务持久化、事务与运行时基础设施 |
 
-文档检查：
+**技术栈**：Go · Gin · GORM · PostgreSQL 17 · Redis 7 · React 19 · TypeScript · Vite · pnpm
 
-```powershell
-node docs/system-design/tools/build-contracts.cjs
-node docs/system-design/tools/check-design.cjs
+## 工程入口
+
+建议先阅读 [AGENTS.md](AGENTS.md) 和 [系统设计索引](docs/system-design/00-INDEX.md)，再按任务进入对应领域。
+
+```bash
+# 从仓库根目录运行，和 GitHub Actions CI 保持一致
+node scripts/check-project-skills.mjs
+node scripts/agent-notes.mjs check
 go build ./...
+go vet ./...
+gofmt -l .  # 输出应为空
+go run ./cmd/i18ncheck frontend/packages/i18n/src/locales/zh-CN.ts frontend/packages/i18n/src/locales/en-US.ts
+go run ./cmd/archguard -reachability
+
+# 前端（Node 22、pnpm 11.25.0）
+cd frontend
+pnpm install --frozen-lockfile
+pnpm run build
 ```
 
-生成OpenAPI入口和目录只编译设计资产，不启动服务、不执行数据库迁移。真实PG/Redis/模型及浏览器验收按18逐项执行。开发目标是两个独立应用Creator3000与Admin3001、API8080；当前代码是否达标以实际验收记录为准。
+上述命令适用于默认分支；完整的 PR 历史封印检查还需要真实 Git 基线，权威步骤以 [GitHub Actions CI](.github/workflows/ci.yml) 为准。
+
+开发约定端口：**API 8080 · Creator 3000 · Admin 3001**。本地 PostgreSQL / Redis 配置见 [docker-compose.dev.yml](docker-compose.dev.yml)。仅使用示例环境文件，不提交真实密钥。
+
+## 设计与实现事实
+
+| 文档 | 用途 |
+| --- | --- |
+| [系统设计索引](docs/system-design/00-INDEX.md) | 权威目标设计入口 |
+| [接口契约](docs/system-design/api/openapi.json) / [数据设计](docs/system-design/data/README.md) | API 与数据库约束 |
+| [Creator UX](docs/system-design/15-CREATOR-FUNCTION-UX-SPEC.md) / [Admin UX](docs/system-design/16-ADMIN-FUNCTION-UX-SPEC.md) | 双端界面与交互 |
+| [实施记录](docs/architecture.md) / [任务看板](docs/backlog.md) | 已实现事实、阻塞与验收证据 |
+| [ADR](docs/decisions/README.md) / [工程记忆](.agents/notes/README.md) | 重要取舍与演进过程 |
+
+## 协作与分支
+
+- `private` 为稳定主分支，`dev` 为开发集成分支。
+- 业务、文档与基础设施变更先从功能分支提交 PR 到 `dev`；向 `private` 发布时单独提出 PR。
+- PR 必须满足分支保护与 CI，禁止将 Draft、未确认的架构或数据变更直接自动合并。
+- 合并后自动删除短期 PR 分支，保护长期集成分支。
+
+详见 [贡献指南](CONTRIBUTING.md) 与 [仓库治理策略](docs/repository-governance.md)。
+
+## 状态声明
+
+InkLore 持续开发中。文档中的目标能力不代表全部已上线；涉及数据库迁移、跨租户授权、计费、模型调用与 Agent 恢复的功能必须以独立可复现验收为准。
