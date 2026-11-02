@@ -1,0 +1,43 @@
+name: Supabase Staging Preflight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-supabase:
+    name: Trusted Supabase isolated schema (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: supabase-staging
+    steps:
+      - name: Confirm credentials exist
+        env:
+          STAGING_DSN: ${{ secrets.SUPABASE_STAGING_DATABASE_URL }}
+        shell: bash
+        run: |
+          if [ -z "$STAGING_DSN" ]; then
+            echo "::error::Set SUPABASE_STAGING_DATABASE_URL in environment supabase-staging first."
+            exit 1
+          fi
+          if [[ "$STAGING_DSN" != *"sslmode=require"* && "$STAGING_DSN" != *"sslmode=verify-full"* ]]; then
+            echo "::error::Staging connection must require TLS."
+            exit 1
+          fi
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+      - name: Verify isolated Supabase schema without mutations
+        env:
+          STAGING_DSN: ${{ secrets.SUPABASE_STAGING_DATABASE_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Restrict the routine to SELECT-only. Never run R1 migrations against a shared Supabase public schema.
+          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname='inklore_ci')" | grep -qx t
+          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT NOT has_schema_privilege('anon','inklore_ci','USAGE') AND NOT has_schema_privilege('authenticated','inklore_ci','USAGE')" | grep -qx t
+          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='vector')" | grep -qx t
+          echo 'Supabase staging schema preflight OK (no schema migration performed).'
