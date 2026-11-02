@@ -131,3 +131,5 @@ INK-001–140已使用，永不复用；旧任务涉及的旧路由、兼容方�
 | INK-245 | 移除接入模型渠道弹窗的供应商下拉框 | Admin 渠道体验 | review | 有/无已注册供应商时，弹窗不再渲染“选择供应商”及“自动预设供应商”下拉框；接口协议与渠道别名保留，创建仍沿原有协议匹配/自动注册路径，编辑沿用原绑定。`lsp-diagnostics` 零问题，`pnpm run build:admin`、`go build ./...`、i18ncheck（905/905）和 notes check 均退出0；用户明确要求自行手动测试，浏览器呈现与实际保存未作为验收通过。 | 用户截图要求；INK-237 |
 
 | INK-250 | 拆分模型配置 Token 字段以满足手写文件大小护栏 | Admin 工程维护 | review | ModelConfigRoute 提取受控 ModelTokenFields，父路由认证/加载/表单状态/校验/保存不变。路由49322字节、新组件4039字节，均低于50KB；Go构建通过，真实archguard从17降至16项生成契约超限。其余生成输出布局待ADR0036后继裁决，不改阈值/ignore，不声称全绿；浏览器行为未验收。[Issue #8](https://github.com/BaSui01/InkLore/issues/8)；[工程笔记](../.agents/notes/implemented/process/2026-11-01-model-token-fields.md) | 用户明确护栏修复授权 |
+
+| INK-251 | 按用户裁决将源码文件上限改为500KiB | 工程规则 | review | [ADR-0037](decisions/0037-source-file-size-limit-500kib.md) 将既有源码扫描范围阈值改为512000字节，其他门禁/ignore不变。Go构建和archguard含可达性报告通过；独立CLI边界夹具512000通过、512001拒绝。是新规则通过而非旧50KB满足；独立复核/业务验收未完成，不合并。[Issue #10](https://github.com/BaSui01/InkLore/issues/10)；[笔记](../.agents/notes/implemented/process/2026-11-01-source-file-size-limit.md) | 用户2026-11-01明确决策 |

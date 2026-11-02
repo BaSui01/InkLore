@@ -1,5 +1,7 @@
 # InkLore 重构实施事实
 
+> 当前源码文件大小规则由 [ADR-0037](decisions/0037-source-file-size-limit-500kib.md) 更新为500KiB（512000字节）。下文历史50KB验收描述保留为当时事实，不再表示现行源码阈值；独立文档长度和冻结治理不变。
+
 本文件只记录实现证据，不维护第二份目标架构。唯一目标设计：[R1索引](system-design/00-INDEX.md)，契约：[00基线](system-design/00-CONTRACT-BASELINE.md)。
 
 ## INK-245 · 接入模型渠道弹窗移除供应商下拉框（review）
@@ -317,3 +319,7 @@ Admin `AgentGovernanceRoute.tsx` 经 `adminApi.ts` 分页读取 definitions/work
 ## INK-250：模型配置 Token 字段组件边界
 
 Admin App 的 models 视图仍挂载 ModelConfigRoute；该路由保留认证上下文、数据加载、创建/编辑默认值、表单状态与校验、createLlmModel/updateLlmModel 调用及编辑 expected_revision。仅将上下文与最大输出输入区域、预设按钮和原格式化展示函数移至 components/ModelTokenFields，通过两个字符串值与两个 setter 回调受控连接；无新增API、依赖、Go包或业务接线。路由与组件均低于既有50KB限制；archguard仍报告16项生成契约超限，未变更规则或冻结设计。
+
+## INK-251：用户裁决的源码大小上限
+
+archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，扫描生成源码，不增加忽略项。跨域/基座依赖、禁测试文件、Go解析不变；无运行服务/业务包/契约/生成器变化。新规则Go构建、R1–R5护栏及512000/512001边界通过，不代表旧规则通过。PR9页面拆分保持可独立审查，未回滚。
