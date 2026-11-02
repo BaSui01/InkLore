@@ -363,3 +363,7 @@ INK-253 的 GitHub 自动化权限、默认分支生效约束与取舍见 [工�
 ## INK-258 · Go 加密与网络依赖安全更新（review）
 
 基于原 Dependabot PR #28 的模块解析快照，将 golang.org/x/crypto 从 v0.48.0 升至 v0.52.0，同步更新 x/net、x/text、x/sys、x/sync；本阶段只改 go.mod/go.sum，原 Go 应用源代码、SQL 和前端运行路径不变。依赖图变更仍可能影响加密、密码校验、JWT、传输安全等可达运行行为，因此不能仅根据静态构建认定功能兼容；必须在隔离环境验收实际授权与失败路径，再经受保护发布 PR 同步 private。详情见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-go-crypto-security-upgrade.md)。
+
+## INK-256：dev 向 private 的受保护提交批量同步
+
+仅增加默认分支 GitHub Actions 与治理文档，不改变业务 Go/React 运行路径、数据库迁移或发布镜像。基于 Compare ahead_by≥20 创建 release 源快照；只有 GitHub 的最新检查和保护条件都满足才允许 Merge Commit 自动合入 private，保留 dev 继续开发。当前分支存在 42/6 双向提交分叉以及未完成业务验收，默认阻止无审查发布。

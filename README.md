@@ -64,6 +64,8 @@ make ci NOTES_BASE=<base-commit>
 
 详见 [贡献指南](CONTRIBUTING.md) 与 [仓库治理策略](docs/repository-governance.md)。
 
+按 20 提交阈值产生的 dev 到 private 发布 PR 使用[受保护的同步工作流](.github/workflows/dev-promotion.yml)，分叉或敏感变更必须人工审查。
+
 ## GitHub 协作入口
 
 [Issues](https://github.com/BaSui01/InkLore/issues) · [Pull Requests](https://github.com/BaSui01/InkLore/pulls) · [Projects 看板](https://github.com/users/BaSui01/projects/1) · [Actions](https://github.com/BaSui01/InkLore/actions) · [Insights](https://github.com/BaSui01/InkLore/pulse) · [依赖关系](https://github.com/BaSui01/InkLore/network/dependencies) · [安全](https://github.com/BaSui01/InkLore/security) · [Wiki](https://github.com/BaSui01/InkLore/wiki)

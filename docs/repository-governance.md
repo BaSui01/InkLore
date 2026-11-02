@@ -19,6 +19,19 @@
 
 自动合并只在 GitHub 要求的最新三项 CI、PR 无冲突且 Review 对话解决后执行；不得用机器人绕过保护或把代码构建当作业务验收。目标 `private` 的发布 PR 必须人工审查。
 
+## dev → private：每 20 个提交的自动同步
+
+默认分支 `private` 上的 `.github/workflows/dev-promotion.yml` 监听 `dev` push 后成功结束的 CI，并每小时定时补偿，也支持手动触发。GitHub Compare `private...dev` 的 `ahead_by` 达到 **20** 时创建一次受保护同步 PR。
+
+- **始终保留 dev**：PR 源是从当时 `dev` SHA 创建的 `release/dev-<sha>` 临时快照分支，合并后只删除快照分支。
+- **Merge Commit**：保留 Git 提交祖先，使成功发布后 `ahead_by` 正常归零或减少；不能使用 squash/rebase 代替。
+- **完全自动的条件**：`private` 没有额外分叉提交（`behind_by=0`）、变更没有命中高风险目录、最新 dev 三项必要 CI 全绿，且 GitHub 要求的 PR 检查、合并状态及 Review 对话也满足时才启用 auto-merge。
+- **失败关闭**：有分叉、迁移/密钥/身份/Agent-LLM 底层/工作流等敏感变化或检查缺失时，只提交带 `manual-review` 的 release PR；不强推、不跳过保护或私自合并。
+- **不重复发布**：已有尚未结束的 `release/dev-*` PR 时不创建第二份；下一次仅在旧 PR 完成后再次按阈值判断。
+- 由 `GITHUB_TOKEN` 自动创建 PR 时，GitHub 可能不会触发新的 `pull_request` 工作流；无法取得所需检查时必须阻塞，不得把 dev 的既往检查冒充 PR 的完整独立验收。
+
+此动作只同步 Git 历史，不发布 Tag、不部署服务、不迁移数据库，也不因 CI 全绿而将未验收的业务 Issue 自动标 done。详见 [INK-256 工程记忆](../.agents/notes/implemented/process/2026-11-03-dev-private-20-commit-promotion.md)。
+
 ## 仓库设置
 
 `private` 和 `dev` 要求 PR、最新 CI、解决 Review 对话；禁止强推、删除。检查项为项目 Skills/notes、后端构建/静态检查、前端构建。

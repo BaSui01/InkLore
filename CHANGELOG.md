@@ -6,6 +6,10 @@
 
 ## [Unreleased]
 
+### INK-256：dev 超前 20 个提交后发布 PR（review）
+
+- 采用默认分支可信工作流按 GitHub Commit Compare 阈值自动创建 release 快照 PR；安全满足时启用 Merge Commit auto-merge，分叉、敏感或 CI 未通过时保留人工复核。保护 dev 不被删除或强推，发布不等于部署或业务验收。
+
 ### Agent 模型渠道租户安全与策略冻结（INK-228，待隔离验收）
 
 - Agent 的请求由冻结的 PolicyVersionID 与所属租户的精确 Model ID 选择数据库渠道、协议和上游模型名称；停用、缺失和凭据失败不回退到其他租户或全局密钥；不再于组合根无 tenant 读取 LLM 业务表。
