@@ -16,7 +16,8 @@ func (s *Store) CurrentPolicyVersion(ctx context.Context, tenantID, taskKey stri
 	err = db.Raw(`SELECT current_version_id::text
 		FROM llm_task_policies
 		WHERE tenant_id=? AND task_key=? AND enabled=TRUE
-		  AND deleted_at IS NULL AND current_version_id IS NOT NULL`, tenantID, taskKey).Scan(&versionID).Error
+		  AND deleted_at IS NULL AND current_version_id IS NOT NULL
+		FOR SHARE`, tenantID, taskKey).Scan(&versionID).Error
 	return versionID, err
 }
 
