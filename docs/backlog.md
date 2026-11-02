@@ -139,3 +139,5 @@ INK-001–140已使用，永不复用；旧任务涉及的旧路由、兼容方�
 | INK-251 | 按用户裁决将源码文件上限改为500KiB | 工程规则 | review | [ADR-0037](decisions/0037-source-file-size-limit-500kib.md) 将既有源码扫描范围阈值改为512000字节，其他门禁/ignore不变。Go构建和archguard含可达性报告通过；独立CLI边界夹具512000通过、512001拒绝。是新规则通过而非旧50KB满足；独立复核/业务验收未完成，不合并。[Issue #10](https://github.com/BaSui01/InkLore/issues/10)；[笔记](../.agents/notes/implemented/process/2026-11-01-source-file-size-limit.md) | 用户2026-11-01明确决策 |
 
 | INK-252 | 公开仓库前的凭据治理与安全核验 | 仓库安全 | blocked | 当前文档中的宿主机数据库及缓存密码、机器专属连接信息改为安全模板；后续仍须轮换已记载的 PostgreSQL/Redis 凭据，完成所有可达历史与 PR diff 的秘密扫描和历史暴露处置，最后再验证 Actions / 分支保护并切换 Public。仅清理当前文件不视为公开安全验收；本任务不执行数据库密码轮换或强推重写历史。 | 用户授权公开仓库；阻塞：实际凭据轮换与历史公开风险验收 |
+
+| INK-253 | 安全自动合并的事件竞态、权限和敏感路径治理 | 仓库 CI / 安全 | review | 对 dev 非 Draft PR 采用实时状态与路径复核、旧 head 无操作、标签撤销、重命名原路径、低风险文档白名单和源码显式授权标签；敏感目录一律人工合并，private 不自动合并。GitHub 默认分支需部署此策略，合并后仍要运行实际事件验收。[工程笔记](../.agents/notes/implemented/process/2026-11-03-safe-pr-automerge-gates.md) | 用户授权维护仓库自动合并；PR #22、#26 |
