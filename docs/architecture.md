@@ -4,6 +4,9 @@
 
 本文件只记录实现证据，不维护第二份目标架构。唯一目标设计：[R1索引](system-design/00-INDEX.md)，契约：[00基线](system-design/00-CONTRACT-BASELINE.md)。
 
+## INK-228 · 独立云端领域结构门禁（辅助 CI）
+
+GitHub PR #38 新增不接触真实凭据的 PostgreSQL 17 + Redis 7 临时 Runner，执行当前 17 个 R1 迁移及重复运行、Agent/LLM 表和租户外键结构断言；不改任何业务运行路径。初始 head 的云端检查已通过，最终 head CI 仍需验证。详细选择和假设见 [工程笔记](../.agents/notes/implemented/testing/2026-11-03-ink228-isolated-schema-gate.md)。这不是 Agent/LLM 跨租户执行、事务竞争、真实模型或前端链路验收，INK-228 保持现有未完成状态。
 ## INK-245 · 接入模型渠道弹窗移除供应商下拉框（review）
 
 Admin `ChannelModal` 的协议与别名仍保留，供应商选择下拉框移除；创建时由所选协议匹配已有供应商，未匹配则由现有保存流程注册，编辑时沿用渠道绑定的供应商。后端接口、Provider/Channel 数据结构及已有资源不变。TypeScript LSP 零问题，Admin 与 Go 构建、i18ncheck（905/905）、notes check 通过。用户要求自行手测，弹窗实际呈现和登录后保存行为未由本轮浏览器验收。
