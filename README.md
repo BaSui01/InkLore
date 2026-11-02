@@ -1,6 +1,6 @@
 # InkLore 墨境
 
-模块化单体AI小说创作平台。当前工作阶段是 **R1完整重构设计已定稿、业务实现待按契约重构**。
+模块化单体 AI 小说创作平台。系统设计持续维护，功能实现与验收进度分别以任务看板和实现证据为准，不以设计文档存在或编译通过代替业务验收。
 
 设计唯一入口：[docs/system-design/00-INDEX.md](docs/system-design/00-INDEX.md)。先读 [00全局契约](docs/system-design/00-CONTRACT-BASELINE.md)，再读领域功能、SQL、OpenAPI和双端UI分册。不要把旧代码行为当作新接口标准。
 
