@@ -6,6 +6,15 @@
 
 ## [Unreleased]
 
+### INK-253：安全自动合并门禁加固（review）
+
+- 自动合并收紧为普通文档白名单和非敏感源码显式授权，默认分支 private 仍需人工合并。修复 Draft/标签撤销、旧 head 事件竞态和重命名原路径覆盖；不绕过 GitHub 必需 CI 或 Review 对话，实际事件行为仍待复核。
+
+### 公开仓库前的凭据安全准备（INK-252，blocked）
+
+- 将包含宿主机实际 PostgreSQL/Redis 共用密码的本地环境记录替换为可公开的无凭据开发模板，同时移除机器专属 DBX 连接信息。
+- 已提交过的凭据仍可能存在于 Git 历史与 PR diff，必须先轮换、再完成历史安全核查；此次修改不宣称历史已清理，也不改变仓库可见性。
+
 ### pnpm 与 dev 持续集成配置（INK-248，待完整验收）
 
 - 前端 CI 改用固定 pnpm 11.25.0、已有 pnpm 锁文件及 frozen-lockfile 安装，保留 Creator/Admin 构建；push 增加 dev，保留 main 与 PR 触发。

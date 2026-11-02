@@ -1,88 +1,131 @@
 name: Safe PR Auto Merge
-# Hardened: opt-out labels and sensitive paths revoke previously enabled auto-merge.
 
+# Only trusted default-branch code runs here. Never checkout or execute PR code.
 on:
   pull_request_target:
-    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft, edited, labeled, unlabeled]
+
+concurrency:
+  group: safe-pr-automerge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  enable-auto-merge:
+  evaluate-auto-merge:
     name: Evaluate safe auto-merge
-    if: ${{ github.event.pull_request.base.ref == 'dev' && !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
-      - name: Verify changed paths and opt-out labels
-        id: gate
+      - name: Recheck PR state, paths and manual-review policy
         uses: actions/github-script@v7
         with:
           script: |
-            const pr = context.payload.pull_request;
-            const labels = new Set(pr.labels.map(label => label.name.toLowerCase()));
-            const reject = async (reason) => {
-              core.info(reason);
-              const current = await github.rest.pulls.get({
-                owner: context.repo.owner, repo: context.repo.repo, pull_number: pr.number
-              });
-              if (current.data.auto_merge) {
-                await github.graphql(
-                  `mutation($id: ID!) { disablePullRequestAutoMerge(input: {pullRequestId: $id}) { clientMutationId } }`,
-                  { id: current.data.node_id }
-                );
-                core.info('Existing auto-merge request revoked.');
-              }
+            const eventPR = context.payload.pull_request;
+            const req = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: eventPR.number
             };
-            if (labels.has('manual-review') || labels.has('do-not-merge')) {
-              await reject('Manual review requested; automatic merge disabled.');
+            const repoName = context.repo.owner + '/' + context.repo.repo;
+
+            // A delayed synchronize event must never undo the newer head's decision.
+            let current = (await github.rest.pulls.get(req)).data;
+            if (current.head.sha !== eventPR.head.sha) {
+              core.info('Ignoring stale head event; the latest PR decision remains untouched.');
               return;
             }
-            const protectedPaths = [
-              /^migrations\//,
-              /^docs\/system-design\//,
-              /^docs\/decisions\//,
-              /^AGENTS\.md$/,
-              /^\.github\/workflows\//,
-              /^\.github\/CODEOWNERS$/,
-              /^internal\/platform\/(auth|crypto|secret|payment|billing)\//,
-              /^internal\/(llm|agent)\/infrastructure\/.*(secret|credential|provider_router)/i
-            ];
+
+            // Only live PR state is trusted: event labels may already be obsolete.
             const files = await github.paginate(github.rest.pulls.listFiles, {
-              owner: context.repo.owner, repo: context.repo.repo,
-              pull_number: pr.number, per_page: 100
+              ...req, per_page: 100
             });
-            const unsafe = files.some(file =>
-              [file.filename, file.previous_filename].filter(Boolean).some(path =>
-                protectedPaths.some(pattern => pattern.test(path))
-              )
+            current = (await github.rest.pulls.get(req)).data;
+            if (current.head.sha !== eventPR.head.sha) {
+              core.info('PR head changed while scanning; leaving the newer decision untouched.');
+              return;
+            }
+
+            const disable = async (reason) => {
+              core.info(reason);
+              if (!current.auto_merge) return;
+              await github.graphql(
+                'mutation($id: ID!) { disablePullRequestAutoMerge(input: {pullRequestId: $id}) { clientMutationId } }',
+                { id: current.node_id }
+              );
+              core.info('Existing auto-merge was revoked.');
+            };
+
+            const labels = new Set(current.labels.map(label => label.name.toLowerCase()));
+            if (current.state !== 'open' || current.draft ||
+                current.base.ref !== 'dev' ||
+                current.head.repo?.full_name !== repoName ||
+                labels.has('manual-review') || labels.has('do-not-merge')) {
+              await disable('PR must be open, non-draft, same-repository, targeting dev, and not opted out.');
+              return;
+            }
+
+            const paths = files.flatMap(file =>
+              [file.filename, file.previous_filename].filter(Boolean)
             );
-            if (unsafe) {
-              await reject('Sensitive source or governance paths changed; manual merge required.');
+            if (files.length === 0 || files.length > 20) {
+              await disable('Empty or broad PR; manual review required.');
               return;
             }
-            const current = await github.rest.pulls.get({
-              owner: context.repo.owner, repo: context.repo.repo, pull_number: pr.number
-            });
-            if (current.data.draft || current.data.base.ref !== 'dev' ||
-                current.data.head.repo.full_name !== context.repo.owner + '/' + context.repo.repo ||
-                current.data.head.sha !== pr.head.sha ||
-                current.data.state !== 'open') {
-              await reject('PR state changed. Skipping auto-merge.');
+
+            // Always require a human merge for these sensitive governance/runtime paths.
+            const protectedPaths = [
+              /^\.github\//,
+              /^\.agents\//,
+              /^\.env(?:\.|$)/,
+              /^AGENTS\.md$/,
+              /^SECURITY\.md$/,
+              /^configs\//,
+              /^migrations\//,
+              /^scripts\//,
+              /^docs\/(?:system-design|decisions)\//,
+              /^docs\/(?:local-environment|repository-governance)\.md$/,
+              /^(?:go\.mod|go\.sum|Dockerfile|docker-compose[^/]*)$/,
+              /^frontend\/pnpm-lock\.yaml$/,
+              /^internal\/platform\/(?:auth|crypto|database|uow|middleware|secret)[^/]*\//,
+              /^internal\/(?:llm|agent)\/infrastructure\//,
+              /^internal\/app\//,
+              /(^|\/)(?:auth|secrets?|credentials?|payments?|billing|tenant|token|password)(?:[._/-]|$)/i
+            ];
+            if (paths.some(path => protectedPaths.some(pattern => pattern.test(path)))) {
+              await disable('Security, contract, persistence or governance file changed: human merge only.');
               return;
             }
-            const nodeId = current.data.node_id;
+
+            // Routine documentation can be automatic. All other changes require explicit opt-in.
+            const lowRiskDocs = [
+              /^README\.md$/,
+              /^CONTRIBUTING\.md$/,
+              /^docs\/README\.md$/,
+              /^docs\/development-guide\.md$/,
+              /^docs\/project-management\.md$/,
+              /^docs\/guides\/[a-zA-Z0-9._/-]+\.md$/
+            ];
+            const documentationOnly = paths.every(path =>
+              lowRiskDocs.some(pattern => pattern.test(path))
+            );
+            if (!documentationOnly && !labels.has('auto-merge-approved')) {
+              await disable('Code or non-routine docs require the auto-merge-approved label.');
+              return;
+            }
+
+            // The GitHub branch rules still require CI checks and resolved conversations.
+            if (current.auto_merge) {
+              core.info('Safe policy passed; auto-merge already enabled.');
+              return;
+            }
             try {
               await github.graphql(
-                `mutation($id: ID!) {
-                  enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: SQUASH}) {
-                    pullRequest { number autoMergeRequest { enabledAt } }
-                  }
-                }`,
-                { id: nodeId }
+                'mutation($id: ID!) { enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: SQUASH}) { pullRequest { number } } }',
+                { id: current.node_id }
               );
-              core.info('Auto-merge enabled. Branch rules and CI still gate actual merge.');
+              core.info('Auto-merge enabled; branch protection decides when it can merge.');
             } catch (error) {
               if (/already enabled|already in the auto-merge queue/i.test(error.message)) {
                 core.info('Already enabled.');
