@@ -26,6 +26,7 @@ Scope: internal/llm/infrastructure/tenant_channel.go、provider_router.go、inte
 ## Acceptance criteria
 
 - Go build、vet、gofmt、archguard、前端和 Skills/notes CI 通过。
+- 独立临时 PG/Redis 两租户，使用 Go loopback HTTP 模拟真实 Provider 网络层，检查每个租户的 Bearer Key、upstream_model 和服务端接收到的请求内容；跨租户 Model ID、缺失冻结版本或 Key 不能产生额外 HTTP 外发。此项不替代真实云端供应商验收。
 - 两租户相同上游名称配不同 Key，只会调用所持租户和 Model ID 对应渠道；无配置、禁用、凭据缺失或未知协议不得产生网络请求，也不得使用全局密钥。
 - 同租户同名模型不得随机选第一个。上游请求的模型名来自选中的渠道映射而不是进程默认。
 - 策略发布和 CreateRun 竞争要么先取得旧版本并原子提交 Run/Job，要么使用新版本；失败不留半写入记录。

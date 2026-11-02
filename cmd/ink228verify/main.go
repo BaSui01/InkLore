@@ -104,6 +104,10 @@ func run() error {
 		return fmt.Errorf("tenant isolation: %w", err)
 	}
 	fmt.Println("PASS: real PostgreSQL two-tenant routes, frozen versions and fail-closed credentials")
+	if err := checkMockUpstream(ctx, db, resolveChannel, a, b); err != nil {
+		return fmt.Errorf("mock upstream: %w", err)
+	}
+	fmt.Println("PASS: real loopback HTTP egress used tenant-specific model aliases and keys")
 	if err := checkConcurrentRuns(ctx, db, manager, store, runRepo, govRepo, jobs, a, b); err != nil {
 		return fmt.Errorf("concurrency: %w", err)
 	}

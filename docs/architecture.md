@@ -10,6 +10,8 @@ PR #18 已合入 dev：Run Scheduler、小说引导和 LLM Catalog 查询链携�
 
 跨租户通道/失效 Key、真实费用、策略并发发布、真实 Provider/WS/SSE 和登录浏览器尚未在隔离环境穿透；CI 构建通过不等于模型调用成功。灵感/质检现已按当前租户启用的 inspiration/review 策略提供 Model ID/版本/预算上限；缺策略直接失败，真实生成仍需验收。无租户调用仅保留显式全局 pool/env 路径；Creator 安全策略目录、task_policy_version_id 创建与兼容 sunset 仍待实施。根因与测试门禁见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-02-tenant-model-routing.md)。
 
+PR #19 的 cmd/ink228verify 增加 Go 环回 HTTP 伪 Provider：在临时数据库对两租户分别使用独立 Key 与上游模型标识发出真实 HTTP 请求，断言失败配置和跨租户 Model ID 不会产生额外外发。真实模型供应商与对外计费仍未验收，必须以新 head 的独立 CI 为准。
+
 ## INK-228 · 独立云端领域结构门禁（辅助 CI）
 
 GitHub PR #38 新增不接触真实凭据的 PostgreSQL 17 + Redis 7 临时 Runner，执行当前 17 个 R1 迁移及重复运行、Agent/LLM 表和租户外键结构断言；不改任何业务运行路径。初始 head 的云端检查已通过，最终 head CI 仍需验证。详细选择和假设见 [工程笔记](../.agents/notes/implemented/testing/2026-11-03-ink228-isolated-schema-gate.md)。这不是 Agent/LLM 跨租户执行、事务竞争、真实模型或前端链路验收，INK-228 保持现有未完成状态。
