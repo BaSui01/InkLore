@@ -47,10 +47,10 @@ func (g *InspirationGeneration) Generate(ctx context.Context, req inspapp.Genera
 		Model:           policy.ModelName,
 		Temperature:     policy.Temperature,
 		SystemPrompt:    "Return only JSON matching the requested analysis structure. Do not invent evidence offsets.",
-		Messages:     []llmdomain.ChatMessage{{Role: llmdomain.ChatMessageRoleUser, Content: content}},
-		MaxTokens:    capModelOutputTokens(req.MaxOutputTokens, policy.MaxOutputTokens),
-		TaskKey:      "inspiration",
-		RequestID:    req.ExecutionKey,
+		Messages:        []llmdomain.ChatMessage{{Role: llmdomain.ChatMessageRoleUser, Content: content}},
+		MaxTokens:       capModelOutputTokens(req.MaxOutputTokens, policy.MaxOutputTokens),
+		TaskKey:         "inspiration",
+		RequestID:       req.ExecutionKey,
 		ResponseFormat: llmdomain.NewJSONSchemaResponseFormat("inspiration_report", true, map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -121,11 +121,11 @@ func (g *ComplianceGeneration) GenerateAudit(ctx context.Context, tenantID, repo
 		ModelID:         policy.ModelID,
 		Model:           policy.ModelName,
 		Temperature:     policy.Temperature,
-		SystemPrompt: "Return only JSON with summary and issues. Use character offsets into the supplied text.",
-		Messages:     []llmdomain.ChatMessage{{Role: llmdomain.ChatMessageRoleUser, Content: text}},
-		MaxTokens:    capModelOutputTokens(maxTokens, policy.MaxOutputTokens),
-		TaskKey:      "review",
-		RequestID:    chapterID,
+		SystemPrompt:    "Return only JSON with summary and issues. Use character offsets into the supplied text.",
+		Messages:        []llmdomain.ChatMessage{{Role: llmdomain.ChatMessageRoleUser, Content: text}},
+		MaxTokens:       capModelOutputTokens(maxTokens, policy.MaxOutputTokens),
+		TaskKey:         "review",
+		RequestID:       chapterID,
 	})
 	if err != nil {
 		return compapp.AuditLLMResult{}, err
@@ -176,11 +176,11 @@ func (g *ComplianceGeneration) GenerateRewrite(ctx context.Context, tenantID, no
 		ModelID:         policy.ModelID,
 		Model:           policy.ModelName,
 		Temperature:     policy.Temperature,
-		SystemPrompt: "Return only JSON with patches. Preserve every patch offset and old_text exactly.",
-		Messages:     []llmdomain.ChatMessage{{Role: llmdomain.ChatMessageRoleUser, Content: text + "\n\nIssues:\n" + string(issuesJSON)}},
-		MaxTokens:    capModelOutputTokens(maxTokens, policy.MaxOutputTokens),
-		TaskKey:      "review",
-		RequestID:    chapterID,
+		SystemPrompt:    "Return only JSON with patches. Preserve every patch offset and old_text exactly.",
+		Messages:        []llmdomain.ChatMessage{{Role: llmdomain.ChatMessageRoleUser, Content: text + "\n\nIssues:\n" + string(issuesJSON)}},
+		MaxTokens:       capModelOutputTokens(maxTokens, policy.MaxOutputTokens),
+		TaskKey:         "review",
+		RequestID:       chapterID,
 	})
 	if err != nil {
 		return compapp.RewriteLLMResult{}, err
