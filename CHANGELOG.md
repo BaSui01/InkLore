@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### Go 加密依赖安全升级（INK-258，待独立验收）
+
+- 以 Dependabot PR #28 为版本来源，在 dev 提交 x/crypto 0.48.0→0.52.0，联动 x/net、x/text、x/sys、x/sync 的必要版本与校验和更新；未直接更改业务源代码。
+- 加密、认证与网络依赖图变化需要最新 CI 和隔离服务的实际认证/租户回归证据。稳定 private 分支暂不直接合入，仍须受保护发布 PR。
+
+
 ### INK-228 隔离 PG17/Redis7 数据库结构冒烟门禁（review）
 
 - 新增面向 Agent/LLM 变更的临时 PostgreSQL 迁移与租户外键检查，固定当前 17 个迁移基线、重复迁移和无持久化服务凭据验证；不执行真实模型或 Supabase 写入。
