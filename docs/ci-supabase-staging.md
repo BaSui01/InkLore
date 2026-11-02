@@ -29,6 +29,10 @@ PR 到 `dev` / `private`、手动触发：容器使用与生产不同的固定�
 
 注意：不要使用 Supabase 高权限 `postgres` 超级用户作为持续集成身份。不要把连接字符串提交到代码、Issue 或日志；连接串需要 `sslmode=require` 或更强 TLS 校验。
 
+## 权限与安全验收（2026-11-03）
+
+已实际执行 `scripts/sql/supabase-staging-permissions.sql` 与 `scripts/sql/supabase-staging-function-hardening.sql`，复核运行角色有授权的 SELECT/INSERT 而没有 DELETE、不可变账本 UPDATE 与 schema_migrations 修改权限；保留数据角色不可删除 ledger 事件。四个历史触发函数固定到 `pg_catalog, inklore_ci, extensions` 搜索路径，Supabase Security Advisor 的当前安全 lint 数量为 0。该结果不能等同于完整的跨租户与业务授权渗透测试。
+
 ## 后续端到端验收
 
 迁移验收完成后，另用受控服务运行 Go API、Agent Worker 和 Redis。分别测试 `/healthz` 与 `/readyz`、真实 Postgres 读写回滚、跨租户拒绝、Agent 断线/恢复、API SSE、Creator/Admin 双端浏览器真实业务操作。
