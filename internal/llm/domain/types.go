@@ -110,6 +110,7 @@ type TextGenerationRequest struct {
 	TaskKey           string                   `json:"task_key,omitempty"`
 	TenantID          string                   `json:"-"`
 	PolicyVersionID   string                   `json:"-"`
+	ModelID           string                   `json:"-"`
 	RequestID         string                   `json:"request_id,omitempty"`
 	OnReasoningChunk  func(chunk string) error `json:"-"`
 	OnTextChunk       func(chunk string) error `json:"-"`
