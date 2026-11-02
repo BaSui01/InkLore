@@ -62,3 +62,5 @@
 - [ADR-0025：图片适配器按当前供应商合同 fail-closed](0025-image-adapter-current-provider-contract.md)：Accepted；移除退出 Imagen predict、OpenAI 图生图改为 multipart edits、Gemini 不默认放开安全阈值。
 
 - [ADR-0026：LLM 渠道协议与凭据解析收敛](0026-llm-channel-protocol-and-secret-resolution.md)：Accepted；区分公开 Provider 与内部 transport，并使数据库 SecretRef fail-closed 解析。
+
+- [ADR-0037：源码文件大小上限调整为500KiB](0037-source-file-size-limit-500kib.md)（Accepted，用户明确裁决，仅替代旧源码大小条款）。
