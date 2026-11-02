@@ -82,6 +82,40 @@ jobs:
         run: |
           go run ./cmd/migrate -cmd up -timeout 180s
           go run ./cmd/migrate -cmd status -timeout 60s
+      - name: Verify Supabase staging permissions against unrelated public objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_ci PGPASSWORD=ci-only-not-production
+          # A second disposable database models a shared Supabase project with unrelated public objects.
+          psql -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE inklore_staging_probe"
+          psql -d inklore_staging_probe -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE SCHEMA extensions;
+          CREATE EXTENSION vector WITH SCHEMA extensions;
+          CREATE EXTENSION pg_trgm WITH SCHEMA extensions;
+          CREATE EXTENSION pgcrypto WITH SCHEMA extensions;
+          CREATE SCHEMA inklore_ci;
+          REVOKE ALL ON SCHEMA inklore_ci FROM PUBLIC;
+          CREATE TABLE public.ci_unrelated_data(id bigint PRIMARY KEY);
+          CREATE SEQUENCE public.ci_unrelated_sequence;
+          SQL
+          export DATABASE_DSN='postgres://inklore_ci:ci-only-not-production@127.0.0.1:5432/inklore_staging_probe?sslmode=disable&options=-csearch_path%3Dinklore_ci%2Cextensions%2Cpublic'
+          go run ./cmd/migrate -cmd up -timeout 180s
+          psql -d inklore_staging_probe -Atqc "SELECT count(*) FROM inklore_ci.schema_migrations" | grep -qx 17
+          psql -d inklore_staging_probe -Atqc "SELECT count(*) FROM pg_tables WHERE schemaname='inklore_ci'" | grep -qx 80
+          # 000009_permissions intentionally granted public objects prior to the staging overlay.
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_runtime','public.ci_unrelated_data','SELECT')" | grep -qx t
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_retention','public.ci_unrelated_data','DELETE')" | grep -qx t
+          psql -d inklore_staging_probe -Atqc "SELECT has_sequence_privilege('inklore_runtime','public.ci_unrelated_sequence','USAGE')" | grep -qx t
+          psql -d inklore_staging_probe -v ON_ERROR_STOP=1 -f scripts/sql/supabase-staging-permissions.sql
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_runtime','public.ci_unrelated_data','SELECT')" | grep -qx f
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_retention','public.ci_unrelated_data','DELETE')" | grep -qx f
+          psql -d inklore_staging_probe -Atqc "SELECT has_sequence_privilege('inklore_runtime','public.ci_unrelated_sequence','USAGE')" | grep -qx f
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_runtime','inklore_ci.platform_tenants','INSERT')" | grep -qx t
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_runtime','inklore_ci.worldview_fact_ledger_events','UPDATE')" | grep -qx f
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_runtime','inklore_ci.schema_migrations','UPDATE')" | grep -qx f
+          psql -d inklore_staging_probe -Atqc "SELECT has_schema_privilege('anon','inklore_ci','USAGE')" | grep -qx f
+          echo 'Supabase overlay isolates public objects and preserves private role grants.'
       - name: Verify transaction rollback has no persistent side effects
         shell: bash
         run: |
