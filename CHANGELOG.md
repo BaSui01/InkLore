@@ -6,6 +6,11 @@
 
 ## [Unreleased]
 
+### 公开仓库前的凭据安全准备（INK-252，blocked）
+
+- 将包含宿主机实际 PostgreSQL/Redis 共用密码的本地环境记录替换为可公开的无凭据开发模板，同时移除机器专属 DBX 连接信息。
+- 已提交过的凭据仍可能存在于 Git 历史与 PR diff，必须先轮换、再完成历史安全核查；此次修改不宣称历史已清理，也不改变仓库可见性。
+
 ### pnpm 与 dev 持续集成配置（INK-248，待完整验收）
 
 - 前端 CI 改用固定 pnpm 11.25.0、已有 pnpm 锁文件及 frozen-lockfile 安装，保留 Creator/Admin 构建；push 增加 dev，保留 main 与 PR 触发。
