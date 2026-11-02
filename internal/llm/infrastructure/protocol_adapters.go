@@ -266,7 +266,7 @@ func (r *ProviderRouter) nativeChat(ctx context.Context, target upstreamTarget, 
 	case protocolResponses:
 		return r.responsesChat(ctx, target, req)
 	default:
-		return domain.TextGenerationResponse{}, fmt.Errorf("unsupported native protocol %q", r.protocol)
+		return domain.TextGenerationResponse{}, fmt.Errorf("unsupported native protocol %q", target.protocol)
 	}
 }
 
@@ -281,7 +281,7 @@ func (r *ProviderRouter) nativeStream(ctx context.Context, target upstreamTarget
 	case protocolResponses:
 		return r.responsesStream(ctx, target, req, onEvent)
 	default:
-		return fmt.Errorf("unsupported native protocol %q", r.protocol)
+		return fmt.Errorf("unsupported native protocol %q", target.protocol)
 	}
 }
 
