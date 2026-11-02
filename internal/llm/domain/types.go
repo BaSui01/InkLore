@@ -108,6 +108,8 @@ type TextGenerationRequest struct {
 	MaxTokens         int                      `json:"max_tokens,omitempty"`
 	Options           map[string]interface{}   `json:"options,omitempty"`
 	TaskKey           string                   `json:"task_key,omitempty"`
+	TenantID          string                   `json:"-"`
+	PolicyVersionID   string                   `json:"-"`
 	RequestID         string                   `json:"request_id,omitempty"`
 	OnReasoningChunk  func(chunk string) error `json:"-"`
 	OnTextChunk       func(chunk string) error `json:"-"`

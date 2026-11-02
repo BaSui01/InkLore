@@ -35,6 +35,7 @@ type ModelGenerateInput struct {
 	RunID             string
 	NodeKey           string
 	TaskKey           string
+	PolicyVersionID   string
 	Model             string
 	SystemInstruction string
 	UserInstruction   string
