@@ -33,7 +33,7 @@ type ProviderRouter struct {
 	// metricsRecorder 为可选的进程内指标消费者（INK-056）；未注入时不记录。
 	// 与审计解耦：没有数据库时指标依然可用。
 	metricsRecorder domain.MetricsRecorder
-	dbResolver      UpstreamDBResolver
+	tenantResolver  TenantChannelResolver
 }
 
 func NewProviderRouter() *ProviderRouter {
@@ -238,18 +238,11 @@ func (r *ProviderRouter) GenerateChatStream(ctx context.Context, req domain.Text
 		return domain.ErrProviderNotConfigured
 	}
 
-	target, targetErr := r.resolveUpstream(ctx)
+	target, model, targetErr := r.resolveChatTarget(ctx, req)
 	if targetErr != nil {
 		return targetErr
 	}
-	model := req.Model
-	if model == "" || strings.HasPrefix(model, "novel-") {
-		model = r.config.ActiveModel
-	}
-	if model == "" {
-		model = defaultModelForProtocol(r.protocol, true)
-	}
-	if nativeProtocol(r.protocol) {
+	if nativeProtocol(target.protocol) {
 		return r.generateNativeChatStream(ctx, target, req, model)
 	}
 
@@ -490,13 +483,8 @@ type upstreamTarget struct {
 	protocol  string
 }
 
-// resolveUpstream 选择本次调用使用的渠道与密钥。
-//
-// 优先使用管理员在数据库中配置的渠道解析器（SetDBResolver）；
-// 其次若注入了多渠道选路池则走 routing.Pool（候选集一次获取、平滑加权轮询、限流与熔断）；
-// 兜底退化为单一环境变量直连，未配置任何渠道时明确失败。
-// UpstreamDBResolver 提供从数据库持久化渠道与密钥直接解析运行时目标的能力。
-type UpstreamDBResolver func(ctx context.Context, modelOrProtocol string) (baseURL string, apiKey string, channelID int64, protocol string, err error)
+// resolveUpstream is the legacy unscoped pool/environment route. Tenant-bound
+// requests use resolveChatTarget and must never reach this fallback.
 
 // SetPool 注入可选的多渠道选路池。
 func (r *ProviderRouter) SetPool(pool *routing.Pool) {
@@ -511,17 +499,50 @@ func (r *ProviderRouter) SetPool(pool *routing.Pool) {
 	}
 }
 
-// SetDBResolver 注入数据库渠道与密钥解析器（管理员在数据库配置的模型渠道）。
-func (r *ProviderRouter) SetDBResolver(resolver UpstreamDBResolver) {
+// SetTenantResolver selects a channel using an authenticated tenant and exact model ID.
+func (r *ProviderRouter) SetTenantResolver(resolver TenantChannelResolver) {
 	if r == nil {
 		return
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.dbResolver = resolver
+	r.tenantResolver = resolver
 	if resolver != nil {
 		r.isLiveAPI = true
 	}
+}
+
+// resolveChatTarget never falls back to global credentials for tenant-bound work.
+func (r *ProviderRouter) resolveChatTarget(ctx context.Context, req domain.TextGenerationRequest) (upstreamTarget, string, error) {
+	if req.TenantID != "" || req.ModelID != "" || req.PolicyVersionID != "" {
+		if strings.TrimSpace(req.TenantID) == "" || strings.TrimSpace(req.ModelID) == "" ||
+			strings.TrimSpace(req.PolicyVersionID) == "" || r.tenantResolver == nil {
+			return upstreamTarget{}, "", fmt.Errorf("tenant model route requires tenant, model and frozen policy")
+		}
+		resolved, err := r.tenantResolver(ctx, req.TenantID, req.ModelID)
+		if err != nil {
+			return upstreamTarget{}, "", err
+		}
+		if resolved.BaseURL == "" || resolved.APIKey == "" || resolved.UpstreamModel == "" || resolved.Protocol == "" {
+			return upstreamTarget{}, "", fmt.Errorf("tenant model route unavailable")
+		}
+		return upstreamTarget{
+			baseURL: resolved.BaseURL, apiKey: resolved.APIKey,
+			protocol: resolved.Protocol, leaseID: -1,
+		}, resolved.UpstreamModel, nil
+	}
+	target, err := r.resolveUpstream(ctx, req.Model)
+	if err != nil {
+		return upstreamTarget{}, "", err
+	}
+	model := req.Model
+	if model == "" || strings.HasPrefix(model, "novel-") {
+		model = r.config.ActiveModel
+	}
+	if model == "" {
+		model = defaultModelForProtocol(target.protocol, true)
+	}
+	return target, model, nil
 }
 
 func (r *ProviderRouter) resolveUpstream(ctx context.Context, requestedModel ...string) (upstreamTarget, error) {
@@ -538,19 +559,7 @@ func (r *ProviderRouter) resolveUpstream(ctx context.Context, requestedModel ...
 		}
 		r.mu.RUnlock()
 	}
-	// 1. 优先使用管理员配置的数据库渠道解析器
-	if r.dbResolver != nil {
-		if bURL, key, chID, proto, err := r.dbResolver(ctx, selector); err == nil && strings.TrimSpace(key) != "" {
-			return upstreamTarget{
-				baseURL:   strings.TrimRight(strings.TrimSpace(bURL), "/"),
-				apiKey:    strings.TrimSpace(key),
-				channelID: chID,
-				leaseID:   -1,
-				protocol:  proto,
-			}, nil
-		}
-	}
-	// 2. 若配置了多渠道池
+	// 非租户请求只能使用明确配置的进程级渠道池或环境变量。
 	if r.pool != nil {
 		channel, decryptedKey, leaseID, err := r.pool.GetChannelKeyContext(ctx, selector)
 		if err == nil {
