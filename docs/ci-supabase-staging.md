@@ -19,19 +19,19 @@ GitHub Actions 对每个 PR 运行**临时** PostgreSQL 17（含 pgvector）与 
 
 ### `isolated-integration.yml`
 
-PR 到 `dev` / `private`、手动触发：容器使用与生产不同的固定、仅供本次作业的无价值凭据；无外部 Secrets；验证 PostgreSQL/Redis、执行真实 R1 迁移及重复迁移，执行 Go build/vet/archguard。Creator/Admin 静态构建仍由既有 `ci.yml` 负责。
+针对 dev 和 private 的 PR、两条保护分支的 push，以及手动触发，使用临时 PG17/Redis7 验证真实 R1 迁移、幂等、权限回收、事务回滚和 Creator 会话 HTTP 行为。两端静态构建由原 CI 负责；全过程不用 Supabase 私密凭据。
 
 ### `supabase-staging-preflight.yml`
 
 仅 `workflow_dispatch`，并绑定 `supabase-staging` Environment。该 Environment 应设置仅允许可信分支，推荐需要维护者审批。把**单独、限权、仅能访问 `inklore_ci` 的数据库角色**的 TLS 连接字符串配置到该 Environment Secret：`SUPABASE_STAGING_DATABASE_URL`。
 
-该作业只读检查 schema、角色权限、R1 迁移数与扩展状态。GitHub Environment supabase-staging 已设置仅允许受保护分支；只读数据库账号和 SUPABASE_STAGING_DATABASE_URL Secret 尚未配置，故远程预检工作流仍待运行验收。
+远程预检作业只读检查 schema、角色权限、迁移数与扩展状态。supabase-staging Environment 仅接受受保护分支，目前只读登录账号和 SUPABASE_STAGING_DATABASE_URL Secret 尚未配置。workflow_dispatch 需要工作流已存在于默认 private 分支，当前 PR 只进入 dev 后仍无法在 Actions 页面直接手动触发。
 
 注意：不要使用 Supabase 高权限 `postgres` 超级用户作为持续集成身份。不要把连接字符串提交到代码、Issue 或日志；连接串需要 `sslmode=require` 或更强 TLS 校验。
 
 ## 权限与安全验收（2026-11-03）
 
-已实际执行 `scripts/sql/supabase-staging-permissions.sql` 与 `scripts/sql/supabase-staging-function-hardening.sql`，复核运行角色有授权的 SELECT/INSERT 而没有 DELETE、不可变账本 UPDATE 与 schema_migrations 修改权限；保留数据角色不可删除 ledger 事件。四个历史触发函数固定到 `pg_catalog, inklore_ci, extensions` 搜索路径，Supabase Security Advisor 的当前安全 lint 数量为 0。该结果不能等同于完整的跨租户与业务授权渗透测试。
+此前版本的私有 schema 权限补丁与触发器函数安全补丁已实际应用至 Supabase；复查运行/保留身份访问限制和 Security Advisor 的安全警告数为 0。最新版权限补丁额外撤销 public 现存表和序列的授权，已在隔离 Actions #41490710935 验证前后有效权限，尚未再次部署到共享 Supabase，等待 PR #37 人工安全评审。
 
 ## 后续端到端验收
 

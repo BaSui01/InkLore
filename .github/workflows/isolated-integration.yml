@@ -1,6 +1,8 @@
 name: Isolated Integration
 
 on:
+  push:
+    branches: [dev, private]
   pull_request:
     branches: [dev, private]
   workflow_dispatch:

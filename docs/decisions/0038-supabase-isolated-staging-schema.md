@@ -28,7 +28,7 @@ InkLore 原生 R1 DDL 大部分对象不带 schema 名，`000009_permissions.sql
 
 - `inklore_ci` 的 `anon`/`authenticated`/`service_role` USAGE 皆为 false。
 - R1 17 组原始 SQL 和校验和以实际 `inklore_ci.schema_migrations` 为准，业务表只位于私有 schema，`public` 不新增业务表。
-- `scripts/sql/supabase-staging-permissions.sql` 已在实际测试库执行并核对运行/清理权限；后续角色/表更新仍必须审查授权。
+- 初始私有 schema 权限覆盖已在 Supabase 执行。随后发现 R1 对既有 public 表与序列的对象授权遗留；最新版 SQL 已补显式撤权并通过隔离 Actions #41490710935 验证，尚未再次执行到共享 Supabase，需要 PR #37 人工审核。
 - Supabase Security Advisor 指出四个不可变历史触发函数的 search_path 可变；使用 `scripts/sql/supabase-staging-function-hardening.sql` 固定函数的 search_path 后，Security Advisor 返回 0 条安全告警。
 - Go API 连接到该 schema 时必须在服务端 DSN / 会话中明确配置 search_path，绝不能依赖 Supabase 默认公共路径。
 - 该 ADR 为在线测试专用提案，正式生产存储、权限、迁移应独立审查。

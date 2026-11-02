@@ -32,4 +32,6 @@ GitHub supabase-staging Environment 限制只接受受保护分支，提供只�
 
 2026-11-03 Supabase MCP 实际执行 PostgreSQL 17 的 17 组 R1 原始迁移，inklore_ci.schema_migrations 共 17 行（64 字符哈希），私有 schema 共 80 张表，public 新增业务表数为 0。pgcrypto、vector、pg_trgm 均位于 extensions；anon/authenticated/service_role 对 inklore_ci 的 USAGE 均为 false。NOLOGIN 的 inklore_runtime 允许业务表 SELECT/INSERT，但不允许 DELETE、修改不可变事实账本或修改 schema_migrations；inklore_retention 不允许删除 worldview_fact_ledger_events。Supabase Security Advisor 曾指出四个未固定 search_path 的触发函数，使用 staging 硬化脚本修复后安全 lint 为 0。GitHub Actions 已实测临时 PG/Redis 迁移和 API health/ready（见 PR #37）。新加入的 Creator 注册/会话验证仍以 PR 最新 CI 结论为准。
 
+PR #37 中发现 public 表和序列已有对象授权残留。最新权限覆盖已添加显式撤权，并在 GitHub Actions #41490710935 内使用包含无关 public 表/序列的隔离数据库实证：原始 R1 权限迁移后有多余授权，更新覆盖后 has_table_privilege / has_sequence_privilege 均为 false，私有 schema 的正常访问不受影响。当前修正版尚未在共享 Supabase 重新执行，审查线程保持开放。
+
 没有调用付费模型，没有导入真实创作数据、没有运行浏览器与跨租户完整业务验收；远程只读数据库登录账号和 GitHub Environment Secret 创建未通过安全执行门禁，故远程工作流的自动验收尚未宣称完成。
