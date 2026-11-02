@@ -16,9 +16,9 @@ const ChineseCharTokenRatio float64 = 1.5
 
 // CreditPolicy 定义平台积分换算与工具扣费策略。
 type CreditPolicy struct {
-	MicrosPerCredit   int64            `json:"micros_per_credit"`
-	MarginMultiplier  float64          `json:"margin_multiplier"`
-	FixedToolCredits  map[string]int64 `json:"fixed_tool_credits"`
+	MicrosPerCredit  int64            `json:"micros_per_credit"`
+	MarginMultiplier float64          `json:"margin_multiplier"`
+	FixedToolCredits map[string]int64 `json:"fixed_tool_credits"`
 }
 
 // DefaultCreditPolicy 返回默认的小说创作平台积分计费策略。
@@ -27,36 +27,36 @@ func DefaultCreditPolicy() CreditPolicy {
 		MicrosPerCredit:  DefaultMicrosPerCredit,
 		MarginMultiplier: DefaultMarginMultiplier,
 		FixedToolCredits: map[string]int64{
-			"outline_generate":   5, // 大纲生成：固定 5 积分
-			"character_profile":  2, // 角色设定生成：固定 2 积分
-			"worldview_entry":    2, // 世界观词条提炼：固定 2 积分
-			"inspiration_card":   3, // 拆书灵感卡片：固定 3 积分
-			"compliance_audit":   1, // 合规敏审查：固定 1 积分
+			"outline_generate":  5, // 大纲生成：固定 5 积分
+			"character_profile": 2, // 角色设定生成：固定 2 积分
+			"worldview_entry":   2, // 世界观词条提炼：固定 2 积分
+			"inspiration_card":  3, // 拆书灵感卡片：固定 3 积分
+			"compliance_audit":  1, // 合规敏审查：固定 1 积分
 		},
 	}
 }
 
 // NovelEstimationRequest 包含一次正文续写或章节生成的测算输入。
 type NovelEstimationRequest struct {
-	TargetWords     int          `json:"target_words"`      // 目标生成汉字数 (如 1000、2000、3000)
-	ContextWords    int          `json:"context_words"`     // 携带的前置背景字数 (如 10000、30000)
-	CacheHitRatio   float64      `json:"cache_hit_ratio"`   // 提示词缓存预估命中率 (0.0 ~ 1.0)
-	Price           PriceSnapshot `json:"price"`             // 模型微元价格快照
-	Policy          CreditPolicy `json:"policy"`            // 平台积分策略
+	TargetWords   int           `json:"target_words"`    // 目标生成汉字数 (如 1000、2000、3000)
+	ContextWords  int           `json:"context_words"`   // 携带的前置背景字数 (如 10000、30000)
+	CacheHitRatio float64       `json:"cache_hit_ratio"` // 提示词缓存预估命中率 (0.0 ~ 1.0)
+	Price         PriceSnapshot `json:"price"`           // 模型微元价格快照
+	Policy        CreditPolicy  `json:"policy"`          // 平台积分策略
 }
 
 // NovelEstimationResult 包含估算后的详细消耗、成本与千字锚点单价。
 type NovelEstimationResult struct {
-	TargetWords             int     `json:"target_words"`
-	EstimatedInputTokens    int64   `json:"estimated_input_tokens"`
-	EstimatedOutputTokens   int64   `json:"estimated_output_tokens"`
-	EstimatedCachedTokens   int64   `json:"estimated_cached_tokens"`
-	RawCostMicros           int64   `json:"raw_cost_micros"`            // 真实云厂商成本 (微元)
-	RawCostCNY              float64 `json:"raw_cost_cny"`               // 真实云厂商成本 (元)
-	BilledCredits           int64   `json:"billed_credits"`             // 向作者收取的积分/墨水币
-	BilledCNY               float64 `json:"billed_cny"`                 // 扣除积分折合人民币 (元)
-	RawCostPerThousandCNY   float64 `json:"raw_cost_per_thousand_cny"`  // 底层真实成本折合千字单价 (元/千字)
-	PricePerThousandCNY     float64 `json:"price_per_thousand_cny"`     // 创作者端折合千字单价 (元/千字)
+	TargetWords           int     `json:"target_words"`
+	EstimatedInputTokens  int64   `json:"estimated_input_tokens"`
+	EstimatedOutputTokens int64   `json:"estimated_output_tokens"`
+	EstimatedCachedTokens int64   `json:"estimated_cached_tokens"`
+	RawCostMicros         int64   `json:"raw_cost_micros"`           // 真实云厂商成本 (微元)
+	RawCostCNY            float64 `json:"raw_cost_cny"`              // 真实云厂商成本 (元)
+	BilledCredits         int64   `json:"billed_credits"`            // 向作者收取的积分/墨水币
+	BilledCNY             float64 `json:"billed_cny"`                // 扣除积分折合人民币 (元)
+	RawCostPerThousandCNY float64 `json:"raw_cost_per_thousand_cny"` // 底层真实成本折合千字单价 (元/千字)
+	PricePerThousandCNY   float64 `json:"price_per_thousand_cny"`    // 创作者端折合千字单价 (元/千字)
 }
 
 // EstimateNovelCost 根据小说字数、上下文深度与缓存命中率，精确估算 Token 消耗与千字成本。
@@ -125,4 +125,3 @@ func EstimateNovelCost(req NovelEstimationRequest) (NovelEstimationResult, error
 		PricePerThousandCNY:   pricePerThousandCNY,
 	}, nil
 }
-
