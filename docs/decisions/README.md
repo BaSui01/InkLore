@@ -64,3 +64,5 @@
 - [ADR-0026：LLM 渠道协议与凭据解析收敛](0026-llm-channel-protocol-and-secret-resolution.md)：Accepted；区分公开 Provider 与内部 transport，并使数据库 SecretRef fail-closed 解析。
 
 - [ADR-0037：源码文件大小上限调整为500KiB](0037-source-file-size-limit-500kib.md)（Accepted，用户明确裁决，仅替代旧源码大小条款）。
+
+- [ADR-0038：Supabase 测试库使用私有 schema 隔离](0038-supabase-isolated-staging-schema.md)（Proposed，限 INK-255 云端验收，不变更 R1 冻结迁移原文）。
