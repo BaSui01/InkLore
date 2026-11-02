@@ -37,12 +37,13 @@ func (g *AgentTaskModelGateway) Generate(ctx context.Context, input agentdomain.
 		return nil, errors.New("frozen model policy does not match the run task")
 	}
 
-	modelToUse := policy.ModelName
+	modelID, modelToUse := policy.ModelID, policy.ModelName
 	if selected := strings.TrimSpace(input.Model); selected != "" {
-		modelToUse, err = g.catalog.ResolveEnabledModel(ctx, input.TenantID, selected)
-		if err != nil {
-			return nil, err
+		model, resolveErr := g.catalog.ResolveEnabledModel(ctx, input.TenantID, selected)
+		if resolveErr != nil {
+			return nil, resolveErr
 		}
+		modelID, modelToUse = model.ID, model.Name
 	}
 	maxTokens := policy.MaxOutputTokens
 	if input.MaxOutputTokens > 0 {
@@ -54,6 +55,7 @@ func (g *AgentTaskModelGateway) Generate(ctx context.Context, input agentdomain.
 	request := llmdomain.TextGenerationRequest{
 		TenantID:          input.TenantID,
 		PolicyVersionID:   input.PolicyVersionID,
+		ModelID:           modelID,
 		Model:             modelToUse,
 		SystemPrompt:      input.SystemInstruction,
 		MaxTokens:         maxTokens,

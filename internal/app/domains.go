@@ -4,9 +4,7 @@ import (
 	"InkLore/internal/app/adapters"
 	"context"
 	"errors"
-	"os"
 	"strconv"
-	"strings"
 
 	agentapp "InkLore/internal/agent/application"
 	agentinfra "InkLore/internal/agent/infrastructure"
@@ -137,44 +135,11 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 	a.domains.Budget = llmBudget
 	llmHandler.Register(engine)
 	providerRouter := llmr1infra.NewProviderRouter()
-	providerRouter.SetDBResolver(func(ctx context.Context, modelOrProtocol string) (string, string, int64, string, error) {
-		db, err := p.UoW.Require(ctx)
-		if err != nil {
-			return "", "", 0, "", err
-		}
-		type Row struct {
-			BaseURL       string `gorm:"column:base_url"`
-			SecretKind    string `gorm:"column:secret_kind"`
-			SecretLocator string `gorm:"column:secret_locator"`
-			Protocol      string `gorm:"column:protocol"`
-		}
-		var row Row
-		query := "SELECT c.base_url, k.secret_kind, k.secret_locator, pr.protocol FROM llm_channels c JOIN llm_keys k ON k.channel_id = c.id JOIN llm_providers pr ON pr.id = c.provider_id WHERE c.enabled = true AND k.enabled = true AND c.deleted_at IS NULL AND k.deleted_at IS NULL AND pr.deleted_at IS NULL AND (c.upstream_model = ? OR pr.protocol = ? OR pr.code = ? OR ? = '') ORDER BY c.priority ASC, c.weight DESC, c.created_at DESC LIMIT 1"
-		err = db.Raw(query, modelOrProtocol, modelOrProtocol, modelOrProtocol, modelOrProtocol).Scan(&row).Error
-		if err != nil || row.BaseURL == "" {
-			return "", "", 0, "", errors.New("no active channel in db")
-		}
-		var key string
-		loc := strings.TrimSpace(row.SecretLocator)
-		if llmr1infra.IsEncryptedSecret(loc) {
-			decrypted, err := llmr1infra.DecryptSecret(loc)
-			if err == nil && decrypted != "" {
-				key = decrypted
-			}
-		} else if row.SecretKind == "env" {
-			if val := os.Getenv(loc); strings.TrimSpace(val) != "" {
-				key = strings.TrimSpace(val)
-			} else {
-				key = loc
-			}
-		} else {
-			key = loc
-		}
-		if key == "" {
-			return "", "", 0, "", errors.New("selected channel secret is unavailable")
-		}
-		return row.BaseURL, key, 0, row.Protocol, nil
-	})
+	tenantResolver, err := llmr1infra.NewTenantChannelResolver(p.UoW)
+	if err != nil {
+		return err
+	}
+	providerRouter.SetTenantResolver(tenantResolver)
 	llmGateway := llmr1app.NewGatewayService(providerRouter)
 	a.domains.Gateway = llmGateway
 	contenthttp.New(content).RegisterRoutes(engine)
@@ -193,7 +158,7 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 		Idempotency: p.Idempotency,
 		Cursor:      p.Cursor,
 		Files:       adapters.InspirationFiles{Service: p.Files, Content: content},
-		Generation:  adapters.NewInspirationGeneration(llmGateway),
+		Generation:  adapters.NewInspirationGeneration(llmGateway, llmCatalog),
 	})
 	if err != nil {
 		return err
@@ -217,7 +182,7 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 		Repositories:  compRepos,
 		UoW:           p.UoW,
 		Scope:         p.Scope,
-		Generation:    adapters.NewComplianceGeneration(llmGateway),
+		Generation:    adapters.NewComplianceGeneration(llmGateway, llmCatalog),
 		Outbox:        adapters.ComplianceOutboxAdapter{Outbox: events},
 		SnapshotCache: compCache,
 	})

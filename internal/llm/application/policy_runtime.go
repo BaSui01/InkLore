@@ -16,7 +16,7 @@ func (s *Catalog) ReadFrozenPolicy(ctx context.Context, tenantID, versionID stri
 	return s.opts.Repository.ReadFrozenPolicy(ctx, tenantID, versionID)
 }
 
-func (s *Catalog) ResolveEnabledModel(ctx context.Context, tenantID, model string) (string, error) {
+func (s *Catalog) ResolveEnabledModel(ctx context.Context, tenantID, model string) (d.EnabledModel, error) {
 	return s.opts.Repository.ResolveEnabledModel(ctx, tenantID, model)
 }
 
