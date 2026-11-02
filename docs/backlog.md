@@ -134,4 +134,6 @@ INK-001–140已使用，永不复用；旧任务涉及的旧路由、兼容方�
 
 | INK-249 | 七个已记录 Go 文件的机械格式修复 | 工程维护 | review | 七文件仅标准 gofmt 空白变动，去空白前后相同；全仓 gofmt -l 为空，Go 1.27.1 go build -buildvcs=false ./... 通过。核对 dev/开放 PR 无两个 novel_creation.go 并发修改后补齐格式，不接管 INK-236 功能或改变其状态。独立验收及其他门禁未完成，不合并。[Issue #6](https://github.com/BaSui01/InkLore/issues/6) | 用户明确授权；不依赖 INK-248 |
 
+| INK-248 | 修复 pnpm 前端 CI 与 dot 本地持续集成入口 | 工程维护 | review | 复用 make ci，显式 BUILDVCS 快照选项，保留 workflow 与全部门禁。dot 单项 Go build/vet、Skills、920键 i18n、冻结依赖安装与双端构建通过；历史 notes 缺真实 Git 基线，fmt/guard 保留既存失败，完整门禁与独立验收未完成，不合并。运行路径不变。[Issue #1](https://github.com/BaSui01/InkLore/issues/1)；[工程笔记](../.agents/notes/implemented/process/2026-11-01-pnpm-ci-dev-gates.md) | 用户授权；INK-143,173 |
+
 | INK-251 | 按用户裁决将源码文件上限改为500KiB | 工程规则 | review | [ADR-0037](decisions/0037-source-file-size-limit-500kib.md) 将既有源码扫描范围阈值改为512000字节，其他门禁/ignore不变。Go构建和archguard含可达性报告通过；独立CLI边界夹具512000通过、512001拒绝。是新规则通过而非旧50KB满足；独立复核/业务验收未完成，不合并。[Issue #10](https://github.com/BaSui01/InkLore/issues/10)；[笔记](../.agents/notes/implemented/process/2026-11-01-source-file-size-limit.md) | 用户2026-11-01明确决策 |

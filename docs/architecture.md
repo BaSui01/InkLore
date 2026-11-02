@@ -324,6 +324,10 @@ Admin App 的 models 视图仍挂载 ModelConfigRoute；该路由保留认证上
 
 仅标准 gofmt 调整 llm/domain/catalog.go、credit_estimator.go、platform/captcha/captcha.go、platform/membership/write.go、app/adapters/agent_task_model_gateway.go 及 agent/domain/novel_creation.go、agent/application/novel_creation.go 的空白与对齐；去空白前后完全相同，未改包、依赖、接口、业务逻辑或运行接线。补齐后全仓格式与 Go 构建通过。两个 novel_creation.go 经 dev/开放 PR/远端 blob 核对未见并发修改，格式处理不接管 INK-236 功能、不改变其 doing 状态。其他门禁与独立验收仍待完成。
 
+## INK-248：pnpm 与 dev 持续集成配置
+
+`.github/workflows/ci.yml` 的前端任务先安装固定 pnpm 11.25.0，再由 Node 22 配合 pnpm store 缓存和 `frontend/pnpm-lock.yaml` 执行 `pnpm install --frozen-lockfile`、`pnpm run build`。push 触发包含 main/dev，PR 触发与原有后端、Skills、notes 门禁不变。仅调整离线 CI 配置与验证指南，未修改 Go 包、启动入口、领域依赖、业务接线或锁文件。make ci 复用本地完整构建与静态检查，dot 可直接运行，不依赖 Actions。Go 默认 VCS stamping 保持 auto；核验来源的无 Git 快照必须显式 BUILDVCS=false，历史 notes 仍须真实基线。dot 单项 Go build/vet、Skills/i18n、冻结安装和双端构建已通过；notes 基线不可用及既存 fmt/guard 失败仍阻止完整门禁通过，独立验收未完成。
+
 ## INK-251：用户裁决的源码大小上限
 
 archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，扫描生成源码，不增加忽略项。跨域/基座依赖、禁测试文件、Go解析不变；无运行服务/业务包/契约/生成器变化。新规则Go构建、R1–R5护栏及512000/512001边界通过，不代表旧规则通过。PR9页面拆分保持可独立审查，未回滚。
