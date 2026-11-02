@@ -13,7 +13,7 @@ const (
 	NovelGuideProposeNovelTool  = "propose_novel"
 	NovelGuideMaxTurns          = 8
 	NovelGuideMaxIdeaCodepoints = 2000
-	NovelGuideMaxAnswerCodepts = 2000
+	NovelGuideMaxAnswerCodepts  = 2000
 )
 
 type NovelGuideStatus string
@@ -45,29 +45,29 @@ type NovelGuideProposal struct {
 }
 
 type NovelGuideSession struct {
-	ID                  string                  `json:"session_id"`
-	TenantID            string                  `json:"-"`
-	OwnerUserID         string                  `json:"-"`
-	CreatedAt           time.Time               `json:"created_at"`
-	UpdatedAt           time.Time               `json:"updated_at"`
-	Revision            int64                   `json:"revision"`
-	Status              NovelGuideStatus        `json:"status"`
-	InitialIdea         string                  `json:"initial_idea"`
-	Turns               []NovelGuideTurn        `json:"turns"`
-	CurrentQuestion     *NovelGuideQuestion     `json:"current_question,omitempty"`
-	Proposal            *NovelGuideProposal     `json:"proposal,omitempty"`
-	CreatedNovelID      string                  `json:"created_novel_id,omitempty"`
-	DefinitionVersionID string                  `json:"-"`
-	SystemInstruction   string                  `json:"-"`
-	PolicyVersionID     string                  `json:"-"`
-	ModelName           string                  `json:"-"`
-	MaxOutputTokens     int                     `json:"-"`
-	Temperature         float64                 `json:"-"`
-	StartKey            string                  `json:"-"`
-	StartRequestHash    string                  `json:"-"`
-	StartResponse       json.RawMessage         `json:"-"`
-	ErrorCode           string                  `json:"error_code,omitempty"`
-	ExpiresAt           time.Time               `json:"expires_at"`
+	ID                  string              `json:"session_id"`
+	TenantID            string              `json:"-"`
+	OwnerUserID         string              `json:"-"`
+	CreatedAt           time.Time           `json:"created_at"`
+	UpdatedAt           time.Time           `json:"updated_at"`
+	Revision            int64               `json:"revision"`
+	Status              NovelGuideStatus    `json:"status"`
+	InitialIdea         string              `json:"initial_idea"`
+	Turns               []NovelGuideTurn    `json:"turns"`
+	CurrentQuestion     *NovelGuideQuestion `json:"current_question,omitempty"`
+	Proposal            *NovelGuideProposal `json:"proposal,omitempty"`
+	CreatedNovelID      string              `json:"created_novel_id,omitempty"`
+	DefinitionVersionID string              `json:"-"`
+	SystemInstruction   string              `json:"-"`
+	PolicyVersionID     string              `json:"-"`
+	ModelName           string              `json:"-"`
+	MaxOutputTokens     int                 `json:"-"`
+	Temperature         float64             `json:"-"`
+	StartKey            string              `json:"-"`
+	StartRequestHash    string              `json:"-"`
+	StartResponse       json.RawMessage     `json:"-"`
+	ErrorCode           string              `json:"error_code,omitempty"`
+	ExpiresAt           time.Time           `json:"expires_at"`
 }
 
 type NovelGuideCommand struct {
@@ -98,10 +98,10 @@ type NovelGuideCompleteInput struct {
 }
 
 type NovelGuidePolicySnapshot struct {
-	VersionID      string
-	ModelName      string
+	VersionID       string
+	ModelName       string
 	MaxOutputTokens int
-	Temperature    float64
+	Temperature     float64
 }
 
 func ValidateNovelGuideIdea(idea string) bool {

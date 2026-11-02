@@ -159,4 +159,3 @@ func randInt(max int) int {
 	}
 	return int(n.Int64())
 }
-
