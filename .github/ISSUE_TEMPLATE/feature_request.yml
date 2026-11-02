@@ -1,0 +1,38 @@
+name: "功能建议"
+description: "提出清晰、可验收的产品或工程能力"
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: "先检查 R1 冻结设计、现有 ADR 和 backlog；未获批准的架构变更不能直接当作既定实现。"
+  - type: textarea
+    id: problem
+    attributes:
+      label: "要解决的问题"
+      description: "解释使用者、场景和当前的实际限制"
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: "建议范围与不做什么"
+      description: "标记涉及 Creator / Admin / Go / 数据库 / Agent 的边界"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "可复现验收条件"
+      description: "提供可核查的场景、输入、期望输出和异常边界"
+    validations:
+      required: true
+  - type: input
+    id: references
+    attributes:
+      label: "关联设计或任务"
+      placeholder: "INK-xxx、ADR-xxxx、文档链接"
+  - type: textarea
+    id: risks
+    attributes:
+      label: "风险及依赖"
+      description: "说明权限、租户隔离、兼容、迁移与外部模型副作用"
