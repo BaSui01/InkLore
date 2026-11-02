@@ -19,6 +19,9 @@ END;
 $scope_guard$;
 
 -- R1 的原权限迁移在 public 上声明角色；这里只针对私有测试 schema 补授权。
+-- 撤销 000009 对 public 现存表与序列的显式授权，避免继承 public 默认 USAGE 后仍可访问无关业务。
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM inklore_runtime, inklore_retention;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM inklore_runtime, inklore_retention;
 REVOKE ALL ON SCHEMA public FROM inklore_runtime, inklore_retention;
 GRANT USAGE ON SCHEMA inklore_ci TO inklore_runtime, inklore_retention;
 GRANT SELECT,INSERT,UPDATE ON ALL TABLES IN SCHEMA inklore_ci TO inklore_runtime;
