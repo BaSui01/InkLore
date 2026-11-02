@@ -256,7 +256,7 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 	if err != nil {
 		return err
 	}
-	agentModelGateway := adapters.NewAgentTaskModelGateway(llmGateway, p.UoW)
+	agentModelGateway := adapters.NewAgentTaskModelGateway(llmGateway, llmCatalog)
 	agentNovelGuideRepo, err := agentinfra.NewNovelGuideRepository(p.UoW)
 	if err != nil {
 		return err
