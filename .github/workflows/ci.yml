@@ -78,11 +78,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: 启用 Corepack
+        run: corepack enable
 
       - name: 安装依赖
-        run: npm ci
+        run: corepack pnpm install --frozen-lockfile
 
       - name: 构建
-        run: npm run build
+        run: corepack pnpm run build
