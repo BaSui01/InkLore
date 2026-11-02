@@ -30,3 +30,9 @@ GitHub 仓库开启 `allow_auto_merge`、`delete_branch_on_merge` 和 `allow_upd
 - PR 的合并不等于业务 Issue 已验收，Issue 仍按 `docs/backlog.md` 的状态管理。
 - Agent 任务恢复、冻结策略、跨租户路由、Provider Key 及数据库迁移需额外安全验收。
 - 不主动改默认分支、历史提交、已接受的 ADR 或现有持久化数据。
+
+## GitHub 功能整合
+
+协作看板、依赖安全、定时只读 Insights、Wiki 首次发布与 GitHub Security 的使用步骤统一见 [GitHub 功能与运维入口](github-platform.md)。
+
+GitHub Project 的状态不覆盖 `docs/backlog.md`，Dependabot 与健康报表仅在配置进入默认分支后生效；项目公开前仍必须完成 INK-252 的凭据轮换和历史风险核查。

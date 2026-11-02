@@ -1,0 +1,44 @@
+name: "缺陷反馈"
+description: "报告可复现的功能、可靠性或安全边界问题（不要公开凭据和漏洞利用细节）"
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "请先搜索现有 Issue 与 docs/backlog.md；安全漏洞请优先使用仓库私密漏洞报告渠道。"
+  - type: input
+    id: task
+    attributes:
+      label: "关联 INK 任务（如果已有）"
+      placeholder: "INK-xxx / Issue #n"
+  - type: textarea
+    id: actual
+    attributes:
+      label: "实际行为与影响"
+      description: "说明观察到的结果、错误码以及影响的端点或界面"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "最小复现步骤"
+      description: "写清版本、环境、操作与结果；所有日志和截图必须脱敏"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: "预期行为"
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: "验收线索"
+      description: "相关提交、命令、HTTP 状态、错误码或浏览器复现证据"
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: "提交前核对"
+      options:
+        - label: "已检查无真实 API Key、数据库口令、Token、用户正文或其他个人数据"
+          required: true
