@@ -496,7 +496,7 @@ type upstreamTarget struct {
 // 其次若注入了多渠道选路池则走 routing.Pool（候选集一次获取、平滑加权轮询、限流与熔断）；
 // 兜底退化为单一环境变量直连，未配置任何渠道时明确失败。
 // UpstreamDBResolver 提供从数据库持久化渠道与密钥直接解析运行时目标的能力。
-type UpstreamDBResolver func(ctx context.Context, modelOrProtocol string) (baseURL string, apiKey string, channelID int64, protocol string, err error)
+type UpstreamDBResolver func(ctx context.Context, tenantID, modelOrProtocol string) (baseURL string, apiKey string, channelID int64, protocol string, err error)
 
 // SetPool 注入可选的多渠道选路池。
 func (r *ProviderRouter) SetPool(pool *routing.Pool) {
@@ -538,18 +538,6 @@ func (r *ProviderRouter) resolveUpstream(ctx context.Context, requestedModel ...
 		}
 		r.mu.RUnlock()
 	}
-	// 1. 优先使用管理员配置的数据库渠道解析器
-	if r.dbResolver != nil {
-		if bURL, key, chID, proto, err := r.dbResolver(ctx, selector); err == nil && strings.TrimSpace(key) != "" {
-			return upstreamTarget{
-				baseURL:   strings.TrimRight(strings.TrimSpace(bURL), "/"),
-				apiKey:    strings.TrimSpace(key),
-				channelID: chID,
-				leaseID:   -1,
-				protocol:  proto,
-			}, nil
-		}
-	}
 	// 2. 若配置了多渠道池
 	if r.pool != nil {
 		channel, decryptedKey, leaseID, err := r.pool.GetChannelKeyContext(ctx, selector)
@@ -585,6 +573,23 @@ func (r *ProviderRouter) resolveUpstream(ctx context.Context, requestedModel ...
 		return upstreamTarget{baseURL: r.baseURL, apiKey: r.apiKey, leaseID: -1, protocol: r.protocol}, nil
 	}
 	return upstreamTarget{}, domain.ErrProviderNotConfigured
+}
+
+// resolveTenantUpstream never falls back to a global pool or environment credentials.
+// A tenant-scoped Agent call must be routed through its own enabled DB channel.
+func (r *ProviderRouter) resolveTenantUpstream(ctx context.Context, tenantID, model string) (upstreamTarget, error) {
+	if r == nil || r.dbResolver == nil || strings.TrimSpace(tenantID) == "" || strings.TrimSpace(model) == "" {
+		return upstreamTarget{}, domain.ErrProviderNotConfigured
+	}
+	baseURL, key, channelID, protocol, err := r.dbResolver(ctx, tenantID, model)
+	if err != nil {
+		return upstreamTarget{}, err
+	}
+	if strings.TrimSpace(baseURL) == "" || strings.TrimSpace(key) == "" {
+		return upstreamTarget{}, domain.ErrProviderNotConfigured
+	}
+	return upstreamTarget{baseURL: strings.TrimRight(strings.TrimSpace(baseURL), "/"),
+		apiKey: key, channelID: channelID, leaseID: -1, protocol: protocol}, nil
 }
 
 // recordUpstream 回报调用结果；未走选路的直连目标无需回报。

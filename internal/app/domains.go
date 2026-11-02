@@ -137,8 +137,8 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 	a.domains.Budget = llmBudget
 	llmHandler.Register(engine)
 	providerRouter := llmr1infra.NewProviderRouter()
-	providerRouter.SetDBResolver(func(ctx context.Context, modelOrProtocol string) (string, string, int64, string, error) {
-		db, err := p.UoW.Require(ctx)
+	providerRouter.SetDBResolver(func(ctx context.Context, tenantID, modelOrProtocol string) (string, string, int64, string, error) {
+		db, err := p.UoW.DB(ctx)
 		if err != nil {
 			return "", "", 0, "", err
 		}
@@ -149,8 +149,19 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 			Protocol      string `gorm:"column:protocol"`
 		}
 		var row Row
-		query := "SELECT c.base_url, k.secret_kind, k.secret_locator, pr.protocol FROM llm_channels c JOIN llm_keys k ON k.channel_id = c.id JOIN llm_providers pr ON pr.id = c.provider_id WHERE c.enabled = true AND k.enabled = true AND c.deleted_at IS NULL AND k.deleted_at IS NULL AND pr.deleted_at IS NULL AND (c.upstream_model = ? OR pr.protocol = ? OR pr.code = ? OR ? = '') ORDER BY c.priority ASC, c.weight DESC, c.created_at DESC LIMIT 1"
-		err = db.Raw(query, modelOrProtocol, modelOrProtocol, modelOrProtocol, modelOrProtocol).Scan(&row).Error
+		query := `SELECT c.base_url, k.secret_kind, k.secret_locator, pr.protocol
+			FROM llm_channel_models cm
+			JOIN llm_channels c ON c.tenant_id=cm.tenant_id AND c.id=cm.channel_id
+			JOIN llm_models m ON m.tenant_id=cm.tenant_id AND m.id=cm.model_id
+			JOIN llm_keys k ON k.tenant_id=c.tenant_id AND k.channel_id=c.id
+			JOIN llm_providers pr ON pr.tenant_id=c.tenant_id AND pr.id=c.provider_id
+			WHERE c.tenant_id=? AND (m.id::text=? OR m.upstream_name=?)
+			  AND cm.enabled=true AND cm.deleted_at IS NULL
+			  AND m.enabled=true AND m.deleted_at IS NULL
+			  AND c.enabled=true AND k.enabled=true AND pr.enabled=true
+			  AND c.deleted_at IS NULL AND k.deleted_at IS NULL AND pr.deleted_at IS NULL
+			ORDER BY cm.priority ASC, cm.weight DESC, c.created_at DESC LIMIT 1`
+		err = db.Raw(query, tenantID, modelOrProtocol, modelOrProtocol).Scan(&row).Error
 		if err != nil || row.BaseURL == "" {
 			return "", "", 0, "", errors.New("no active channel in db")
 		}
@@ -164,11 +175,7 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 		} else if row.SecretKind == "env" {
 			if val := os.Getenv(loc); strings.TrimSpace(val) != "" {
 				key = strings.TrimSpace(val)
-			} else {
-				key = loc
 			}
-		} else {
-			key = loc
 		}
 		if key == "" {
 			return "", "", 0, "", errors.New("selected channel secret is unavailable")
