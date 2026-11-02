@@ -1,5 +1,7 @@
 # InkLore 重构实施事实
 
+> 当前源码文件大小规则由 [ADR-0037](decisions/0037-source-file-size-limit-500kib.md) 更新为500KiB（512000字节）。下文历史50KB验收描述保留为当时事实，不再表示现行源码阈值；独立文档长度和冻结治理不变。
+
 本文件只记录实现证据，不维护第二份目标架构。唯一目标设计：[R1索引](system-design/00-INDEX.md)，契约：[00基线](system-design/00-CONTRACT-BASELINE.md)。
 
 ## INK-245 · 接入模型渠道弹窗移除供应商下拉框（review）
@@ -317,3 +319,7 @@ Admin `AgentGovernanceRoute.tsx` 经 `adminApi.ts` 分页读取 definitions/work
 ## INK-249：机械 Go 格式修复
 
 仅标准 gofmt 调整 llm/domain/catalog.go、credit_estimator.go、platform/captcha/captcha.go、platform/membership/write.go、app/adapters/agent_task_model_gateway.go 及 agent/domain/novel_creation.go、agent/application/novel_creation.go 的空白与对齐；去空白前后完全相同，未改包、依赖、接口、业务逻辑或运行接线。补齐后全仓格式与 Go 构建通过。两个 novel_creation.go 经 dev/开放 PR/远端 blob 核对未见并发修改，格式处理不接管 INK-236 功能、不改变其 doing 状态。其他门禁与独立验收仍待完成。
+
+## INK-251：用户裁决的源码大小上限
+
+archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，扫描生成源码，不增加忽略项。跨域/基座依赖、禁测试文件、Go解析不变；无运行服务/业务包/契约/生成器变化。新规则Go构建、R1–R5护栏及512000/512001边界通过，不代表旧规则通过。PR9页面拆分保持可独立审查，未回滚。
