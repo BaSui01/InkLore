@@ -20,6 +20,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
       - name: 校验技能元数据与文档链接
         run: node scripts/check-project-skills.mjs
       - name: 校验工程笔记与历史归档封印
@@ -81,11 +83,13 @@ jobs:
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: 启用 Corepack
-        run: corepack enable
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+          run_install: false
 
       - name: 安装依赖
-        run: corepack pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: 构建
-        run: corepack pnpm run build
+        run: pnpm run build

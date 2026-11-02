@@ -4,7 +4,7 @@
 //
 //	R1 跨域 infrastructure 直接导入（业务域 A 的文件导入业务域 B 的 infrastructure；业务域清单见 ADR-0014 的 7 域）
 //	R2 platform 基座反向依赖业务域
-//	R3 手写代码文件超过 50KB 上限
+//	R3 手写代码文件超过 500KiB 上限
 //	R4 出现 *_test.go / *.test.ts(x) 测试文件
 //	R5 Go 源文件无法解析
 //
@@ -31,7 +31,7 @@ import (
 
 const (
 	modulePath   = "InkLore"
-	maxFileBytes = 50 * 1024
+	maxFileBytes = 500 * 1024
 )
 
 var skipDirs = map[string]bool{
@@ -72,7 +72,7 @@ type ruleMeta struct {
 var allRules = []ruleMeta{
 	{"R1", "跨域 infrastructure 直接导入"},
 	{"R2", "platform 反向依赖业务域"},
-	{"R3", "单文件体积不超过 50KB"},
+	{"R3", "单文件体积不超过 500KiB"},
 	{"R4", "不存在测试文件"},
 	{"R5", "Go 源文件可解析"},
 }
@@ -183,7 +183,7 @@ func checkFileSizes(root string, files []string) []violation {
 			vs = append(vs, violation{
 				Rule:   "R3",
 				File:   f,
-				Detail: fmt.Sprintf("体积 %.1fKB 超过 50KB 上限，需垂直或水平拆分", float64(info.Size())/1024),
+				Detail: fmt.Sprintf("体积 %.1fKiB 超过 500KiB 上限，需垂直或水平拆分", float64(info.Size())/1024),
 			})
 		}
 	}

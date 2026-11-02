@@ -784,3 +784,7 @@ Docker 守护进程可用后，此前三条阻塞的验收全部在真实 Postgr
 
 - INK-201/203：补齐安全HTTP日志request_id白名单；真实PG17只读完整App启动与11HTTP场景通过，中间件panic/流后恢复/日志脱敏探针通过。
 - INK-199/200/201：修复Agent及文件DELETE忽略未声明body，拒绝重复/额外revision查询；删除SSE的last_event_id查询后备。公共guard七请求场景通过。
+
+### INK-251：源码大小上限500KiB（review）
+
+按用户明确裁决更新AGENTS与archguard，512000字节以内允许；保持其他门禁与扫描范围。新增ADR0037，不改历史ADR/冻结资产/文档独立长度门禁。真实构建、架构护栏与边界验证通过，未合并。
