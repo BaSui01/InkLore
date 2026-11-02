@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### Qodana 工作流有效性修复（INK-254，review）
+
+- 将无效的 step `secrets` 条件换成 Token 可用性布尔输出，保留凭据只在受限环境变量中；更新 push 到 private/dev，令工作流可正常解析。
+- 保留缺少 QODANA_TOKEN 时的安全跳过行为，扫描仍须真实 Token/平台执行验收；不将跳过视为安全通过。
+
+
 ### INK-253：安全自动合并门禁加固（review）
 
 - 自动合并收紧为普通文档白名单和非敏感源码显式授权，默认分支 private 仍需人工合并。修复 Draft/标签撤销、旧 head 事件竞态和重命名原路径覆盖；不绕过 GitHub 必需 CI 或 Review 对话，实际事件行为仍待复核。
