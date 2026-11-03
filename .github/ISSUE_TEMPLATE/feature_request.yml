@@ -4,7 +4,7 @@ title: "[Feature] "
 body:
   - type: markdown
     attributes:
-      value: "先检查 R1 冻结设计、现有 ADR 和 backlog；未获批准的架构变更不能直接当作既定实现。"
+      value: "先核对真实源码和已有 Issues，说明用户场景与差距；未验证的能力不能当作已实现。"
   - type: textarea
     id: problem
     attributes:
@@ -30,7 +30,7 @@ body:
     id: references
     attributes:
       label: "关联设计或任务"
-      placeholder: "INK-xxx、ADR-xxxx、文档链接"
+      placeholder: "Issue #n、源码、必要的决策记录或证据链接"
   - type: textarea
     id: risks
     attributes:

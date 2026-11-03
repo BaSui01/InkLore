@@ -48,7 +48,7 @@ vet: ## go vet 静态检查
 	$(GO) vet -buildvcs=$(BUILDVCS) ./...
 
 .PHONY: guard
-guard: ## 架构红线校验（AGENTS.md R1–R5）
+guard: ## 架构边界、源码体积与 Go 语法校验
 	$(GO) run -buildvcs=$(BUILDVCS) ./cmd/archguard
 
 .PHONY: guard-report
@@ -89,6 +89,11 @@ notes-check: ## 校验工程笔记与历史封印（需 NOTES_BASE）
 
 build-check: ## 编译全部 Go 包
 	$(GO) build -buildvcs=$(BUILDVCS) ./...
+
+.PHONY: contracts-check
+contracts-check: ## 检查 OpenAPI、DDL Owner 和错误目录一致性
+	$(NODE) docs/system-design/tools/check-design.cjs
+	$(NODE) scripts/check-platform-contracts.mjs
 
 .PHONY: ci
 ci: ## dot / 本地完整构建门禁（需 NOTES_BASE，不部署、不调用付费模型）

@@ -29,7 +29,7 @@ Scope: 原 docs/acceptance-INK-206.md 的历史材料迁移与链接维护
 
 ### INK-206 / INK-211 首页与自动登录验收
 
-日期：2026-09-20。任务状态以 [backlog](../../../../docs/backlog.md) 为准。
+日期：2026-09-20。任务状态以 [backlog](../../reference/planning/backlog.md) 为准。
 
 ### 交付范围
 
@@ -72,12 +72,12 @@ Chrome DevTools MCP 连接真实本地 Vite 与已运行的 29080 后端。数�
 
 ### 截图
 
-- [桌面首屏](../../../../docs/evidence/INK-206/home-desktop.png)
-- [真实书架](../../../../docs/evidence/INK-206/bookshelf.png)
-- [功能与指南](../../../../docs/evidence/INK-206/features.png)
-- [320 手机](../../../../docs/evidence/INK-206/home-mobile-320.png)
-- [英文深色手机](../../../../docs/evidence/INK-206/home-mobile-dark-en.png)
-- [刷新失败保留作品](../../../../docs/evidence/INK-206/refresh-error.png)
+- [桌面首屏](../../reference/evidence/INK-206/home-desktop.png)
+- [真实书架](../../reference/evidence/INK-206/bookshelf.png)
+- [功能与指南](../../reference/evidence/INK-206/features.png)
+- [320 手机](../../reference/evidence/INK-206/home-mobile-320.png)
+- [英文深色手机](../../reference/evidence/INK-206/home-mobile-dark-en.png)
+- [刷新失败保留作品](../../reference/evidence/INK-206/refresh-error.png)
 
 截图由 Chrome DevTools MCP 获取，再将工具返回的图像字节存入本工作区；未通过截屏修改业务数据。
 
@@ -92,4 +92,3 @@ Chrome DevTools MCP 连接真实本地 Vite 与已运行的 29080 后端。数�
 - 补充验证：用当前 TypeScript transpileModule 将 locales 转为临时 CommonJS 模块，读取实际组合后的 zhCN/enUS，1222 对 1222 keys、missing=[]、extra=[]；新首页 117 个字面引用全部有双语词条。临时目录完成后删除。词条机械对齐通过不等于全文翻译质量审计。
 
 INK-206 保持 review：页面与本轮行为验收已交付，原 i18n 检查器误报仍由 INK-212 独立处理。INK-211 登录修复具有真实浏览器复现与恢复证据。
-

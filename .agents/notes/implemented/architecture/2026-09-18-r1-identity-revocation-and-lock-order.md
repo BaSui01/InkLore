@@ -7,7 +7,7 @@ Scope: identity、membership、audit、cursor与R1 HTTP/部署bootstrap的无冲
 
 ## Problem
 
-已检索[平台原子命令笔记](2026-09-18-r1-platform-atomic-command-boundary.md)，沿用[ADR-0016](../../../../docs/decisions/0016-r1-reconstruction-design-freeze.md)的同PG事务和[ADR-0017](../../../../docs/decisions/0017-preserve-decision-records-and-single-design-entry.md)的事实入口。旧会话与旧路由不满足双aud、refresh重放吊销、当前成员权限、同租户成员管理和隐私审计要求。
+已检索[平台原子命令笔记](2026-09-18-r1-platform-atomic-command-boundary.md)，沿用[ADR-0016](../../reference/decisions/0016-r1-reconstruction-design-freeze.md)的同PG事务和[ADR-0017](../../reference/decisions/0017-preserve-decision-records-and-single-design-entry.md)的事实入口。旧会话与旧路由不满足双aud、refresh重放吊销、当前成员权限、同租户成员管理和隐私审计要求。
 
 refresh已使用token必须401，但把该错误直接返回Within会回滚吊销。两个租户operator互为目标用户时，只统一tenant优先仍不足：每个事务先锁自己账号再锁对方账号会形成环。
 

@@ -11,7 +11,7 @@ Scope: Creator navigation、App、会话入口、Vite与静态托管
 
 ## Decision
 
-按[ADR-0023](../../../../docs/decisions/0023-creator-history-routing.md)使用集中History模块，统一push/replace与popstate订阅。returnTo验证同源及页面白名单，作品ID放入editor查询参数。守卫/成功回跳替换历史项，旧Hash只做首次转换。Vite显式SPA，生产配置只给已知页面回退，API与静态资源独立。
+按[ADR-0023](../../reference/decisions/0023-creator-history-routing.md)使用集中History模块，统一push/replace与popstate订阅。returnTo验证同源及页面白名单，作品ID放入editor查询参数。守卫/成功回跳替换历史项，旧Hash只做首次转换。Vite显式SPA，生产配置只给已知页面回退，API与静态资源独立。
 
 ## Alternatives considered
 

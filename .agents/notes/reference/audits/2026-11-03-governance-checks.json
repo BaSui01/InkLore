@@ -1,0 +1,172 @@
+{
+  "date": "2026-11-03",
+  "scope": "Isolated positive and negative fixtures; no production database or business-model verification",
+  "checks": [
+    {
+      "name": "notes accepts #15",
+      "pass": true,
+      "exit": 0,
+      "expected": 0
+    },
+    {
+      "name": "notes accepts https://github.com/BaSui01/InkLore/issues/15",
+      "pass": true,
+      "exit": 0,
+      "expected": 0
+    },
+    {
+      "name": "notes accepts https://github.com/BaSui01/InkLore/pull/110",
+      "pass": true,
+      "exit": 0,
+      "expected": 0
+    },
+    {
+      "name": "notes accepts INK-99999",
+      "pass": true,
+      "exit": 0,
+      "expected": 0
+    },
+    {
+      "name": "notes rejects #0",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "notes rejects untracked text",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "notes rejects https://example.com/issues/15",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "notes historical seal unchanged",
+      "pass": true,
+      "exit": 0,
+      "expected": 0
+    },
+    {
+      "name": "notes rejects content tamper",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "notes rejects rehashed history",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "contracts allows evolving docs without FR/hash/size lock",
+      "pass": true,
+      "exit": 0,
+      "expected": 0
+    },
+    {
+      "name": "contracts refuses retired --freeze",
+      "pass": true,
+      "exit": 2,
+      "expected": 2
+    },
+    {
+      "name": "contracts rejects duplicate operationId",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "contracts rejects missing permission",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "contracts rejects missing idempotency",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "contracts rejects missing CAS",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "contracts rejects missing path parameter",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "contracts rejects broken ref",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "contracts rejects wrong table owner",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "contracts rejects missing FK target",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "platform catalog accepts matching implementation",
+      "pass": true,
+      "exit": 0,
+      "expected": 0
+    },
+    {
+      "name": "platform catalog rejects status mismatch",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "archguard permits focused test files",
+      "pass": true,
+      "exit": 0,
+      "expected": 0
+    },
+    {
+      "name": "archguard rejects cross-infrastructure",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "archguard rejects platform reverse dependency",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "archguard rejects oversize",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "archguard rejects syntax error",
+      "pass": true,
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "DSH YAML non-prompt settings unchanged",
+      "pass": true
+    }
+  ]
+}

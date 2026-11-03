@@ -1,6 +1,8 @@
 # LLM 供应商官方协议与契约规范
 
-本文档是 InkLore 上游模型协议的核验基线，不是模型目录、价格表或对外 API 契约。它用于指导 `internal/llm/infrastructure` 的请求序列化、响应解构、上游 SSE 解析和用量审计。项目自己的 Provider、Model、Channel、Policy、预算和错误契约，以 [LLM Gateway R1 设计](system-design/09-DOMAIN-LLM-GATEWAY-SPEC.md) 与机读 API/DDL 为准。
+本文保留 InkLore 上游模型协议的核验记录，用于维护 `internal/llm/infrastructure` 的请求序列化、响应解构、上游 SSE 解析和用量审计。公开接口和数据结构见 [机器契约](system-design/00-INDEX.md)；实际支持范围须核对源码装配和运行结果。历史设计不具有更高效力，也不能由供应商文档推断本项目已经实现某项能力。
+
+本轮治理未重新验收外部协议。下文的预算、限流和错误处理要求是实现应满足的行为，当前调用接线仍有缺口，见 [Agent / LLM 源码审计](../.agents/notes/reference/audits/2026-11-03-agent-llm.md)。
 
 最后核验：2026-09-20。本次补充核验 Gemini Interactions 在 2026 年 6 月成为 GA 后的推荐地位、旧 schema 的退出，以及其当前流式 steps 合同。所有外部链接均为供应商官方开发者文档。供应商可在不通知本仓库的情况下变更模型标识、预览状态、限额和单模型能力；禁止把“当前示例模型”或字符串前缀当成永久能力判定规则。
 
@@ -8,11 +10,11 @@
 
 ### 1.1 InkLore 公开边界
 
-R1 的 Provider 公开枚举只有 `openai`、`deepseek`、`anthropic`、`gemini` 与 `ollama`。这五个值的管理 API、数据库与策略能力由 R1 契约定义，不能因本文出现某个供应商就扩展枚举。
+当前 Provider 公开枚举为 `openai`、`deepseek`、`anthropic`、`gemini` 与 `ollama`。管理 API、数据库约束与策略能力需一起核对；本文提及供应商不等于已接入，也不自动扩展公开枚举。
 
-`openai_responses`、`gemini_interactions` 与 `gemini_openai` 是当前基础设施中可识别的内部传输模式，不是新的 R1 Provider 值。特别是 OpenAI Responses 通过 `LLM_OPENAI_API=responses` 作为 `openai` 的内部选择；任何将它添加为管理端 Provider 值的改动，均属于冻结契约变更，必须先走 ADR 与机读契约更新。
+`openai_responses`、`gemini_interactions` 与 `gemini_openai` 是基础设施中可识别的内部传输模式，不是新的公开 Provider 值。OpenAI Responses 通过 `LLM_OPENAI_API=responses` 作为 `openai` 的内部选择。若要扩展管理端枚举，应按实际需求评估 API、数据与客户端兼容性，在授权范围内同步契约、实现及验证；不受历史阶段或一律先写 ADR 的要求限制。
 
-GLM/Z.AI 与 Kimi/Moonshot 的接口在第 10 节保留为已核验的候选兼容协议。当前 R1 枚举没有 `glm` 或 `kimi`，不能据此宣称项目已经有相应的原生 Provider 接入或完成生产验收。
+GLM/Z.AI 与 Kimi/Moonshot 的接口在第 10 节保留为此前核验的候选兼容协议。当前枚举没有 `glm` 或 `kimi`，不能据此宣称项目已经有相应的原生 Provider 接入或完成生产验收。
 
 ### 1.2 官方来源清单
 
@@ -41,7 +43,7 @@ GLM/Z.AI 与 Kimi/Moonshot 的接口在第 10 节保留为已核验的候选兼�
 | `anthropic` | `POST /v1/messages` | `x-api-key` 加 `anthropic-version` | 命名 SSE 事件 | 工具结果是 `user` content block，不是 OpenAI 的 `role: tool` |
 | `gemini` | `POST /v1beta/models/{model}:generateContent` | `x-goog-api-key` 或 API key 查询参数 | `streamGenerateContent?alt=sse` | 仍受支持但已是 legacy；`contents.parts` / `functionCall`，字段采用 camelCase |
 | `ollama` | `{base}/v1/chat/completions` | 本地服务通常可忽略 Bearer 值 | OpenAI 兼容流 | 兼容并不等于支持 OpenAI 全部字段 |
-| OpenAI 内部模式 | `POST /v1/responses` | `Authorization: Bearer` | Responses HTTP SSE | 非 R1 Provider 值；不要写成 `/v1/responses` WebSocket |
+| OpenAI 内部模式 | `POST /v1/responses` | `Authorization: Bearer` | Responses HTTP SSE | 非公开 Provider 值；不要写成 `/v1/responses` WebSocket |
 | Gemini 内部模式 | `POST /{api_version}/interactions` | `x-goog-api-key` | Interaction SSE | GA 推荐；渠道固定 API version 后使用其当前 schema，`input` / `previous_interaction_id` 与 generateContent 不兼容 |
 
 所有上游 URL 均须从受控 Channel 的 endpoint/base URL 解析，并经 SecretRef、TLS 与 SSRF allowlist 校验。本文的官方 URL 不能成为允许任意转发的理由。
@@ -67,7 +69,7 @@ GLM/Z.AI 与 Kimi/Moonshot 的接口在第 10 节保留为已核验的候选兼�
 
 1. **字段白名单而非透传**：Application/Domain 只表达统一意图；基础设施适配器根据 `protocol + api_version + model capability` 组装上游对象。任意调用方提供的 model、base URL、header、provider-only 参数或工具 schema 都不得直接穿透。
 2. **互斥与依赖关系必须前置校验**：例如 OpenAI Responses 的结构化输出位于 `text.format` 而非 Chat 的 `response_format`；Gemini 两种 API 分别使用 camelCase 与 snake_case；Kimi `partial` 不与 `json_object` 混用。供应商拒绝的组合应映射为本地可审计请求/能力失败，不能静默删字段后继续执行。
-3. **结构化输出不等于本地校验通过**：所有 JSON mode、JSON Schema、strict tool schema 只约束上游生成；响应仍必须完成 UTF-8、单值、重复键、大小/深度及 R1 Draft 2020-12 校验。
+3. **结构化输出不等于本地校验通过**：所有 JSON mode、JSON Schema、strict tool schema 只约束上游生成；响应仍必须完成 UTF-8、单值、重复键、大小/深度及 Draft 2020-12 校验。
 4. **思考字段不得可见**：`reasoning_content`、Anthropic thinking/signature、Gemini thought 与 OpenAI reasoning item 仅作为协议续调和受限审计数据；绝不写入创作者 SSE、日志正文或管理端可读详情。
 5. **控制字段必须可审计**：记录脱敏后的 provider、channel、model、protocol/api version、允许的字段集合、请求关联 ID、供应商 usage 与受限失败类别；不记录 Authorization、SecretRef 解密值、完整 prompt 或原始响应。
 
@@ -234,7 +236,7 @@ Content-Type: application/json
 }
 ```
 
-`generationConfig` 支持与模型相关的生成控制。严格 JSON 应使用 `responseMimeType: "application/json"` 与 `responseJsonSchema`，再由 InkLore 按 R1 的 Draft 2020-12 规则二次校验。原文的通用 `responseSchema` 映射并非当前 REST 参考推荐字段。
+`generationConfig` 支持与模型相关的生成控制。严格 JSON 应使用 `responseMimeType: "application/json"` 与 `responseJsonSchema`，再由 InkLore 按 Draft 2020-12 规则二次校验。原文的通用 `responseSchema` 映射并非当前 REST 参考推荐字段。
 
 ### 7.2 思考、安全与响应
 
@@ -324,9 +326,9 @@ Authorization: Bearer $MOONSHOT_API_KEY
 Content-Type: application/json
 ```
 
-Kimi 的 SSE 使用 `chat.completion.chunk`、`data: [DONE]`、`stream_options.include_usage` 和分片 `tool_calls`。在思考/工具调用场景，官方指导将累积的 `reasoning_content`、完整 assistant tool call 与 tool result 一同续传；适配器同样必须延迟解析分片 arguments。Kimi 还公开 `response_format.type: "json_schema"`，但本地仍必须执行 R1 的严格 JSON Schema 验证。
+Kimi 的 SSE 使用 `chat.completion.chunk`、`data: [DONE]`、`stream_options.include_usage` 和分片 `tool_calls`。在思考/工具调用场景，官方指导将累积的 `reasoning_content`、完整 assistant tool call 与 tool result 一同续传；适配器同样必须延迟解析分片 arguments。Kimi 还公开 `response_format.type: "json_schema"`，但本地仍必须执行严格 JSON Schema 验证。
 
-两家供应商都只能在其端点、认证方式、工具分片和能力经过独立验收后，作为受控 `openai` 兼容 Channel 引入。它们不是 `LLM_PROTOCOL=glm` 或 `LLM_PROTOCOL=kimi` 的现有 R1 配置值。
+两家供应商都只能在其端点、认证方式、工具分片和能力经过独立验收后，作为受控 `openai` 兼容 Channel 引入。它们不是 `LLM_PROTOCOL=glm` 或 `LLM_PROTOCOL=kimi` 的现有配置值。
 
 ## 11. 图像生成与编辑
 
@@ -357,7 +359,7 @@ OpenAI 的图片生成与编辑是两个不同端点：
 
 ### 11.4 实现状态与待验收边界
 
-INK-218 已按 [ADR-0025](decisions/0025-image-adapter-current-provider-contract.md) 修复图片适配器：已删除已退出的 Imagen `:predict` 调用并对 `imagen` 模型明确失败；OpenAI 图生图改用真实 multipart `/images/edits`；Gemini 图片请求不再默认发送全量放开的安全阈值。
+INK-218 已按 [ADR-0025](../.agents/notes/reference/decisions/0025-image-adapter-current-provider-contract.md) 修复图片适配器：已删除已退出的 Imagen `:predict` 调用并对 `imagen` 模型明确失败；OpenAI 图生图改用真实 multipart `/images/edits`；Gemini 图片请求不再默认发送全量放开的安全阈值。
 
 该变更尚未使用真实凭据验收。部署环境必须分别验证 OpenAI 文生图、OpenAI 编辑、Gemini 图片、已退出 Imagen 的 422 拒绝、供应商安全拦截及无密钥失败；不得把编译或文档核对当作上述上游行为的证据。Gemini Interactions 的 steps schema/工具续调迁移另列 INK-219，不在本图片修复范围内。
 
@@ -379,9 +381,9 @@ INK-218 已按 [ADR-0025](decisions/0025-image-adapter-current-provider-contract
 
 ### 12.3 用量、失败与重试
 
-供应商 HTTP status、错误 JSON 形状、Retry-After 和 usage 字段不统一。基础设施只应提取状态、受限的错误类别、Retry-After、模型/渠道标识和供应商报告 token；再由 R1 调度器决定 Key health、熔断、预算结算、第一次 delta 前的技术重试与 fallback。不得把本文的示例映射为新的公开错误码。
+供应商 HTTP status、错误 JSON 形状、Retry-After 和 usage 字段不统一。基础设施只应提取状态、受限的错误类别、Retry-After、模型/渠道标识和供应商报告 token；再由网关调用链统一决定 Key health、熔断、预算结算、第一次 delta 前的技术重试与 fallback。不得把本文的示例映射为新的公开错误码。
 
-上游已 dispatch 但没有可靠终态/usage 时，按 R1 的保守结算与 `llm.upstream_outcome_unknown` 语义处理；绝不能以“估计成功”补造用户输出。首个可见 delta 后的失败不得无提示地切换模型拼接文本。
+上游已 dispatch 但没有可靠终态/usage 时，按保守结算要求与 `llm.upstream_outcome_unknown` 语义处理；绝不能以“估计成功”补造用户输出。首个可见 delta 后的失败不得无提示地切换模型拼接文本。
 
 ## 13. 每次供应商升级的复核清单
 
@@ -389,4 +391,4 @@ INK-218 已按 [ADR-0025](decisions/0025-image-adapter-current-provider-contract
 2. 为目标模型逐项确认 text、tools、structured output、thinking、streaming、image 与 token usage 能力，更新本地 Model Catalog，而非写死名称判断。
 3. 在隔离环境使用脱敏渠道做一次非流、流式、工具续调、结构化输出、限流/无效参数失败验证；真实密钥和正文不进入证据。
 4. 确认首个 delta 前后、取消、EOF、429、401、5xx 和 usage 缺失时的本地状态机及审计结果。
-5. 若变更涉及 Provider 枚举、数据库、外部 HTTP 合同、通信协议或能力模型，先写 ADR；仅外部来源的文档漂移按 INK 任务记录来源、结论和未验证边界。
+5. 变更 Provider 枚举、数据库、外部 HTTP 合同、通信协议或能力模型时说明兼容影响，按授权范围同步实现与验证；重要长期取舍记录理由。外部来源漂移记录来源、结论与未验证边界，关联现有 GitHub 任务，不强制新建 INK 编号或局部修改 ADR。

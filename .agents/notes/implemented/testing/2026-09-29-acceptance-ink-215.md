@@ -31,7 +31,7 @@ Scope: 原 docs/acceptance-INK-215.md 的历史材料迁移与链接维护
 
 ### 实施范围
 
-依据[ADR-0023](../../../../docs/decisions/0023-creator-history-routing.md)。Creator首页/，独立登录/login，注册/register，找回密码/forgot-password，工作台/outline、/worldview、/analysis，编辑器/editor?novelId=作品ID。原Hash入口首次加载转换为普通路径。Admin保持独立，不改其路由。
+依据[ADR-0023](../../reference/decisions/0023-creator-history-routing.md)。Creator首页/，独立登录/login，注册/register，找回密码/forgot-password，工作台/outline、/worldview、/analysis，编辑器/editor?novelId=作品ID。原Hash入口首次加载转换为普通路径。Admin保持独立，不改其路由。
 
 统一navigation模块管理History导航、popstate与应用内通知。登录守卫及成功回跳replace历史项；returnTo仅同源已知非鉴权页面，保留作品参数。App从地址读取作品ID，移除仅在内存保存当前作品的路由实现。首页灵感仍仅在App内存保留。无新增npm依赖或Go运行路径变化。
 
@@ -60,4 +60,3 @@ Scope: 原 docs/acceptance-INK-215.md 的历史材料迁移与链接维护
 ### 剩余边界
 
 本地身份恢复接口此前返回500，真实成功登录后的作品加载与自动回跳尚未实网复验。本轮已验证路由消费returnTo的往返逻辑，但不声称认证成功；INK-215保持review。部署示例需按实际网络配置API上游和TLS，不会自动部署。
-

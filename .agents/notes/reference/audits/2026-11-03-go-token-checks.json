@@ -1,0 +1,133 @@
+{
+  "all_equal": true,
+  "baseline": "b0732b31fb9c306ec60d42c4793a069b474b74a1",
+  "file_count": 18,
+  "files": [
+    {
+      "current_tokens": 3895,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 3895,
+      "path": "internal/agent/application/run_service.go"
+    },
+    {
+      "current_tokens": 1363,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 1363,
+      "path": "internal/agent/domain/dag.go"
+    },
+    {
+      "current_tokens": 908,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 908,
+      "path": "internal/agent/domain/types.go"
+    },
+    {
+      "current_tokens": 2429,
+      "equal_without_comments": true,
+      "normalized_import_aliases": true,
+      "old_tokens": 2429,
+      "path": "internal/app/domains.go"
+    },
+    {
+      "current_tokens": 3,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 3,
+      "path": "internal/compliance/doc.go"
+    },
+    {
+      "current_tokens": 3,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 3,
+      "path": "internal/content/doc.go"
+    },
+    {
+      "current_tokens": 3,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 3,
+      "path": "internal/inspiration/doc.go"
+    },
+    {
+      "current_tokens": 4366,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 4366,
+      "path": "internal/llm/application/catalog.go"
+    },
+    {
+      "current_tokens": 3,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 3,
+      "path": "internal/llm/doc.go"
+    },
+    {
+      "current_tokens": 5032,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 5032,
+      "path": "internal/llm/infrastructure/catalog.go"
+    },
+    {
+      "current_tokens": 805,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 805,
+      "path": "internal/platform/cursor/cursor.go"
+    },
+    {
+      "current_tokens": 119,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 119,
+      "path": "internal/platform/files/json.go"
+    },
+    {
+      "current_tokens": 517,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 517,
+      "path": "internal/platform/files/types.go"
+    },
+    {
+      "current_tokens": 310,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 310,
+      "path": "internal/platform/identity/types.go"
+    },
+    {
+      "current_tokens": 432,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 432,
+      "path": "internal/platform/jobs/types.go"
+    },
+    {
+      "current_tokens": 1979,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 1979,
+      "path": "internal/platform/notifications/notifications.go"
+    },
+    {
+      "current_tokens": 841,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 841,
+      "path": "internal/platform/observability/status.go"
+    },
+    {
+      "current_tokens": 1213,
+      "equal_without_comments": true,
+      "normalized_import_aliases": false,
+      "old_tokens": 1213,
+      "path": "internal/worldview/transport/http.go"
+    }
+  ]
+}

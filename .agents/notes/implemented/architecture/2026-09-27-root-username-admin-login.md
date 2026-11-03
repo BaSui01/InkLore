@@ -11,7 +11,7 @@ R1登录只接受邮箱，Admin不能使用root用户名；硬编码root到邮�
 
 ## Decision
 
-按[ADR-0029](../../../../docs/decisions/0029-root-username-admin-login.md)，platform_users增加可空且唯一的username列，R1目前只允许值root。Login严格要求email或username二选一；Admin username root查找绑定用户后仍执行原audience、活动operator、tenant校验。Creator仍只允许email。首次`admin bootstrap -username root`可直接绑定；现有账号用`admin set-root -email EMAIL`绑定root、从`INKLORE_ROOT_PASSWORD`更新bcrypt密码并吊销所有旧session。CLI不把密码写入参数或输出。
+按[ADR-0029](../../reference/decisions/0029-root-username-admin-login.md)，platform_users增加可空且唯一的username列，R1目前只允许值root。Login严格要求email或username二选一；Admin username root查找绑定用户后仍执行原audience、活动operator、tenant校验。Creator仍只允许email。首次`admin bootstrap -username root`可直接绑定；现有账号用`admin set-root -email EMAIL`绑定root、从`INKLORE_ROOT_PASSWORD`更新bcrypt密码并吊销所有旧session。CLI不把密码写入参数或输出。
 
 ## Alternatives considered
 

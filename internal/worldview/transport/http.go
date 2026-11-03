@@ -1,4 +1,4 @@
-// Package transport serves the frozen R1 worldview HTTP operations.
+// Package transport serves the current worldview HTTP operations.
 package transport
 
 import (

@@ -9,7 +9,7 @@ Scope: frontend/apps/creator/src/routes/HomeRoute.tsx、components/home、domain
 
 用户要求参考马良写作完善自己的首页。原首页混用侧栏工作台壳、硬编码模型与预填剧情，生成按钮实际只创建元数据；列表异常被清空后与成功空书架无法区分。原 SDK 列表丢弃游标并有隐式登录，不适合作为新首页数据边界。
 
-改前检索 notes 的首页/HomeRoute/书架/creator，没有既有首页设计决策；Vite 过期缓存笔记仅与开发服务相关，仍适用但不覆盖本次页面。设计依据为 [作者页](../../../../docs/system-design/15-CREATOR-FUNCTION-UX-SPEC.md)、[共享状态](../../../../docs/system-design/20-FRONTEND-REUSE-AND-STATE-CONTRACTS.md)，本次用户明确指定的参考视觉限定在首页。
+改前检索 notes 的首页/HomeRoute/书架/creator，没有既有首页设计决策；Vite 过期缓存笔记仅与开发服务相关，仍适用但不覆盖本次页面。设计依据为 [作者页](../../reference/system-design/15-CREATOR-FUNCTION-UX-SPEC.md)、[共享状态](../../reference/system-design/20-FRONTEND-REUSE-AND-STATE-CONTRACTS.md)，本次用户明确指定的参考视觉限定在首页。
 
 ## Decision
 
