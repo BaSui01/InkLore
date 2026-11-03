@@ -23,6 +23,7 @@ import {
 import { AuthSession } from "../http/session";
 import { RunEventBuffer } from "./buffer";
 import { reportSafeDiagnostic } from "../http/diagnostic";
+import { stripTrailingSlashes } from "../base-url";
 
 export type ConnectionState = "idle" | "connecting" | "open" | "reconnecting" | "closed";
 
@@ -55,7 +56,7 @@ export class StreamClient {
   private readonly heartbeatTimeoutMs: number;
 
   constructor(options: StreamClientOptions) {
-    this.baseUrl = (options.baseUrl || "").replace(/\/+$/, "");
+    this.baseUrl = stripTrailingSlashes(options.baseUrl || "");
     this.session = options.session;
     this.heartbeatTimeoutMs = options.heartbeatTimeoutMs || 45000;
   }
