@@ -9,17 +9,17 @@
 | ID | 任务 | 里程碑 | 状态 | 验收标准 | 依赖 |
 | --- | --- | --- | --- | --- | --- |
 | INK-144 | 配置InkLore的DSH并行开发子代理与Terra模型 | 工程治理 | done | 已安装专用preset；DSH原生发现及Config校验13工具通过，固定basui/gpt-5.6-terra/high、单层委派与只读审阅。项目源与安装一致；go build、Skills、notes、冻结设计与diff检查均退出0。新对话选择preset启用，未调用上游模型。[配置与使用](../.dsh/SUBAGENTS.md) | 用户授权；INK-141 |
-| INK-143 | 落地 .agents/notes 工程记忆与生命周期门禁 | 工程治理 | done | 规约/三模板/首篇implemented笔记落地；三skills与CI接入；32项隔离场景通过，含归档篡改基线保护与排他锁；正式notes检查、技能检查12份Markdown/74目标、go build及diff检查通过；已适配R1文档迁移，运行路径不变。[验收证据](notes-delivery-INK-143.md) | INK-142；用户明确授权引入notes |
-| INK-142 | 融合核心 docs 与 DSH 实践的 InkLore 开发维护 skills | 工程治理 | done | 三个skill均被DSH成功加载；9份Markdown/60个相对目标校验通过；隔离合法/错名/失效链接/越界场景退出码0/1/1/1符合预期；go build与git diff --check退出0；AGENTS/治理入口/architecture/CHANGELOG及CI已同步；运行路径不变。详见[交付证据](./skill-delivery-INK-142.md) | 用户本轮授权；现有治理文档 |
+| INK-143 | 落地 .agents/notes 工程记忆与生命周期门禁 | 工程治理 | done | 规约/三模板/首篇implemented笔记落地；三skills与CI接入；32项隔离场景通过，含归档篡改基线保护与排他锁；正式notes检查、技能检查12份Markdown/74目标、go build及diff检查通过；已适配R1文档迁移，运行路径不变。[验收证据](../.agents/notes/implemented/process/2026-09-18-notes-delivery-ink-143.md) | INK-142；用户明确授权引入notes |
+| INK-142 | 融合核心 docs 与 DSH 实践的 InkLore 开发维护 skills | 工程治理 | done | 三个skill均被DSH成功加载；9份Markdown/60个相对目标校验通过；隔离合法/错名/失效链接/越界场景退出码0/1/1/1符合预期；go build与git diff --check退出0；AGENTS/治理入口/architecture/CHANGELOG及CI已同步；运行路径不变。详见[交付证据](../.agents/notes/implemented/process/2026-09-29-skill-delivery-ink-142.md) | 用户本轮授权；现有治理文档 |
 | INK-141 | 以system-design为唯一重构基线，设计定稿与旧文档清理 | 重构设计冻结 | done | R1七域/双端/复用/API/DDL已定稿；30旧文件实际删除。编译152路径/233操作/95错误；检查7593引用/420链接/74表，issues与warnings均0；freeze hash复核通过。go build、Skills12文档74目标、notes和diff检查退出0。未改业务代码、未执行SQL/部署/浏览器实现。[机器证据](system-design/implementation/design-validation.json) | 用户本轮重构设计指令 |
-| INK-160 | platform PG迁移、UnitOfWork、scope、幂等 | R1实现 | done | 独立R1迁移14表；UoW/Recoverable、scope/CAS/历史证明、原子幂等；26组真实PG/HTTP验收、go build、archguard、冻结源/设计/Skills/notes/diff检查退出0。仅挂R1技术探针，账号/领域未验收。[证据](acceptance-INK-160.md) | 141 |
-| INK-161 | platform账号、会话、成员、CSRF与审计 | R1实现 | done | R1.1已接15操作；24组真实PG/Redis/HTTP含完整响应校验、故障回滚/并发、26组160回归及全部护栏通过。[证据](acceptance-INK-161.md)。Chrome与产品UI留后续前端/端到端门禁 | 160 |
-| INK-162 | platform文件、队列、outbox、WS/观测 | R1实现 | done | 六组真实PG/HTTP组件与304条件下载通过；App重放审计通过。通用jobs lease/fencing/checkpoint/recover机制已真实验收；Agent/Content领域handler与生产链留给171/172。[证据](acceptance-INK-162.md) | 160,161 |
-| INK-163 | content作品/卷/章/版本/排序 | R1实现 | done | 12组真实PG/HTTP、27操作完整Schema；故障快照回滚/Unicode/CAS/目录/授权通过，完整构建护栏与文档已同步。[证据](acceptance-INK-163.md) | 160,161 |
-| INK-164 | outline三级大纲/场景/伏笔/节奏 | R1实现 | done | 10组真实PG/HTTP、29操作完整Schema；JCS历史锚点/线索/节奏/重排/回滚通过，完整构建护栏与文档已同步。[证据](acceptance-INK-164.md) | 160,161 |
-| INK-165 | worldview角色/设定/图谱/账本 | R1实现 | done | 16组真实PG/HTTP、25操作完整Schema；ledger不可变/重建/冲突/回滚/30天擦除与cap边界通过。[证据](acceptance-INK-165.md) | 160,161 |
-| INK-166 | content确认用例与跨域Port装配 | R1实现 | done | 9组真实PG/HTTP、确认操作完整Schema；空提议world+1、事实来源proof、双CAS、幂等/撤权、故障整事务回滚与审计/outbox通过。[证据](acceptance-INK-166.md) | 163,164,165 |
-| INK-167 | llm目录/SecretRef/策略/预算/Gateway | R1实现 | done | 000005_llm迁移与32冻结路由全挂载；Catalog/CAS/SecretRef/strict通过；跨北京零点日桶结算、Reserve回滚、Settle回滚、Reserve重放与冲突拒绝、Redis Lua/SWRR/fail-closed通过真实PG/Redis全套验收。[证据](acceptance-INK-167.md) | 160,161,162 |
+| INK-160 | platform PG迁移、UnitOfWork、scope、幂等 | R1实现 | done | 独立R1迁移14表；UoW/Recoverable、scope/CAS/历史证明、原子幂等；26组真实PG/HTTP验收、go build、archguard、冻结源/设计/Skills/notes/diff检查退出0。仅挂R1技术探针，账号/领域未验收。[证据](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-160.md) | 141 |
+| INK-161 | platform账号、会话、成员、CSRF与审计 | R1实现 | done | R1.1已接15操作；24组真实PG/Redis/HTTP含完整响应校验、故障回滚/并发、26组160回归及全部护栏通过。[证据](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-161.md)。Chrome与产品UI留后续前端/端到端门禁 | 160 |
+| INK-162 | platform文件、队列、outbox、WS/观测 | R1实现 | done | 六组真实PG/HTTP组件与304条件下载通过；App重放审计通过。通用jobs lease/fencing/checkpoint/recover机制已真实验收；Agent/Content领域handler与生产链留给171/172。[证据](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-162.md) | 160,161 |
+| INK-163 | content作品/卷/章/版本/排序 | R1实现 | done | 12组真实PG/HTTP、27操作完整Schema；故障快照回滚/Unicode/CAS/目录/授权通过，完整构建护栏与文档已同步。[证据](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-163.md) | 160,161 |
+| INK-164 | outline三级大纲/场景/伏笔/节奏 | R1实现 | done | 10组真实PG/HTTP、29操作完整Schema；JCS历史锚点/线索/节奏/重排/回滚通过，完整构建护栏与文档已同步。[证据](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-164.md) | 160,161 |
+| INK-165 | worldview角色/设定/图谱/账本 | R1实现 | done | 16组真实PG/HTTP、25操作完整Schema；ledger不可变/重建/冲突/回滚/30天擦除与cap边界通过。[证据](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-165.md) | 160,161 |
+| INK-166 | content确认用例与跨域Port装配 | R1实现 | done | 9组真实PG/HTTP、确认操作完整Schema；空提议world+1、事实来源proof、双CAS、幂等/撤权、故障整事务回滚与审计/outbox通过。[证据](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-166.md) | 163,164,165 |
+| INK-167 | llm目录/SecretRef/策略/预算/Gateway | R1实现 | done | 000005_llm迁移与32冻结路由全挂载；Catalog/CAS/SecretRef/strict通过；跨北京零点日桶结算、Reserve回滚、Settle回滚、Reserve重放与冲突拒绝、Redis Lua/SWRR/fail-closed通过真实PG/Redis全套验收。[证据](../.agents/notes/implemented/testing/2026-09-29-acceptance-ink-167.md) | 160,161,162 |
 | INK-168 | inspiration来源/分析/文风/灵感 | R1实现 | done | 4层架构完整落地，29个REST路由；<=4000确定性分片、分析状态机、不可变文风版本、灵感卡去重与采纳引用闭环（绝不反写正文），编译与archguard通过 | 162,167 |
 | INK-169 | compliance规则/扫描/报告/净化 | R1实现 | done | 4层架构完整落地，21个REST路由；AC版本原子切换、Unicode码点快速扫描、AI味评分、净化改写建议与风险审阅回执闭环，编译与archguard通过 | 162,167 |
 | INK-170 | agent定义/工具/MCP/workflow配置 | R1实现 | done | 4层完整落地，20个API端点；Kahn DAG校验、Draft 2020-12严格Schema、MCP白名单与防SSRF、不可变配置版本发布，全仓构建通过 | 161,167 |
@@ -28,13 +28,13 @@
 | INK-173 | frontend共享身份/HTTP/Query/SSE/Schema/恢复库 | R1实现 | done | transport单飞刷新/重放/错误聚焦、SSE断线重连/心跳、IndexedDB严格租户隔离/淘汰/防篡改、i18n纯净双语694词条对齐、build:creator与build:admin通过 | 161,162 |
 | INK-174 | creator页面与编辑控制器 | R1实现 | done | 专属端口3000，三栏沉浸编辑器、IndexedDB事务级离线暂存、原子章节确认、灵感卡采纳、build:creator顺利通过 | 166,168,169,171,172,173 |
 | INK-175 | admin页面与权限 | R1实现 | done | 专属端口3001，彻底消除硬编码，全面打通真实后端REST API（模型大盘/渠道与Key轮换/Agent治理/全链路审计NDJSON导出），全量纯净国际化t()驱动无裸露中文，通过build:admin与i18ncheck | 167,170,171,173 |
-| INK-176 | 可观测性、备份/恢复/停机、容量验证 | R1实现 | done | 13分册探针与18项穿透场景全套通过；PG故障503无内存降级、Redis断线降级、双端Cookie/CSRF、审计脱敏防正文越权。[证据](acceptance-INK-176.md) | 171,174,175 |
+| INK-176 | 可观测性、备份/恢复/停机、容量验证 | R1实现 | done | 13分册探针与18项穿透场景全套通过；PG故障503无内存降级、Redis断线降级、双端Cookie/CSRF、审计脱敏防正文越权。[证据](../.agents/notes/implemented/testing/2026-09-29-acceptance-ink-176.md) | 171,174,175 |
 | INK-178 | R1冻结契约差异裁决：改密幂等与缺失错误响应 | R1契约治理 | done | 用户批准四项最小勘误，ADR-0018已Accepted；原manifest保存、仅8资产变化、DDL不变；97错误与405/422实际行为、冻结检查全部通过 | 141 |
-| INK-177 | 旧库到R1映射导入及最终切换演练 | R1实现 | done | 离线数据映射导入引擎(cmd/migrate/r1migration)通过；117项规则零遗漏、事实账本一致性核算、外键完整性、双端bundlehash与旧代码清理登记。[证据](acceptance-INK-177.md) | 176 |
+| INK-177 | 旧库到R1映射导入及最终切换演练 | R1实现 | done | 离线数据映射导入引擎(cmd/migrate/r1migration)通过；117项规则零遗漏、事实账本一致性核算、外键完整性、双端bundlehash与旧代码清理登记。[证据](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-177.md) | 176 |
 | INK-179 | 条件下载304机读声明补齐裁决 | R1契约治理 | done | 用户批准ADR-0019；304空响应源契约、派生contracts、freeze manifest、canary、真实conditional_download和INK-162全套通过 | 178 |
 | INK-180 | 后续模型/维护错误登记差异核对 | R1契约治理 | done | 核对完成：llm.provider_not_configured与worldview.projection_corrupt确认为内部调度原因与维护作业防御错误，不新增公开契约错误码，分别映射为llm.capacity_unavailable(503)与平台通用500；保持98个公开错误及冻结manifest绝对稳定，见[工程笔记](../.agents/notes/implemented/architecture/2026-09-20-internal-error-registry-audit.md) | 178 |
 | INK-181 | 管理端信息密度与硬编码文案精简 | 前端维护 | done | 删除仪表盘、渠道、审计和智能体治理页的装饰性小字、伪状态与无数据来源断言；移除新增智能体预填指令与未引用中英文词条，保留操作必需状态、字段和风险信息；build:admin、diff检查通过。 | 175 |
-| INK-182 | 管理端导航语义与智能体页底部操作区优化 | 前端维护 | done | 侧边导航收敛为简洁运维语义；智能体页移除重复页头及无数据来源指标；三类列表分页固定在工作区底部，桌面1920x991与窄工作区520px浏览器验证无横向溢出；build:admin、go build、notes和diff检查均通过。[证据](acceptance-INK-182.md) | 175,181 |
+| INK-182 | 管理端导航语义与智能体页底部操作区优化 | 前端维护 | done | 侧边导航收敛为简洁运维语义；智能体页移除重复页头及无数据来源指标；三类列表分页固定在工作区底部，桌面1920x991与窄工作区520px浏览器验证无横向溢出；build:admin、go build、notes和diff检查均通过。[证据](../.agents/notes/implemented/testing/2026-09-29-acceptance-ink-182.md) | 175,181 |
 | INK-183 | 管理端智能体页中文术语统一 | 前端维护 | done | 中文界面标题、指标、版本、语言控件和功能说明不含中英文混排；原始资源标识符和值字段保持原样；build:admin与浏览器验证通过。 | 182 |
 | INK-184 | 清理废弃 legacy novel 代码与消除 R1 过渡命名 | 架构收尾 | done | 已物理删除 internal/novel 整个目录与 6 个 legacy adapters；消除 config/r1.go 及 BootstrapR1，统一为 config.Bootstrap；清理 app.go 死代码与未用字段，cmd/archguard 业务域纯化为标准 7 域；拆分 AgentGovernanceRoute 满足单手写代码 <=50KB；go build ./...、archguard（R1-R5 全绿）、check-project-skills 与 notes check 均退出 0 | 177,183 |
 | INK-185 | 业务域目录扁平化与全仓过渡命名消除 | 架构收尾 | done | 全部 7 业务域完成消除 r1 嵌套子目录与过渡命名；各层包声明统一为 domain/application/infrastructure/http；组合根与适配器调用路径更新；修复前端 auth 国际化语法；go build ./...、双端前端构建、archguard 架构红线与 notes 检查全绿通过 | 184 |
@@ -64,17 +64,17 @@
 | INK-200 | Agent SSE 写入与断线资源收敛 | HTTP 收敛 | done | ADR-0020；逐项证据见 acceptance-INK-203.md；构建、运行路径、正常及失败请求、删除闭环与文档同步 | 192 |
 | INK-201 | Gin 中间件路由代理与平台输入收敛 | HTTP 收敛 | done | ADR-0020；逐项证据见 acceptance-INK-203.md；构建、运行路径、正常及失败请求、删除闭环与文档同步 | 191 |
 | INK-202 | 遗留响应认证与广播消费者清理 | HTTP 收敛 | done | ADR-0020；逐项证据见 acceptance-INK-203.md；构建、运行路径、正常及失败请求、删除闭环与文档同步 | 193,194,195,196,197,198,199,200,201 |
-| INK-203 | Gin 全仓集成验收与交付 | HTTP 收敛 | done | 全仓build/vet/护栏/Schema/notes/skills通过；238操作107请求离线编译；完整App路由映射与中间件安全探针通过；隔离库inklore_gin_209下23项Agent/SSE及认证扩展事务写入全通；测试库已安全销毁，见[证据](acceptance-INK-203.md) | 202；209 |
+| INK-203 | Gin 全仓集成验收与交付 | HTTP 收敛 | done | 全仓build/vet/护栏/Schema/notes/skills通过；238操作107请求离线编译；完整App路由映射与中间件安全探针通过；隔离库inklore_gin_209下23项Agent/SSE及认证扩展事务写入全通；测试库已安全销毁，见[证据](../.agents/notes/implemented/testing/2026-09-20-acceptance-ink-203.md) | 202；209 |
 
 | INK-204 | Agent 及灵感/质检运行适配器占位实现核对 | 架构缺陷 | review | AgentTaskResources 已通过 content/inspiration/compliance 应用服务读取真实 revision/hash 并在审批前复核；AgentJobs 已接入 platform_jobs 的真实入队、领取、心跳、挂起、完成和取消路径；InspirationFiles 已接入 platform/files 读写；Generation/ComplianceGeneration 经真实 Gateway。`go build ./...`、`go vet ./...`、archguard 与 notes 检查通过；PG worker 穿透、真实凭据和上游响应待部署验收 | 203,205 |
 | INK-205 | 管理端视觉收敛与真实模型协议接线 | 前端维护 / LLM运行链 | review | 管理端移除非必要标题小字与主题文字标签，统一浅色层级、焦点/悬停与图标按钮；ProviderRouter按配置接入OpenAI Chat Completions、OpenAI Responses运行模式、DeepSeek兼容协议、Anthropic Messages、Gemini generateContent/流式SSE、Ollama兼容协议；Agent、灵感、质检生成适配器均经真实Gateway调用，未配置Provider明确失败；`go build ./...`、`npm run build:admin`、notes/skills检查和目标diff检查通过。真实模型凭据、PG登录后浏览器和各上游实网响应待部署环境复核。 | 167,175,203 |
 
-| INK-206 | 创作者首页文学视觉重构与真实书架接线 | 前端体验 | review | 完成文学风格首页、真实书架与创意开书；Chrome 实测创建201、重载留存、13条游标分页、指定作品打开、500与离线恢复，320/390/1440布局和英文深色通过；go build、双端构建、notes/skills通过。旧i18n检查器误报由INK-212跟进，实际1222对1222组合词条一致。[验收与截图](acceptance-INK-206.md) | 173,174；用户授权 |
+| INK-206 | 创作者首页文学视觉重构与真实书架接线 | 前端体验 | review | 完成文学风格首页、真实书架与创意开书；Chrome 实测创建201、重载留存、13条游标分页、指定作品打开、500与离线恢复，320/390/1440布局和英文深色通过；go build、双端构建、notes/skills通过。旧i18n检查器误报由INK-212跟进，实际1222对1222组合词条一致。[验收与截图](../.agents/notes/implemented/testing/2026-09-20-acceptance-ink-206.md) | 173,174；用户授权 |
 | INK-207 | 共享业务 SDK 隐式登录与默认凭据清理 | 身份缺陷 | done | 彻底删除ApiSDK中的ensureAuthenticated及Password123!默认凭据；各业务方法内部移除隐式登录；双端构建通过，未登录行为严格由ApiClient统一处理，见[工程笔记](../.agents/notes/implemented/bug-fix/2026-09-20-sdk-implicit-login-cleanup.md) | 173 |
 
 | INK-208 | 补齐 Agent/Inspiration/Compliance 正式迁移链 | 部署缺陷 | done | ADR-0024；补齐000006_agent至000009_permissions迁移；隔离库与主库migrate up验证通过，74张业务表及权限全部纳入版本化迁移；database.Verify通过，见[工程笔记](../.agents/notes/implemented/architecture/2026-09-20-r1-complete-migration-stream.md) | 203 |
 
-| INK-211 | 创作者登录初始化并发刷新修复 | 身份缺陷 | done | bootstrap 在途单飞并复用 refresh；Chrome 实测重载仅一次CSRF200与refresh200，登录主体及真实作品保留；go build、双端构建、notes/skills通过，运行路径与工程笔记已同步，不改变服务端安全契约。[证据](acceptance-INK-206.md) | 173；用户自动登录授权 |
+| INK-211 | 创作者登录初始化并发刷新修复 | 身份缺陷 | done | bootstrap 在途单飞并复用 refresh；Chrome 实测重载仅一次CSRF200与refresh200，登录主体及真实作品保留；go build、双端构建、notes/skills通过，运行路径与工程笔记已同步，不改变服务端安全契约。[证据](../.agents/notes/implemented/testing/2026-09-20-acceptance-ink-206.md) | 173；用户自动登录授权 |
 
 | INK-212 | i18n 检查器模块导出名称误判 | 工具缺陷 | done | 修复cmd/i18ncheck状态机，增加stack深度判断，消除顶层类型注解与zhCN/enUS导出误判；同步CI/check.ps1路径；全词库与各子模块对比验证一致，见[工程笔记](../.agents/notes/implemented/bug-fix/2026-09-20-i18n-check-export-fix.md) | 173 |
 
@@ -96,7 +96,7 @@ INK-001–140已使用，永不复用；旧任务涉及的旧路由、兼容方�
 
 | INK-214 | 创作者独立登录页与来源回跳 | 前端体验 | review | 移除Creator登录弹窗，入口统一独立路由；Chrome验证首页登录→login?returnTo=home、注册保留来源、后退保留灵感、outline保护跳转；登录/注册成功回调消费白名单returnTo。go build、双端构建通过；身份接口500导致真实成功登录回跳待补验 | 用户明确授权；213 |
 
-| INK-215 | Creator普通路径路由与刷新回退 | 前端路由 | review | ADR-0023；普通路径、作品参数、白名单returnTo、旧链接转换落地；Go/双端构建、路由断言、Chrome刷新与历史、Vite预览和Nginx容器HTTP通过。真实认证成功回跳待身份接口500恢复后补验。[证据](acceptance-INK-215.md) | 用户明确授权 |
+| INK-215 | Creator普通路径路由与刷新回退 | 前端路由 | review | ADR-0023；普通路径、作品参数、白名单returnTo、旧链接转换落地；Go/双端构建、路由断言、Chrome刷新与历史、Vite预览和Nginx容器HTTP通过。真实认证成功回跳待身份接口500恢复后补验。[证据](../.agents/notes/implemented/testing/2026-09-29-acceptance-ink-215.md) | 用户明确授权 |
 
 | INK-216 | 双端输入法（IME）组合状态与快捷键完善 | 前端体验与交互安全 | review | 落地 RE08 与 DS03 输入法红线：packages/ui 新增 isImeComposing 与 useImeComposition 工具，增强 Input/Textarea 支持 onPressEnter/onCtrlEnter 状态防误触；EditorRoute 接管 compositionstart/end 事件，IME 选词期间严禁自动保存半字拼音，组合结束后恢复计时，接入 Ctrl/Cmd+S 单写并阻止浏览器另存；CreateNovelDialog 与 HomeRoute 支持非 IME 状态下的 Ctrl+Enter 快捷提交；ChannelModal 修复拼音选词误添加。构建与护栏全通。 | 173,206 |
 | INK-217 | LLM 供应商官方协议来源复核与文档纠偏 | 文档维护 | done | 已逐端点核验 OpenAI、DeepSeek、Anthropic、Gemini、Ollama、GLM、Kimi 与图像接口，保留 24 个官方 HTTPS 来源链接；移除虚构/过期模型、错误 Responses WebSocket、错误 Gemini Interactions 字段和已退出 Imagen `:predict` 声明。`go build ./...`、notes 检查、文档链接格式检查和目标 `git diff --check` 均通过；仅文档/治理文件变化，运行路径不变。实现差距已转入 INK-218。 | 用户明确授权；205 |
