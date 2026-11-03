@@ -108,6 +108,10 @@ func run() error {
 		return fmt.Errorf("mock upstream: %w", err)
 	}
 	fmt.Println("PASS: real loopback HTTP egress used tenant-specific model aliases and keys")
+	if err := checkCatalogSSRFPreflight(ctx); err != nil {
+		return fmt.Errorf("catalog preflight guard: %w", err)
+	}
+	fmt.Println("PASS: model catalog custom endpoints blocked local HTTP, reserved IP and synthetic private DNS")
 	if err := checkConcurrentRuns(ctx, db, manager, store, runRepo, govRepo, jobs, a, b); err != nil {
 		return fmt.Errorf("concurrency: %w", err)
 	}
