@@ -303,8 +303,10 @@ func (h *Handler) fetchUpstreamModels(c *gin.Context) {
 		APIKey:   input.APIKey,
 	})
 	if err != nil && len(items) == 0 {
+		// Avoid logging a caller-controlled URL or upstream response body: both
+		// may contain query secrets or credential-bearing diagnostic text.
 		logger.FromContext(c.Request.Context()).Warn("fetch_upstream_models_failed",
-			"protocol", input.Protocol, "base_url", input.BaseURL, "error", err.Error())
+			"protocol", input.Protocol, "reason", "upstream_model_probe_failed")
 		response.OK(c, 200, gin.H{
 			"items": []any{},
 		})
