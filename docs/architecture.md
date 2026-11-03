@@ -331,3 +331,7 @@ archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，�
 ## INK-258 · Go 加密与网络依赖安全更新（review）
 
 基于原 Dependabot PR #28 的模块解析快照，将 golang.org/x/crypto 从 v0.48.0 升至 v0.52.0，同步更新 x/net、x/text、x/sys、x/sync；本阶段只改 go.mod/go.sum，原 Go 应用源代码、SQL 和前端运行路径不变。依赖图变更仍可能影响加密、密码校验、JWT、传输安全等可达运行行为，因此不能仅根据静态构建认定功能兼容；必须在隔离环境验收实际授权与失败路径，再经受保护发布 PR 同步 private。详情见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-go-crypto-security-upgrade.md)。
+
+## INK-254 · 自动合并的身份与持久化路径保护（review）
+
+默认分支的 safe-auto-merge 安全路径规则补充 identity 和任意深度 infrastructure 目录覆盖。仅收紧 dev PR 的自动合并分类，保持敏感路径人工 Review、已有 CI/分支保护，不改变运行时代码。动机、取舍和验收案例见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-sensitive-path-auto-merge-failclosed.md)。

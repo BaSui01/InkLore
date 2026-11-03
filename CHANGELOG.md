@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### 自动合并敏感路径收紧（INK-254，review）
+
+- 默认分支安全 PR Gate 增加 internal/platform/identity 和所有领域的 infrastructure 路径，防止拥有 auto-merge-approved 标签的认证/持久化 PR 绕过人工审查；低风险路径、原有 CI 与 Review 门禁保持不变。
+- 源码与工作流静态测试仍需最终 PR CI 及合并后的事件复核。
+
+
 ### 稳定分支独立接入数据库/Redis 集成测试（INK-260，review）
 
 - 从已验证的 dev 最小同步两个 GitHub Actions 工作流和所需的测试环境权限 SQL，不混入 70 文件发布候选 PR #41。
