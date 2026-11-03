@@ -77,7 +77,7 @@ jobs:
                   compact(branch.sha),
                   workflow,
                   status,
-                  latest ? '[View run](' + latest.html_url + ')' : '[Actions](' + origin + '/actions)'
+                  latest ? '<a href="' + origin + '/actions/runs/' + latest.id + '">View run</a>' : '<a href="' + origin + '/actions">Actions</a>'
                 ]);
               }
             }
@@ -99,7 +99,7 @@ jobs:
                 escaped(pr.base.ref),
                 pr.draft ? 'Draft' : 'Open',
                 runStatus(ci),
-                '[PR checks](' + origin + '/pull/' + pr.number + '/checks)'
+                '<a href="' + origin + '/pull/' + pr.number + '/checks">PR checks</a>'
               ]);
             }
             const summary = core.summary
