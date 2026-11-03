@@ -38,7 +38,10 @@ func (g *AgentTaskModelGateway) Generate(ctx context.Context, input agentdomain.
 	}
 
 	modelID, modelToUse := policy.ModelID, policy.ModelName
-	if selected := strings.TrimSpace(input.Model); selected != "" {
+	// A saved novel guide repeats the frozen model name. Keep its exact model
+	// ID instead of re-resolving a provider-ambiguous upstream name.
+	if selected := strings.TrimSpace(input.Model); selected != "" &&
+		selected != policy.ModelName && selected != policy.ModelID {
 		model, resolveErr := g.catalog.ResolveEnabledModel(ctx, input.TenantID, selected)
 		if resolveErr != nil {
 			return nil, resolveErr
