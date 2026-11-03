@@ -63,4 +63,4 @@ node scripts/agent-notes.mjs check --base HEAD
 | 只改样式 | 读取相关UI约束、适当构建与浏览器检查，不生成冗余决策笔记 |
 | 发布故障 | 维护技能定位版本/探针/依赖，按实际授权修复或回滚，记录恢复证据 |
 
-[Skills 初始交付](./skill-delivery-INK-142.md) 和 [工程记忆交付](./notes-delivery-INK-143.md) 分别记录对应轮次的真实验收与限制。
+[Skills 初始交付](../.agents/notes/implemented/process/2026-09-29-skill-delivery-ink-142.md) 和 [工程记忆交付](../.agents/notes/implemented/process/2026-09-18-notes-delivery-ink-143.md) 分别记录对应轮次的真实验收与限制。

@@ -137,11 +137,11 @@ Go 模块声明 `go 1.27.0` 并固定 `toolchain go1.27.1`；Docker 构建阶段
 
 server和迁移CLI使用独立 `migrations/r1` 流；当前含000001..000012版本化脚本：000010补齐LLM策略task_kinds、000011增加Agent澄清、000012增加可空唯一root用户名；升级事务保留旧账号与运行历史。迁移版本、名称、checksum不匹配拒绝执行；迁移使用PG事务级锁。R1不加载旧.env，不用旧AES/认证中心校验阻断启动，进程DATABASE_DSN优先于配置文件；无PG拒绝启动。
 
-公共HTTP增加R1封包、独立request/trace关联、精确Origin、JSON上限与修订前置校验、冻结错误目录映射及安全details；SQL日志只输出安全固定摘要。事务/scope/幂等已通过26组真实PG/HTTP验收、全仓构建和架构护栏；[验收证据](acceptance-INK-160.md)记录命令、故障路径和未覆盖边界。该段描述INK-160基座验收；账号与审计的后续交付见下节，业务域和浏览器另行验收。
+公共HTTP增加R1封包、独立request/trace关联、精确Origin、JSON上限与修订前置校验、冻结错误目录映射及安全details；SQL日志只输出安全固定摘要。事务/scope/幂等已通过26组真实PG/HTTP验收、全仓构建和架构护栏；[验收证据](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-160.md)记录命令、故障路径和未覆盖边界。该段描述INK-160基座验收；账号与审计的后续交付见下节，业务域和浏览器另行验收。
 
 ## INK-161 · R1.1后端身份与审计已验收
 
-identity、membership、audit、cursor由R1组合根装配，现有15个身份/成员/审计操作及部署cmd/admin bootstrap。双aud、CSRF、refresh重放、当前PG权限、成员保护、本人改密全会话吊销及授权后幂等重放、审计NDJSON原子导出已通过24组真实PG/Redis/HTTP；另有26组INK-160回归。改密审计失败完整回滚，并发改密一次提交；15操作完整响应校验通过。[证据](acceptance-INK-161.md)。Admin邮箱登录保持兼容，保留用户名root用于Admin/Creator登录，Creator audience支持按ADR-0031认证；`cmd/admin set-root`绑定现有operator邮箱、经环境变量设置新密码并撤销旧session，`cmd/admin bootstrap -username root`为新租户首个operator设置别名。实际身份接线和迁移状态见INK-233。
+identity、membership、audit、cursor由R1组合根装配，现有15个身份/成员/审计操作及部署cmd/admin bootstrap。双aud、CSRF、refresh重放、当前PG权限、成员保护、本人改密全会话吊销及授权后幂等重放、审计NDJSON原子导出已通过24组真实PG/Redis/HTTP；另有26组INK-160回归。改密审计失败完整回滚，并发改密一次提交；15操作完整响应校验通过。[证据](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-161.md)。Admin邮箱登录保持兼容，保留用户名root用于Admin/Creator登录，Creator audience支持按ADR-0031认证；`cmd/admin set-root`绑定现有operator邮箱、经环境变量设置新密码并撤销旧session，`cmd/admin bootstrap -username root`为新租户首个operator设置别名。实际身份接线和迁移状态见INK-233。
 
 新密码规则已按ADR-0028统一为至少6个Unicode字符且不超过72个UTF-8字节；Go身份服务校验写入边界，Creator/Admin表单与离线请求Schema同步。此处为代码/契约现状，真实PG认证请求的5/6字符边界尚未回归。
 
@@ -151,19 +151,19 @@ identity、membership、audit、cursor由R1组合根装配，现有15个身份/�
 
 R1组合根已接content 27、outline 29、worldview 25操作，另接文件四操作、状态、SecretRef列表与WS握手；连同既有15操作共有102个非WS操作。新增三个领域的四层及doc.go已实际进入cmd/server依赖链，跨域章元数据由internal/app/adapters适配。四份迁移与冻结DDL一致；新迁移已在隔离PG执行。
 
-主代理独立PG/HTTP复跑通过：content 12组/27操作、outline 10组/29操作、worldview 16组/25操作，包含30天静态与整书payload擦除、缺cap/撤cap/期限、事件故障回滚和账本逐行不变。各HTTP响应使用按真实路由选择的冻结Schema，覆盖按METHOD+template记账。真实故障注入证明正文版本、目录、scope/history、账本、audit、outbox与幂等的整体回滚。详见 [163](acceptance-INK-163.md)、[164](acceptance-INK-164.md)、[165](acceptance-INK-165.md)。
+主代理独立PG/HTTP复跑通过：content 12组/27操作、outline 10组/29操作、worldview 16组/25操作，包含30天静态与整书payload擦除、缺cap/撤cap/期限、事件故障回滚和账本逐行不变。各HTTP响应使用按真实路由选择的冻结Schema，覆盖按METHOD+template记账。真实故障注入证明正文版本、目录、scope/history、账本、audit、outbox与幂等的整体回滚。详见 [163](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-163.md)、[164](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-164.md)、[165](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-165.md)。
 
 公共UoW默认READ COMMITTED不变；outline只读聚合显式RR READ ONLY，事实预检使用可保存技术幂等缓存的RR。只读授权不执行FOR SHARE；普通外层事务不能偷偷升级。trash授权保留父书存活要求；tombstone历史证明可写但普通读仍拒绝。
 
-INK-162平台文件、租约、Outbox/Inbox、WS/状态/Schema与观测组件及304条件下载已通过真实PG/HTTP与护栏验收，App重放权限/审计已接线；通用jobs lease/fencing/checkpoint/recover机制有真实验收证据。Agent/Content领域handler和业务worker链属于171/172，指标采样、维护调度和备份演练属于176，不构成162未完成条件。详见 [162阶段证据](acceptance-INK-162.md)。
+INK-162平台文件、租约、Outbox/Inbox、WS/状态/Schema与观测组件及304条件下载已通过真实PG/HTTP与护栏验收，App重放权限/审计已接线；通用jobs lease/fencing/checkpoint/recover机制有真实验收证据。Agent/Content领域handler和业务worker链属于171/172，指标采样、维护调度和备份演练属于176，不构成162未完成条件。详见 [162阶段证据](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-162.md)。
 
 ## INK-166 · 章节确认跨域事务
 
-content确认操作已接入组合根，新增content-owned WorldFactPort及app层worldview adapter；确认在scope→novel→chapter锁后，将权威chapter/version/hash来源交给worldview同一UoW。空提议递增world revision但不写事实event；成功更新confirmed_version、章节/作品revision、scope/history、audit、outbox和幂等。真实故障注入验证16张表含幂等记录完整回滚。content原有27操作的验收范围保持不变，确认操作单独由INK-166覆盖。[验收证据](acceptance-INK-166.md)
+content确认操作已接入组合根，新增content-owned WorldFactPort及app层worldview adapter；确认在scope→novel→chapter锁后，将权威chapter/version/hash来源交给worldview同一UoW。空提议递增world revision但不写事实event；成功更新confirmed_version、章节/作品revision、scope/history、audit、outbox和幂等。真实故障注入验证16张表含幂等记录完整回滚。content原有27操作的验收范围保持不变，确认操作单独由INK-166覆盖。[验收证据](../.agents/notes/implemented/testing/2026-09-18-acceptance-ink-166.md)
 
 ## INK-167 · LLM目录与预算调度已验收
 
-llm domain/r1、application/r1、infrastructure/r1及transport/http/r1切片已接入组合根：tenant隔离Catalog/CAS、不可变policy/pricing、SecretRef allowlist与provider绑定HMAC fingerprint、strict JSON/schema、精确Cost、Budget持久化和Redis admission；000005_llm迁移已在隔离PG应用。App真实挂载32个冻结管理路由，30个Catalog/pricing/usage操作可达；Budget Provision/Get/Configure CAS通过；4个核心场景（跨北京时间零点跨日结算、Reserve原子回滚、Settle原子回滚、Reserve幂等重放与冲突校验）全部通过真实PG验证；Redis Lua/100并发/SWRR与fail-closed通过，go run ./cmd/acceptance/ink167 all退出0。[验收证据](acceptance-INK-167.md)
+llm domain/r1、application/r1、infrastructure/r1及transport/http/r1切片已接入组合根：tenant隔离Catalog/CAS、不可变policy/pricing、SecretRef allowlist与provider绑定HMAC fingerprint、strict JSON/schema、精确Cost、Budget持久化和Redis admission；000005_llm迁移已在隔离PG应用。App真实挂载32个冻结管理路由，30个Catalog/pricing/usage操作可达；Budget Provision/Get/Configure CAS通过；4个核心场景（跨北京时间零点跨日结算、Reserve原子回滚、Settle原子回滚、Reserve幂等重放与冲突校验）全部通过真实PG验证；Redis Lua/100并发/SWRR与fail-closed通过，go run ./cmd/acceptance/ink167 all退出0。[验收证据](../.agents/notes/implemented/testing/2026-09-29-acceptance-ink-167.md)
 
 ## R1状态
 
@@ -185,7 +185,7 @@ Qodana 使用 `qodana.starter` 对当前 Go 工作区执行离线扫描。报告
 
 ## INK-182 · 管理端导航与工作区密度
 
-Admin Console 的智能体管理页移除重复页头及无真实数据来源的循环守卫指标；三个资源计数概览、页签和查询仍从既有 REST 读取。侧边导航词条收敛为网关监控、渠道密钥、智能体管理和运行审计。智能体、工作流和工具分页共享固定于管理工作区底部，内容区预留安全留白；当管理工作区小于900px时，查询和分页改为纵向紧凑布局以避免截断。该变更仅影响 `frontend/apps/admin` 与共享 UI 分页的浏览器渲染，不修改 API、后端、数据、运行端口或领域装配。生产构建和 Chrome 桌面/窄视口截图通过，见[验收记录](acceptance-INK-182.md)。
+Admin Console 的智能体管理页移除重复页头及无真实数据来源的循环守卫指标；三个资源计数概览、页签和查询仍从既有 REST 读取。侧边导航词条收敛为网关监控、渠道密钥、智能体管理和运行审计。智能体、工作流和工具分页共享固定于管理工作区底部，内容区预留安全留白；当管理工作区小于900px时，查询和分页改为纵向紧凑布局以避免截断。该变更仅影响 `frontend/apps/admin` 与共享 UI 分页的浏览器渲染，不修改 API、后端、数据、运行端口或领域装配。生产构建和 Chrome 桌面/窄视口截图通过，见[验收记录](../.agents/notes/implemented/testing/2026-09-29-acceptance-ink-182.md)。
 
 ## INK-183 · 管理端 UI 完善、通用组件化与模型/渠道前后端接入
 
@@ -231,16 +231,16 @@ INK-141只修改文档、设计SQL/JSON和离线文档检查工具；未新增�
 
 ## INK-142 · 开发维护工具
 
-仓库级 `.agents/skills/` 包含开发交付、决策记忆与维护排障三个技能，操作入口见 [开发维护指南](./development-guide.md)。`scripts/check-project-skills.mjs` 是独立离线 Node 文档检查器，CI 单独执行；没有新增应用运行依赖，不修改 Go 包、HTTP/Worker 启动入口或组合根接线。技能存在不代表设计目标已实现，交付证据见 [INK-142](./skill-delivery-INK-142.md)。
+仓库级 `.agents/skills/` 包含开发交付、决策记忆与维护排障三个技能，操作入口见 [开发维护指南](./development-guide.md)。`scripts/check-project-skills.mjs` 是独立离线 Node 文档检查器，CI 单独执行；没有新增应用运行依赖，不修改 Go 包、HTTP/Worker 启动入口或组合根接线。技能存在不代表设计目标已实现，交付证据见 [INK-142](../.agents/notes/implemented/process/2026-09-29-skill-delivery-ink-142.md)。
 
 
 ## INK-143 · 长期工程记忆工具
 
-`.agents/notes/` 保存实现因果与方案生命周期；`scripts/agent-notes.mjs` 及其 `scripts/lib/agent-note-*` 模块执行离线结构/链接/任务关联检查、归档封印与 Git 基线保护。工具仅用于开发与CI，无应用运行依赖，不改变业务接线。规约见 [工程记忆](../.agents/notes/README.md)，验收见 [INK-143](./notes-delivery-INK-143.md)。
+`.agents/notes/` 保存实现因果与方案生命周期；`scripts/agent-notes.mjs` 及其 `scripts/lib/agent-note-*` 模块执行离线结构/链接/任务关联检查、归档封印与 Git 基线保护。工具仅用于开发与CI，无应用运行依赖，不改变业务接线。规约见 [工程记忆](../.agents/notes/README.md)，验收见 [INK-143](../.agents/notes/implemented/process/2026-09-18-notes-delivery-ink-143.md)。
 
 ## INK-190 · Gin 收敛实施基线
 
-ADR-0020 与 [验收矩阵](acceptance-INK-203.md) 登记当前入口、目标和删除范围；原生子代理显式使用 GPT-5.6 Terra/high，与既有 DSH preset 分开说明。`scripts/build-request-schemas.cjs` 生成嵌入操作映射与请求资源，运行时由 `internal/platform/requestschema` 离线编译。当前处于迁移中，认证扩展与冻结契约冲突待裁决，不能视为全部运行链验收通过。
+ADR-0020 与 [验收矩阵](../.agents/notes/implemented/testing/2026-09-20-acceptance-ink-203.md) 登记当前入口、目标和删除范围；原生子代理显式使用 GPT-5.6 Terra/high，与既有 DSH preset 分开说明。`scripts/build-request-schemas.cjs` 生成嵌入操作映射与请求资源，运行时由 `internal/platform/requestschema` 离线编译。当前处于迁移中，认证扩展与冻结契约冲突待裁决，不能视为全部运行链验收通过。
 
 ## INK-191–202 · Gin 输入、安全与旧链收敛
 
@@ -276,7 +276,7 @@ INK-203增量：PG连接强制只读且关闭自动迁移下，完整App装配�
 
 CreatorApp 的已认证 home 视图独立呈现顶部导航、双栏创作入口、真实游标书架、功能说明和创作指南；其余业务页继续使用原壳，编辑器按返回作品 ID 打开。HomeRoute 的 QueryProvider 经 content/useHomeBookshelf 复用当前 AuthSession 与 ApiClient，保留分页和错误状态；关键词搜索明确只覆盖已加载数据。CreateNovelDialog 真实 POST 作品元数据，没有模板正文、预置模型或伪生成。首页双语词条位于 locales/home.ts，局部浅纸色/暖金色主题不修改共享或管理端 token。
 
-AuthSession.bootstrap 在途请求单飞，内部复用 refresh，解决 StrictMode 双初始化导致轮换重放与退出。该修复不改变后端认证、数据库或 HTTP 契约。当前本地环境为 localhost:29000，默认端口配置未变。真实浏览器已验证空态、创建201、重载留存、13条游标分页、指定作品打开、500与离线、320/390/1440布局及英文深色；详见 [验收记录](acceptance-INK-206.md)。原 i18n 检查器把导出名视为key的误报登记 INK-212，实际组合1222对1222词条一致。
+AuthSession.bootstrap 在途请求单飞，内部复用 refresh，解决 StrictMode 双初始化导致轮换重放与退出。该修复不改变后端认证、数据库或 HTTP 契约。当前本地环境为 localhost:29000，默认端口配置未变。真实浏览器已验证空态、创建201、重载留存、13条游标分页、指定作品打开、500与离线、320/390/1440布局及英文深色；详见 [验收记录](../.agents/notes/implemented/testing/2026-09-20-acceptance-ink-206.md)。原 i18n 检查器把导出名视为key的误报登记 INK-212，实际组合1222对1222词条一致。
 
 Agent及文件DELETE使用公共空请求体检查；Agent revision查询拒绝重复/未知参数。Agent SSE仅接受契约Last-Event-ID请求头，已删除last_event_id查询兼容入口。
 
@@ -296,7 +296,7 @@ Chrome已验证首页登录独立页面无dialog、注册保留returnTo、后退
 
 Creator的Hash实现已由[ADR-0023](decisions/0023-creator-history-routing.md)与navigation.ts替代：/公开首页、/login等独立身份页面、/outline等受保护工作台，作品/editor?novelId=…可由URL重建。统一History事件和白名单returnTo，守卫/认证回跳replace。旧Hash只首次转换为新地址。Vite显式SPA，部署示例见[静态托管说明](../frontend/deploy/README.md)；实际Go接线、API和Admin路由不变。
 
-双端构建、Go、路由内存断言、Chrome和Vite/预览/Nginx HTTP已验证，详见[INK-215](acceptance-INK-215.md)。先前INK-213/214文字为历史记录，当前地址与交互以本节为准；真实成功登录回跳仍待本地身份服务恢复后补验。
+双端构建、Go、路由内存断言、Chrome和Vite/预览/Nginx HTTP已验证，详见[INK-215](../.agents/notes/implemented/testing/2026-09-29-acceptance-ink-215.md)。先前INK-213/214文字为历史记录，当前地址与交互以本节为准；真实成功登录回跳仍待本地身份服务恢复后补验。
 
 ## INK-226 · 多智能体配置驱动最终集成复核
 
