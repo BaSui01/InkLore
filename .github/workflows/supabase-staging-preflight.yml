@@ -30,18 +30,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client
-      - name: Verify isolated Supabase schema without mutations
+      - name: Verify Supabase with IPv4 session pooler (read-only)
         env:
           STAGING_DSN: ${{ secrets.SUPABASE_STAGING_DATABASE_URL }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Restrict the routine to SELECT-only. Never run R1 migrations against a shared Supabase public schema.
-          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname='inklore_ci')" | grep -qx t
-          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT NOT has_schema_privilege('anon','inklore_ci','USAGE') AND NOT has_schema_privilege('authenticated','inklore_ci','USAGE')" | grep -qx t
-          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='vector')" | grep -qx t
-          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT count(*) FROM inklore_ci.schema_migrations" | grep -qx 17
-          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT count(*) FROM pg_tables WHERE schemaname='inklore_ci'" | grep -qx 80
-          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='pg_trgm')" | grep -qx t
-          psql "$STAGING_DSN" -X -v ON_ERROR_STOP=1 -Atqc "SELECT NOT has_schema_privilege('service_role','inklore_ci','USAGE')" | grep -qx t
-          echo 'Supabase staging schema preflight OK (no schema migration performed).'
+        run: python3 scripts/ci/supabase_staging_preflight.py
