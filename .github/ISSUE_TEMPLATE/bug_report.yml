@@ -4,12 +4,12 @@ title: "[Bug] "
 body:
   - type: markdown
     attributes:
-      value: "请先搜索现有 Issue 与 docs/backlog.md；安全漏洞请优先使用仓库私密漏洞报告渠道。"
+      value: "请先搜索现有 Issue 和相关源码；安全漏洞请优先使用仓库私密漏洞报告渠道。"
   - type: input
     id: task
     attributes:
       label: "关联 INK 任务（如果已有）"
-      placeholder: "INK-xxx / Issue #n"
+      placeholder: "Issue #n / 历史 INK 编号"
   - type: textarea
     id: actual
     attributes:

@@ -1,0 +1,90 @@
+# Substitute only deployment-controlled variables; keep Nginx $variables intact.
+# The error handler embeds the full request line (including query data) in
+# error-level diagnostics, so that level is suppressed entirely; startup,
+# configuration and crash failures at crit/emerg still surface.
+error_log /dev/stderr crit;
+events { worker_connections 1024; }
+http {
+  include /etc/nginx/mime.types;
+  default_type application/octet-stream;
+  sendfile on;
+  server_tokens off;
+
+  # Access logs must never record query data: content search text and the
+  # one-time WebSocket ticket arrive as $args, which stay out of $uri.
+  log_format sanitized '$remote_addr [$time_local] '
+                       '"$request_method $uri $server_protocol" '
+                       '$status $body_bytes_sent rt=$request_time '
+                       'rid=$http_x_request_id';
+  access_log /dev/stdout sanitized;
+
+  # The entrypoint extracts the container DNS resolver from
+  # /etc/resolv.conf so the upstream address can be re-resolved at
+  # runtime instead of only once at configuration load.
+  resolver ${NGINX_RESOLVER} valid=10s ipv6=off;
+  resolver_timeout 5s;
+
+  map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+  }
+
+  server {
+    listen ${PORT};
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # The backend keeps its own authoritative limits (20MiB uploads,
+    # 2MiB JSON); this only lets the full allowance pass the proxy.
+    client_max_body_size 21m;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header X-Frame-Options DENY always;
+
+    # Same-origin proxy prevents browsers needing a public API domain.
+    # The upstream must be the PRIVATE Railway API service. Proxying
+    # through a variable keeps runtime DNS re-resolution active.
+    set $api_upstream_url "${API_UPSTREAM}";
+
+    location ^~ /v1/ {
+      proxy_pass $api_upstream_url;
+      proxy_http_version 1.1;
+      proxy_set_header Host $http_host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection $connection_upgrade;
+      proxy_set_header X-Request-ID $request_id;
+      proxy_buffering off;
+      proxy_request_buffering off;
+      proxy_read_timeout 3600s;
+      proxy_send_timeout 3600s;
+    }
+
+    location = /healthz {
+      proxy_pass $api_upstream_url;
+      proxy_set_header Host $http_host;
+    }
+    location = /readyz {
+      proxy_pass $api_upstream_url;
+      proxy_set_header Host $http_host;
+    }
+
+    location ^~ /assets/ {
+      try_files $uri =404;
+      add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+    location ~ /[.](env|git|ht|svn) {
+      deny all;
+    }
+    location = /index.html {
+      add_header Cache-Control "no-store";
+    }
+    location / {
+      try_files $uri $uri/ /index.html;
+    }
+  }
+}

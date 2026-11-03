@@ -1,4 +1,4 @@
-// Package r1 provides PostgreSQL and deployment adapters for frozen LLM ports.
+// Package infrastructure provides PostgreSQL and deployment adapters for frozen LLM ports.
 package infrastructure
 
 import (

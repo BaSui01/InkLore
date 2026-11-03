@@ -25,4 +25,4 @@ Scope: content R1保存、目录与不可变历史证明
 
 主独立go run ./cmd/acceptance/ink163退出0，12组/27操作完整Schema；故障wrapper实际看到tx内正文已写，再证明9表指纹回滚。
 
-详见 [任务验收](../../../../docs/acceptance-INK-163.md)。
+详见 [任务验收](../testing/2026-09-18-acceptance-ink-163.md)。

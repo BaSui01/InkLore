@@ -1,23 +1,22 @@
-# 验证矩阵
+# 按影响选择验证
 
-下列命令在仓库根执行；运行前读取现有脚本，避免脚本已变更而照抄过期命令。命令退出非零时检查原因，区分本次引入与已有问题，不能隐瞒或把失败标成通过。
+命令从仓库根运行，先核对当前脚本。选择能验证本次改动的检查；既有受保护 CI 的必需门禁仍由正常 PR 流程执行。
 
-| 影响面 | 必需检查 | 通过意味着什么 |
+| 改动影响 | 适用检查 | 能证明的范围 |
 | --- | --- | --- |
-| 所有交付 | go build ./...；git diff --check | 当前工作区可构建、已跟踪 diff 无空白错误；不证明行为正确 |
-| Go / 分层 / 装配 | go vet ./...；go run ./cmd/archguard -reachability；gofmt -l internal cmd | 静态质量、护栏与可达性；配置仍需核对消费方 |
-| 前端 | pnpm --dir frontend run build | 当前脚本分别构建 Creator/Admin；之后必须在真实应用地址核对行为 |
-| i18n | go run ./cmd/i18ncheck frontend/packages/i18n/src/locales/zh-CN.ts frontend/packages/i18n/src/locales/en-US.ts | 词条对齐；还需检查页面是否使用词条 |
-| 技能与指南 | node scripts/check-project-skills.mjs | 技能元数据、长度、Emoji 与本地文件链接；不验证外站与语义 |
-| 工程笔记 | node scripts/agent-notes.mjs check；归档变动另执行 node scripts/agent-notes.mjs check --base HEAD | 格式/任务关联/链接/哈希；基线检查拒绝旧封印变化，不判定理由真假或漏写笔记 |
-| API / DB | 在已授权的开发环境发真实请求，查返回与持久化结果 | 正常、非法输入、跨租户、重启留存、并发冲突按任务选择；不操作生产样本 |
-| SSE / Agent / LLM | 正常生成、无 Provider、上游中断、用户取消；核对持久化终态 | 不用静态数组/假进度替代真实路径；桩上游不证明真实模型质量 |
-| 发布 / 回滚 | 按发布手册核对版本、healthz、readyz 与迁移兼容 | 构建通过与服务就绪分别记证据；实际发布需要任务授权 |
+| 文档、链接或文案 | 相关链接/渲染检查、`git diff --check` | 内容可读取、路径有效；无需为纯文档启动数据库或模型 |
+| 项目技能与指南 | `node scripts/check-project-skills.mjs` | 元数据、大小和本地文件链接；不验证语义和外站 |
+| 工程笔记 | `node scripts/agent-notes.mjs check`；涉及历史归档时加 `--base <变更前真实提交>` | 格式、链接与封印；Task 格式合规不代表已在线验证任务存在 |
+| Go 逻辑、边界或装配 | 受影响包的构建/测试与 gofmt；按影响运行 `go vet ./...`、`go run ./cmd/archguard -reachability` | 编译、静态边界与回归行为；可达不等于业务可用 |
+| 前端逻辑或组件 | 对应应用的类型检查/构建、相关测试及实际交互；共享包改动考虑 `pnpm --dir frontend run build` | 构建与用户行为分别记录 |
+| i18n 词条 | `go run ./cmd/i18ncheck frontend/packages/i18n/src/locales/zh-CN.ts frontend/packages/i18n/src/locales/en-US.ts` | Key 集合一致；仍需检查页面使用和显示 |
+| API/机器契约 | `node docs/system-design/tools/check-design.cjs`、`node scripts/check-platform-contracts.mjs`，再核对路由与真实请求 | 静态语义/错误目录一致性；不证明运行时校验和授权已经接通 |
+| 数据、事务或授权 | 授权的隔离环境中执行相关 API/SQL 正反例 | 持久化、回滚、并发或跨租户边界，按影响选择 |
+| Agent/LLM/SSE | 相关正常生成、审批、断线、取消、Worker 恢复与上游失败场景 | 核对 Run/Job/产物和费用结果；桩上游不能证明真实模型效果 |
+| 发布或恢复 | 当前发布配置、版本、healthz/readyz、迁移兼容与代表性路径 | 实际服务与恢复行为；发布授权单独核对 |
 
-已有综合入口：[check.ps1](../../../../scripts/check.ps1)，可执行 pwsh -File scripts/check.ps1 -Reachability -IncludeFrontend。按任务选择，不为纯文档改动启动数据库和模型请求。不得创建或修改 *_test.go / *.test.ts。
+针对根因和易回归的边界增加有价值的测试，不写机械复刻实现的测试。验证已有充分证据后，不因流程习惯反复运行同一套检查。
 
-运行路径：业务改动可比较 go list -deps ./cmd/server 前后结果；纯文档与离线检查工具明确“没有修改 Go 包、启动入口、依赖和接线，运行路径不受本任务影响”。不要把其他并行改动算作自己的变化。
+失败时记录命令、退出码、原始错误与影响，区分已存在的差异和本次引入的问题；不关闭检查、修改历史迁移或伪造通过来消除红灯。缺依赖的检查明确记为 `NOT_VERIFIED`。
 
-完整工作区已有失败时，记录原始命令及归因；任务保持 review 或说明外部阻塞，不能降低 DoD。通过的编译无需无理由重复；文档终态更新后重跑轻量文档校验即可。
-
-Linux / dot 入口：`make ci NOTES_BASE=<交付前真实commit>`。复用 Makefile，包含 frozen-lockfile 安装及 Creator/Admin 双端构建，不部署、不调用付费模型。已核验 blob 来源但无 Git 元数据的快照可显式设置 `BUILDVCS=false` 运行单项目标；这仅禁用 Go VCS stamping，不能代替真实历史封印检查。无真实 Git 基线时 make ci 必须失败，不可标记全绿。可用 `PNPM='pnpm --config.store-dir=<获准可写路径>'` 指定已有 store，不修改系统权限。构建通过不等于 API / DB / 浏览器 / Agent 行为验收通过。
+需要全仓交付验证时复用 `make ci NOTES_BASE=<交付前真实提交>`；Windows 入口为 [check.ps1](../../../../scripts/check.ps1)。综合构建通过仍不替代数据库、浏览器和 Agent 行为验收。缺少真实 Git 历史时不能宣称 `--base` 历史封印校验通过。
