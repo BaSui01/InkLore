@@ -1,4 +1,4 @@
-// Package jobs implements R1 durable scheduling; domain state remains domain-owned.
+// Package jobs implements durable scheduling; domain state remains domain-owned.
 package jobs
 
 import (

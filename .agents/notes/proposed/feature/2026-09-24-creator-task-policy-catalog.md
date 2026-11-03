@@ -15,7 +15,7 @@ INK-226 的 Creator 工作台已经通过 Creator 安全目录读取 Definition�
 
 仅提案：新增 Agent creator-safe `GET /v1/agents/catalog/task-policies` 返回分页安全投影 `policy_id`、`policy_version_id`、`task_key`、`title`、`version`；仅当前 tenant 已启用且发布的 policy。Agent 通过消费方 Port / app adapter 获取 LLM 目录，不能直读 LLM 私表，也不能复用 Admin API。Creator 分别选择定义支持的 `task_kind` 与策略，instruction 保持原文，不根据角色名或指令文本硬编码策略映射。
 
-CreateRun 创作请求提议新增必填 `task_policy_version_id`，服务端从其解析 task_key、校验 tenant/启用/当前版本并持久化现有 `agent_runs.task_key` 与 `policy_version_id`；旧 `task_key` 请求只在明确定义的过渡兼容期保留，服务端仍须解析到真实已启用 policy。执行时使用冻结 policy version。提案详见 [ADR-0027](../../../../docs/decisions/0027-proposed-creator-task-policy-catalog.md)。该契约尚待用户批准，未实施。
+CreateRun 创作请求提议新增必填 `task_policy_version_id`，服务端从其解析 task_key、校验 tenant/启用/当前版本并持久化现有 `agent_runs.task_key` 与 `policy_version_id`；旧 `task_key` 请求只在明确定义的过渡兼容期保留，服务端仍须解析到真实已启用 policy。执行时使用冻结 policy version。提案详见 [ADR-0027](../../reference/decisions/0027-proposed-creator-task-policy-catalog.md)。该契约尚待用户批准，未实施。
 
 Agent 自然语言澄清是可选且独立的 R1.x 范围：需完整设计运行暂停/继续、用户响应幂等、恢复、超时、撤权与 SSE；不得新增冻结事件名 `ask_question`，不得滥用 `approval.required`。
 

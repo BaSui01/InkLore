@@ -1,4 +1,4 @@
-// Package r1 contains domain models and invariants for agent governance.
+// Package domain contains domain models and invariants for agent governance.
 package domain
 
 import (

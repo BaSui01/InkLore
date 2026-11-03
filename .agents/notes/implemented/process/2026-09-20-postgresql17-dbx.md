@@ -11,7 +11,7 @@ Scope: Compose、dbx、数据库运行基线
 
 ## Decision
 
-按[ADR-0022](../../../../docs/decisions/0022-postgresql-17-baseline.md)采用PG17。dbx使用项目既有连接参数，实际查询服务版本与扩展。Compose使用pg17供新部署；既有PG16卷须备份迁移到新目录，不直接换镜像挂旧卷。
+按[ADR-0022](../../reference/decisions/0022-postgresql-17-baseline.md)采用PG17。dbx使用项目既有连接参数，实际查询服务版本与扩展。Compose使用pg17供新部署；既有PG16卷须备份迁移到新目录，不直接换镜像挂旧卷。
 
 ## Alternatives considered
 
@@ -23,4 +23,4 @@ Scope: Compose、dbx、数据库运行基线
 
 ## Verification
 
-dbx当前连接inklore-pg-r1实查17.11、vector0.8.0、pg_trgm1.6与46张public表；建库返回SQL_BLOCKED。无数据迁移或业务写入。详[验收](../../../../docs/acceptance-INK-203.md)。
+dbx当前连接inklore-pg-r1实查17.11、vector0.8.0、pg_trgm1.6与46张public表；建库返回SQL_BLOCKED。无数据迁移或业务写入。详[验收](../testing/2026-09-20-acceptance-ink-203.md)。

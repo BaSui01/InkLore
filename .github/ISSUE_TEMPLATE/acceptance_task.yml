@@ -1,17 +1,15 @@
 name: "实施 / 独立验收"
-description: "基于已有 INK 编号登记实施或独立验收入口"
-title: "[INK-xxx] "
+description: "关联已有任务，登记可复现的实施或验收目标"
+title: "[验收] "
 body:
   - type: markdown
     attributes:
-      value: "docs/backlog.md 是任务状态唯一权威。先核对编号与依赖，不重复创建同义任务；实施与独立验收分开。"
+      value: "先核对现有 GitHub Issues 和依赖，不重复创建同义任务；实现与运行验收分别给证据。"
   - type: input
     id: id
     attributes:
-      label: "唯一 INK 编号"
-      placeholder: "INK-253"
-    validations:
-      required: true
+      label: "关联 Issue / PR（已有时填写）"
+      placeholder: "#15 或完整 GitHub 链接"
   - type: textarea
     id: scope
     attributes:
@@ -42,5 +40,5 @@ body:
     attributes:
       label: "工程边界"
       options:
-        - label: "不绕过冻结设计、CI、敏感路径人工审阅与凭据限制"
+        - label: "不绕过 CI、敏感路径人工审阅、权限与数据保护"
           required: true

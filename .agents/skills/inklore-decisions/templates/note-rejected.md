@@ -2,7 +2,7 @@
 
 Status: rejected — 填写具体否决原因
 
-Task: INK-XXX
+Task: #NUMBER
 Scope: 填写真实机制或代码路径
 
 ## Problem

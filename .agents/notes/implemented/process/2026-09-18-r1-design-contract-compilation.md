@@ -11,7 +11,7 @@ Scope: docs/system-design设计资产、旧文档清理与离线契约检查，�
 
 ## Decision
 
-全局选择记录在[ADR-0016](../../../../docs/decisions/0016-r1-reconstruction-design-freeze.md)，治理位置按[ADR-0017](../../../../docs/decisions/0017-preserve-decision-records-and-single-design-entry.md)。七域分片是API源，编译器合并同一路径不同方法并把所有Schema引用重定位为外部ref；不flatten各域同名Report/Budget。生成入口、错误目录和FR映射只由源生成。DDL是独立真实SQL；前端按实际Schema校齐字段和命令边界。
+全局选择记录在[ADR-0016](../../reference/decisions/0016-r1-reconstruction-design-freeze.md)，治理位置按[ADR-0017](../../reference/decisions/0017-preserve-decision-records-and-single-design-entry.md)。七域分片是API源，编译器合并同一路径不同方法并把所有Schema引用重定位为外部ref；不flatten各域同名Report/Budget。生成入口、错误目录和FR映射只由源生成。DDL是独立真实SQL；前端按实际Schema校齐字段和命令边界。
 
 30个旧设计/旧API/重复DDL文件已按manifest实际删除，保留ADR原文和活动工具任务。历史ADR-0010指向的旧评估仅留退役说明页，避免修改已接受正文或恢复旧设计。正文/metadata双命令保存、单阶段审批、job/node双fence等集成冲突在设计阶段明确后再冻结。
 
@@ -25,4 +25,4 @@ Scope: docs/system-design设计资产、旧文档清理与离线契约检查，�
 
 ## Verification
 
-node docs/system-design/tools/build-contracts.cjs退出0：152路径、233操作、95错误码。node docs/system-design/tools/check-design.cjs退出0：7593本地refs、420文档链接、74表Owner引用、无重复operationId/缺幂等/CAS等结构问题。node scripts/check-project-skills.mjs退出0。go build ./...退出0。清理manifest的30路径均不存在。最终报告以[design-validation.json](../../../../docs/system-design/implementation/design-validation.json)为准；未执行设计SQL或业务重构，不宣称运行功能通过。
+node docs/system-design/tools/build-contracts.cjs退出0：152路径、233操作、95错误码。node docs/system-design/tools/check-design.cjs退出0：7593本地refs、420文档链接、74表Owner引用、无重复operationId/缺幂等/CAS等结构问题。node scripts/check-project-skills.mjs退出0。go build ./...退出0。清理manifest的30路径均不存在。最终报告以[design-validation.json](../../reference/system-design/implementation/design-validation.json)为准；未执行设计SQL或业务重构，不宣称运行功能通过。

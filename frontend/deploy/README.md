@@ -1,6 +1,6 @@
 # Creator 普通路径部署
 
-依据 [ADR-0023](../../docs/decisions/0023-creator-history-routing.md)，Creator 使用 History 路由，首页 `/`，独立登录页 `/login`，工作台 `/outline`、`/worldview`、`/analysis`、`/editor?novelId=…`。Admin 是独立应用，不能把其构建产物或路由挂到此站点。
+依据 [ADR-0023](../../.agents/notes/reference/decisions/0023-creator-history-routing.md)，Creator 使用 History 路由，首页 `/`，独立登录页 `/login`，工作台 `/outline`、`/worldview`、`/analysis`、`/editor?novelId=…`。Admin 是独立应用，不能把其构建产物或路由挂到此站点。
 
 开发：`npm --prefix frontend run dev:creator -- --strictPort`。Vite SPA 回退支持直接访问和刷新；`/v1` 和 `/healthz` 先进入既有后端代理。
 

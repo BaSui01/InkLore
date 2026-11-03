@@ -2,10 +2,9 @@
 //
 // 校验项：
 //
-//	R1 跨域 infrastructure 直接导入（业务域 A 的文件导入业务域 B 的 infrastructure；业务域清单见 ADR-0014 的 7 域）
+//	R1 跨域 infrastructure 直接导入（业务域 A 的文件导入业务域 B 的 infrastructure）
 //	R2 platform 基座反向依赖业务域
 //	R3 手写代码文件超过 500KiB 上限
-//	R4 出现 *_test.go / *.test.ts(x) 测试文件
 //	R5 Go 源文件无法解析
 //
 // 附加项（不判定失败）：运行路径可达性报告，列出不在 cmd/server 依赖图中的包。
@@ -45,9 +44,7 @@ var sizeCheckedExts = map[string]bool{
 	".css": true, ".sql": true,
 }
 
-// businessDomains 是 AGENTS.md §1.2 定义的业务限界上下文清单（7 域，见 ADR-0014）。
-// 新增业务域时必须同步登记此处与 AGENTS.md，否则 R1 跨域护栏不会覆盖该域。
-// novel 是 ADR-0014 迁移期的过渡容器，迁移完成后必须从本清单与代码库中一并删除。
+// 新增或调整业务域时同步登记，避免跨域护栏漏掉真实边界。
 var businessDomains = map[string]bool{
 	"content":     true,
 	"outline":     true,
@@ -73,7 +70,6 @@ var allRules = []ruleMeta{
 	{"R1", "跨域 infrastructure 直接导入"},
 	{"R2", "platform 反向依赖业务域"},
 	{"R3", "单文件体积不超过 500KiB"},
-	{"R4", "不存在测试文件"},
 	{"R5", "Go 源文件可解析"},
 }
 
@@ -94,7 +90,6 @@ func main() {
 	}
 
 	violations := make([]violation, 0)
-	violations = append(violations, checkTestFiles(files)...)
 	violations = append(violations, checkFileSizes(root, files)...)
 	violations = append(violations, checkImports(root, files)...)
 
@@ -145,28 +140,6 @@ func collectFiles(root string) ([]string, error) {
 	})
 	sort.Strings(out)
 	return out, walkErr
-}
-
-func checkTestFiles(files []string) []violation {
-	forbidden := []string{
-		"_test.go", ".test.ts", ".test.tsx", ".test.js", ".test.jsx",
-		".spec.ts", ".spec.tsx", ".spec.js", ".spec.jsx",
-	}
-	vs := make([]violation, 0)
-	for _, f := range files {
-		base := filepath.Base(f)
-		for _, suffix := range forbidden {
-			if strings.HasSuffix(base, suffix) {
-				vs = append(vs, violation{
-					Rule:   "R4",
-					File:   f,
-					Detail: "禁止编写或提交测试文件（AGENTS.md 第 3 节第 1 条）",
-				})
-				break
-			}
-		}
-	}
-	return vs
 }
 
 func checkFileSizes(root string, files []string) []violation {

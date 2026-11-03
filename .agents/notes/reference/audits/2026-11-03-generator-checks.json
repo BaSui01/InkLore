@@ -1,0 +1,48 @@
+{
+  "baseline": "b0732b31fb9c306ec60d42c4793a069b474b74a1",
+  "temporary_root": "/workspace/scratch/6fdc8eb82eec/audit/contract-generator-qa-e0jnk3fn",
+  "source_fragments_changed": [],
+  "runs": {
+    "old": {
+      "exit_code": 0,
+      "stdout": "{\n  \"source_fragments\": 34,\n  \"paths\": 168,\n  \"operations\": 246,\n  \"path_shards\": 17,\n  \"error_codes\": 102,\n  \"issues\": []\n}\n",
+      "stderr": ""
+    },
+    "current": {
+      "exit_code": 0,
+      "stdout": "{\n  \"source_fragments\": 34,\n  \"paths\": 168,\n  \"operations\": 246,\n  \"path_shards\": 17,\n  \"error_codes\": 102,\n  \"issues\": []\n}\n",
+      "stderr": ""
+    }
+  },
+  "compared_file_counts": {
+    "old": 73,
+    "current": 72,
+    "identical": 70
+  },
+  "changes": [
+    {
+      "path": "api/README.md",
+      "kind": "changed"
+    },
+    {
+      "path": "api/openapi.json",
+      "kind": "changed",
+      "json_difference_paths": [
+        "/info/description",
+        "/info/title"
+      ]
+    },
+    {
+      "path": "implementation/requirements-map.md",
+      "kind": "removed"
+    }
+  ],
+  "second_current_run": {
+    "exit_code": 0,
+    "deterministic": true
+  },
+  "generator_sha256": {
+    "old": "ad60bb743b339384180774ab23ca4f626e9c683e9725b1fc9f670ebb8510fb3c",
+    "current": "5b6d8e5d43539e2f630d6bb7e1628ee5565f90886c6476b44b04a7699bcb2148"
+  }
+}

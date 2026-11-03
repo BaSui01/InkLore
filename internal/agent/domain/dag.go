@@ -22,7 +22,7 @@ var (
 	}
 )
 
-// ValidateDAG validates the workflow manifest graph according to the R1 contract:
+// ValidateDAG validates the workflow manifest graph according to the workflow contract:
 // 1..64 nodes, <= 128 edges, Kahn topological sort (no cycles, no self loops),
 // valid roles, valid bindings to ancestor nodes, and role/version consistency.
 func ValidateDAG(manifest WorkflowManifest) error {

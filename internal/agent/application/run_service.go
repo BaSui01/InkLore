@@ -199,7 +199,7 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 		}
 	}
 
-	// A workflow omitted by the R1 request contract uses one definition-bound root node.
+	// A workflow omitted by the current request contract uses one definition-bound root node.
 	if len(manifestNodes) == 0 {
 		manifestNodes = []d.ManifestNode{
 			{

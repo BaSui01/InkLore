@@ -25,7 +25,7 @@
 
 ### 双端 UI/UX 设计实施包（INK-259，review）
 
-- 新增 [docs/ui-ux](docs/ui-ux/README.md)：管理端/创作者端现有路由盘点、核心页面布局与交互方案、组件复用和响应式/无障碍/权限验收矩阵。
+- 新增 [docs/ui-ux](.agents/notes/reference/ui-ux/README.md)：管理端/创作者端现有路由盘点、核心页面布局与交互方案、组件复用和响应式/无障碍/权限验收矩阵。
 - 明确与冻结 15/16/17/20 分册、实际业务代码和 API 的边界；高保真设计图及前端功能改造均为后续单独交付，本次没有运行路径变化。
 
 
@@ -207,7 +207,7 @@
 **INK-215：Creator普通路径路由**
 
 - 首页、登录和创作工作台改用History路径，旧Hash入口自动转换；登录来源和编辑器作品ID由URL恢复，支持前进后退。
-- Vite深链访问与刷新、Nginx静态托管/API分流、Go与双端构建验证通过，见[验收](docs/acceptance-INK-215.md)。真实认证成功回跳仍待补验。
+- Vite深链访问与刷新、Nginx静态托管/API分流、Go与双端构建验证通过，见[验收](.agents/notes/implemented/testing/2026-09-29-acceptance-ink-215.md)。真实认证成功回跳仍待补验。
 
 **INK-214：独立登录页面与来源回跳**
 
@@ -224,7 +224,7 @@
 - 首页按用户参考重做宋体双栏首屏、纸页钢笔插画、暖金色操作、真实书架、功能区与指南；支持双语、明暗主题和手机导航。
 - 真实作品游标分页、已加载数据搜索、创意开书与指定作品编辑入口闭环；加载、空态、错误、过期快照与离线明确区分，无模型/正文/统计占位。
 - 会话初始化共享在途 Promise，消除开发模式重复刷新造成的登录退出；不改变原账号密码或服务端安全规则。
-- Go 与双端构建、真实 Chrome 创建/留存/分页/失败恢复通过，[截图与验收](docs/acceptance-INK-206.md)已保存；i18n检查器既有误报登记INK-212，真实组合词条一致。
+- Go 与双端构建、真实 Chrome 创建/留存/分页/失败恢复通过，[截图与验收](.agents/notes/implemented/testing/2026-09-20-acceptance-ink-206.md)已保存；i18n检查器既有误报登记INK-212，真实组合词条一致。
 
 
 **INK-205：管理端视觉收敛与真实模型协议接线（待复核）**
@@ -284,7 +284,7 @@
 - 三个领域四层、81个操作与主组合根接线；冻结DDL原样迁移。真实PG/HTTP逐操作Schema、并发CAS、撤权重放及故障整体回滚通过。
 - 内容：正文/版本/目录/proof同事务；大纲：三级节点、场景、伏笔、RR只读节奏；世界观：图谱、整批事实冲突、不可变ledger与维护重建。
 - 补齐RR根事务模式、trash授权与typed冲突详情，修复实测时间精度、UTC、错误映射及审计action集成问题；160/161共50组回归通过。
-- 验收记录：[163](docs/acceptance-INK-163.md)、[164](docs/acceptance-INK-164.md)、[165](docs/acceptance-INK-165.md)。前端、确认用例与大容量运行演练仍留后续任务。
+- 验收记录：[163](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-163.md)、[164](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-164.md)、[165](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-165.md)。前端、确认用例与大容量运行演练仍留后续任务。
 
 **INK-167：LLM R1目录与管理transport进行中**
 
@@ -304,14 +304,14 @@
 
 - 按用户明确批准落ADR-0018，保存原冻结清单；补齐四项契约差异，错误95→97，DDL不变。
 - 15个后端操作接线；本人改密全会话吊销、审计失败回滚、新会话幂等重放；审计NDJSON先校验31天/10000条后完整返回；405 JSON与精确Allow。
-- 24组真实PG/Redis/HTTP与15操作Schema覆盖、26组INK-160回归通过；既有4组双端代理验收保留。真实Chrome与产品前端未验收，留在后续前端/端到端门禁。[证据](docs/acceptance-INK-161.md)。
+- 24组真实PG/Redis/HTTP与15操作Schema覆盖、26组INK-160回归通过；既有4组双端代理验收保留。真实Chrome与产品前端未验收，留在后续前端/端到端门禁。[证据](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-161.md)。
 
 
 **INK-160：R1平台事务、授权投影与幂等基座**
 
 - 建立独立R1迁移流与组合根，旧路由不挂载；迁移名称/checksum门禁、事务级迁移互斥、独立配置装载和PG必需启动。
-- 实施UoW/Recoverable、scope历史证明与CAS、事务幂等及安全HTTP基座；26组真实PG/HTTP正反例、全仓构建、架构/冻结/技能/notes护栏通过。[验收证据](docs/acceptance-INK-160.md)。
-- 冻结设计保持不变；后续操作的契约差异记录于[INK-178](docs/r1-contract-differences-INK-178.md)。
+- 实施UoW/Recoverable、scope历史证明与CAS、事务幂等及安全HTTP基座；26组真实PG/HTTP正反例、全仓构建、架构/冻结/技能/notes护栏通过。[验收证据](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-160.md)。
+- 冻结设计保持不变；后续操作的契约差异记录于[INK-178](.agents/notes/implemented/architecture/2026-09-18-r1-contract-differences-ink-178.md)。
 
 **INK-144：DSH并行开发子代理配置**
 
@@ -334,18 +334,18 @@
 - 增加 `.agents/notes/` 四生命周期与六分类，明确 notes / ADR / backlog 分工，提供提案、已实施与否决模板。
 - 三个项目skills及AGENTS接入改前检索、非平凡变更留因果、同批更新与归档流程。
 - 新增无依赖笔记校验/归档工具，验证结构、任务关联、本地链接与归档哈希；CI对照变更前Git基线保护已有封印。
-- 首篇流程笔记保留真实备选与验证，业务运行路径不变；证据见 [INK-143](docs/notes-delivery-INK-143.md)。
+- 首篇流程笔记保留真实备选与验证，业务运行路径不变；证据见 [INK-143](.agents/notes/implemented/process/2026-09-18-notes-delivery-ink-143.md)。
 
 **INK-142：项目定制开发维护 Skills**
 
 - 新增仓库级 `inklore-development`、`inklore-decisions`、`inklore-maintenance`，融合核心 docs 的按需阅读、七域边界、ADR 历史保护、真实验收与维护流程。
 - 新增文档路由、验证矩阵、验收/复盘模板与来源适配说明；沿用 decisions 和唯一 backlog。
 - 新增无第三方依赖的技能文档校验器及独立 CI 检查，更新 AGENTS 与文档治理入口。
-- 本任务不修改业务运行路径，验证范围与结果见 [INK-142 交付记录](docs/skill-delivery-INK-142.md)。
+- 本任务不修改业务运行路径，验证范围与结果见 [INK-142 交付记录](.agents/notes/implemented/process/2026-09-29-skill-delivery-ink-142.md)。
 
 **M12 · ADR-0014 七域架构治理与大纲域抽取（INK-114，已交付）**
 
-- 新增 [ADR-0014](docs/decisions/0014-domain-boundary-expansion-to-seven-contexts.md)：业务限界上下文由 3 个（`novel`/`agent`/`llm`）扩张为 7 个（`content`/`outline`/`worldview`/`inspiration`/`compliance`/`agent`/`llm`）。**Supersedes ADR-0001 第 2 条**，ADR-0001 顶部已加替代说明（正文按「已接受 ADR 不修改」约定保持原样），`docs/decisions/README.md` 索引同步
+- 新增 [ADR-0014](.agents/notes/reference/decisions/0014-domain-boundary-expansion-to-seven-contexts.md)：业务限界上下文由 3 个（`novel`/`agent`/`llm`）扩张为 7 个（`content`/`outline`/`worldview`/`inspiration`/`compliance`/`agent`/`llm`）。**Supersedes ADR-0001 第 2 条**，ADR-0001 顶部已加替代说明（正文按「已接受 ADR 不修改」约定保持原样），`.agents/notes/reference/decisions/README.md` 索引同步
 - 更新 `AGENTS.md`：§1 架构图改为 7 域拓扑并标注域间单向 DAG；§1.2 域清单、四层骨架义务、跨域红线与唯一受控例外（跨域只读值类型）；§2 领域职责按 7 域重写，事实权威重新划界（作品与正文归 `content`，设定与事实账本归 `worldview`）
 - 更新 `cmd/archguard`：`businessDomains` 由 3 域扩为 7 域（`novel` 暂留为过渡容器并加 TODO），R1 跨域护栏即时覆盖新域
 - **抽取 `internal/outline`**（ADR-0014 strangler 步骤 2，11 文件 / 4 层）：`domain`（`OutlineNode` 及其中间过程值对象 + `OutlineNodeRepository`）、`application`（`OutlineService` + 消费方自定义的只读引用端口 `ContentReference`）、`infrastructure`（SQL 与内存两档实现）、`transport/http`（独立 `Handler` 与 `RegisterRoutes`，复用 `/v1/novels` 下的 `outline` 子路径，端点不变）
@@ -430,7 +430,7 @@
 - 删除内置引擎中伪造的 `call_fact_check_001` 工具调用与 `success` 回执：伪造的执行轨迹比伪造正文更具误导性
 - `ProviderInfo` 如实上报：默认 `type=none`；开启演示后名称/类型/能力均标明离线演示与 `template_based`
 - `GatewayService` 与 LLM HTTP 层统一错误映射：`503 + llm_provider_not_configured`，不再被二次包装成通用 `llm_generation_failed`
-- 新增 [ADR-0005](docs/decisions/0005-no-fabrication-without-provider.md) 记录该决策
+- 新增 [ADR-0005](.agents/notes/reference/decisions/0005-no-fabrication-without-provider.md) 记录该决策
 - 验证：探针 14 项断言（默认模式零产出、演示模式 tool 事件恒为 0）全部通过；`POST /v1/llm/generate` 默认返回 503 `llm_provider_not_configured`；`/v1/llm/provider/status` 默认 `type=none`
 
 **M6：前端 i18n 完整性校验（INK-042）**
@@ -495,7 +495,7 @@
   · `required` 但未配置密钥时**进程拒绝启动**
 - 新增 `cmd/tokengen`：本地签发令牌（密钥只从环境读取）
 - 新增 `GET /v1/auth/whoami`：回显主体、租户与请求上下文中的租户
-- 新增 [ADR-0006](docs/decisions/0006-platform-token-and-auth-mode.md) 记录认证契约
+- 新增 [ADR-0006](.agents/notes/reference/decisions/0006-platform-token-and-auth-mode.md) 记录认证契约
 
 **验证（11 项断言全部通过）**：无 Token / 伪造 / 缺 `tid` / 过期 → 401 且 code 明确；
 有效 Token → 200；`whoami` 租户绑定正确；`/healthz`、`/readyz`、`/v1/architecture`
@@ -601,7 +601,7 @@ Docker 守护进程可用后，此前三条阻塞的验收全部在真实 Postgr
 - 新增 `POST /v1/novels/:novelID/chapters/:chapterID/confirm`
   · 冲突返回 **409 + 结构化冲突清单**（含旧值、提议值、来源章节、原因）
   · 冲突经由 `ConfirmResult` 传递而非 error 通道 —— error 无法承载结构化清单
-- 新增 [ADR-0007](docs/decisions/0007-chapter-confirmation-and-fact-versioning.md)
+- 新增 [ADR-0007](.agents/notes/reference/decisions/0007-chapter-confirmation-and-fact-versioning.md)
 
 **验证（18 项断言全部通过，真实 PostgreSQL）**：首次确认入账且可回溯来源章节、
 章节状态转 confirmed；同值重复确认识别为 unchanged 且不重复写入；
@@ -625,7 +625,7 @@ Docker 守护进程可用后，此前三条阻塞的验收全部在真实 Postgr
 
 **M1：制品库存储选型定案（INK-020）**
 
-- 新增 [ADR-0008](docs/decisions/0008-artifact-store-postgres-jsonb.md)：Agent 制品库统一落 PostgreSQL JSONB，**不引入 MongoDB**
+- 新增 [ADR-0008](.agents/notes/reference/decisions/0008-artifact-store-postgres-jsonb.md)：Agent 制品库统一落 PostgreSQL JSONB，**不引入 MongoDB**
 - 依据：两份编排文件本就只启动 postgres + redis，`MongoStore` 从未接线（不可达包）；项目红线是模块化单体，第二套数据平面会额外带来备份、监控与租户隔离成本（现有租户隔离建立在每条 SQL 带 `tenant_id` 之上）
 - `docs/architecture.md` §6.2 存储职责表据此改写：MongoDB 行标注为不引入，原先的 ⚠️「待 ADR 决策」说明撤除
 - 登记 INK-046（删除 `artifactstore` 的 Mongo 实现）与 INK-045（制品表随统一建表迁移落地）
@@ -834,7 +834,7 @@ Docker 守护进程可用后，此前三条阻塞的验收全部在真实 Postgr
 
 **M4：工具审批端到端接入（INK-012）**
 
-- `platform/auth` 新增 `WithPrincipal` / `PrincipalFromContext`，`middleware.Auth` 校验通过后把认证主体**同时**写入 gin 上下文与请求上下文，使域内授权判定无需依赖传输层（新增 [ADR-0009](docs/decisions/0009-principal-context-and-approval-authorization.md)）
+- `platform/auth` 新增 `WithPrincipal` / `PrincipalFromContext`，`middleware.Auth` 校验通过后把认证主体**同时**写入 gin 上下文与请求上下文，使域内授权判定无需依赖传输层（新增 [ADR-0009](.agents/notes/reference/decisions/0009-principal-context-and-approval-authorization.md)）
 - 新增 `adapters.NewApprovalPrincipalResolver`：只信任请求上下文中的主体，要求 `UserID` 与审批归属一致、角色照搬；主体不带权限时按「当前无权限中心、平台令牌即操作员凭证」补通配权限；认证强制且无主体时直接拒绝
 - `runtimeapp.Service` 新增审批服务依赖；`RunInput` 透传 `UserID` / `ApprovalTokens` / `PermissionLevel`，并把运行记录 ID 作为 `RunID` 关联到审批单（审批单可按运行追溯）
 

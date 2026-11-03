@@ -13,7 +13,7 @@ Scope: internal/llm/infrastructure/image_adapters.go 与 ADR-0025
 
 ## Decision
 
-依据 [ADR-0025](../../../../docs/decisions/0025-image-adapter-current-provider-contract.md)，图片适配器现在对 Imagen fail-closed，使用既有 llm.capability_mismatch 语义拒绝，而不再请求 :predict。
+依据 [ADR-0025](../../reference/decisions/0025-image-adapter-current-provider-contract.md)，图片适配器现在对 Imagen fail-closed，使用既有 llm.capability_mismatch 语义拒绝，而不再请求 :predict。
 
 OpenAI 的 image_to_image 请求现在仅接受非空 base64 或 data URL 参考图，将解码后的真实字节以 multipart/form-data 的 image[] 文件字段上传到 /images/edits；没有参考图或无法解码时在外呼前明确拒绝。普通文生图继续使用 /images/generations JSON 请求。
 
