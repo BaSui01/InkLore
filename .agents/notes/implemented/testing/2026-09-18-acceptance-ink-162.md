@@ -53,3 +53,4 @@ go run ./cmd/acceptance/ink162 all
 实际server已接files、outbox、notifications、observability、schemavalidation；jobs通用状态机通过真实PG/scope验收adapter，领域handler注册与业务worker链留给171/172，指标采样/SecretRef部署目录/维护调度/备份演练留给176。平台任务不把消费Port adapter冒充领域业务实现。
 
 公共层另有platformextensions六组真实PG验证，26组160及24组161回归通过。全仓build、archguard、四份DDL精确一致和97错误目录检查、冻结检查通过。
+

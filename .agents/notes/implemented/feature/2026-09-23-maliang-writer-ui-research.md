@@ -174,3 +174,4 @@ Scope: 原 docs/research/maliang-writer-ui-and-novel-agent-analysis.md 的历史
 - `POST /v1/agents/supervisor/stream`：输出带 `thinking`、`task`、`ask_question`、`artifact` 的 SSE 多通道事件流；
 - `GET /v1/worldview/novels/{id}/consistency/guard`：一致性检查卫士接口，防止长篇吃书；
 - `POST /v1/llm/budget/estimate`：实时 Token 与费用预估接口。
+

@@ -191,6 +191,15 @@ func (s *Service) Delete(ctx context.Context, p identity.Principal, id string) e
 			}
 		}
 		// 1. 级联清理该成员在该租户下的创作命令与创作会话（解除外键依赖）
+		var guideSessionIDs []string
+		if err = db.Raw("SELECT id::text FROM agent_novel_creation_sessions WHERE tenant_id=? AND owner_user_id=?", p.TenantID, current.UserID).Scan(&guideSessionIDs).Error; err != nil {
+			return err
+		}
+		if len(guideSessionIDs) > 0 && s.policyRefs != nil {
+			if err = s.policyRefs.ReleaseGuideSessionReferences(txctx, p.TenantID, guideSessionIDs); err != nil {
+				return err
+			}
+		}
 		if err = db.Exec("DELETE FROM agent_novel_creation_commands WHERE tenant_id=? AND session_id IN (SELECT id FROM agent_novel_creation_sessions WHERE tenant_id=? AND owner_user_id=?)", p.TenantID, p.TenantID, current.UserID).Error; err != nil {
 			if isForeignKeyViolation(err) {
 				return apperrors.Contract(409, "platform.resource_in_use", map[string]any{"reason": "member has active novel creation commands in use"})

@@ -63,3 +63,4 @@ content新增自己的WorldFactPort、ConfirmationSource、Confirm和typed fact 
 content transport的nullable presence检查调整为：指针字段允许schema批准的null，非指针必填字段仍拒绝null；该修复覆盖target_event_id、reason和retract的value。新增content.chapter.confirmed显式audit action。
 
 INK-163仍严格验收27个原有操作；确认操作由本任务独立覆盖，避免跨任务重复或遗漏。浏览器Chrome连接仍不可用，故本任务未宣称真实浏览器证据；HTTP/PG和架构门禁已通过。
+

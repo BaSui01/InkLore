@@ -15,17 +15,22 @@ import (
 )
 
 const (
-	// migrationTable 记录已应用的迁移版本，是幂等执行的唯一依据。
+	// migrationTable 记录冻结 R1 流已应用的迁移版本，是幂等执行的唯一依据。
 	migrationTable = "schema_migrations"
 	// downMarker 分隔同一个迁移文件中的升级段与降级段。
 	downMarker = "-- +migrate Down"
-	// createMigrationTableSQL 使用 TIMESTAMPTZ，遵循全栈北京时间契约。
-	createMigrationTableSQL = "CREATE TABLE IF NOT EXISTS schema_migrations (" +
+)
+
+// createMigrationTableSQLFor 为指定历史表生成建表语句。
+// 表结构使用 TIMESTAMPTZ，遵循全栈北京时间契约；独立迁移流使用独立历史表，
+// 避免污染冻结 R1 流的既定历史。
+func createMigrationTableSQLFor(table string) string {
+	return "CREATE TABLE IF NOT EXISTS " + table + " (" +
 		"version TEXT PRIMARY KEY, " +
 		"name TEXT NOT NULL, " +
 		"checksum TEXT NOT NULL, " +
 		"applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW())"
-)
+}
 
 // Migration 是一条解析后的迁移脚本。
 type Migration struct {
@@ -121,25 +126,35 @@ func LoadMigrations(fsys fs.FS, dir string) ([]Migration, error) {
 	return result, nil
 }
 
-// EnsureVersionTable 创建迁移版本表（幂等）。
+// EnsureVersionTable 创建默认（冻结 R1 流）迁移版本表（幂等）。
 func EnsureVersionTable(ctx context.Context, db *gorm.DB) error {
+	return EnsureVersionTableIn(ctx, db, migrationTable)
+}
+
+// EnsureVersionTableIn 为指定迁移流创建历史表（幂等）。
+func EnsureVersionTableIn(ctx context.Context, db *gorm.DB, table string) error {
 	if db == nil {
 		return fmt.Errorf("数据库未初始化")
 	}
-	if err := db.WithContext(ctx).Exec(createMigrationTableSQL).Error; err != nil {
+	if err := db.WithContext(ctx).Exec(createMigrationTableSQLFor(table)).Error; err != nil {
 		return fmt.Errorf("创建迁移版本表失败: %w", err)
 	}
 	return nil
 }
 
-// AppliedRecords 返回已应用的迁移版本 → 记录。
+// AppliedRecords 返回冻结 R1 流已应用的迁移版本 → 记录。
 func AppliedRecords(ctx context.Context, db *gorm.DB) (map[string]AppliedRecord, error) {
-	if err := EnsureVersionTable(ctx, db); err != nil {
+	return AppliedRecordsIn(ctx, db, migrationTable)
+}
+
+// AppliedRecordsIn 返回指定迁移流已应用的版本 → 记录。
+func AppliedRecordsIn(ctx context.Context, db *gorm.DB, table string) (map[string]AppliedRecord, error) {
+	if err := EnsureVersionTableIn(ctx, db, table); err != nil {
 		return nil, err
 	}
 	rows := make([]AppliedRecord, 0, 8)
 	if err := db.WithContext(ctx).
-		Table(migrationTable).
+		Table(table).
 		Select("version, name, checksum, applied_at").
 		Scan(&rows).Error; err != nil {
 		return nil, fmt.Errorf("读取迁移版本表失败: %w", err)
@@ -156,6 +171,12 @@ func AppliedRecords(ctx context.Context, db *gorm.DB) (map[string]AppliedRecord,
 // 幂等：已应用且校验和一致的迁移直接跳过；已应用但校验和变化则报错，
 // 防止历史迁移被静默篡改导致各环境库结构不一致。
 func Up(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string) (UpResult, error) {
+	return UpIn(ctx, db, fsys, dir, migrationTable)
+}
+
+// UpIn 把迁移应用到指定流的历史表，供冻结 R1 之外的扩展流复用同一套
+// 幂等、校验和与并发锁语义。
+func UpIn(ctx context.Context, db *gorm.DB, fsys fs.FS, dir, table string) (UpResult, error) {
 	var result UpResult
 	if db == nil {
 		return result, fmt.Errorf("database is required")
@@ -165,20 +186,20 @@ func Up(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string) (UpResult, err
 			return err
 		}
 		var err error
-		result, err = upLocked(ctx, tx, fsys, dir)
+		result, err = upLocked(ctx, tx, fsys, dir, table)
 		return err
 	})
 	return result, err
 }
 
-func upLocked(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string) (UpResult, error) {
+func upLocked(ctx context.Context, db *gorm.DB, fsys fs.FS, dir, table string) (UpResult, error) {
 	result := UpResult{Applied: []string{}, Skipped: []string{}}
 
 	migrations, err := LoadMigrations(fsys, dir)
 	if err != nil {
 		return result, err
 	}
-	applied, err := AppliedRecords(ctx, db)
+	applied, err := AppliedRecordsIn(ctx, db, table)
 	if err != nil {
 		return result, err
 	}
@@ -203,7 +224,7 @@ func upLocked(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string) (UpResul
 			result.Skipped = append(result.Skipped, m.Label())
 			continue
 		}
-		if err := applyUp(ctx, db, m); err != nil {
+		if err := applyUp(ctx, db, m, table); err != nil {
 			return result, err
 		}
 		result.Applied = append(result.Applied, m.Label())
@@ -211,7 +232,7 @@ func upLocked(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string) (UpResul
 	return result, nil
 }
 
-func applyUp(ctx context.Context, db *gorm.DB, m Migration) error {
+func applyUp(ctx context.Context, db *gorm.DB, m Migration, table string) error {
 	body := strings.TrimSpace(m.Up)
 	return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if body != "" {
@@ -220,7 +241,7 @@ func applyUp(ctx context.Context, db *gorm.DB, m Migration) error {
 			}
 		}
 		if err := tx.Exec(
-			"INSERT INTO schema_migrations (version, name, checksum) VALUES (?, ?, ?)",
+			"INSERT INTO "+table+" (version, name, checksum) VALUES (?, ?, ?)",
 			m.Version, m.Name, m.Checksum,
 		).Error; err != nil {
 			return fmt.Errorf("登记迁移 %s 失败: %w", m.Label(), err)
@@ -233,6 +254,11 @@ func applyUp(ctx context.Context, db *gorm.DB, m Migration) error {
 //
 // 未定义降级段的迁移会被拒绝回滚，而不是产生半吊子状态。
 func Down(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string, steps int) ([]string, error) {
+	return DownIn(ctx, db, fsys, dir, steps, migrationTable)
+}
+
+// DownIn 按版本号从新到旧回滚指定流最近 steps 条已应用迁移。
+func DownIn(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string, steps int, table string) ([]string, error) {
 	reverted := make([]string, 0, steps)
 	if steps <= 0 {
 		return reverted, fmt.Errorf("回滚步数必须大于 0")
@@ -242,7 +268,7 @@ func Down(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string, steps int) (
 	if err != nil {
 		return reverted, err
 	}
-	applied, err := AppliedRecords(ctx, db)
+	applied, err := AppliedRecordsIn(ctx, db, table)
 	if err != nil {
 		return reverted, err
 	}
@@ -270,7 +296,7 @@ func Down(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string, steps int) (
 		if !m.HasDown() {
 			return reverted, fmt.Errorf("迁移 %s 未定义降级段（%s），拒绝回滚", m.Label(), downMarker)
 		}
-		if err := applyDown(ctx, db, m); err != nil {
+		if err := applyDown(ctx, db, m, table); err != nil {
 			return reverted, err
 		}
 		reverted = append(reverted, m.Label())
@@ -278,25 +304,30 @@ func Down(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string, steps int) (
 	return reverted, nil
 }
 
-func applyDown(ctx context.Context, db *gorm.DB, m Migration) error {
+func applyDown(ctx context.Context, db *gorm.DB, m Migration, table string) error {
 	return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Exec(strings.TrimSpace(m.Down)).Error; err != nil {
 			return fmt.Errorf("执行 %s 降级段失败: %w", m.Label(), err)
 		}
-		if err := tx.Exec("DELETE FROM schema_migrations WHERE version = ?", m.Version).Error; err != nil {
+		if err := tx.Exec("DELETE FROM "+table+" WHERE version = ?", m.Version).Error; err != nil {
 			return fmt.Errorf("删除迁移记录 %s 失败: %w", m.Label(), err)
 		}
 		return nil
 	})
 }
 
-// Status 返回全部迁移脚本的应用状态。
+// Status 返回冻结 R1 流全部迁移脚本的应用状态。
 func Status(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string) ([]StatusRow, error) {
+	return StatusIn(ctx, db, fsys, dir, migrationTable)
+}
+
+// StatusIn 返回指定流全部迁移脚本的应用状态。
+func StatusIn(ctx context.Context, db *gorm.DB, fsys fs.FS, dir, table string) ([]StatusRow, error) {
 	migrations, err := LoadMigrations(fsys, dir)
 	if err != nil {
 		return nil, err
 	}
-	applied, err := AppliedRecords(ctx, db)
+	applied, err := AppliedRecordsIn(ctx, db, table)
 	if err != nil {
 		return nil, err
 	}

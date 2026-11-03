@@ -368,16 +368,27 @@ export function ChannelModal({
     }
   };
 
+  // The backend reserves the omitted-URL exception for the built-in local
+  // Ollama endpoint; explicitly sending that loopback URL would be rejected
+  // by the unsafe-endpoint guard, so the default travels as an empty value.
+  const upstreamBaseUrl = (): string => {
+    const baseUrl = formBaseUrl.trim();
+    if (formProtocol === "ollama" && (!baseUrl || baseUrl === "http://localhost:11434")) {
+      return "";
+    }
+    return baseUrl;
+  };
+
   // 从上游获取模型列表
   const handleFetchUpstreamModels = async () => {
     setFormError(null);
     setTestResult(null);
     setUpstreamNotice(null);
 
-    const baseUrl = formBaseUrl.trim();
     const apiKey = formApiKey.trim();
+    const baseUrl = upstreamBaseUrl();
 
-    if (!baseUrl) {
+    if (!baseUrl && formProtocol !== "ollama") {
       setFormError(t("admin.channels.err_base_url_required"));
       return;
     }
@@ -390,7 +401,7 @@ export function ChannelModal({
     try {
       const result = await fetchUpstreamModels({
         protocol: formProtocol,
-        base_url: baseUrl,
+        base_url: upstreamBaseUrl(),
         api_key: apiKey,
       });
 
@@ -496,7 +507,7 @@ export function ChannelModal({
       if (formApiKey.trim() || formProtocol === "ollama") {
         const models = await fetchUpstreamModels({
           protocol: formProtocol,
-          base_url: baseUrl,
+          base_url: upstreamBaseUrl(),
           api_key: formApiKey.trim(),
         });
         if (!models || models.length === 0) {

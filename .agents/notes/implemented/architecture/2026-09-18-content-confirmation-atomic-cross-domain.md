@@ -38,4 +38,4 @@ transport允许仅由schema声明的指针字段使用null；正文、revision�
 - go run ./cmd/acceptance/ink165：退出0，16组及25操作通过。
 - INK-160/161回归继续退出0。
 
-详见 docs/acceptance-INK-166.md。
+详见 .agents/notes/implemented/testing/2026-09-18-acceptance-ink-166.md。

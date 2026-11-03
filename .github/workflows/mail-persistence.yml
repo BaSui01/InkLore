@@ -41,13 +41,15 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - name: Apply frozen R1 migrations only to disposable PostgreSQL
+      - name: Apply frozen R1 and post-R1 migrations to disposable PostgreSQL
         run: go run ./cmd/migrate -cmd up -dsn "$DATABASE_DSN" -timeout 150s
       - name: Confirm original R1 17 migrations unchanged
         run: |
           test "$(psql -X -Atc 'SELECT count(*) FROM schema_migrations')" = '17'
           test "$(psql -X -Atc "SELECT count(*) FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'platform_%'")" -ge 5
-      - name: Apply extension migration in separate step
-        run: psql -X -v ON_ERROR_STOP=1 -f migrations/post_r1/000001_platform_mail_settings.sql
+      - name: Confirm post-R1 stream registered by the migration runner
+        run: |
+          test "$(psql -X -Atc 'SELECT count(*) FROM schema_migrations_post_r1')" -ge 2
+          psql -X -Atc "SELECT to_regclass('llm_policy_version_references') IS NOT NULL" | grep -qx t
       - name: Assert mail secret and OTP persistence invariants
         run: psql -X -v ON_ERROR_STOP=1 -f migrations/post_r1/verify_email_schema.sql

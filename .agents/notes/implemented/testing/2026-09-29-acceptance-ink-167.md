@@ -55,3 +55,4 @@ go run ./cmd/acceptance/ink167 inventory
 - Catalog mutation的真实PG/API正反例、Schema strict正反例、SecretRef安全fixture和并发预算证据。
 
 go run ./cmd/acceptance/ink167 all退出0并通过原有路由盘点与4个真实的Budget Reserve/Settle/Rollback/Replay行为探针；不以编译、迁移、路由挂载或legacy实现代替上述行为证据。
+

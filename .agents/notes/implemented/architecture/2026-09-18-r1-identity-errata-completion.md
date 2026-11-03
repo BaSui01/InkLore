@@ -29,4 +29,4 @@ INK-161原冻结源缺改密幂等头、导出422和405错误定义。无冲突�
 
 ## Verification
 
-最终INK-161真实PG/Redis/HTTP 24组通过，包括注入审计失败回滚密码、revision与全部session，两会话并发改密恰一200一401。15操作逐响应Schema、NDJSON10000正例/10001反例、32天拒绝、敏感字段不泄露；405 Allow与OPTIONS实测。INK-160 26组回归通过。原manifest已另存；仅8冻结源/派生资产变化，DDL不变，错误95→97。详docs/acceptance-INK-161.md。
+最终INK-161真实PG/Redis/HTTP 24组通过，包括注入审计失败回滚密码、revision与全部session，两会话并发改密恰一200一401。15操作逐响应Schema、NDJSON10000正例/10001反例、32天拒绝、敏感字段不泄露；405 Allow与OPTIONS实测。INK-160 26组回归通过。原manifest已另存；仅8冻结源/派生资产变化，DDL不变，错误95→97。详.agents/notes/implemented/testing/2026-09-18-acceptance-ink-161.md。

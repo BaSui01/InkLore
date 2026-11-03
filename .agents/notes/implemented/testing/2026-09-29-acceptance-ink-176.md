@@ -233,3 +233,4 @@ PASS ink176.all_scenarios_verified
 - [x] 遵守单手写文件体积限制：所有源码与文档文件均小于 50KB。
 - [x] 严格零测试文件红线：全代码库未创建任何 `*_test.go` 或 `*.test.ts` 文件。
 - [x] 退出码门禁验证：`go build ./cmd/acceptance/ink176/...` 退出码 0，`go build ./...` 退出码 0，`go run ./cmd/acceptance/ink176 all` 退出码 0。
+

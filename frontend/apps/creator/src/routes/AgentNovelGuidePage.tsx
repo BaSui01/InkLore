@@ -107,7 +107,19 @@ export function AgentNovelGuidePage({ initialIdea, client, offline, onBack, onCr
       const value = await call<Guide>("agent_start_novel_guide", "POST", "/v1/agents/novel-guide", { initial_idea: content }, startAttempt.current.key);
       startAttempt.current = null; localStorage.removeItem(keys.startKey); localStorage.removeItem(keys.startIdea);
       localStorage.setItem(keys.session, value.session_id); hydrate(value);
-    } catch (cause) { setError(cause); } finally { lock.current = false; setPending(false); }
+    } catch (cause) {
+      // A definitive validation rejection (4xx other than 403) never created a
+      // session, so drop the pending attempt and return to the editable form
+      // instead of trapping the author with an unusable replay key. Transient
+      // failures and 403 keep the stored key for retry or explicit restart.
+      const status = cause instanceof ApiError ? cause.httpStatus : 0;
+      if (status >= 400 && status < 500 && status !== 403) {
+        startAttempt.current = null;
+        localStorage.removeItem(keys.startKey);
+        localStorage.removeItem(keys.startIdea);
+      }
+      setError(cause);
+    } finally { lock.current = false; setPending(false); }
   };
 
   useEffect(() => {

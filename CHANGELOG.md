@@ -6,6 +6,44 @@
 
 ## [Unreleased]
 
+### 前端 ReDoS 线性 URL/邮箱校验修复（INK-263，private 发布候选）
+
+- 将 dev #76 已验收的尾部斜杠线性处理与基础邮箱校验移植至默认 private；不修改服务端鉴权、数据库或敏感配置。
+- 此修复针对已识别的正则复杂度问题，仍需在默认分支验证 CodeQL 和真实浏览器回归，不等于全部安全告警已修复。
+
+
+### INK-273：2026-11-03 dev/private 双向历史基线（待验收）
+
+- 基于当前 private 与 dev 的同一个共同祖先执行双父合并，保留双方独有提交；优先沿用稳定分支已实测的 CI/Supabase/敏感目录保护规则，开发分支最新 Agent、前端、LLM 安全修复通过合并候选 PR 统一验收。
+- 仅新增 Git 合并候选与可重现的测试证据，不部署生产服务器、不执行 Supabase 写入、不改旧 Git 历史。敏感权限和 CodeQL Python 失败仍需在发布前单独评审。
+
+### 保护分支定期 Supabase 监控与跨端 E2E 验收（INK-270，review）
+
+- Supabase 的只读 IPv4 Session Pooler 预检保持 GitHub 受保护 Environment Secret，仅在默认分支每天 03:17 UTC 定时运行（也可手动运行），禁止写入真实业务数据。
+- 独立 GitHub Actions 在 PR、dev/private push 以及每周两次的默认分支计划任务中，使用临时 PG17/Redis7、Go 后端/部署 CLI、Creator/Admin React 生产构建与 Chromium，验收 Creator 注册/小说 CRUD 与租户隔离、Admin 治理访问、Agent 定义及无权限 Run 的真实拒绝。
+- 浏览器依赖固定 Playwright 版本并安装在 Runner 临时目录，不引入生产依赖；真实模型调用、Agent Worker 产出、SSE 和断线恢复保留独立验收。
+
+### Supabase IPv4 Session Pooler 远程预检修复（INK-262）
+
+- 修复受保护 GitHub Actions 在 Supabase 免费项目 IPv6 Direct 端点连接失败的问题；不重置已保存的环境 Secret，不购买 IPv4 Add-on。
+- 改为使用真实身份和数据库结构查询验证官方 IPv4 Session Pooler 地址；连接凭据只在 GitHub-hosted Runner 内存中使用，不输出密码、完整 DSN 或身份验证错误详情。
+- 首次 IPv6 失败证据：Actions #41570140594；改进后必须以新的人工验收 Success 为交付依据。
+
+### 自动合并敏感路径收紧（INK-254，review）
+
+- 默认分支安全 PR Gate 增加 internal/platform/identity 和所有领域的 infrastructure 路径，防止拥有 auto-merge-approved 标签的认证/持久化 PR 绕过人工审查；低风险路径、原有 CI 与 Review 门禁保持不变。
+- 源码与工作流静态测试仍需最终 PR CI 及合并后的事件复核。
+
+### 稳定分支独立接入数据库/Redis 集成测试（INK-260，review）
+
+- 从已验证的 dev 最小同步两个 GitHub Actions 工作流和所需的测试环境权限 SQL，不混入 70 文件发布候选 PR #41。
+- 隔离作业的临时 PG17/Redis7 验证真实 R1 迁移、回滚、权限、Go API/Creator 身份；Supabase 只读预检只在受保护分支手动触发且需要独立最小权限凭据，现有 Secret 未配置。
+
+### INK-256：dev 超前 20 个提交后发布 PR（review）
+
+- 采用默认分支可信工作流按 GitHub Commit Compare 阈值自动创建 release 快照 PR；安全满足时启用 Merge Commit auto-merge，分叉、敏感或 CI 未通过时保留人工复核。保护 dev 不被删除或强推，发布不等于部署或业务验收。
+
+
 ### Creator 开书引导 403 本地恢复退出（INK-271，review）
 
 - 为无法访问的历史小说引导会话提供显式“重新开始”，仅在用户点击后清除本地恢复指针并显示新建表单；后端身份与数据权限不变。

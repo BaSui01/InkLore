@@ -15,13 +15,27 @@ type Authorizer interface {
 	Authorize(context.Context, identity.Principal, ...string) (identity.Principal, error)
 }
 
+// PolicyReferenceReleaser removes LLM-owned policy-version pins for guide
+// sessions that are being deleted, keeping frozen-version deletion refusal
+// accurate without platform code reading LLM tables.
+type PolicyReferenceReleaser interface {
+	ReleaseGuideSessionReferences(ctx context.Context, tenantID string, sessionIDs []string) error
+}
+
 type Service struct {
 	manager    *uow.Manager
 	authorizer Authorizer
+	policyRefs PolicyReferenceReleaser
 }
 
 func New(manager *uow.Manager, authorizer Authorizer) *Service {
 	return &Service{manager: manager, authorizer: authorizer}
+}
+
+// SetPolicyReferenceReleaser wires the composition-root adapter after the
+// LLM domain is built.
+func (s *Service) SetPolicyReferenceReleaser(r PolicyReferenceReleaser) {
+	s.policyRefs = r
 }
 
 type Member struct {

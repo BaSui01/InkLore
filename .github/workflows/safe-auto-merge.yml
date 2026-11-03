@@ -88,8 +88,9 @@ jobs:
               /^docs\/(?:local-environment|repository-governance)\.md$/,
               /^(?:go\.mod|go\.sum|Dockerfile|docker-compose[^/]*)$/,
               /^frontend\/pnpm-lock\.yaml$/,
-              /^internal\/platform\/(?:auth|crypto|database|uow|middleware|secret)[^/]*\//,
+              /^internal\/platform\/(?:identity|auth|crypto|database|uow|middleware|secret)[^/]*\//,
               /^internal\/(?:llm|agent)\/infrastructure\//,
+              /^internal\/(?:[^/]+\/)*infrastructure\//,
               /^internal\/app\//,
               /(^|\/)(?:auth|secrets?|credentials?|payments?|billing|tenant|token|password)(?:[._/-]|$)/i
             ];
