@@ -26,6 +26,7 @@ import {
 } from "@inklore/contracts";
 import { AuthSession } from "./session";
 import { OperationRegistry } from "./registry";
+import { stripTrailingSlashes } from "../base-url";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -70,7 +71,7 @@ export class ApiClient {
   private readonly onSessionInvalid?: () => void;
 
   constructor(options: ApiClientOptions) {
-    this.baseUrl = (options.baseUrl || "").replace(/\/+$/, "");
+    this.baseUrl = stripTrailingSlashes(options.baseUrl || "");
     this.session = options.session;
     this.registry = options.registry || new OperationRegistry();
     this.clock = options.clock || (() => Date.now());
