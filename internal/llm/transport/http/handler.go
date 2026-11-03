@@ -284,7 +284,7 @@ func (h *Handler) Register(engine *gin.Engine) {
 }
 
 func (h *Handler) fetchUpstreamModels(c *gin.Context) {
-	p, ok := h.authenticate(c, false)
+	p, ok := h.authenticate(c, true)
 	if !ok {
 		return
 	}
