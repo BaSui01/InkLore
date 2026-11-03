@@ -18,10 +18,10 @@
 - 改为使用真实身份和数据库结构查询验证官方 IPv4 Session Pooler 地址；连接凭据只在 GitHub-hosted Runner 内存中使用，不输出密码、完整 DSN 或身份验证错误详情。
 - 首次 IPv6 失败证据：Actions #41570140594；改进后必须以新的人工验收 Success 为交付依据。
 
-### 五项依赖补丁批量整合（INK-261，待独立验收）
+### 五项依赖补丁批量整合（INK-261，已发布）
 
-- 汇总 Dependabot #49–#53 的 quic-go、x/net、Vite、source-map-js、markdown-it 补丁版本和锁文件校验和，先进入 dev 做兼容与实际 API/双端构建验收。
-- 不修改业务代码、数据库或密钥；不直接合入 private，不宣称五项补丁解决所有依赖漏洞或真实模型/浏览器业务验收。
+- [PR #71](https://github.com/BaSui01/InkLore/pull/71) 在 dev 合并 quic-go 0.59.1、x/net 0.55.0、vite 7.3.7、source-map-js 1.2.2、markdown-it 14.3.3；Go mod verify/build/vet/archguard、pnpm frozen、Creator/Admin 构建及 PG17/Redis7 API 回归通过。
+- [PR #79](https://github.com/BaSui01/InkLore/pull/79) 经独立受保护 CI 合入 private，双方 manifest/lockfile 版本和 SHA 一致；原 Dependabot #49–#53 均以 superseded 方式关闭，不重复合并。当前补丁不声称真实 QUIC/HTTP3、CSP/Markdown 或所有安全告警已通过端到端验收。
 
 
 ### 自动合并敏感路径收紧（INK-254，review）
