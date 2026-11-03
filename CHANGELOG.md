@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### Agent 冻结策略引用保护（INK-264，review）
+
+- 对排队 Agent Run、Agent 问答及小说引导持有的冻结 PolicyVersionID 增加物理删除拦截，保留既有策略版本可读；事务锁与 CreateRun 的 FOR SHARE 串行化。
+- 小说引导请求已经持有冻结模型时，不因同名 Provider 再次解析并错误替换 Model ID；使用临时 PG/Redis 与环回 Provider 验收，未执行付费模型调用。
+
+
 ### 五项依赖补丁批量整合（INK-261，已发布）
 
 - [PR #71](https://github.com/BaSui01/InkLore/pull/71) 在 dev 合并 quic-go 0.59.1、x/net 0.55.0、vite 7.3.7、source-map-js 1.2.2、markdown-it 14.3.3；Go mod verify/build/vet/archguard、pnpm frozen、Creator/Admin 构建及 PG17/Redis7 API 回归通过。
