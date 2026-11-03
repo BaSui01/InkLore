@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### 前端 ReDoS 线性 URL/邮箱校验修复（INK-263，private 发布候选）
+
+- 将 dev #76 已验收的尾部斜杠线性处理与基础邮箱校验移植至默认 private；不修改服务端鉴权、数据库或敏感配置。
+- 此修复针对已识别的正则复杂度问题，仍需在默认分支验证 CodeQL 和真实浏览器回归，不等于全部安全告警已修复。
+
+
 ### 保护分支定期 Supabase 监控与跨端 E2E 验收（INK-270，review）
 
 - Supabase 的只读 IPv4 Session Pooler 预检保持 GitHub 受保护 Environment Secret，仅在默认分支每天 03:17 UTC 定时运行（也可手动运行），禁止写入真实业务数据。
