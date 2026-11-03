@@ -6,6 +6,11 @@
 
 ## [Unreleased]
 
+### 稳定分支独立接入数据库/Redis 集成测试（INK-260，review）
+
+- 从已验证的 dev 最小同步两个 GitHub Actions 工作流和所需的测试环境权限 SQL，不混入 70 文件发布候选 PR #41。
+- 隔离作业的临时 PG17/Redis7 验证真实 R1 迁移、回滚、权限、Go API/Creator 身份；Supabase 只读预检只在受保护分支手动触发且需要独立最小权限凭据，现有 Secret 未配置。
+
 ### Go 加密依赖安全升级（INK-258，待独立验收）
 
 - 以 Dependabot PR #28 为版本来源，在 dev 提交 x/crypto 0.48.0→0.52.0，联动 x/net、x/text、x/sys、x/sync 的必要版本与校验和更新；未直接更改业务源代码。
