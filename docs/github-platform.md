@@ -45,3 +45,5 @@
 - 工作流所有权限均为只读；不检出 PR 代码、不执行外部提交、不读 Secret、不写 Projects、不合并 PR、不部署服务。GitHub 原生 Project Auto-add 不需要创建新的 PAT 或在 Actions 中储存项目级 Token。
 - 提交此配置到 `dev` **不会立刻激活 schedule/workflow_run**，需要独立验收后通过受保护的发布 PR 进入默认 `private` 才能开始定时运行。不得为激活周报绕过发布安全门禁。
 - [代码扫描](https://github.com/BaSui01/InkLore/security/code-scanning)、[Dependabot 告警](https://github.com/BaSui01/InkLore/security/dependabot) 和 [Security Policy](../SECURITY.md) 由 GitHub 管理；静态扫描、无告警均不等价于历史凭据已吊销或 Agent/LLM/多租户已完成独立运行验收。
+
+只读周报的权限取舍、误报防护及默认分支生效约束见 [INK-253 工程笔记](../.agents/notes/proposed/process/2026-11-03-ci-status-observability.md)。
