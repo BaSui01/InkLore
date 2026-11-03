@@ -49,9 +49,25 @@ async function verifyCreator(browser) {
       null, { timeout: 20000 },
     );
     await page.goto(origin + "/outline", { waitUntil: "domcontentloaded", timeout: 20000 });
-    await page.waitForURL(url => url.pathname === "/outline", { timeout: 20000 });
-    const content = (await page.locator("#root").innerText({ timeout: 12000 })).trim();
-    assert.ok(content.length > 40, "Creator protected outline view rendered blank");
+    // React initially renders the session bootstrap state. URL alone does not
+    // prove that the protected page has hydrated and loaded its real novel.
+    let loaded = false;
+    try {
+      await page.waitForFunction(
+        () => location.pathname === "/outline" &&
+          (document.querySelector("#root")?.innerText?.trim().length ?? 0) > 40 &&
+          !document.querySelector("#root")?.innerText?.includes("Loading..."),
+        null, { timeout: 20000 },
+      );
+      loaded = true;
+    } catch {
+      const info = await page.evaluate(() => ({
+        route: location.pathname,
+        length: document.querySelector("#root")?.innerText?.trim().length ?? 0,
+      }));
+      console.error("Creator protected page diagnostics: " + JSON.stringify(info));
+    }
+    assert.ok(loaded, "Creator protected outline view did not become ready");
     assert.ok(!page.url().includes("/login"), "Creator browser lost its real session");
     console.log("Creator Chromium: protected page and HttpOnly-cookie session passed.");
   } finally {
