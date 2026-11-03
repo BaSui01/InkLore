@@ -1,4 +1,8 @@
 # Substitute only deployment-controlled variables; keep Nginx $variables intact.
+# The error handler embeds the full request line (including query data) in
+# error-level diagnostics, so that level is suppressed entirely; startup,
+# configuration and crash failures at crit/emerg still surface.
+error_log /dev/stderr crit;
 events { worker_connections 1024; }
 http {
   include /etc/nginx/mime.types;
