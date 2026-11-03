@@ -143,20 +143,14 @@ export function AuthView({
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [verifyCode, setVerifyCode] = useState("");
   const [captchaInput, setCaptchaInput] = useState("");
-  const [expectedCaptcha, setExpectedCaptcha] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [captchaId, setCaptchaId] = useState("");
   const [captchaRefreshKey, setCaptchaRefreshKey] = useState(0);
 
-  const handleCaptchaChange = useCallback((c: { id: string; code?: string }) => {
+  const handleCaptchaChange = useCallback((c: { id: string }) => {
     setCaptchaId(c.id);
     setCaptchaInput("");
-    setExpectedCaptcha(c.code || "");
-  }, []);
-
-  const handleCodeChange = useCallback((c: string) => {
-    setExpectedCaptcha(c);
   }, []);
   const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
   const [legalTab, setLegalTab] = useState<LegalTab>("terms");
@@ -201,26 +195,29 @@ export function AuthView({
   }, [codeCooldown]);
 
   const validateEmail = (val: string): boolean => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+    const email = val.trim();
+    const at = email.indexOf("@");
+    if (at <= 0 || at === email.length - 1 || email.indexOf("@", at + 1) !== -1) {
+      return false;
+    }
+    const dot = email.indexOf(".", at + 2);
+    return dot !== -1 && dot < email.length - 1 && !/\s/.test(email);
   };
 
   const validateLoginIdentifier = (val: string): boolean =>
     (allowUsername && val.trim() === "root") || validateEmail(val);
 
   const validateCaptcha = (): boolean => {
+    if (!captchaId) {
+      setErrorMsg(t("auth.captcha_unavailable"));
+      return false;
+    }
     const trimmed = captchaInput.trim();
     if (!trimmed) {
       setErrorMsg(t("auth.captcha_required"));
       return false;
     }
     if (trimmed.length !== 4) {
-      setErrorMsg(t("auth.captcha_mismatch"));
-      return false;
-    }
-    if (
-      expectedCaptcha &&
-      trimmed.toUpperCase() !== expectedCaptcha.trim().toUpperCase()
-    ) {
       setErrorMsg(t("auth.captcha_mismatch"));
       return false;
     }
@@ -238,13 +235,13 @@ export function AuthView({
       return;
     }
 
+    if (!onSendVerificationCode) {
+      setErrorMsg(t("auth.email_code_unavailable"));
+      return;
+    }
     setSendingCode(true);
     try {
-      if (onSendVerificationCode) {
-        await onSendVerificationCode(trimmedEmail, purpose);
-      } else {
-        await new Promise((r) => setTimeout(r, 600));
-      }
+      await onSendVerificationCode(trimmedEmail, purpose);
       setSuccessNotice(t("auth.send_code_success"));
       setCodeCooldown(60);
     } catch (err: any) {
@@ -301,7 +298,6 @@ export function AuthView({
       setErrorMsg(formatAuthError(err, t));
       setCaptchaInput("");
       setCaptchaId("");
-      setExpectedCaptcha("");
       setCaptchaRefreshKey((key) => key + 1);
     } finally {
       setLoading(false);
@@ -326,7 +322,7 @@ export function AuthView({
       setErrorMsg(t("auth.pen_name_required"));
       return;
     }
-    if (!verifyCode.trim()) {
+    if (onSendVerificationCode && !verifyCode.trim()) {
       setErrorMsg(t("auth.verify_code_required"));
       return;
     }
@@ -513,7 +509,9 @@ export function AuthView({
                 setLoginMethod("code");
                 setErrorMsg(null);
               }}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              disabled={!onSendVerificationCode}
+              title={!onSendVerificationCode ? t("auth.email_code_unavailable") : undefined}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                 loginMethod === "code"
                   ? "bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs font-bold"
                   : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
@@ -650,8 +648,8 @@ export function AuthView({
               <GraphicCaptcha
                 key={captchaRefreshKey}
                 onCaptchaChange={handleCaptchaChange}
-                onCodeChange={handleCodeChange}
                 refreshTitle={t("auth.refresh_captcha")}
+                unavailableTitle={t("auth.captcha_unavailable")}
               />
             </div>
           </div>
@@ -729,8 +727,9 @@ export function AuthView({
             </div>
           </div>
 
-          {/* 邮箱安全验证码 */}
-          <div>
+          {/* 仅在真实邮件验证码后端接通时展示 */}
+          {onSendVerificationCode && (
+            <div>
             <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
               {t("auth.verify_code")}
             </label>
@@ -762,6 +761,7 @@ export function AuthView({
               </Button>
             </div>
           </div>
+          )}
 
           {/* 密码 */}
           <div>
@@ -835,8 +835,8 @@ export function AuthView({
               </div>
               <GraphicCaptcha
                 onCaptchaChange={handleCaptchaChange}
-                onCodeChange={handleCodeChange}
                 refreshTitle={t("auth.refresh_captcha")}
+                unavailableTitle={t("auth.captcha_unavailable")}
               />
             </div>
           </div>
@@ -1027,8 +1027,8 @@ export function AuthView({
               </div>
               <GraphicCaptcha
                 onCaptchaChange={handleCaptchaChange}
-                onCodeChange={handleCodeChange}
                 refreshTitle={t("auth.refresh_captcha")}
+                unavailableTitle={t("auth.captcha_unavailable")}
               />
             </div>
           </div>

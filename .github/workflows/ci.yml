@@ -2,12 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [private, dev]
   pull_request:
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
+
+# CI never needs a writable GITHUB_TOKEN, including for PR checks.
+permissions:
+  contents: read
 
 jobs:
   project-skills:

@@ -360,10 +360,18 @@ INK-253 的 GitHub 自动化权限、默认分支生效约束与取舍见 [工�
 
 对应错误的机制、替代方案与真实验收限制见 [工程笔记](../.agents/notes/implemented/bug-fix/2026-11-03-qodana-invalid-step-condition.md)。
 
-## INK-258 · Go 加密与网络依赖安全更新（review）
+## INK-258 · Go 加密与网络依赖安全更新（done）
 
-基于原 Dependabot PR #28 的模块解析快照，将 golang.org/x/crypto 从 v0.48.0 升至 v0.52.0，同步更新 x/net、x/text、x/sys、x/sync；本阶段只改 go.mod/go.sum，原 Go 应用源代码、SQL 和前端运行路径不变。依赖图变更仍可能影响加密、密码校验、JWT、传输安全等可达运行行为，因此不能仅根据静态构建认定功能兼容；必须在隔离环境验收实际授权与失败路径，再经受保护发布 PR 同步 private。详情见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-go-crypto-security-upgrade.md)。
+[PR #43](https://github.com/BaSui01/InkLore/pull/43) 已在 dev 完成 x/crypto 0.52.0 与 x/net/text/sys/sync 安全更新。真实临时 [PG17/Redis7 HTTP 回归](https://github.com/BaSui01/InkLore/actions/runs/41492434905) 覆盖迁移重放、注册200、会话200、匿名401、重复注册409和授权/事务；[PR #47](https://github.com/BaSui01/InkLore/pull/47) 已经受保护门禁同步到 private。两条长期分支的 go.mod 版本一致。未验证的真实 Provider/生产压测另行跟踪，不把安全升级视为全系统风险解除。
 
-## INK-261 · Go 网络与前端依赖补丁整合（review）
+## INK-261 · Go 网络与前端依赖补丁整合（done）
 
-本轮仅整合来自 Dependabot #49–#53 的五项版本更新：quic-go v0.59.1、golang.org/x/net v0.55.0、Vite v7.3.7、source-map-js v1.2.2 与 markdown-it v14.3.3。变更范围限 go.mod/go.sum、frontend/package.json/pnpm-lock.yaml 和工程记录，无应用 Go/React/SQL/冻结设计逻辑改动。依赖解析、浏览器渲染和 HTTP/3 行为仍可能受库变更影响，不能把模块构建视为实际业务回归。所有版本和 integrity 均从独立 bot PR 出处汇总、按同一基础锁文件差异无重叠合成。具体风险、验证与双分支发布边界见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-dependabot-batch-review.md)。
+[PR #71](https://github.com/BaSui01/InkLore/pull/71) 已将 quic-go v0.59.1、x/net v0.55.0、Vite v7.3.7、source-map-js v1.2.2、markdown-it v14.3.3 的五项 Dependabot 补丁按完整校验和整合至 dev；Go1.27.1 mod verify/build/vet/archguard、pnpm11.25.0 frozen-lockfile、Creator/Admin 双端构建、i18n 与 Skills/notes 通过，GitHub [PG17/Redis7/API 回归](https://github.com/BaSui01/InkLore/pull/71) 通过。[PR #79](https://github.com/BaSui01/InkLore/pull/79) 已单独将完全一致的四份 manifest/lockfile 受保护地发布至 private；两个长期分支的相关依赖文件 SHA 已重新核对一致，旧 bot PR #49–#53 均已关闭未重叠合入。没有业务 Go/React 源码变更。真实 QUIC/HTTP3、CSP 与不可信 Markdown 渲染场景未被这一补丁覆盖，后续单独验收，不把此补丁声明为全站安全风险消除。
+
+## INK-264 · 冻结策略引用与模型 ID 的安全保护（review）
+
+为已经持有 PolicyVersionID 的 Agent Run / 问答 / 小说引导阻止策略物理删除，事务内以政策头 FOR UPDATE 同步新建运行的 FOR SHARE，失败返回现有 resource_in_use 错误。对保存的冻结 ModelName 不再次模糊解析，同名不同 Provider 保留原冻结 ModelID。仅修改 Go 应用/基础设施和现有 cmd/ink228verify 验收命令，不改 R1 DDL / API / Secret。新增只使用临时 PG 和环回网络的回归，真实供应商、计费与模型/Provider 删除的完整边界仍需后继验收。详见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-03-frozen-policy-references.md)。
+
+## INK-271 · Creator Agent 会话 403 恢复退出（review）
+
+仅修复 Creator Agent 开书页在恢复旧 session 遇到 403 后无法继续的本地 UI 限制。保留既有 HomeNotice 的拒绝反馈，在无权会话等待恢复时由作者明确点击重新开始，清除其本地恢复指针但不触及服务器数据或绕过鉴权；还阻止自动引导流程因状态重渲染重复发起 POST。详见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-03-creator-guide-denied-recovery.md)。
