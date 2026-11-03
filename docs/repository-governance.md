@@ -13,7 +13,7 @@
 
 - **普通文档自动化**：仅 `README.md`、`CONTRIBUTING.md`、开发指南/项目管理入口等明确白名单文件可以自动开启 auto-merge。
 - **普通代码需授权**：其他非敏感变更必须由维护者添加 `auto-merge-approved` 标签；仅 CI 通过不足以授权自动合并。
-- **始终人工**：包含 `SECURITY.md`、本地环境/凭据文件、`.github/`、`AGENTS.md`、ADR、冻结设计、迁移、平台安全与底层 LLM/Agent 基础设施的 PR；即便加授权标签也不会自动合并。
+- **始终人工**：包含 `SECURITY.md`、本地环境/凭据文件、`.github/`、`AGENTS.md`、ADR、契约资产、迁移、平台安全与底层 LLM/Agent 基础设施的 PR；即便加授权标签也不会自动合并。
 - **强制阻止**：`manual-review` 或 `do-not-merge` 标签、跨仓库来源、Draft、文件过多或目标非 dev。
 - **动态撤销**：PR 改为 Draft、修改目标、添加阻止标签或新增敏感路径时撤销此前开启的 auto-merge。陈旧 head 事件不允许撤销新版本的决定，重命名同时检查原路径和目标路径。
 
@@ -27,7 +27,7 @@ GitHub 仓库开启 `allow_auto_merge`、`delete_branch_on_merge` 和 `allow_upd
 
 ## 边界
 
-- PR 的合并不等于业务 Issue 已验收，Issue 仍按 `docs/backlog.md` 的状态管理。
+- PR 的合并不等于业务 Issue 已验收，任务状态和验收证据统一维护在 GitHub Issues。
 - Agent 任务恢复、冻结策略、跨租户路由、Provider Key 及数据库迁移需额外安全验收。
 - 不主动改默认分支、历史提交、已接受的 ADR 或现有持久化数据。
 
@@ -35,4 +35,4 @@ GitHub 仓库开启 `allow_auto_merge`、`delete_branch_on_merge` 和 `allow_upd
 
 协作看板、依赖安全、定时只读 Insights、Wiki 首次发布与 GitHub Security 的使用步骤统一见 [GitHub 功能与运维入口](github-platform.md)。
 
-GitHub Project 的状态不覆盖 `docs/backlog.md`，Dependabot 与健康报表仅在配置进入默认分支后生效；项目公开前仍必须完成 INK-252 的凭据轮换和历史风险核查。
+GitHub Project 展示已有 Issues 和 Milestones，不再与文档维护两套状态。Dependabot 与定时健康报表以默认分支中的配置为准；凭据和历史风险按实际安全任务持续处理。

@@ -7,7 +7,7 @@ Scope: internal/platform/logger/project_projection.go、internal/platform/middle
 
 ## Problem
 
-现有标准输出日志无法在管理端分页查询，但直接持久化通用 slog 会把任意业务参数或故障文本复制到数据库。审计事件已有独立的只追加事实语义，不适合承载高频项目日志。约束见 [ADR-0033](../../../../docs/decisions/0033-postgresql-safe-project-logs.md)。改前检索现有活跃 notes 未发现日志入库的相同机制记录。
+现有标准输出日志无法在管理端分页查询，但直接持久化通用 slog 会把任意业务参数或故障文本复制到数据库。审计事件已有独立的只追加事实语义，不适合承载高频项目日志。约束见 [ADR-0033](../../reference/decisions/0033-postgresql-safe-project-logs.md)。改前检索现有活跃 notes 未发现日志入库的相同机制记录。
 
 ## Decision
 

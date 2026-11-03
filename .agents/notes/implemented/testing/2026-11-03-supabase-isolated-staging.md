@@ -15,7 +15,7 @@ InkLore R1 的 SQL 对象默认使用不带 schema 前缀的名称，权限迁�
 
 Supabase 东京 pgsql 独立使用 inklore_ci 私有 schema，所有 R1 数据表、约束与迁移登记只在该 schema。原始 17 个 SQL 及其文件 SHA256 不改写；连接会话指定私有 schema、extensions、public 的顺序。由于 R1 000009_permissions 对 public 授权，应用专用 scripts/sql/supabase-staging-permissions.sql 在完成迁移后将 NOLOGIN 角色的访问权限补到私有 schema，并保持不可变事实与迁移登记表的更新/删除限制。触发器四个原始函数的 search_path 由单独可复现的硬化脚本固定。
 
-GitHub supabase-staging Environment 限制只接受受保护分支，提供只读预检工作流。专用登录身份及 SUPABASE_STAGING_DATABASE_URL 尚未配置；不能用高权限 postgres 用户或 PR 输入直接代替。设计依据见 [ADR-0038](../../../../docs/decisions/0038-supabase-isolated-staging-schema.md)。
+GitHub supabase-staging Environment 限制只接受受保护分支，提供只读预检工作流。专用登录身份及 SUPABASE_STAGING_DATABASE_URL 尚未配置；不能用高权限 postgres 用户或 PR 输入直接代替。设计依据见 [ADR-0038](../../reference/decisions/0038-supabase-isolated-staging-schema.md)。
 
 ## Alternatives considered
 

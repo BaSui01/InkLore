@@ -9,7 +9,7 @@ Scope: .agents/notes、三个项目技能、离线笔记门禁与CI
 
 INK-142 把局部取舍放入任务验收记录，便于首次落地，但跨任务检索长期约束不集中。用户明确要求像 DSH 一样增加 .agents/notes。现有 ADR 和 backlog 分别负责架构裁决与任务状态，工程记忆需要独立落点，避免重复权威。
 
-改前检索核对了 [INK-142 交付](../../../../docs/skill-delivery-INK-142.md) 与 [来源适配](../../../skills/inklore-decisions/references/source-adaptation.md)：前者保留为历史事实，后者关于不建 notes 的活跃流程说明由本决定替代。开工时没有既有 notes。本条只交付工程流程，不宣称业务功能完成。
+改前检索核对了 [INK-142 交付](2026-09-29-skill-delivery-ink-142.md) 与 [来源适配](../../../skills/inklore-decisions/references/source-adaptation.md)：前者保留为历史事实，后者关于不建 notes 的活跃流程说明由本决定替代。开工时没有既有 notes。本条只交付工程流程，不宣称业务功能完成。
 
 ## Decision
 
@@ -37,4 +37,4 @@ INK-142 把局部取舍放入任务验收记录，便于首次落地，但跨任
 
 Windows、Node v24.9.0 下正式笔记check、check --base HEAD、技能检查及git diff --check退出0；Go go1.26.4下go build ./...退出0。HEAD无历史manifest时显式报告bootstrap，未伪称真实历史封印已获验证。
 
-独立临时仓库的28个结构/链接/归档/篡改场景及4个最终针对性场景全部通过，含单改正文与同时改正文/manifest的不同结果、占用锁拒绝且原文件不变、正常归档后释放锁；专项结果与终态检查见 [INK-143验收](../../../../docs/notes-delivery-INK-143.md)。临时夹具清理，不创建项目禁止的测试文件。CI配置Node22但远端尚未执行，不把本地Node24结果写成远端结果。业务运行路径不受本任务影响。
+独立临时仓库的28个结构/链接/归档/篡改场景及4个最终针对性场景全部通过，含单改正文与同时改正文/manifest的不同结果、占用锁拒绝且原文件不变、正常归档后释放锁；专项结果与终态检查见 [INK-143验收](2026-09-18-notes-delivery-ink-143.md)。临时夹具清理，不创建项目禁止的测试文件。CI配置Node22但远端尚未执行，不把本地Node24结果写成远端结果。业务运行路径不受本任务影响。

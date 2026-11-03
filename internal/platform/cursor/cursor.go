@@ -1,4 +1,4 @@
-// Package cursor signs scoped keyset cursors for the frozen R1 list contract.
+// Package cursor signs scoped keyset cursors for the current list contract.
 package cursor
 
 import (

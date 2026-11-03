@@ -1,4 +1,4 @@
-// Package observability exposes fixed, safe R1 operational projections.
+// Package observability exposes fixed, safe operational projections.
 package observability
 
 import (

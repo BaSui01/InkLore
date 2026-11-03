@@ -4,5 +4,5 @@ contact_links:
     url: "https://github.com/BaSui01/InkLore/blob/dev/SECURITY.md"
     about: "先阅读安全政策；请勿在公开 Issue 中发布敏感信息。"
   - name: "任务与设计文档"
-    url: "https://github.com/BaSui01/InkLore/blob/dev/docs/backlog.md"
-    about: "先查询 INK 编号与冻结设计，避免重复任务。"
+    url: "https://github.com/BaSui01/InkLore/issues"
+    about: "先搜索现有任务与验收范围，避免重复。"

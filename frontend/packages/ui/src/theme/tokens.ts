@@ -1,6 +1,6 @@
 /**
  * @inklore/ui - 设计系统语义 Token
- * 严格遵循 17-DESIGN-SYSTEM-AND-ACCESSIBILITY.md §2 冻结规范
+ * Creator 与 Admin 共用的语义颜色及主题映射。
  */
 
 import { Audience } from "@inklore/contracts";

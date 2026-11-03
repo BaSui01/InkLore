@@ -2,7 +2,7 @@
 
 Status: implemented
 
-Task: INK-XXX
+Task: #NUMBER
 Scope: 填写真实机制或代码路径
 
 ## Problem
@@ -11,7 +11,7 @@ Scope: 填写真实机制或代码路径
 
 ## Decision
 
-用现在时描述已在本范围落地的选择，链接相关ADR和事实来源。
+用现在时描述已在本范围落地的选择，按需链接相关决定和事实来源。
 
 ## Alternatives considered
 

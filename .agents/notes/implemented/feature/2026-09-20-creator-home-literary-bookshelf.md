@@ -9,7 +9,7 @@ Scope: frontend/apps/creator/src/routes/HomeRoute.tsx、components/home、domain
 
 用户要求参考马良写作完善自己的首页。原首页混用侧栏工作台壳、硬编码模型与预填剧情，生成按钮实际只创建元数据；列表异常被清空后与成功空书架无法区分。原 SDK 列表丢弃游标并有隐式登录，不适合作为新首页数据边界。
 
-改前检索 notes 的首页/HomeRoute/书架/creator，没有既有首页设计决策；Vite 过期缓存笔记仅与开发服务相关，仍适用但不覆盖本次页面。设计依据为 [作者页](../../../../docs/system-design/15-CREATOR-FUNCTION-UX-SPEC.md)、[共享状态](../../../../docs/system-design/20-FRONTEND-REUSE-AND-STATE-CONTRACTS.md)，本次用户明确指定的参考视觉限定在首页。
+改前检索 notes 的首页/HomeRoute/书架/creator，没有既有首页设计决策；Vite 过期缓存笔记仅与开发服务相关，仍适用但不覆盖本次页面。设计依据为 [作者页](../../reference/system-design/15-CREATOR-FUNCTION-UX-SPEC.md)、[共享状态](../../reference/system-design/20-FRONTEND-REUSE-AND-STATE-CONTRACTS.md)，本次用户明确指定的参考视觉限定在首页。
 
 ## Decision
 
@@ -33,4 +33,4 @@ Scope: frontend/apps/creator/src/routes/HomeRoute.tsx、components/home、domain
 
 ## Verification
 
-[验收记录](../../../../docs/acceptance-INK-206.md)含 Chrome 截图、POST 201、刷新留存、13 条真实分页、指定作品进入、500 首次/刷新失败和离线恢复。go build 与双端生产构建通过，真实组合双语词典 key 一致。原 i18n 检查器的导出名误报登记 INK-212，任务状态保持 review；notes、skills 与定向 diff 校验通过。无新依赖、Go 接线或测试文件。
+[验收记录](../testing/2026-09-20-acceptance-ink-206.md)含 Chrome 截图、POST 201、刷新留存、13 条真实分页、指定作品进入、500 首次/刷新失败和离线恢复。go build 与双端生产构建通过，真实组合双语词典 key 一致。原 i18n 检查器的导出名误报登记 INK-212，任务状态保持 review；notes、skills 与定向 diff 校验通过。无新依赖、Go 接线或测试文件。

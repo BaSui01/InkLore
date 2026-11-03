@@ -11,7 +11,7 @@ Scope: Creator navigation、App、会话入口、Vite与静态托管
 
 ## Decision
 
-按[ADR-0023](../../../../docs/decisions/0023-creator-history-routing.md)使用集中History模块，统一push/replace与popstate订阅。returnTo验证同源及页面白名单，作品ID放入editor查询参数。守卫/成功回跳替换历史项，旧Hash只做首次转换。Vite显式SPA，生产配置只给已知页面回退，API与静态资源独立。
+按[ADR-0023](../../reference/decisions/0023-creator-history-routing.md)使用集中History模块，统一push/replace与popstate订阅。returnTo验证同源及页面白名单，作品ID放入editor查询参数。守卫/成功回跳替换历史项，旧Hash只做首次转换。Vite显式SPA，生产配置只给已知页面回退，API与静态资源独立。
 
 ## Alternatives considered
 
@@ -23,4 +23,4 @@ Hash无需托管回退，但用户明确不接受。第三方路由库功能完�
 
 ## Verification
 
-[验收记录](../../../../docs/acceptance-INK-215.md)记录构建、Node内存断言、Chrome路径/刷新/历史/旧链接转换、开发与预览HTTP、Nginx配置和容器HTTP验证。未新增测试文件。真实认证成功回跳受现有身份接口500限制，未宣称端到端登录已通过；线上部署与TLS不在本轮实测范围。
+[验收记录](../testing/2026-09-29-acceptance-ink-215.md)记录构建、Node内存断言、Chrome路径/刷新/历史/旧链接转换、开发与预览HTTP、Nginx配置和容器HTTP验证。未新增测试文件。真实认证成功回跳受现有身份接口500限制，未宣称端到端登录已通过；线上部署与TLS不在本轮实测范围。

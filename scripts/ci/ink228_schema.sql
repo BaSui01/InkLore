@@ -1,6 +1,8 @@
 \set ON_ERROR_STOP on
 -- This gate intentionally uses ONLY GitHub Actions' throwaway Postgres.
 -- No production or Supabase connection strings are accepted.
+-- 工作流先核对实际迁移身份与校验和，再传入仓库迁移数量。
+SELECT set_config('inklore_ci.expected_migrations', :'expected_migrations', false);
 DO $$
 DECLARE
   n integer;
@@ -10,11 +12,8 @@ BEGIN
     RAISE EXCEPTION 'integration gate requires isolated inklore_ci database';
   END IF;
   SELECT count(*) INTO n FROM schema_migrations;
-  IF n <> (SELECT count(*) FROM (VALUES
-    ('000001'),('000002'),('000003'),('000004'),('000005'),('000006'),
-    ('000007'),('000008'),('000009'),('000010'),('000011'),('000012'),
-    ('000013'),('000014'),('000015'),('000016'),('000017')) AS t(v)) THEN
-    RAISE EXCEPTION 'expected 17 versioned migrations, found %', n;
+  IF n = 0 OR n <> current_setting('inklore_ci.expected_migrations')::integer THEN
+    RAISE EXCEPTION 'migration count differs from verified repository stream, found %', n;
   END IF;
   IF to_regclass('public.llm_channel_models') IS NULL
      OR to_regclass('public.llm_task_policy_versions') IS NULL
@@ -30,6 +29,6 @@ BEGIN
   IF bad < 2 THEN
     RAISE EXCEPTION 'tenant-scoped model/channel foreign keys missing';
   END IF;
-  RAISE NOTICE 'INK-228 isolated schema and tenant FK gate passed (% migrations)', n;
+  RAISE NOTICE 'Agent/LLM isolated schema and tenant FK gate passed (% migrations)', n;
 END
 $$;

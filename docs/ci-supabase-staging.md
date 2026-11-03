@@ -1,40 +1,25 @@
-# InkLore 隔离在线集成验收（INK-255）
+# 隔离集成验收
 
-## 目标与范围
+## 自动验收范围
 
-GitHub Actions 对每个 PR 运行**临时** PostgreSQL 17（含 pgvector）与 Redis 7，应用仓库原生 R1 迁移、重复执行检查、Go 构建/架构门禁及真实 API 启动和请求验收。作业运行完数据销毁，**不依赖个人电脑和任何真实数据库密钥**。
+[隔离集成工作流](../.github/workflows/isolated-integration.yml)在临时 PostgreSQL 17（含 pgvector）与 Redis 7 上应用仓库迁移，检查重复执行、回滚、角色权限及 API 的健康、就绪和身份请求。PR、dev/private push 与手动触发使用各自提交的代码；临时数据库随作业销毁，不使用共享数据库密钥。
 
-独立的 Supabase 数据库只用于受信任手动启动的只读预检，不让来自 Fork 的 PR 获得数据库连接串，**不**自动部署或迁移真实 Supabase 数据。
+[并发策略验收](../.github/workflows/ink228-integration.yml)核对迁移记录、租户组合外键及任务策略并发行为。迁移历史仍位于 [migrations/r1](../migrations/r1/)，保留版本、文件名与校验和。当前文件数量不是永久架构约束。
 
-## 已连接的 Supabase 测试项目
+[常规 CI](../.github/workflows/ci.yml)执行 Go build/vet/gofmt、架构检查、i18n、工程记录与双端构建。具体覆盖以工作流和脚本为准；构建成功不证明 Agent、模型、编辑器或完整作品导出已经验收。
 
-- 项目：`pgsql`，东京区域 `ap-northeast-1`；项目 ID：`rjxtggttklpqbfjesrgp`。
-- 使用专属私有 schema `inklore_ci`，并撤销 `PUBLIC`、`anon`、`authenticated`、`service_role` 对它的权限。
-- 已成功执行 SQL 证明匿名与普通授权角色无 schema USAGE 权限。
-- PostgreSQL 的 pgcrypto、vector、pg_trgm 已验证均安装在 extensions schema。
-- 已向 inklore_ci 私有 schema 运行 17/17 组 R1 原始 SQL，登记完整源文件校验和。真实 SQL 复核确认 80 张私有业务表、public 中 0 张业务表；R1 000009 权限迁移硬编码 public 的问题用 scripts/sql/supabase-staging-permissions.sql 做测试环境隔离覆盖（ADR-0038），不篡改历史迁移。
-- Supabase Free 项目可能因不活跃暂停，不保证 24 小时在线。
+## 私有 schema 权限覆盖
 
-## Workflows
+初始权限迁移包含 public schema 的历史设定。[测试环境权限覆盖](../scripts/sql/supabase-staging-permissions.sql)用于隔离的 inklore_ci schema，收回 public 访问并限制运行/保留角色；不改写历史迁移。
 
-### `isolated-integration.yml`
+覆盖脚本当前只审查过前 17 个迁移，故保留明确版本数保护，防止新增表自动取得未经审查的权限。追加迁移时应重新审查授权集合并更新相应保护，不能为通过 CI 直接放宽它。普通迁移完整性另以仓库真实版本、名称、校验和核对；权限覆盖适用范围与普通迁移数量是两件事。
 
-针对 dev 和 private 的 PR、两条保护分支的 push，以及手动触发，使用临时 PG17/Redis7 验证真实 R1 迁移、幂等、权限回收、事务回滚和 Creator 会话 HTTP 行为。两端静态构建由原 CI 负责；全过程不用 Supabase 私密凭据。
+## 共享测试环境只读预检
 
-### `supabase-staging-preflight.yml`
+[Supabase 预检工作流](../.github/workflows/supabase-staging-preflight.yml)仅接受手动触发，并使用 supabase-staging Environment。维护者应限制可信分支和批准范围，配置仅能访问目标 schema 的受限角色及 TLS 连接串到 SUPABASE_STAGING_DATABASE_URL；不使用超级用户作为持续集成身份，不在日志输出凭据。
 
-仅 `workflow_dispatch`，并绑定 `supabase-staging` Environment。该 Environment 应设置仅允许可信分支，推荐需要维护者审批。把**单独、限权、仅能访问 `inklore_ci` 的数据库角色**的 TLS 连接字符串配置到该 Environment Secret：`SUPABASE_STAGING_DATABASE_URL`。
+工作流本身只读检查。共享环境是否在线、Secrets 是否已配置、该提交能否手动触发，都应在操作时重新确认。本轮治理未连接或更改 Supabase。此前部署信息与原始验收叙述见 [历史记录](../.agents/notes/reference/implementation/ci-staging-history.md)，不能替代当前环境证明。
 
-远程预检作业只读检查 schema、角色权限、迁移数与扩展状态。supabase-staging Environment 仅接受受保护分支，目前只读登录账号和 SUPABASE_STAGING_DATABASE_URL Secret 尚未配置。workflow_dispatch 需要工作流已存在于默认 private 分支，当前 PR 只进入 dev 后仍无法在 Actions 页面直接手动触发。
+## 业务验收边界
 
-注意：不要使用 Supabase 高权限 `postgres` 超级用户作为持续集成身份。不要把连接字符串提交到代码、Issue 或日志；连接串需要 `sslmode=require` 或更强 TLS 校验。
-
-## 权限与安全验收（2026-11-03）
-
-此前版本的私有 schema 权限补丁与触发器函数安全补丁已实际应用至 Supabase；复查运行/保留身份访问限制和 Security Advisor 的安全警告数为 0。最新版权限补丁额外撤销 public 现存表和序列的授权，已在隔离 Actions #41490710935 验证前后有效权限，尚未再次部署到共享 Supabase，等待 PR #37 人工安全评审。
-
-## 后续端到端验收
-
-迁移验收完成后，另用受控服务运行 Go API、Agent Worker 和 Redis。分别测试 `/healthz` 与 `/readyz`、真实 Postgres 读写回滚、跨租户拒绝、Agent 断线/恢复、API SSE、Creator/Admin 双端浏览器真实业务操作。
-
-GitHub-hosted Runner 不适合当永久运行服务器。免费构建与免费常驻托管属于两种不同资源；不要把 CI 成功等同于端到端验收。
+长期创作链需要额外观察 UI、API、数据库、Worker 与实际模型结果，覆盖跨租户拒绝、断线恢复、事实确认、作者采纳与可下载导出。每条运行结论记录源码 SHA、环境、操作和结果；CI 绿灯仅适用于实际覆盖的场景。

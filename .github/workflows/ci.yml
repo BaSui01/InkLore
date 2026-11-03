@@ -67,7 +67,7 @@ jobs:
       - name: 前端 i18n key 完整性
         run: go run ./cmd/i18ncheck frontend/packages/i18n/src/locales/zh-CN.ts frontend/packages/i18n/src/locales/en-US.ts
 
-      - name: 架构红线校验（AGENTS.md R1-R5）
+      - name: 架构边界、源码体积与 Go 语法校验
         run: go run ./cmd/archguard -reachability
 
   frontend:

@@ -1,4 +1,4 @@
-// Package files owns R1 PostgreSQL bytea files and safe file validation.
+// Package files owns PostgreSQL bytea files and safe file validation.
 package files
 
 import (

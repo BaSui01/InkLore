@@ -25,4 +25,4 @@ WithinReadSnapshot只在根启动REPEATABLE READ READ ONLY，身份/scope读在�
 
 6组platformextensions真实PG验证RR/强制只读/旧缓存重放/删除边界；outline独立10组与29操作完整Schema通过，含特殊Unicode独立JCS、锚点、故障回滚。
 
-详见 [任务验收](../../../../docs/acceptance-INK-164.md)。
+详见 [任务验收](../testing/2026-09-18-acceptance-ink-164.md)。
