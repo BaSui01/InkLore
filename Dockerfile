@@ -26,7 +26,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
       -o /out/server ./cmd/server
 
 # ── 运行阶段 ────────────────────────────────────────────────
-FROM alpine:3.20
+FROM alpine:3.24
 
 # ca-certificates：访问各家模型 API 必需；tzdata：北京时间换算必需
 RUN apk add --no-cache ca-certificates tzdata \
