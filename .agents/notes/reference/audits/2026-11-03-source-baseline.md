@@ -4,6 +4,8 @@
 
 业务源码基线为 [dev@60279c40f5c81982c69d035c0c886931d22334cd](https://github.com/BaSui01/InkLore/tree/60279c40f5c81982c69d035c0c886931d22334cd)。本轮在同基线的既有文档整理提交 b0732b31 上追加治理改造，保留其 ADR 和过程记录迁移，避免再开重复搬迁 PR。下文文件与行号指业务基线；治理改动以 PR diff 为准。本文是带日期的审计证据，不维护第二份任务状态看板。
 
+交付期间的并行变更：dev 通过 PR #114 前进至 4d68771b91bf6139fba2d15b4355a0bfdd2b7367，仅修改 frontend/package.json 与 pnpm-lock.yaml 的 lucide-react 依赖；远端工作分支已有 7eec9d624fa44b73e5f6e2ebf84bff37deb93a04 同步该 dev。本文保留原始源码取证 SHA，业务源文件与调用链未因该依赖提交变化。本轮未执行该合并，也未回退并行改动；最终 PR 的增量与当前 dev 比较，依赖文件没有额外改动。
+
 ## 1. 结论与证据口径
 
 本次移除的是历史阶段对当前工作的约束：唯一 R1 设计入口、设计文件哈希冻结、固定实施顺序、强制 INK/backlog 登记、全面测试禁令、固定领域数量和一律 ADR-First。当前规则改为真实源码与实际装配确定现状、需求与风险确定修改、按影响验证、通过受保护 PR 交付。
@@ -28,7 +30,7 @@
 | --- | --- | --- |
 | 仓库读取 | 可读；当前为 public | GitHub 连接器 get_repo、目录/文件读取和本地 clone 成功；没有借历史截图推断源码 |
 | 默认/稳定分支 | private，读取时 f44f02809d6b64b80b23f9044dcc10ad9ce8940a | 仓库 metadata 与分支读取 |
-| 开发分支 | dev，60279c40f5c81982c69d035c0c886931d22334cd | 审计前读取，交付准备时再次读取未变化 |
+| 开发分支 | 初始 dev 为60279c40；最终 dev 为4d68771b91bf6139fba2d15b4355a0bfdd2b7367 | 交付期间PR #114合入；两次基线的差异仅lucide-react依赖文件，业务审计仍适用 |
 | 提交/PR 写入能力 | metadata 的 push/maintain 为 true；Git 对象、分支及 PR 写工具可用 | 本轮复用独立分支 chore/agent-decision-docs-cleanup-20261103 与 Draft #110；实际追加提交及 PR 状态见链接，不直接写保护分支 |
 | Issue 写入能力 | 连接器暴露 create/update Issue，metadata 允许 push；未执行写探测 | 用户尚未批准任务写入；未为探测权限创建或修改 Issue |
 | Milestone 写入能力 | 可读取；当前连接器未提供创建/修改工具；本地 gh 未登录 | 公开 REST 读取到 5 个里程碑；不能从读取或 metadata 推断可创建。待获写入批准后若仍受限，再生成可执行 gh 脚本 |
@@ -169,13 +171,13 @@
 | pnpm install --frozen-lockfile | PASS | 未修改依赖声明或lockfile |
 | pnpm run build | PASS | Creator/Admin tsc与Vite；当前UI文案改后重跑 |
 | Skills / notes --base 60279c40 | PASS；12技能Markdown、51相对目标、101生命周期笔记，历史封印与基线一致 | 元数据/链接/历史封印；不判断业务完成 |
-| 全树Markdown目标 | PASS；最终240个Markdown、1118个目标，其中954个相对路径全部存在 | 包含隐藏目录与新归档；不验证外网或fragment |
+| 全树Markdown目标 | PASS；240个Markdown的954个相对路径全部存在 | 包含隐藏目录与新归档；不验证外网或fragment |
 | 治理工具正反例 | PASS，28/28 | 合法Task/长历史资料/测试文件可通过；错误权限/CAS/refs/Owner/FK/跨infra/语法/历史篡改仍拒绝 |
 | 迁移CI正反例与脚本语法 | PASS；8/8行为检查、YAML/Bash/Python语法 | 真实Go loader的17项清单通过；缺项、等数量错版本/名称/hash、多项和重复版本拒绝；隔离新增第18项含CRLF通过 |
 | 生成器隔离对比 | PASS | 34输入相同，70产物逐字节相同；仅OpenAPI标题描述/README及不再生成旧FR报告有预期差异；重复生成确定 |
 | Go业务token等价 | PASS | 18文件中17个仅注释，domains.go仅4个导入别名等价；排除主动改逻辑的archguard |
-| migrations、配置、依赖清单、权限SQL及API/DDL | PASS；仅OpenAPI标题和说明两项元数据变化 | 逐JSON结构比较确认接口版本、路由、请求响应与错误码不变；其他机器资产、历史SQL和依赖相对dev无差异；不代表现有契约无缺陷 |
-| 最新PR CI/隔离PG/Redis | 以PR对应最新head记录为准 | 不沿用旧提交绿灯；不将限定迁移/身份冒烟扩写为完整创作运行通过 |
+| migrations、配置、依赖清单、权限SQL及API/DDL | PASS；仅OpenAPI标题和说明两项元数据变化 | 逐JSON结构比较确认接口版本、路由、请求响应与错误码不变；其他机器资产、历史SQL和依赖相对最终dev（4d68771）无差异；不代表现有契约无缺陷 |
+| PR代码提交167c24e的CI/隔离PG/Redis | PASS；三个required jobs与两个集成工作流全部success | 迁移、私有schema权限、回滚、API身份、双租户路由及策略并发等限定场景RUNTIME_VERIFIED；真实模型、完整创作与浏览器未验收；后续head状态继续回读PR |
 | PowerShell脚本、DSH实际调度 | NOT_VERIFIED | 环境没有pwsh与已配置DSH；DSH非提示词配置等价已单独验证 |
 | 真实模型、完整浏览器、共享Staging | NOT_RUNTIME_VERIFIED | 未获得这些场景的当前运行证据 |
 
@@ -187,6 +189,8 @@
 2. check-platform-contracts.mjs 报错误码目录漂移：源目录102个，Go97个，缺 agent.question_already_answered、agent.question_binding_mismatch、agent.question_expired、agent.task_policy_version_changed、auth.invalid_token。
 3. 本轮未修改 API 幂等声明或错误码业务来掩盖问题。二者原本不在三个required CI jobs中；新增的 make contracts-check 保持显式可调用，不把既有失败偷偷设为必须通过，也未禁用原有必需检查。
 4. 普通迁移检查与权限overlay范围保护分开。overlay固定17依然可能在未来追加迁移时阻断，原因是需要审核授权集合，应有具体安全评审后再改。
+
+本轮代码提交 167c24e1c35bfa63bfe2d9ad159684e1c9aa6f05 的 [CI](https://github.com/BaSui01/InkLore/actions/runs/41598450470)、[隔离迁移/身份](https://github.com/BaSui01/InkLore/actions/runs/41598450575) 与 [Agent/LLM 数据库集成](https://github.com/BaSui01/InkLore/actions/runs/41598450546)均为success，包含已同步的并行依赖升级。受控回环HTTP验证租户模型路由，不是外部模型供应商或小说创作质量验收。
 
 基线 dev 曾有 [CI 成功记录](https://github.com/BaSui01/InkLore/actions/runs/41589879732) 和 [隔离集成成功记录](https://github.com/BaSui01/InkLore/actions/runs/41589879727)。它们只证明当时工作流覆盖的范围，不是本轮新head或完整业务通过的证据。
 
