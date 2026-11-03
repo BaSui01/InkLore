@@ -1,0 +1,16 @@
+# Dockerfile-specific context for Admin; keep frontend workspace available.
+.git
+.github
+.env
+.env.*
+**/.env
+**/.env.*
+**/node_modules
+**/dist
+**/dist-admin
+bin
+tmp
+vendor
+configs/config.yaml
+*.pem
+*.key
