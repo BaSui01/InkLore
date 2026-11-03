@@ -46,5 +46,5 @@ jobs:
               'test -s /usr/share/nginx/html/index.html && test -s /etc/nginx/nginx.conf.template'
             docker run --rm --entrypoint sh -e PORT=8080 \
               -e API_UPSTREAM=http://127.0.0.1:8080 "$image" -ec \
-              "envsubst '$PORT $API_UPSTREAM' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -t"
+              "envsubst '\$PORT \$API_UPSTREAM' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -t"
           fi
