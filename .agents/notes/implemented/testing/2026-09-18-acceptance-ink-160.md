@@ -1,17 +1,46 @@
-# INK-160 · 平台事务与API基座验收
+# Agent Note: INK-160 平台事务与API基座历史验收
 
-验收日期：2026-09-18，北京时间。任务状态唯一来源为 [backlog](backlog.md)。本轮只交付INK-160，不把平台表存在当作账号、队列、文件或业务域功能完成。
+Status: implemented
 
-## 实现与运行路径
+Task: INK-160
+Scope: docs/acceptance-INK-160.md 的历史验收记录与迁移
 
-- [R1组合根](../internal/app/platform.go)：`cmd/server → app.New → config.BootstrapR1 → app.NewWithConfig`，装配UoW/scope/idempotency。目前仅挂载healthz/readyz，旧业务路由不挂载；旧构造器保留为未调用代码，旧import尚未清理。
-- [迁移](../migrations/r1/000001_platform.sql)逐行等于冻结platform.sql；server与cmd/migrate使用同一独立流，不混跑旧18条迁移。Up持PG事务锁并校验所有版本、名称和checksum；Status/Verify拒绝混流或漂移。Verify验证迁移元数据，不声称检测任意手工表结构篡改。
-- [UoW](../internal/platform/uow/uow.go)通过不透明context共享事务；嵌套失败/取消和panic不能留下半账。[Recoverable](../internal/platform/uow/recoverable.go)只隔离确定性命令失败，致命故障仍阻止根提交。
-- [scope](../internal/platform/scope/scope.go)验证当前用户、租户、成员、会话、audience及owner；父作品→子scope固定锁序；投影CAS、历史revision/hash与码点长度证明；当前权限与软删优先于历史证明。
-- [幂等](../internal/platform/idempotency/executor.go)前置授权→非阻塞事务advisory锁→持锁再授权→claim/replay→命令；业务和结果同提交，成功及确定性409/422重放原封包，5xx不缓存，过期processing不抢占。
+## Problem
+
+阶段验收记录散落在 docs 读者文档目录，与长期有效的设计规范混放。
+
+## Decision
+
+将原始验收记录纳入工程记忆，保留当时的运行证据、未覆盖范围和实现路径；本次只迁移文档，不声称今日再次验收通过。
+
+## Alternatives considered
+
+继续放在 docs 可以沿用旧路径，但会继续混淆文档职责；直接删除将损失复现证据。因此选择保留全文并迁入 notes。
+
+## Consequences
+
+访问路径变更，需要同步入站引用；源记录中的命令和结果需结合当前版本重新验证。
+
+## Verification
+
+来源为 private 分支既有验收记录，以下保持历史事实并调整相对引用。本次验证限于文档格式、路径与 Git 提交。
+
+### 历史原始记录
+
+### INK-160 · 平台事务与API基座验收
+
+验收日期：2026-09-18，北京时间。任务状态唯一来源为 [backlog](../../../../docs/backlog.md)。本轮只交付INK-160，不把平台表存在当作账号、队列、文件或业务域功能完成。
+
+### 实现与运行路径
+
+- [R1组合根](../../../../internal/app/platform.go)：`cmd/server → app.New → config.BootstrapR1 → app.NewWithConfig`，装配UoW/scope/idempotency。目前仅挂载healthz/readyz，旧业务路由不挂载；旧构造器保留为未调用代码，旧import尚未清理。
+- [迁移](../../../../migrations/r1/000001_platform.sql)逐行等于冻结platform.sql；server与cmd/migrate使用同一独立流，不混跑旧18条迁移。Up持PG事务锁并校验所有版本、名称和checksum；Status/Verify拒绝混流或漂移。Verify验证迁移元数据，不声称检测任意手工表结构篡改。
+- [UoW](../../../../internal/platform/uow/uow.go)通过不透明context共享事务；嵌套失败/取消和panic不能留下半账。[Recoverable](../../../../internal/platform/uow/recoverable.go)只隔离确定性命令失败，致命故障仍阻止根提交。
+- [scope](../../../../internal/platform/scope/scope.go)验证当前用户、租户、成员、会话、audience及owner；父作品→子scope固定锁序；投影CAS、历史revision/hash与码点长度证明；当前权限与软删优先于历史证明。
+- [幂等](../../../../internal/platform/idempotency/executor.go)前置授权→非阻塞事务advisory锁→持锁再授权→claim/replay→命令；业务和结果同提交，成功及确定性409/422重放原封包，5xx不缓存，过期processing不抢占。
 - 公共HTTP使用冻结R1封包、真实request/trace关联、精确Origin、2MiB JSON上限、未知/重复/大小写别名字段拒绝与安全错误；不替代后续领域DTO/JSON Schema校验。
 
-## 可复现命令
+### 可复现命令
 
 需要Go、Node、Docker，以及本机已可用的 `pgvector/pgvector:pg16` 镜像。验收程序只允许连接名称以 `inklore_r1_acceptance` 开头的专用数据库，并生成随机UUID隔离样本。
 
@@ -31,7 +60,7 @@ docker stop inklore-r1-acceptance-160
 
 以上trust只用于本机回环端口的临时验收容器，不作为部署配置。命令无真实密码/API Key/用户正文。验收命令通过真实PG和loopback HTTP执行，不新增任何 `*_test.go` / `*.test.ts` 文件，不开放额外产品API。
 
-## 实测证据
+### 实测证据
 
 | 检查 | 预期与实际 |
 | --- | --- |
@@ -52,18 +81,18 @@ docker stop inklore-r1-acceptance-160
 
 SQL反例产生固定 `database operation failed` 日志属于预期拒绝，不输出SQL、正文、密钥或连接串。
 
-## 发现及修复
+### 发现及修复
 
 初次集成构建暴露验收命令的重复短变量声明，修正后全仓编译通过。旧Bootstrap会读取.env并覆盖显式DSN；迁移流检查拒绝该旧库，未提交DDL，随后改用BootstrapR1并在独立PG完成迁移。只读审阅指出缺key用例可能因空DSN假阳性，已改为有效DSN正例后单独去key并检查错误来源。
 
-## 启动与使用约束
+### 启动与使用约束
 
 R1从进程环境/挂载配置加载，**不读取旧.env**。需要真实DATABASE_DSN，四个独立且至少32字节的JWT_SIGNING_KEY、CSRF_KEY、IDEMPOTENCY_HASH_KEY、CURSOR_SIGNING_KEY，以及精确且不同的CREATOR_ORIGIN/ADMIN_ORIGIN。APP_ENV只接受development/production/test；生产必须挂载配置并先执行R1迁移，不能靠拼错环境名进入自动迁移。
 
 UoW context同步使用、不逃逸、不并发。Authorize必须绑定实际请求tenant/actor及目标资源，不能在重放前重新做CAS；读写进入同一事务后再次验证并持锁。码点长度由内容Owner从正文计算，不信任客户端声明。人为残留processing会持续409，需诊断，不能因过期自动重复未知工作。
 
-## 未覆盖与后续
+### 未覆盖与后续
 
-未做真实模型调用、账号登录/refresh/CSRF/审计业务、文件和作业运行、七域业务、双端浏览器、生产部署、旧库导入或容量恢复验收；这些属于后续任务。R1源契约未改，改密幂等头与缺失错误响应差异记录于 [INK-178](r1-contract-differences-INK-178.md)，进入受影响任务前需裁决。
+未做真实模型调用、账号登录/refresh/CSRF/审计业务、文件和作业运行、七域业务、双端浏览器、生产部署、旧库导入或容量恢复验收；这些属于后续任务。R1源契约未改，改密幂等头与缺失错误响应差异记录于 [INK-178](../architecture/2026-09-18-r1-contract-differences-ink-178.md)，进入受影响任务前需裁决。
 
-工程理由见 [事务与幂等笔记](../.agents/notes/implemented/architecture/2026-09-18-r1-platform-atomic-command-boundary.md)。
+工程理由见 [事务与幂等笔记](../architecture/2026-09-18-r1-platform-atomic-command-boundary.md)。

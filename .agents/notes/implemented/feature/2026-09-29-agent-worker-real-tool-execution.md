@@ -13,7 +13,7 @@ Scope: internal/app Agent Worker 装配、internal/agent 工具冻结版本执�
 
 组合根现向 Scheduler 和 Admin 工具状态投影注入同一 `ToolExecutor`，在路由与依赖校验成功后启动独立后台 Worker；关闭 App 时先停止 Worker。PG 作业按 lease owner/epoch 领取、心跳与终结；后台终态与平台 job 在事务内一致提交。Scheduler 在 Think 时只暴露定义冻结版本里受控且可执行的工具，模型返回的 key/version 必须精确命中；Act 按租户与冻结版本重新验证 Schema、启用状态、副作用与执行器，Observe 将真实结果作为不可信数据加入下一轮模型上下文，不以“已登记”冒充成功。工具结果不进入 SSE 正文。
 
-当前只登记一项真实无外部写入的只读能力 `platform_utc_now`，处理器读取当前 UTC 时间并按版本输入/输出 Schema 验证；MCP、网络搜索和旧启发式小说分析均未接入。`admin seed-tool -tenant-id` 可独立在 GORM 事务中只为指定租户登记该能力，已软删/禁用或 Schema 不兼容则拒绝复活。管理页只在当前运行进程已装配 Worker 且租户当前版本匹配时标为 `available`，否则 `not_bound`。该冻结响应增量仍见 [ADR-0034（Proposed）](../../../../docs/decisions/0034-agent-tool-execution-status-and-safe-retirement.md)。
+当前只登记一项真实无外部写入的只读能力 `platform_utc_now`，处理器读取当前 UTC 时间并按版本输入/输出 Schema 验证；MCP、网络搜索和旧启发式小说分析均未接入。`admin seed-tool -tenant-id` 可独立在 GORM 事务中只为指定租户登记该能力，已软删/禁用或 Schema 不兼容则拒绝复活。管理页只在当前运行进程已装配 Worker 且租户当前版本匹配时标为 `available`，否则 `not_bound`。该冻结响应增量仍见 [ADR-0034（Proposed）](../../reference/decisions/0034-agent-tool-execution-status-and-safe-retirement.md)。
 
 ## Alternatives considered
 

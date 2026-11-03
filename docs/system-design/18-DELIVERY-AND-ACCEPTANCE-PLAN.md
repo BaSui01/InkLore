@@ -68,13 +68,13 @@ INK-141验证资产一致性而非功能运行：编译OpenAPI入口、error/FR�
 
 ## R1.x Agent策略绑定与中途澄清增量门禁
 
-依据[ADR-0027](../decisions/0027-proposed-creator-task-policy-catalog.md)，仅含Creator安全策略目录/Run不可变版本消费与Agent Question交互。INK-227登记本契约/设计交付；其实现任务为INK-228（策略目录Port、CreateRun版本冻结、Worker真实消费与000010迁移）、INK-229（Question状态/持久表、Answer CAS、PG job/checkpoint及SSE回放）、INK-230（Creator/Admin安全目录/问答UI与隔离PG/API/worker/浏览器端到端验收）。执行顺序：227设计review→228与229后端依赖完成→230跨域验收；每个实现阶段依次更新源契约/000010+000011迁移、Agent service/worker、双端UI，再执行隔离PG并发/恢复与浏览器验收。迁移000010先加LLM policy-version task_kinds（既有版本空映射），000011再加Agent Question与事件；两者只upgrade，保留旧字段与数据；回滚部署仅回应用，不执行down或删除已答Question/事件。单一task_key兼容只覆盖服务与客户端滚动升级期间，sunset在Creator升级验证后关闭并保留部署证据。
+依据[ADR-0027](../../.agents/notes/reference/decisions/0027-proposed-creator-task-policy-catalog.md)，仅含Creator安全策略目录/Run不可变版本消费与Agent Question交互。INK-227登记本契约/设计交付；其实现任务为INK-228（策略目录Port、CreateRun版本冻结、Worker真实消费与000010迁移）、INK-229（Question状态/持久表、Answer CAS、PG job/checkpoint及SSE回放）、INK-230（Creator/Admin安全目录/问答UI与隔离PG/API/worker/浏览器端到端验收）。执行顺序：227设计review→228与229后端依赖完成→230跨域验收；每个实现阶段依次更新源契约/000010+000011迁移、Agent service/worker、双端UI，再执行隔离PG并发/恢复与浏览器验收。迁移000010先加LLM policy-version task_kinds（既有版本空映射），000011再加Agent Question与事件；两者只upgrade，保留旧字段与数据；回滚部署仅回应用，不执行down或删除已答Question/事件。单一task_key兼容只覆盖服务与客户端滚动升级期间，sunset在Creator升级验证后关闭并保留部署证据。
 
 给定旧task_key Creator请求，兼容窗口内只接受tenant已启用策略并冻结版本，窗口关闭后拒绝缺version请求；未知/跨tenant拒绝且不创建Run/Job。给定策略停用/发布竞争，新Run要么绑定事务提交时current version，要么409且无Run/Job；Worker每次真实Gateway调用使用Run冻结版本，Admin发布不漂移已有运行。给定open question，页面退出/网络断开后GET恢复同Run，Last-Event-ID续传；合法回答本人CAS一次并恢复原job/checkpoint，重复键不重复执行，其他actor/scope拒绝；schema越界/伪造工具权限拒绝。取消、过期、撤权、来源变化竞态最终只有唯一终态/问答状态与原子持久事件；未知外部副作用不重发，未回答不伪造进度。须验证双端Creator/Admin UI、数据库迁移与上下行兼容、Agent API/Worker真实链路；文档、构建、静态检查不等于功能验收。
 
 
 
-依据[ADR-0021](../decisions/0021-r1-auth-extensions.md)保留验证码、独立creator注册和密码找回入口。必须验证严格Schema、密码边界、角色注入拒绝、注册原子性、重置令牌失败重试/并发、会话撤销及开发/非开发投递边界；没有邮件供应商时不宣称生产找回已交付。原七域与Gin验收门禁继续有效。
+依据[ADR-0021](../../.agents/notes/reference/decisions/0021-r1-auth-extensions.md)保留验证码、独立creator注册和密码找回入口。必须验证严格Schema、密码边界、角色注入拒绝、注册原子性、重置令牌失败重试/并发、会话撤销及开发/非开发投递边界；没有邮件供应商时不宣称生产找回已交付。原七域与Gin验收门禁继续有效。
 
 ## R1.x 密码最小长度调整（ADR-0028）
 

@@ -2,7 +2,7 @@
 
 **状态：持续维护的设计基线。初始设计任务为 INK-141。** 这是唯一目标设计入口。具体实现与验收状态以[任务看板](../backlog.md)和[实施事实](../architecture.md)为准，不把旧实现限制、历史done或设计文档存在当作当前契约验收。分册之间无“临时兼容版”关系；字段、状态和权限必须统一。
 
-先读[契约基线](00-CONTRACT-BASELINE.md)，再按角色读以下资产。全局选择及取舍记录在[ADR-0016](../decisions/0016-r1-reconstruction-design-freeze.md)，以前ADR仅按其未替代范围适用，不另建决策库。现行入口不以发行代号命名；历史ADR文件名、迁移标识和验收编号保留追溯用途。
+先读[契约基线](00-CONTRACT-BASELINE.md)，再按角色读以下资产。全局选择及取舍记录在[ADR-0016](../../.agents/notes/reference/decisions/0016-r1-reconstruction-design-freeze.md)，以前ADR仅按其未替代范围适用，不另建决策库。现行入口不以发行代号命名；历史ADR文件名、迁移标识和验收编号保留追溯用途。
 
 ## 1. 开发阅读路径
 
@@ -40,7 +40,7 @@
 
 ## 5. 契约增量：Agent 策略绑定与中途澄清
 
-用户于2026-09-24批准且仅批准 ADR-0027 两项：Creator安全任务策略目录与CreateRun不可变策略版本绑定；Agent中途澄清完整持久交互。具体API/DDL/SSE状态、错误、兼容窗口、迁移及验收均见 [ADR-0027](../decisions/0027-proposed-creator-task-policy-catalog.md)、[基线](00-CONTRACT-BASELINE.md)、[Agent工作流](07-DOMAIN-AGENT-WORKFLOW-SPEC.md)、[Agent详细设计](domains/07-DOMAIN-AGENT-DETAIL-SPEC.md)、[实施计划](18-DELIVERY-AND-ACCEPTANCE-PLAN.md)。改变仅限上述范围，不推翻本索引其他冻结决策；实现仍以 backlog 为准。
+用户于2026-09-24批准且仅批准 ADR-0027 两项：Creator安全任务策略目录与CreateRun不可变策略版本绑定；Agent中途澄清完整持久交互。具体API/DDL/SSE状态、错误、兼容窗口、迁移及验收均见 [ADR-0027](../../.agents/notes/reference/decisions/0027-proposed-creator-task-policy-catalog.md)、[基线](00-CONTRACT-BASELINE.md)、[Agent工作流](07-DOMAIN-AGENT-WORKFLOW-SPEC.md)、[Agent详细设计](domains/07-DOMAIN-AGENT-DETAIL-SPEC.md)、[实施计划](18-DELIVERY-AND-ACCEPTANCE-PLAN.md)。改变仅限上述范围，不推翻本索引其他冻结决策；实现仍以 backlog 为准。
 关键实现决策已具体到接口/SQL/Port/状态/组件；开发时不再自行发明新协议。若遇设计缺陷必须提交契约差异（原因、影响、兼容/迁移、验收）再同步全部契约。禁止为了“永不修改”而保留已知矛盾，亦禁止用“以后再说”掩盖缺失设计。TTS/协同/支付属于未来需求，不因去除发行标签而纳入当前范围。
 
 ## 6. 全局密码长度调整

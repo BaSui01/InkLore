@@ -11,7 +11,7 @@ Scope: internal/platform/identity、AuthView、platform API Schema 与身份契�
 
 ## Decision
 
-按[ADR-0028](../../../../docs/decisions/0028-password-minimum-length.md)，所有新密码至少6个Unicode字符，最多72个UTF-8字节，bcrypt cost仍为12。Go验证器作为写入权威；所有创建/重置/改密路径经统一HashPassword/ValidatePassword，登录/注册/重置Schema同时改到minLength 6。旧有不少于12字符的密码继续可用，不触发用户迁移。
+按[ADR-0028](../../reference/decisions/0028-password-minimum-length.md)，所有新密码至少6个Unicode字符，最多72个UTF-8字节，bcrypt cost仍为12。Go验证器作为写入权威；所有创建/重置/改密路径经统一HashPassword/ValidatePassword，登录/注册/重置Schema同时改到minLength 6。旧有不少于12字符的密码继续可用，不触发用户迁移。
 
 ## Alternatives considered
 

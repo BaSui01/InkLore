@@ -18,7 +18,7 @@ M1 验收标准第 ④ 条要求「断库启动给出明确错误与降级策略
 
 约束与相关红线：
 
-- [AGENTS.md](../../AGENTS.md) §1：`internal/novel` 是作品事实的**唯一权威 Owner**——权威数据必须落在持久化存储上，「进程内存里的副本」不构成权威。
+- [AGENTS.md](../../../../AGENTS.md) §1：`internal/novel` 是作品事实的**唯一权威 Owner**——权威数据必须落在持久化存储上，「进程内存里的副本」不构成权威。
 - 与 [ADR-0005](./0005-no-fabrication-without-provider.md)（未配置 Provider 时默认拒绝生成）同构：**宁可明确失败，也不要静默降级**。
 - 已有 `LLM_BUILTIN_FALLBACK` 的先例：危险档位必须显式开启。
 

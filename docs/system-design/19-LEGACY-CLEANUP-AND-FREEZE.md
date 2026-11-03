@@ -19,7 +19,7 @@
 
 ## 2. 保留的非设计记录
 
-依ADR-0017，docs/decisions原位保留不可变选择依据，不新建history决策库；docs/backlog只保留活动任务与退役编号登记；docs/architecture只记录R1尚未实现及运行证据；project-management只是12治理导航。它们不拥有另一套API、DDL或UI目标。docs/semantic-recall-evaluation.md仅有退役说明，用于保持不可改写ADR-0010的历史引用可达，不保留旧评估正文。Skills与notes是工作流/因果记录，不覆盖R1契约，保持正在进行的独立任务记录不丢失。
+依ADR-0017，.agents/notes/reference/decisions保留不可变选择依据，不新建history决策库；docs/backlog只保留活动任务与退役编号登记；docs/architecture只记录R1尚未实现及运行证据；project-management只是12治理导航。它们不拥有另一套API、DDL或UI目标。docs/semantic-recall-evaluation.md仅有退役说明，用于保持不可改写ADR-0010的历史引用可达，不保留旧评估正文。Skills与notes是工作流/因果记录，不覆盖R1契约，保持正在进行的独立任务记录不丢失。
 
 ## 3. 冻结产物
 

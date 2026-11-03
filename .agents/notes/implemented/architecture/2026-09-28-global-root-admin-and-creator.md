@@ -11,7 +11,7 @@ Scope: platform identity、tenant session switch、Creator resource authorizatio
 
 ## Decision
 
-按 [ADR-0030](../../../../docs/decisions/0030-global-root-administrator.md)，platform user 以 `global_roles` 保存 `super_admin`；Admin tenant catalog 只列活动租户，tenant switch 在授权和 CSRF 校验后创建目标 tenant 的新 session 并撤销旧 session。所有 Admin 请求仍绑定一个 tenant。Creator 使用同一邮箱身份，但每个活动 tenant 的 membership 含 `creator/operator/auditor`，Creator 业务仍由现有 owner scope 限制。注册和 CLI bootstrap 在 tenant 创建事务内投影启用的 global admin。
+按 [ADR-0030](../../reference/decisions/0030-global-root-administrator.md)，platform user 以 `global_roles` 保存 `super_admin`；Admin tenant catalog 只列活动租户，tenant switch 在授权和 CSRF 校验后创建目标 tenant 的新 session 并撤销旧 session。所有 Admin 请求仍绑定一个 tenant。Creator 使用同一邮箱身份，但每个活动 tenant 的 membership 含 `creator/operator/auditor`，Creator 业务仍由现有 owner scope 限制。注册和 CLI bootstrap 在 tenant 创建事务内投影启用的 global admin。
 
 首次 root 账号通过用户指定的 DBX 连接写入；密码只在本机交给平台 bcrypt cost 12 实现生成哈希，SQL 不含明文。用户行、活动 tenant membership 与系统审计事件在一个 DBX 事务中提交。
 

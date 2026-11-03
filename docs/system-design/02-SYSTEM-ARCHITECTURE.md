@@ -1,6 +1,6 @@
 # 02 · 总体架构与跨域执行
 
-状态：R1冻结设计。全局值遵循[契约基线](00-CONTRACT-BASELINE.md)，决策见[ADR-0016](../decisions/0016-r1-reconstruction-design-freeze.md)。
+状态：R1冻结设计。全局值遵循[契约基线](00-CONTRACT-BASELINE.md)，决策见[ADR-0016](../../.agents/notes/reference/decisions/0016-r1-reconstruction-design-freeze.md)。
 
 ## 1. 运行形态
 

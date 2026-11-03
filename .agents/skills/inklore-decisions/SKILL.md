@@ -7,7 +7,7 @@ description: 用于 InkLore 工程笔记维护、非平凡改动留因果、历�
 
 ## 先判定记录落点
 
-读 [AGENTS](../../../AGENTS.md)、[管理规约](../../../docs/project-management.md)、[ADR 索引](../../../docs/decisions/README.md) 与 [notes 规约](../../notes/README.md)。来源与适配见 [融合说明](references/source-adaptation.md)。用户已授权引入 notes；不沿用旧版“不建立 notes”的限制，不重复请求安装许可。
+读 [AGENTS](../../../AGENTS.md)、[管理规约](../../../docs/project-management.md)、[ADR 索引](../../notes/reference/decisions/README.md) 与 [notes 规约](../../notes/README.md)。来源与适配见 [融合说明](references/source-adaptation.md)。用户已授权引入 notes；不沿用旧版“不建立 notes”的限制，不重复请求安装许可。
 
 | 变更 | 记录方式 |
 | --- | --- |
@@ -46,7 +46,7 @@ Problem 写具体触发与约束；Alternatives 只写真实权衡，先说对�
 
 ## 4. ADR 仍按正式流程
 
-沿用 [ADR 模板](../../../docs/decisions/0000-template.md) 与现有编号/状态规则。新选择无真实裁决为 Proposed；不能替用户编造批准。Accepted 正文不可改写，后续变化新增 ADR 并明确部分或全部替代范围，按宿主规则更新替代说明。note 归档工具不操作 ADR。
+沿用 [ADR 模板](../../notes/reference/decisions/0000-template.md) 与现有编号/状态规则。新选择无真实裁决为 Proposed；不能替用户编造批准。Accepted 正文不可改写，后续变化新增 ADR 并明确部分或全部替代范围，按宿主规则更新替代说明。note 归档工具不操作 ADR。
 
 ## 5. 同批验收与交付
 

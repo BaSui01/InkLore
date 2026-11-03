@@ -53,7 +53,7 @@ make ci NOTES_BASE=<base-commit>
 | [接口契约](docs/system-design/api/openapi.json) / [数据设计](docs/system-design/data/README.md) | API 与数据库约束 |
 | [Creator UX](docs/system-design/15-CREATOR-FUNCTION-UX-SPEC.md) / [Admin UX](docs/system-design/16-ADMIN-FUNCTION-UX-SPEC.md) | 双端界面与交互 |
 | [实施记录](docs/architecture.md) / [任务看板](docs/backlog.md) | 已实现事实、阻塞与验收证据 |
-| [ADR](docs/decisions/README.md) / [工程记忆](.agents/notes/README.md) | 重要取舍与演进过程 |
+| [ADR](.agents/notes/reference/decisions/README.md) / [工程记忆](.agents/notes/README.md) | 重要取舍与演进过程 |
 
 ## 协作与分支
 

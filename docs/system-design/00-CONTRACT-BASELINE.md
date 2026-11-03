@@ -2,7 +2,7 @@
 
 状态：冻结设计；尚未实现。任务 INK-141。日期2026-09-18。本文件锁定全部分册共享语义；详细字段由 api/*.json 的 OpenAPI 3.1 定义，实际建表由 data/*.sql 定义。此处“必须”指重构验收要求，不代表旧代码已经满足。旧实现不限制新设计，不提供旧路由兼容层。
 
-R1.1勘误：[ADR-0018](../decisions/0018-r1-minimal-contract-errata.md)补齐本人改密幂等头、下载416、审计导出422与未声明方法405错误定义；不改变业务边界、权限、TTL和DDL。
+R1.1勘误：[ADR-0018](../../.agents/notes/reference/decisions/0018-r1-minimal-contract-errata.md)补齐本人改密幂等头、下载416、审计导出422与未声明方法405错误定义；不改变业务边界、权限、TTL和DDL。
 
 ## 1. 边界与交付
 
@@ -30,7 +30,7 @@ R1含全部核心创作与管理闭环：作品生命周期、正文编辑版本
 
 ## 4. 身份与权限
 
-私有部署、多租户；R1.x依据ADR-0021允许公开注册独立creator租户，禁止公开注册管理身份。platform持有用户、成员关系、会话、授权投影；账号由CLI引导或管理员创建。密码按[ADR-0028](../decisions/0028-password-minimum-length.md)要求至少6个Unicode字符、最多72 UTF-8字节，bcrypt cost12；不内置账号口令；保留用户名root可在Creator与Admin audience登录；登录按audience校验活动membership，Creator持续执行owner scope（ADR-0031）。角色creator/operator/auditor，角色并集但接口audience严格creator/admin；访问令牌JWT HS256有效15分钟，签发密钥只环境注入，claims sub/tid/aud/roles/session_id/exp。刷新令牌随机256bit，服务端只存hash，轮换、30天绝对到期、重复使用吊销整个session。两端不同HttpOnly刷新cookie名；Secure生产、SameSite=Strict、Path=/v1/auth；AccessToken仅内存。刷新/退出校验Origin与CSRF token，双端不是靠端口代替服务端授权。
+私有部署、多租户；R1.x依据ADR-0021允许公开注册独立creator租户，禁止公开注册管理身份。platform持有用户、成员关系、会话、授权投影；账号由CLI引导或管理员创建。密码按[ADR-0028](../../.agents/notes/reference/decisions/0028-password-minimum-length.md)要求至少6个Unicode字符、最多72 UTF-8字节，bcrypt cost12；不内置账号口令；保留用户名root可在Creator与Admin audience登录；登录按audience校验活动membership，Creator持续执行owner scope（ADR-0031）。角色creator/operator/auditor，角色并集但接口audience严格creator/admin；访问令牌JWT HS256有效15分钟，签发密钥只环境注入，claims sub/tid/aud/roles/session_id/exp。刷新令牌随机256bit，服务端只存hash，轮换、30天绝对到期、重复使用吊销整个session。两端不同HttpOnly刷新cookie名；Secure生产、SameSite=Strict、Path=/v1/auth；AccessToken仅内存。刷新/退出校验Origin与CSRF token，双端不是靠端口代替服务端授权。
 
 creator仅访问自己所属tenant且拥有作品scope的创作资源；operator可管理本租户配置/成员但不读取作者正文；auditor看脱敏运行与配置审计，不看原始正文。审批仅发起运行的本人可决定，管理员不可代批。所有对象读写含tenant与资源owner scope；跨scope404。运行详情正文仅本人且当前仍具作品权限；审计默认只显示摘要/指标。权限版本变化下次请求立即生效，JWT角色只作提示，服务端按session+membership revision校验。R1不支持管理员跨租户通配权限。
 
@@ -71,6 +71,6 @@ DDL唯一Owner源为`data/agent.sql`（R1.x Question增量追加于该Agent域DD
 
 ## 10. 冻结与校验
 
-R1为实施基线，任何相互矛盾条款必须在本轮消除，所有核心功能的实现选择必须在本轮明确。以后新增需求或发现设计缺陷需R1.x变更记录，列影响接口/迁移/前后兼容/验收；不得声称技术设计永不可能修正。不改动业务代码以假装设计达标。删除旧文档前确保有替代位置和链接重定向；旧决策原位保留于docs/decisions作依据，历史冲突由有效替代关系裁决，不建立平行决策库。设计检查校验OpenAPI refs、路径参数、operationId、封包/权限、SQL表Owner、功能映射、局部引用、文件<50KB。
+R1为实施基线，任何相互矛盾条款必须在本轮消除，所有核心功能的实现选择必须在本轮明确。以后新增需求或发现设计缺陷需R1.x变更记录，列影响接口/迁移/前后兼容/验收；不得声称技术设计永不可能修正。不改动业务代码以假装设计达标。删除旧文档前确保有替代位置和链接重定向；旧决策已迁至.agents/notes/reference/decisions作依据，历史冲突由有效替代关系裁决，不建立平行决策库。设计检查校验OpenAPI refs、路径参数、operationId、封包/权限、SQL表Owner、功能映射、局部引用、文件<50KB。
 
-认证扩展裁决见[ADR-0021](../decisions/0021-r1-auth-extensions.md)：验证码可选且成对；注册返回200 Session；登录tenant_id可省略；找回未接入邮件投递时非开发环境返回503，开发响应sent=false且可含短期dev_token。
+认证扩展裁决见[ADR-0021](../../.agents/notes/reference/decisions/0021-r1-auth-extensions.md)：验证码可选且成对；注册返回200 Session；登录tenant_id可省略；找回未接入邮件投递时非开发环境返回503，开发响应sent=false且可含短期dev_token。

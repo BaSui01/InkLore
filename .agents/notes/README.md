@@ -6,7 +6,7 @@
 
 | 资产 | 回答的问题 | 不承担的职责 |
 | --- | --- | --- |
-| [ADR](../../docs/decisions/README.md) | 正式架构裁决、全局契约与替代关系 | 不收集每个局部实现细节 |
+| [ADR](reference/decisions/README.md) | 正式架构裁决、全局契约与替代关系 | 不收集每个局部实现细节 |
 | 本目录 notes | 为什么采用此实现、放弃什么、什么条件下可以重新考虑 | 不定义第二套架构权威、不管理任务进度 |
 | [backlog](../../docs/backlog.md) | 谁在做、是否验收、具体阻塞 | 不承载全部长期因果 |
 | [设计与现状入口](../../docs/development-guide.md) | 目标行为、实际接线与操作规范 | 不重复笔记中的讨论历史 |
@@ -88,3 +88,7 @@ archive-manifest.json 记录每篇归档相对 notes 根的路径及 SHA-256，�
 ## 检查边界
 
 CI 机械检查已有笔记的结构和归档历史，不会可靠地从代码 diff 推断“这一改动是否非平凡”。是否遗漏因果、备选是否真实、证据是否充分仍是 skills 和评审的责任。也不自动归档 ADR、回填旧任务、执行生产操作或启动网页看板。
+
+## 正式 ADR 参考资料
+
+[正式 ADR 索引](reference/decisions/README.md) 保留原有编号、状态与裁决效力。reference/ 是独立的历史裁决资料，不是 proposed/implemented/archived 笔记，当前冻结设计与机读契约继续留在 [docs/system-design](../../docs/system-design/00-INDEX.md)。

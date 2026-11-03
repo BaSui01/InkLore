@@ -11,7 +11,7 @@ Scope: docs/system-design设计资产、旧文档清理与离线契约检查，�
 
 ## Decision
 
-全局选择记录在[ADR-0016](../../../../docs/decisions/0016-r1-reconstruction-design-freeze.md)，治理位置按[ADR-0017](../../../../docs/decisions/0017-preserve-decision-records-and-single-design-entry.md)。七域分片是API源，编译器合并同一路径不同方法并把所有Schema引用重定位为外部ref；不flatten各域同名Report/Budget。生成入口、错误目录和FR映射只由源生成。DDL是独立真实SQL；前端按实际Schema校齐字段和命令边界。
+全局选择记录在[ADR-0016](../../reference/decisions/0016-r1-reconstruction-design-freeze.md)，治理位置按[ADR-0017](../../reference/decisions/0017-preserve-decision-records-and-single-design-entry.md)。七域分片是API源，编译器合并同一路径不同方法并把所有Schema引用重定位为外部ref；不flatten各域同名Report/Budget。生成入口、错误目录和FR映射只由源生成。DDL是独立真实SQL；前端按实际Schema校齐字段和命令边界。
 
 30个旧设计/旧API/重复DDL文件已按manifest实际删除，保留ADR原文和活动工具任务。历史ADR-0010指向的旧评估仅留退役说明页，避免修改已接受正文或恢复旧设计。正文/metadata双命令保存、单阶段审批、job/node双fence等集成冲突在设计阶段明确后再冻结。
 

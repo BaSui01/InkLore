@@ -4,14 +4,14 @@
 
 | 问题 | 权威入口 | 使用方式 |
 | --- | --- | --- |
-| 工程红线与冲突 | [AGENTS](../../../../AGENTS.md)、[ADR 索引](../../../../docs/decisions/README.md) | 核对 Accepted / Proposed / 替代范围，不能只看编号新旧 |
+| 工程红线与冲突 | [AGENTS](../../../../AGENTS.md)、[ADR 索引](../../../notes/reference/decisions/README.md) | 核对 Accepted / Proposed / 替代范围，不能只看编号新旧 |
 | 工程记忆与被否方案 | [notes 规约](../../../notes/README.md) | 按分类、机制检索活跃/否决笔记；历史追溯才读取 archived |
 | 当前代码接线 | [architecture](../../../../docs/architecture.md) | 对照源代码及本轮命令，历史数量不复制到技能 |
 | 任务与完成定义 | [backlog](../../../../docs/backlog.md)、[管理规约](../../../../docs/project-management.md)、[冻结实施计划](../../../../docs/system-design/18-DELIVERY-AND-ACCEPTANCE-PLAN.md) | backlog 唯一任务状态；实施计划仅正式R1.x变更时修订 |
 | 重构目标 | [设计索引](../../../../docs/system-design/00-INDEX.md)、[R1 基线](../../../../docs/system-design/00-CONTRACT-BASELINE.md) | 读目标域分册；设计冻结不等于代码完成 |
 | 后端域实现 | [领域详细设计目录](../../../../docs/system-design/domains/) | 按 content/outline/worldview/inspiration/compliance/agent/llm 选择对应分册，继续读 DDL 与契约 |
 | REST 与持久化 | [持久化设计](../../../../docs/system-design/11-DATA-PERSISTENCE-AND-API-SPEC.md)、[契约入口](../../../../docs/system-design/api/README.md) | 同时核对实际 handler、迁移与组合根；新重构契约按 R1 指向的 api/data 文件读取 |
-| SSE / WS | [有效ADR索引](../../../../docs/decisions/README.md)、[实时任务与恢复](../../../../docs/system-design/21-REALTIME-JOBS-AND-RECOVERY.md) | 与目标基线和已运行端点逐项对照，不混用 POST 生成与 GET 订阅 |
+| SSE / WS | [有效ADR索引](../../../notes/reference/decisions/README.md)、[实时任务与恢复](../../../../docs/system-design/21-REALTIME-JOBS-AND-RECOVERY.md) | 与目标基线和已运行端点逐项对照，不混用 POST 生成与 GET 订阅 |
 | 创作者页面 | [Creator UX](../../../../docs/system-design/15-CREATOR-FUNCTION-UX-SPEC.md) | 连同目标领域、真实 API、权限和未保存状态一起阅读 |
 | 管理页面 | [Admin UX](../../../../docs/system-design/16-ADMIN-FUNCTION-UX-SPEC.md) | 核对配置落库、生效、脱敏与审计，不读取作者私有正文 |
 | UI 组件及错误 | [设计系统](../../../../docs/system-design/17-DESIGN-SYSTEM-AND-ACCESSIBILITY.md)、[错误恢复](../../../../docs/system-design/14-ERROR-HANDLING-AND-RECOVERY.md) | 覆盖 loading/empty/error/disabled、键盘、i18n 与输入保留 |

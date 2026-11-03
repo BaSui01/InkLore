@@ -357,7 +357,7 @@ OpenAI 的图片生成与编辑是两个不同端点：
 
 ### 11.4 实现状态与待验收边界
 
-INK-218 已按 [ADR-0025](decisions/0025-image-adapter-current-provider-contract.md) 修复图片适配器：已删除已退出的 Imagen `:predict` 调用并对 `imagen` 模型明确失败；OpenAI 图生图改用真实 multipart `/images/edits`；Gemini 图片请求不再默认发送全量放开的安全阈值。
+INK-218 已按 [ADR-0025](../.agents/notes/reference/decisions/0025-image-adapter-current-provider-contract.md) 修复图片适配器：已删除已退出的 Imagen `:predict` 调用并对 `imagen` 模型明确失败；OpenAI 图生图改用真实 multipart `/images/edits`；Gemini 图片请求不再默认发送全量放开的安全阈值。
 
 该变更尚未使用真实凭据验收。部署环境必须分别验证 OpenAI 文生图、OpenAI 编辑、Gemini 图片、已退出 Imagen 的 422 拒绝、供应商安全拦截及无密钥失败；不得把编译或文档核对当作上述上游行为的证据。Gemini Interactions 的 steps schema/工具续调迁移另列 INK-219，不在本图片修复范围内。
 

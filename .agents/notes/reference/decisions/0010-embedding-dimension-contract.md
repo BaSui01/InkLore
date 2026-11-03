@@ -66,4 +66,4 @@ M5 要求「同类事实语义检索 Top-3 命中率在抽样集上可用」，�
 3. `EMBEDDING_DIMENSIONS=999` 时：启动日志出现「嵌入维度与内置默认值不一致」WARN；
    索引接口返回 `semantic_index_write_failed` 且消息含 `expected 1536 dimensions, not 999`。
 4. 抽样评估：24 条查询 Top-3 命中 23 条（**95.8%**），记录见
-   [semantic-recall-evaluation.md](../semantic-recall-evaluation.md)。
+   [semantic-recall-evaluation.md](../../../../docs/semantic-recall-evaluation.md)。

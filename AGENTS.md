@@ -138,7 +138,7 @@
    - 数据库存储一律使用带时区的 `TIMESTAMPTZ`（UTC 存储）；
    - 业务逻辑、自然日统计与排期必须通过 `timeutil` 显式转换为北京时间，严禁使用系统本地裸时间。
 5. **单文件体积限制**：
-   - 单个手写代码文件严格控制在 **500KiB（500 × 1024 = 512000 字节）以内**，职责过重的文件必须进行垂直或水平合理拆分。依据 [ADR-0037](docs/decisions/0037-source-file-size-limit-500kib.md)，源码大小阈值适用于既有 archguard 扫描范围（含生成源码）；不改变独立文档长度与冻结治理限制。
+   - 单个手写代码文件严格控制在 **500KiB（500 × 1024 = 512000 字节）以内**，职责过重的文件必须进行垂直或水平合理拆分。依据 [ADR-0037](.agents/notes/reference/decisions/0037-source-file-size-limit-500kib.md)，源码大小阈值适用于既有 archguard 扫描范围（含生成源码）；不改变独立文档长度与冻结治理限制。
 6. **零硬编码铁律 (Zero Hardcoding Contract)**：
    - 严禁在前端组件中硬编码静态展示数组（如知识图谱节点/边、大纲树、预设章节正文），所有业务数据必须通过真实 REST API 读写后端数据库；
    - 严禁在多智能体流水线中使用 setTimeout 伪造执行进度，必须真实调度后端 Agent 状态机与 SSE 流式接口；
@@ -167,7 +167,7 @@
 | `docs/architecture.md` | 代码**现在**是什么样 | 增删包、改变接线、引入依赖时 |
 | `docs/system-design/18-DELIVERY-AND-ACCEPTANCE-PLAN.md` | R1冻结实施顺序与验收门禁 | 仅正式R1.x变更时 |
 | `docs/backlog.md` | **谁在做哪一件**、卡在哪 | 任务状态变化时 |
-| `docs/decisions/` | 当初**为什么**这么选 | 任何架构决策 |
+| `.agents/notes/reference/decisions/` | 当初**为什么**这么选 | 任何架构决策 |
 | `.agents/notes/` | 实现**为什么**如此、失败路线与隐含约束 | 非平凡改动同批新增或同步；不替代 ADR / backlog |
 | `CHANGELOG.md` | 每个版本**交付了什么** | 版本发布时 |
 
@@ -205,7 +205,7 @@
 
 ### 4.5 架构变更 ADR-First
 
-触碰分层结构、域边界、存储选型、通信协议归属、全局契约或新增对外依赖的改动，**必须先写 ADR 再写代码**（模板见 `docs/decisions/0000-template.md`）。已接受的 ADR 不得改写，只能新增并标注替代关系。
+触碰分层结构、域边界、存储选型、通信协议归属、全局契约或新增对外依赖的改动，**必须先写 ADR 再写代码**（模板见 `.agents/notes/reference/decisions/0000-template.md`）。已接受的 ADR 不得改写，只能新增并标注替代关系。
 
 ### 4.6 项目级 Skills 入口
 

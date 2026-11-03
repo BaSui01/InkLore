@@ -7,7 +7,7 @@ Scope: internal/agent 定义与工作流删除、Admin Agent Tools 治理视图
 
 ## Problem
 
-[INK-242 原删除笔记](../bug-fix/2026-09-29-agent-deletion-reference-and-admin-notice.md)通过检查所有外键将已引用定义的物理删除变为409；该策略避免破坏历史，却让用户无法从可选目录删除曾使用过的定义。工具页只有已登记的租户配置，`enabled` 被误认为真实 Agent 工具可执行；运行时 ToolService 和 Scheduler 实际未在组合根装配。参照 [INK-226 配置驱动笔记](../feature/2026-09-24-agent-configuration-driven-integration.md)，不以空配置伪成功。相关契约差异已登记 [ADR-0034（Proposed）](../../../../docs/decisions/0034-agent-tool-execution-status-and-safe-retirement.md)。
+[INK-242 原删除笔记](../bug-fix/2026-09-29-agent-deletion-reference-and-admin-notice.md)通过检查所有外键将已引用定义的物理删除变为409；该策略避免破坏历史，却让用户无法从可选目录删除曾使用过的定义。工具页只有已登记的租户配置，`enabled` 被误认为真实 Agent 工具可执行；运行时 ToolService 和 Scheduler 实际未在组合根装配。参照 [INK-226 配置驱动笔记](../feature/2026-09-24-agent-configuration-driven-integration.md)，不以空配置伪成功。相关契约差异已登记 [ADR-0034（Proposed）](../../reference/decisions/0034-agent-tool-execution-status-and-safe-retirement.md)。
 
 ## Decision
 

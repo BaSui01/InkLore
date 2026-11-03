@@ -9,7 +9,7 @@ Scope: internal/platform/uow、scope、idempotency与internal/app的R1公共装�
 
 R1要求本地业务写、scope、revision证明和幂等结果原子提交，且同键执行中应及时返回409。PG中未提交的processing行对其他事务不可见，单纯INSERT ON CONFLICT会等待；先独立提交claim又会留下业务回滚后仍占键的半状态。旧启动链还会加载旧迁移、旧路由和.env，不应被当作R1运行基座。
 
-改前检索既有notes和决策后，以[ADR-0016](../../../../docs/decisions/0016-r1-reconstruction-design-freeze.md)的同PG UnitOfWork/新库/固定DAG及[ADR-0017](../../../../docs/decisions/0017-preserve-decision-records-and-single-design-entry.md)的记录位置为准。此笔记补充已接受架构的实现细节，不作新契约裁决。
+改前检索既有notes和决策后，以[ADR-0016](../../reference/decisions/0016-r1-reconstruction-design-freeze.md)的同PG UnitOfWork/新库/固定DAG及[ADR-0017](../../reference/decisions/0017-preserve-decision-records-and-single-design-entry.md)的记录位置为准。此笔记补充已接受架构的实现细节，不作新契约裁决。
 
 ## Decision
 
@@ -39,6 +39,6 @@ R1使用独立迁移embed流和新组合根，当前仅暴露已验收技术探�
 
 ## Verification
 
-[INK-160验收记录](../../../../docs/acceptance-INK-160.md)给出真实PG16和loopback HTTP命令。全仓go build、26组验收、archguard、冻结源一致性、设计、技能、notes及diff检查作为本任务门禁。验收包含同连接/同txid、根回滚、Recoverable确定性隔离及致命传播、双连接CAS、scope历史证明、非阻塞并发claim、重放撤权、TTL、JSON/错误/启动故障。
+[INK-160验收记录](../testing/2026-09-18-acceptance-ink-160.md)给出真实PG16和loopback HTTP命令。全仓go build、26组验收、archguard、冻结源一致性、设计、技能、notes及diff检查作为本任务门禁。验收包含同连接/同txid、根回滚、Recoverable确定性隔离及致命传播、双连接CAS、scope历史证明、非阻塞并发claim、重放撤权、TTL、JSON/错误/启动故障。
 
-API/DDL冻结源未修改；发现后续操作不一致记入[INK-178](../../../../docs/r1-contract-differences-INK-178.md)，不在本实现中自行裁定。未验收账号、领域业务、浏览器、模型、生产切换或恢复容量。
+API/DDL冻结源未修改；发现后续操作不一致记入[INK-178](2026-09-18-r1-contract-differences-ink-178.md)，不在本实现中自行裁定。未验收账号、领域业务、浏览器、模型、生产切换或恢复容量。

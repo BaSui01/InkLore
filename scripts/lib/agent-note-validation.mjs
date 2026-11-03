@@ -100,12 +100,17 @@ export async function checkTree(root) {
       const file = path.join(directory, entry.name), next = [...parts, entry.name];
       if (entry.isSymbolicLink()) { report(file, 'symlink is forbidden'); continue; }
       if (entry.isDirectory()) {
-        const valid = next.length === 1 ? lifecycles.includes(entry.name) : next.length === 2 && classes.includes(entry.name);
+        const valid = next[0] === 'reference' || (next.length === 1 ? lifecycles.includes(entry.name) : next.length === 2 && classes.includes(entry.name));
         if (!valid) report(file, 'invalid note directory');
         else await walk(file, next);
         continue;
       }
       if (!entry.isFile()) { report(file, 'only regular files allowed'); continue; }
+      // Reference files are preserved ADRs, not lifecycle notes.
+      if (next[0] === 'reference') {
+        if (!/\.(?:md|json)$/i.test(entry.name)) report(file, 'unsupported reference file');
+        continue;
+      }
       const relative = next.join('/');
       if (relative === 'archive-manifest.json') continue;
       const meta = notePath(relative);

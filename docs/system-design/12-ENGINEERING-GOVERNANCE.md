@@ -1,10 +1,10 @@
 # 12 · 设计冻结与工程治理
 
-当前系统设计是唯一施工基线，入口[00](00-INDEX.md)，全局契约[baseline](00-CONTRACT-BASELINE.md)，初始决策见[ADR-0016](../decisions/0016-r1-reconstruction-design-freeze.md)，后续有效ADR按其明确替代范围适用。现有代码与目标不同是实施工作，不通过改设计把缺陷变合理。
+当前系统设计是唯一施工基线，入口[00](00-INDEX.md)，全局契约[baseline](00-CONTRACT-BASELINE.md)，初始决策见[ADR-0016](../../.agents/notes/reference/decisions/0016-r1-reconstruction-design-freeze.md)，后续有效ADR按其明确替代范围适用。现有代码与目标不同是实施工作，不通过改设计把缺陷变合理。
 
 ## 1. 不变量
 
-模块化单体七域；各域transport→application→domain←infrastructure。跨域消费方Port与app/adapters；禁止跨私表/跨infra。Provider密钥只env/Secret Store；接口只安全metadata。SSE请求级生成，WS系统通知。PG UTC存储、北京业务日。依据[ADR-0037](../decisions/0037-source-file-size-limit-500kib.md)，既有archguard扫描范围内源码（含生成源码）上限为500KiB（512000字节，等值允许）；设计文档与设计资产的独立长度门禁不随源码阈值放宽。无UnicodeEmoji、无静态业务数据兜底、无模拟进度。前端两独立app/3000与3001，所有文案i18n。
+模块化单体七域；各域transport→application→domain←infrastructure。跨域消费方Port与app/adapters；禁止跨私表/跨infra。Provider密钥只env/Secret Store；接口只安全metadata。SSE请求级生成，WS系统通知。PG UTC存储、北京业务日。依据[ADR-0037](../../.agents/notes/reference/decisions/0037-source-file-size-limit-500kib.md)，既有archguard扫描范围内源码（含生成源码）上限为500KiB（512000字节，等值允许）；设计文档与设计资产的独立长度门禁不随源码阈值放宽。无UnicodeEmoji、无静态业务数据兜底、无模拟进度。前端两独立app/3000与3001，所有文案i18n。
 
 禁止新增/修改 *_test.go 与 *.test.ts；验收用可执行命令、受控HTTP/SQL探针和浏览器步骤记录。禁止用这项约束当不验证的理由。设计资产的静态校验器是tools/check-design.cjs，不是业务测试文件。
 
@@ -39,4 +39,4 @@ TTS/图片/协同/支付等原范围外需求仍作为未来需求管理，不�
 
 ## 6. 文档清理
 
-旧docs/archive、旧docs/api、重复DDL/CONTRACT分册及旧路线图/发布方案被现行设计资产替代后删除；不是再次归档整套矛盾设计。docs/architecture仅记录实现差距，backlog仅记录任务，project-management仅导航现行治理；不保留第二套目标方案。以前ADR原位保留docs/decisions，索引标替代范围，依据ADR-0017。删除清单与替代位置见19，根README只指向唯一设计入口；不能留下失效链接要求开发者猜路径。
+旧docs/archive、旧docs/api、重复DDL/CONTRACT分册及旧路线图/发布方案被现行设计资产替代后删除；不是再次归档整套矛盾设计。docs/architecture仅记录实现差距，backlog仅记录任务，project-management仅导航现行治理；不保留第二套目标方案。以前ADR已迁至.agents/notes/reference/decisions，索引标替代范围，依据ADR-0017。删除清单与替代位置见19，根README只指向唯一设计入口；不能留下失效链接要求开发者猜路径。

@@ -1,14 +1,43 @@
-# INK-206 / INK-211 首页与自动登录验收
+# Agent Note: INK-206 / INK-211 首页与自动登录验收
 
-日期：2026-09-20。任务状态以 [backlog](backlog.md) 为准。
+Status: implemented
 
-## 交付范围
+Task: INK-206
+Scope: 原 docs/acceptance-INK-206.md 的历史材料迁移与链接维护
+
+## Problem
+
+阶段性交付证明、契约差异、外部 UI 调研等历史记录混放在 docs 读者文档目录，容易让读者误认成最新有效的规范或功能事实。
+
+## Decision
+
+将原始材料迁入工程记忆，保留其来源、历史约束、验证记录和未完成边界。这是记录整理，不代表原记录涉及的能力已在当前云端完成验收。
+
+## Alternatives considered
+
+继续置于 docs 可维持旧入口但扩大文档噪声；删除历史材料会丢失决策依据与复现信息。因此保留其原有正文并收敛为 notes 记录。
+
+## Consequences
+
+原路径不再作为权威入口；引用必须更新。外部研究中的 UI 功能分析仅作为参考，不对第三方功能或当前 InkLore 的实现状态背书。
+
+## Verification
+
+保留源文档文本，按工程笔记结构调整标题和相对链接；禁用的表意图符号按仓库笔记规范去除。本轮没有重跑源记录中的历史命令。
+
+### 历史原始资料
+
+### INK-206 / INK-211 首页与自动登录验收
+
+日期：2026-09-20。任务状态以 [backlog](../../../../docs/backlog.md) 为准。
+
+### 交付范围
 
 参考用户指定马良首页的文学排版、浅纸色、暖金色按钮、双栏首屏和轻卡片，制作 InkLore 创作者首页。页面使用自身品牌与原创纸页/钢笔矢量构图，没有复制参考站的图片、业务记录或统计。局部首页视觉按用户本次明确指令实现；不改变全局设计 token、管理端主题、HTTP 契约和领域边界，不引入依赖。
 
 入口 `http://localhost:29000/#/home` 使用当前本地环境覆盖端口，保留 Creator 登录保护。默认双端端口配置、管理端和编辑器均未由本任务调整。首页从原侧栏/章节状态壳中独立呈现，书架查询、创建及进入指定作品都使用真实 Content API；没有模型选项占位、预填样例剧情、模拟生成或虚构统计。
 
-## 运行路径
+### 运行路径
 
 - CreatorApp → HomeRoute → HomeHeader / BookCard / CreateNovelDialog / HomeShowcase。
 - useHomeBookshelf → TanStack Query → 共享 ApiClient + 当前 AuthSession → GET `/v1/content/novels?limit=12&status=active|archived&cursor=...`。
@@ -17,7 +46,7 @@
 - INK-211：AuthSession.bootstrap 共用一个在途 Promise，内部 refresh 使用既有单飞机制，finally 释放以允许后续重试。原本 React StrictMode 双初始化导致 refresh 200/401、会话被重放保护吊销；修复后一次 session-csrf 与一次 refresh。
 - 本批未修改 Go 包、服务端启动、数据库结构、领域装配或依赖；服务端依赖运行路径不受本批源码影响。
 
-## 浏览器与接口证据
+### 浏览器与接口证据
 
 Chrome DevTools MCP 连接真实本地 Vite 与已运行的 29080 后端。数据库只读查询确认已有 creator 身份和 bcrypt 哈希；未尝试还原哈希，未修改原账号密码。以独立本地验收账号登录，全部记录都属于该验收主体。第一次初始化失败产生的验收账号仍保留；成功主体留有一部验收作品。密码只在注册调用内存生成，不写到源码、文档或浏览器持久存储。
 
@@ -41,18 +70,18 @@ Chrome DevTools MCP 连接真实本地 Vite 与已运行的 29080 后端。数�
 
 故障注入只用于验证错误处理，没有给产品注入模拟成功响应；结束后恢复原生 fetch 与网络环境。未调用模型、不验证生成质量；未把现有编辑器、其他业务页面或完整 R1 功能算作本轮验收。屏幕阅读器、真机软键盘和全站 WCAG 审计未执行。
 
-## 截图
+### 截图
 
-- [桌面首屏](evidence/INK-206/home-desktop.png)
-- [真实书架](evidence/INK-206/bookshelf.png)
-- [功能与指南](evidence/INK-206/features.png)
-- [320 手机](evidence/INK-206/home-mobile-320.png)
-- [英文深色手机](evidence/INK-206/home-mobile-dark-en.png)
-- [刷新失败保留作品](evidence/INK-206/refresh-error.png)
+- [桌面首屏](../../../../docs/evidence/INK-206/home-desktop.png)
+- [真实书架](../../../../docs/evidence/INK-206/bookshelf.png)
+- [功能与指南](../../../../docs/evidence/INK-206/features.png)
+- [320 手机](../../../../docs/evidence/INK-206/home-mobile-320.png)
+- [英文深色手机](../../../../docs/evidence/INK-206/home-mobile-dark-en.png)
+- [刷新失败保留作品](../../../../docs/evidence/INK-206/refresh-error.png)
 
 截图由 Chrome DevTools MCP 获取，再将工具返回的图像字节存入本工作区；未通过截屏修改业务数据。
 
-## 命令证据
+### 命令证据
 
 - `go build ./...`：退出 0。
 - `npm --prefix frontend run build`：Creator/Admin 两个生产构建均退出 0。

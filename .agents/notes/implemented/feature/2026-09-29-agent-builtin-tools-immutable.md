@@ -7,7 +7,7 @@ Scope: internal/agent 工具只读目录、对外写路由及 Admin 智能体工
 
 ## Problem
 
-[INK-246 的 Worker 接线笔记](./2026-09-29-agent-worker-real-tool-execution.md)实现真实执行器和租户版本安全检查，但管理工具页仍暴露“已登记配置”及创建、修改、停用和删除操作，使代码中固化的工具被误解为租户可任意定义。仅隐藏按钮仍留 POST/PUT/DELETE API 可绕过。用户要求展示的只能是项目代码里实际装配的内置 Agent Tools，不能配置工具。冻结 R1 的 A10 原本包含 Tool CRUD，差异另见 [ADR-0035（Proposed）](../../../../docs/decisions/0035-agent-builtin-readonly-tool-catalog.md)。
+[INK-246 的 Worker 接线笔记](./2026-09-29-agent-worker-real-tool-execution.md)实现真实执行器和租户版本安全检查，但管理工具页仍暴露“已登记配置”及创建、修改、停用和删除操作，使代码中固化的工具被误解为租户可任意定义。仅隐藏按钮仍留 POST/PUT/DELETE API 可绕过。用户要求展示的只能是项目代码里实际装配的内置 Agent Tools，不能配置工具。冻结 R1 的 A10 原本包含 Tool CRUD，差异另见 [ADR-0035（Proposed）](../../reference/decisions/0035-agent-builtin-readonly-tool-catalog.md)。
 
 ## Decision
 

@@ -1,6 +1,6 @@
 # 架构决策记录（ADR）
 
-本目录原位保存选择依据。R1施工设计以 [00基线](../system-design/00-CONTRACT-BASELINE.md) 和有效替代关系为准；治理见 [12分册](../system-design/12-ENGINEERING-GOVERNANCE.md)。旧ADR未被替代条款仍有效，原文不改写。
+本目录原位保存选择依据。R1施工设计以 [00基线](../../../../docs/system-design/00-CONTRACT-BASELINE.md) 和有效替代关系为准；治理见 [12分册](../../../../docs/system-design/12-ENGINEERING-GOVERNANCE.md)。旧ADR未被替代条款仍有效，原文不改写。
 
 ## 索引
 

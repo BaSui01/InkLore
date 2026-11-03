@@ -27,7 +27,7 @@ Agent 缺 Identity 时曾信任身份头，缺幂等键时直接执行；各域 
 
 ## Verification
 
-`go build ./...`、`go vet ./...`、archguard、notes/skills、Schema生成一致性通过。75个真实Gin组件请求与代理场景通过；依赖比较确认server删除realtime/i18n、新增requestschema/strictjson。隔离PG16迁移成功，App启动拒绝未声明captcha路由。真实PG组件23项通过，覆盖幂等事务/撤权/SSE续传/断线和底层FlushError。SSE必须控制Unwrap后的writer，Gin无错误Flush会遮蔽网络错误。EventService每次轮询/心跳重验RunAuthorizer，Artifact和审批读取也复用，列表跳过已无权资源并保持游标推进。完整事务与SSE证据见 [验收记录](../../../../docs/acceptance-INK-203.md)，未验收项保留review，不标全部完成。
+`go build ./...`、`go vet ./...`、archguard、notes/skills、Schema生成一致性通过。75个真实Gin组件请求与代理场景通过；依赖比较确认server删除realtime/i18n、新增requestschema/strictjson。隔离PG16迁移成功，App启动拒绝未声明captcha路由。真实PG组件23项通过，覆盖幂等事务/撤权/SSE续传/断线和底层FlushError。SSE必须控制Unwrap后的writer，Gin无错误Flush会遮蔽网络错误。EventService每次轮询/心跳重验RunAuthorizer，Artifact和审批读取也复用，列表跳过已无权资源并保持游标推进。完整事务与SSE证据见 [验收记录](../testing/2026-09-20-acceptance-ink-203.md)，未验收项保留review，不标全部完成。
 
 本轮完整App只读PG17启动通过；中间件实测发现FromContext仅输出trace_id，因此访问与panic日志显式增加经Contract校验的request_id白名单字段。探针同时验证原始路径参数、查询、正文、Cookie、Authorization和panic文本不出现在日志，流响应后panic不追加JSON。详INK-203增量证据。
 
