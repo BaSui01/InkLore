@@ -6,6 +6,24 @@
 
 ## [Unreleased]
 
+### 前端 ReDoS 线性 URL/邮箱校验修复（INK-263，private 发布候选）
+
+- 将 dev #76 已验收的尾部斜杠线性处理与基础邮箱校验移植至默认 private；不修改服务端鉴权、数据库或敏感配置。
+- 此修复针对已识别的正则复杂度问题，仍需在默认分支验证 CodeQL 和真实浏览器回归，不等于全部安全告警已修复。
+
+
+### 保护分支定期 Supabase 监控与跨端 E2E 验收（INK-270，review）
+
+- Supabase 的只读 IPv4 Session Pooler 预检保持 GitHub 受保护 Environment Secret，仅在默认分支每天 03:17 UTC 定时运行（也可手动运行），禁止写入真实业务数据。
+- 独立 GitHub Actions 在 PR、dev/private push 以及每周两次的默认分支计划任务中，使用临时 PG17/Redis7、Go 后端/部署 CLI、Creator/Admin React 生产构建与 Chromium，验收 Creator 注册/小说 CRUD 与租户隔离、Admin 治理访问、Agent 定义及无权限 Run 的真实拒绝。
+- 浏览器依赖固定 Playwright 版本并安装在 Runner 临时目录，不引入生产依赖；真实模型调用、Agent Worker 产出、SSE 和断线恢复保留独立验收。
+
+### Supabase IPv4 Session Pooler 远程预检修复（INK-262）
+
+- 修复受保护 GitHub Actions 在 Supabase 免费项目 IPv6 Direct 端点连接失败的问题；不重置已保存的环境 Secret，不购买 IPv4 Add-on。
+- 改为使用真实身份和数据库结构查询验证官方 IPv4 Session Pooler 地址；连接凭据只在 GitHub-hosted Runner 内存中使用，不输出密码、完整 DSN 或身份验证错误详情。
+- 首次 IPv6 失败证据：Actions #41570140594；改进后必须以新的人工验收 Success 为交付依据。
+
 ### Creator 开书引导 403 本地恢复退出（INK-271，review）
 
 - 为无法访问的历史小说引导会话提供显式“重新开始”，仅在用户点击后清除本地恢复指针并显示新建表单；后端身份与数据权限不变。
@@ -22,6 +40,18 @@
 
 - [PR #71](https://github.com/BaSui01/InkLore/pull/71) 在 dev 合并 quic-go 0.59.1、x/net 0.55.0、vite 7.3.7、source-map-js 1.2.2、markdown-it 14.3.3；Go mod verify/build/vet/archguard、pnpm frozen、Creator/Admin 构建及 PG17/Redis7 API 回归通过。
 - [PR #79](https://github.com/BaSui01/InkLore/pull/79) 经独立受保护 CI 合入 private，双方 manifest/lockfile 版本和 SHA 一致；原 Dependabot #49–#53 均以 superseded 方式关闭，不重复合并。当前补丁不声称真实 QUIC/HTTP3、CSP/Markdown 或所有安全告警已通过端到端验收。
+
+
+### 自动合并敏感路径收紧（INK-254，review）
+
+- 默认分支安全 PR Gate 增加 internal/platform/identity 和所有领域的 infrastructure 路径，防止拥有 auto-merge-approved 标签的认证/持久化 PR 绕过人工审查；低风险路径、原有 CI 与 Review 门禁保持不变。
+- 源码与工作流静态测试仍需最终 PR CI 及合并后的事件复核。
+
+
+### 稳定分支独立接入数据库/Redis 集成测试（INK-260，review）
+
+- 从已验证的 dev 最小同步两个 GitHub Actions 工作流和所需的测试环境权限 SQL，不混入 70 文件发布候选 PR #41。
+- 隔离作业的临时 PG17/Redis7 验证真实 R1 迁移、回滚、权限、Go API/Creator 身份；Supabase 只读预检只在受保护分支手动触发且需要独立最小权限凭据，现有 Secret 未配置。
 
 ### 双端 UI/UX 设计实施包（INK-259，review）
 
@@ -41,6 +71,10 @@
 
 - [PR #43](https://github.com/BaSui01/InkLore/pull/43) 已在 dev 合并 x/crypto 0.48.0→0.52.0 及关联 x/net/text/sys/sync 更新；Go 模块校验和常规构建通过。
 - [GitHub 临时 PG17/Redis7 运行验收](https://github.com/BaSui01/InkLore/actions/runs/41492434905) 覆盖注册、会话、匿名拒绝、重复注册、权限及事务；[PR #47](https://github.com/BaSui01/InkLore/pull/47) 已将同版本依赖受保护地发布到默认 private。剩余外部模型/生产压测风险保留为业务运行验收，不声称本依赖补丁消除所有安全告警。
+
+### INK-256：dev 超前 20 个提交后发布 PR（review）
+
+- 采用默认分支可信工作流按 GitHub Commit Compare 阈值自动创建 release 快照 PR；安全满足时启用 Merge Commit auto-merge，分叉、敏感或 CI 未通过时保留人工复核。保护 dev 不被删除或强推，发布不等于部署或业务验收。
 
 ### 在线隔离 CI / Supabase 预检（INK-255，待验收）
 
@@ -207,7 +241,7 @@
 **INK-215：Creator普通路径路由**
 
 - 首页、登录和创作工作台改用History路径，旧Hash入口自动转换；登录来源和编辑器作品ID由URL恢复，支持前进后退。
-- Vite深链访问与刷新、Nginx静态托管/API分流、Go与双端构建验证通过，见[验收](docs/acceptance-INK-215.md)。真实认证成功回跳仍待补验。
+- Vite深链访问与刷新、Nginx静态托管/API分流、Go与双端构建验证通过，见[验收](.agents/notes/implemented/testing/2026-09-29-acceptance-ink-215.md)。真实认证成功回跳仍待补验。
 
 **INK-214：独立登录页面与来源回跳**
 
@@ -224,7 +258,7 @@
 - 首页按用户参考重做宋体双栏首屏、纸页钢笔插画、暖金色操作、真实书架、功能区与指南；支持双语、明暗主题和手机导航。
 - 真实作品游标分页、已加载数据搜索、创意开书与指定作品编辑入口闭环；加载、空态、错误、过期快照与离线明确区分，无模型/正文/统计占位。
 - 会话初始化共享在途 Promise，消除开发模式重复刷新造成的登录退出；不改变原账号密码或服务端安全规则。
-- Go 与双端构建、真实 Chrome 创建/留存/分页/失败恢复通过，[截图与验收](docs/acceptance-INK-206.md)已保存；i18n检查器既有误报登记INK-212，真实组合词条一致。
+- Go 与双端构建、真实 Chrome 创建/留存/分页/失败恢复通过，[截图与验收](.agents/notes/implemented/testing/2026-09-20-acceptance-ink-206.md)已保存；i18n检查器既有误报登记INK-212，真实组合词条一致。
 
 
 **INK-205：管理端视觉收敛与真实模型协议接线（待复核）**
@@ -284,7 +318,7 @@
 - 三个领域四层、81个操作与主组合根接线；冻结DDL原样迁移。真实PG/HTTP逐操作Schema、并发CAS、撤权重放及故障整体回滚通过。
 - 内容：正文/版本/目录/proof同事务；大纲：三级节点、场景、伏笔、RR只读节奏；世界观：图谱、整批事实冲突、不可变ledger与维护重建。
 - 补齐RR根事务模式、trash授权与typed冲突详情，修复实测时间精度、UTC、错误映射及审计action集成问题；160/161共50组回归通过。
-- 验收记录：[163](docs/acceptance-INK-163.md)、[164](docs/acceptance-INK-164.md)、[165](docs/acceptance-INK-165.md)。前端、确认用例与大容量运行演练仍留后续任务。
+- 验收记录：[163](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-163.md)、[164](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-164.md)、[165](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-165.md)。前端、确认用例与大容量运行演练仍留后续任务。
 
 **INK-167：LLM R1目录与管理transport进行中**
 
@@ -304,14 +338,14 @@
 
 - 按用户明确批准落ADR-0018，保存原冻结清单；补齐四项契约差异，错误95→97，DDL不变。
 - 15个后端操作接线；本人改密全会话吊销、审计失败回滚、新会话幂等重放；审计NDJSON先校验31天/10000条后完整返回；405 JSON与精确Allow。
-- 24组真实PG/Redis/HTTP与15操作Schema覆盖、26组INK-160回归通过；既有4组双端代理验收保留。真实Chrome与产品前端未验收，留在后续前端/端到端门禁。[证据](docs/acceptance-INK-161.md)。
+- 24组真实PG/Redis/HTTP与15操作Schema覆盖、26组INK-160回归通过；既有4组双端代理验收保留。真实Chrome与产品前端未验收，留在后续前端/端到端门禁。[证据](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-161.md)。
 
 
 **INK-160：R1平台事务、授权投影与幂等基座**
 
 - 建立独立R1迁移流与组合根，旧路由不挂载；迁移名称/checksum门禁、事务级迁移互斥、独立配置装载和PG必需启动。
-- 实施UoW/Recoverable、scope历史证明与CAS、事务幂等及安全HTTP基座；26组真实PG/HTTP正反例、全仓构建、架构/冻结/技能/notes护栏通过。[验收证据](docs/acceptance-INK-160.md)。
-- 冻结设计保持不变；后续操作的契约差异记录于[INK-178](docs/r1-contract-differences-INK-178.md)。
+- 实施UoW/Recoverable、scope历史证明与CAS、事务幂等及安全HTTP基座；26组真实PG/HTTP正反例、全仓构建、架构/冻结/技能/notes护栏通过。[验收证据](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-160.md)。
+- 冻结设计保持不变；后续操作的契约差异记录于[INK-178](.agents/notes/implemented/architecture/2026-09-18-r1-contract-differences-ink-178.md)。
 
 **INK-144：DSH并行开发子代理配置**
 
@@ -334,14 +368,14 @@
 - 增加 `.agents/notes/` 四生命周期与六分类，明确 notes / ADR / backlog 分工，提供提案、已实施与否决模板。
 - 三个项目skills及AGENTS接入改前检索、非平凡变更留因果、同批更新与归档流程。
 - 新增无依赖笔记校验/归档工具，验证结构、任务关联、本地链接与归档哈希；CI对照变更前Git基线保护已有封印。
-- 首篇流程笔记保留真实备选与验证，业务运行路径不变；证据见 [INK-143](docs/notes-delivery-INK-143.md)。
+- 首篇流程笔记保留真实备选与验证，业务运行路径不变；证据见 [INK-143](.agents/notes/implemented/process/2026-09-18-notes-delivery-ink-143.md)。
 
 **INK-142：项目定制开发维护 Skills**
 
 - 新增仓库级 `inklore-development`、`inklore-decisions`、`inklore-maintenance`，融合核心 docs 的按需阅读、七域边界、ADR 历史保护、真实验收与维护流程。
 - 新增文档路由、验证矩阵、验收/复盘模板与来源适配说明；沿用 decisions 和唯一 backlog。
 - 新增无第三方依赖的技能文档校验器及独立 CI 检查，更新 AGENTS 与文档治理入口。
-- 本任务不修改业务运行路径，验证范围与结果见 [INK-142 交付记录](docs/skill-delivery-INK-142.md)。
+- 本任务不修改业务运行路径，验证范围与结果见 [INK-142 交付记录](.agents/notes/implemented/process/2026-09-29-skill-delivery-ink-142.md)。
 
 **M12 · ADR-0014 七域架构治理与大纲域抽取（INK-114，已交付）**
 

@@ -9,7 +9,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# CI never needs a writable GITHUB_TOKEN, including for PR checks.
+# The CI workflow compiles untrusted PR code but never needs a writable GITHUB_TOKEN.
 permissions:
   contents: read
 

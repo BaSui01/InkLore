@@ -30,18 +30,22 @@ InkLore 采用 **模块化单体架构**，以七个业务领域和统一平台�
 建议先阅读 [AGENTS.md](AGENTS.md) 和 [系统设计索引](docs/system-design/00-INDEX.md)，再按任务进入对应领域。
 
 ```bash
-# 后端构建与静态检查
+# 从仓库根目录运行，和 GitHub Actions CI 保持一致
+node scripts/check-project-skills.mjs
+node scripts/agent-notes.mjs check
 go build ./...
 go vet ./...
+gofmt -l .  # 输出应为空
+go run ./cmd/i18ncheck frontend/packages/i18n/src/locales/zh-CN.ts frontend/packages/i18n/src/locales/en-US.ts
+go run ./cmd/archguard -reachability
 
 # 前端（Node 22、pnpm 11.25.0）
 cd frontend
 pnpm install --frozen-lockfile
 pnpm run build
-
-# 完整本地门禁（在仓库根目录；需真实 Git 基线）
-make ci NOTES_BASE=<base-commit>
 ```
+
+上述命令适用于默认分支；完整的 PR 历史封印检查还需要真实 Git 基线，权威步骤以 [GitHub Actions CI](.github/workflows/ci.yml) 为准。完整本地门禁可在仓库根目录执行 `make ci NOTES_BASE=<base-commit>`。
 
 开发约定端口：**API 8080 · Creator 3000 · Admin 3001**。本地 PostgreSQL / Redis 配置见 [docker-compose.dev.yml](docker-compose.dev.yml)。仅使用示例环境文件，不提交真实密钥。
 

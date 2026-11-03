@@ -64,7 +64,10 @@ jobs:
             for (const branch of branchData) {
               for (const workflow of selected) {
                 // Do not describe a green check for an older branch commit.
+                // Push jobs validate the branch tree; pull_request jobs may
+                // validate a synthetic merge commit instead. Never mix them.
                 const latest = runs.find(run =>
+                  run.event === 'push' &&
                   run.head_branch === branch.name &&
                   (run.name === workflow || run.display_title === workflow)
                 );
@@ -92,6 +95,7 @@ jobs:
             ];
             for (const pr of openPrs.sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 25)) {
               const ci = runs.find(run =>
+                run.event === 'pull_request' &&
                 run.head_sha === pr.head.sha && run.name === 'CI'
               );
               prTable.push([

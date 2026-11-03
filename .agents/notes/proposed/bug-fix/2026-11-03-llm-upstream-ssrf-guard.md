@@ -2,7 +2,7 @@
 
 Status: proposed
 
-Task: INK-262
+Task: INK-274
 Scope: internal/llm/infrastructure/upstream_models.go、internal/llm/application/catalog.go、internal/llm/transport/http/handler.go、internal/platform/httpguard/httpguard.go
 
 ## Problem

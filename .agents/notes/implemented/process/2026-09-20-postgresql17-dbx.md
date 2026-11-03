@@ -23,4 +23,4 @@ Scope: Compose、dbx、数据库运行基线
 
 ## Verification
 
-dbx当前连接inklore-pg-r1实查17.11、vector0.8.0、pg_trgm1.6与46张public表；建库返回SQL_BLOCKED。无数据迁移或业务写入。详[验收](../../../../docs/acceptance-INK-203.md)。
+dbx当前连接inklore-pg-r1实查17.11、vector0.8.0、pg_trgm1.6与46张public表；建库返回SQL_BLOCKED。无数据迁移或业务写入。详[验收](../testing/2026-09-20-acceptance-ink-203.md)。

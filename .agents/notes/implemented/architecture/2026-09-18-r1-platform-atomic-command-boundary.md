@@ -39,6 +39,6 @@ R1使用独立迁移embed流和新组合根，当前仅暴露已验收技术探�
 
 ## Verification
 
-[INK-160验收记录](../../../../docs/acceptance-INK-160.md)给出真实PG16和loopback HTTP命令。全仓go build、26组验收、archguard、冻结源一致性、设计、技能、notes及diff检查作为本任务门禁。验收包含同连接/同txid、根回滚、Recoverable确定性隔离及致命传播、双连接CAS、scope历史证明、非阻塞并发claim、重放撤权、TTL、JSON/错误/启动故障。
+[INK-160验收记录](../testing/2026-09-18-acceptance-ink-160.md)给出真实PG16和loopback HTTP命令。全仓go build、26组验收、archguard、冻结源一致性、设计、技能、notes及diff检查作为本任务门禁。验收包含同连接/同txid、根回滚、Recoverable确定性隔离及致命传播、双连接CAS、scope历史证明、非阻塞并发claim、重放撤权、TTL、JSON/错误/启动故障。
 
-API/DDL冻结源未修改；发现后续操作不一致记入[INK-178](../../../../docs/r1-contract-differences-INK-178.md)，不在本实现中自行裁定。未验收账号、领域业务、浏览器、模型、生产切换或恢复容量。
+API/DDL冻结源未修改；发现后续操作不一致记入[INK-178](2026-09-18-r1-contract-differences-ink-178.md)，不在本实现中自行裁定。未验收账号、领域业务、浏览器、模型、生产切换或恢复容量。
