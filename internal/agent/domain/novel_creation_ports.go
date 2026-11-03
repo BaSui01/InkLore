@@ -19,6 +19,9 @@ type NovelGuideNovelAuthorizer interface {
 type NovelGuideModelPort interface {
 	ResolvePolicySnapshot(context.Context, string, string) (NovelGuidePolicySnapshot, error)
 	Generate(context.Context, ModelGenerateInput) (*ModelGenerateOutput, error)
+	// RecordPolicyVersionReference pins the guide session's frozen policy
+	// version on the LLM-owned ledger inside the caller's transaction.
+	RecordPolicyVersionReference(ctx context.Context, tenantID, policyVersionID, referenceKind, referenceID string) error
 }
 
 type NovelGuideDefinitionPort interface {

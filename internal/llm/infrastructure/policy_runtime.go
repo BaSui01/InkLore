@@ -53,7 +53,7 @@ func (s *Store) ResolveEnabledModel(ctx context.Context, tenantID, model string)
 		return d.EnabledModel{}, err
 	}
 	var models []d.EnabledModel
-	err = db.Raw(`SELECT m.id::text AS id, m.upstream_name AS name
+	err = db.Raw(`SELECT m.id::text AS id, m.upstream_name AS name, m.max_output_tokens AS max_output_tokens
 		FROM llm_models m
 		JOIN llm_providers pr ON pr.tenant_id=m.tenant_id AND pr.id=m.provider_id
 		WHERE m.tenant_id=? AND (m.id::text=? OR m.upstream_name=?)
@@ -67,6 +67,24 @@ func (s *Store) ResolveEnabledModel(ctx context.Context, tenantID, model string)
 		return d.EnabledModel{}, d.ErrNotFound
 	}
 	return models[0], nil
+}
+
+// RecordPolicyVersionReference pins a frozen policy version on behalf of an
+// agent-owned entity inside the caller's transaction, keeping deletion
+// refusal inside the LLM domain instead of querying Agent tables.
+func (s *Store) RecordPolicyVersionReference(ctx context.Context, tenantID, versionID, referenceKind, referenceID string) error {
+	db, err := s.manager.DB(ctx)
+	if err != nil {
+		return err
+	}
+	result := db.Exec(`INSERT INTO llm_policy_version_references
+		(tenant_id, policy_version_id, reference_kind, reference_id)
+		VALUES (?::uuid, ?::uuid, ?, ?::uuid)
+		ON CONFLICT DO NOTHING`, tenantID, versionID, referenceKind, referenceID)
+	if result.Error != nil {
+		return dbError(result.Error)
+	}
+	return nil
 }
 
 // CurrentPolicySnapshot provides one coherent policy version for new novel guides.

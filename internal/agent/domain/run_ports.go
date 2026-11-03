@@ -70,6 +70,10 @@ type ModelGenerateOutput struct {
 type ModelGatewayPort interface {
 	Generate(ctx context.Context, input ModelGenerateInput) (*ModelGenerateOutput, error)
 	ResolvePolicy(ctx context.Context, tenantID, taskKey string) (string, error)
+	// RecordPolicyVersionReference pins a frozen policy version on the
+	// LLM-owned ledger inside the caller's transaction, keeping deletion
+	// refusal inside the LLM domain without llm -> agent table access.
+	RecordPolicyVersionReference(ctx context.Context, tenantID, policyVersionID, referenceKind, referenceID string) error
 }
 
 // ToolCallInput is the input for Act phase tool execution.

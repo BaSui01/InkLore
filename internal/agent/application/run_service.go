@@ -312,6 +312,11 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 		if err := s.repo.CreateRun(tx, p.TenantID, run, nodes); err != nil {
 			return err
 		}
+		// Pin the frozen policy version on the LLM-owned ledger inside the
+		// same UoW so deletion refusal never reads Agent private tables.
+		if err := s.gateway.RecordPolicyVersionReference(tx, p.TenantID, policyVersionID, "run", runID); err != nil {
+			return err
+		}
 
 		// Initial event: run.started
 		payload, _ := json.Marshal(d.RunStartedPayload{

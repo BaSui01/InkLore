@@ -40,6 +40,7 @@ func (g *AgentTaskModelGateway) Generate(ctx context.Context, input agentdomain.
 	modelID, modelToUse := policy.ModelID, policy.ModelName
 	// A saved novel guide repeats the frozen model name. Keep its exact model
 	// ID instead of re-resolving a provider-ambiguous upstream name.
+	var override *llmdomain.EnabledModel
 	if selected := strings.TrimSpace(input.Model); selected != "" &&
 		selected != policy.ModelName && selected != policy.ModelID {
 		model, resolveErr := g.catalog.ResolveEnabledModel(ctx, input.TenantID, selected)
@@ -47,6 +48,7 @@ func (g *AgentTaskModelGateway) Generate(ctx context.Context, input agentdomain.
 			return nil, resolveErr
 		}
 		modelID, modelToUse = model.ID, model.Name
+		override = &model
 	}
 	maxTokens := policy.MaxOutputTokens
 	if input.MaxOutputTokens > 0 {
@@ -54,6 +56,11 @@ func (g *AgentTaskModelGateway) Generate(ctx context.Context, input agentdomain.
 			return nil, errors.New("requested model output exceeds frozen policy limit")
 		}
 		maxTokens = input.MaxOutputTokens
+	}
+	// The selected override model travels with its own documented ceiling;
+	// the frozen policy limit alone must not exceed what that model accepts.
+	if override != nil && override.MaxOutputTokens > 0 && int64(maxTokens) > override.MaxOutputTokens {
+		maxTokens = int(override.MaxOutputTokens)
 	}
 	request := llmdomain.TextGenerationRequest{
 		TenantID:          input.TenantID,
@@ -118,6 +125,15 @@ func (g *AgentTaskModelGateway) ResolvePolicy(ctx context.Context, tenantID, tas
 		return "", errors.New("agent policy resolver is not configured")
 	}
 	return g.catalog.CurrentPolicyVersion(ctx, tenantID, strings.TrimSpace(taskKey))
+}
+
+// RecordPolicyVersionReference forwards the agent-owned pin to the LLM
+// catalog so deletion refusal never needs to read Agent private tables.
+func (g *AgentTaskModelGateway) RecordPolicyVersionReference(ctx context.Context, tenantID, policyVersionID, referenceKind, referenceID string) error {
+	if g == nil || g.catalog == nil {
+		return errors.New("agent policy resolver is not configured")
+	}
+	return g.catalog.RecordPolicyVersionReference(ctx, tenantID, policyVersionID, referenceKind, referenceID)
 }
 
 func (g *AgentTaskModelGateway) ResolvePolicySnapshot(ctx context.Context, tenantID, taskKey string) (agentdomain.NovelGuidePolicySnapshot, error) {
