@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### Creator 开书引导 403 本地恢复退出（INK-271，review）
+
+- 为无法访问的历史小说引导会话提供显式“重新开始”，仅在用户点击后清除本地恢复指针并显示新建表单；后端身份与数据权限不变。
+- 防止点击按钮后 initialIdea 自动重新发起 HTTP POST，保持真实浏览器验收为后继要求。
+
+
 ### Agent 冻结策略引用保护（INK-264，review）
 
 - 对排队 Agent Run、Agent 问答及小说引导持有的冻结 PolicyVersionID 增加物理删除拦截，保留既有策略版本可读；事务锁与 CreateRun 的 FOR SHARE 串行化。
