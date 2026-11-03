@@ -1,0 +1,124 @@
+name: InkLore CI Status Overview
+
+# Trusted default-branch workflow: read-only, no checkout and no project tokens.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "29 1,7,13,19 * * *"
+  workflow_run:
+    workflows: [CI, Isolated Integration]
+    types: [completed]
+
+concurrency:
+  group: inklore-ci-status-overview
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+
+jobs:
+  overview:
+    name: Read-only CI overview
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summarize branch and pull request CI
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const origin = 'https://github.com/' + owner + '/' + repo;
+            const selected = ['CI', 'Isolated Integration', 'Qodana', 'CodeQL'];
+            const branches = ['private', 'dev'];
+
+            // Never execute source code from PRs or read secrets.
+            const [branchData, runResponse, openPrs] = await Promise.all([
+              Promise.all(branches.map(async branch => {
+                const result = await github.rest.repos.getBranch({ owner, repo, branch });
+                return { name: branch, sha: result.data.commit.sha };
+              })),
+              github.rest.actions.listWorkflowRunsForRepo({ owner, repo, per_page: 100 }),
+              github.paginate(github.rest.pulls.list, { owner, repo, state: 'open', per_page: 100 })
+            ]);
+            const runs = runResponse.data.workflow_runs || [];
+            const escaped = value => String(value ?? '')
+              .replace(/[|\r\n<>]/g, ' ')
+              .slice(0, 120);
+            const compact = sha => sha.slice(0, 12);
+            const runStatus = run => {
+              if (!run) return 'Not observed (within latest 100 runs)';
+              if (run.status !== 'completed') return escaped(run.status);
+              return escaped(run.conclusion || 'unknown');
+            };
+            const table = [
+              [
+                { data: 'Branch', header: true },
+                { data: 'HEAD', header: true },
+                { data: 'Workflow', header: true },
+                { data: 'Observed status', header: true },
+                { data: 'Run / evidence', header: true }
+              ]
+            ];
+            for (const branch of branchData) {
+              for (const workflow of selected) {
+                // Do not describe a green check for an older branch commit.
+                const latest = runs.find(run =>
+                  run.head_branch === branch.name &&
+                  (run.name === workflow || run.display_title === workflow)
+                );
+                const matchesHead = latest && latest.head_sha === branch.sha;
+                const status = latest
+                  ? (matchesHead ? runStatus(latest) : 'STALE: ' + runStatus(latest))
+                  : 'Not observed';
+                table.push([
+                  escaped(branch.name),
+                  compact(branch.sha),
+                  workflow,
+                  status,
+                  latest ? '<a href="' + origin + '/actions/runs/' + latest.id + '">View run</a>' : '<a href="' + origin + '/actions">Actions</a>'
+                ]);
+              }
+            }
+            const prTable = [
+              [
+                { data: 'PR', header: true },
+                { data: 'Base', header: true },
+                { data: 'State', header: true },
+                { data: 'Latest CI (matching PR HEAD)', header: true },
+                { data: 'Authoritative checks', header: true }
+              ]
+            ];
+            for (const pr of openPrs.sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 25)) {
+              const ci = runs.find(run =>
+                run.head_sha === pr.head.sha && run.name === 'CI'
+              );
+              prTable.push([
+                '#' + pr.number,
+                escaped(pr.base.ref),
+                pr.draft ? 'Draft' : 'Open',
+                runStatus(ci),
+                '<a href="' + origin + '/pull/' + pr.number + '/checks">PR checks</a>'
+              ]);
+            }
+            const summary = core.summary
+              .addHeading('InkLore CI status overview')
+              .addRaw('Generated: ' + new Date().toISOString() + '\n')
+              .addRaw('This is an observation of GitHub Actions metadata, NOT branch-protection or business acceptance evidence.\n')
+              .addHeading('Protected branch workflows', 2)
+              .addTable(table)
+              .addHeading('Open pull requests', 2)
+              .addTable(prTable);
+            if (openPrs.length > 25) {
+              summary.addRaw('Only the 25 most recently updated open PRs are displayed.\n');
+            }
+            summary
+              .addRaw('\n[Projects](' + 'https://github.com/users/BaSui01/projects/1' + ')' +
+                ' | [All Actions](' + origin + '/actions)' +
+                ' | [Security](' + origin + '/security)' +
+                ' | [Dependabot](' + origin + '/security/dependabot)' +
+                ' | [Releases](' + origin + '/releases)\n')
+              .addRaw('CI on pull_request may run against a synthetic merge SHA. If not found on the PR head, review the linked PR checks: missing observation is never interpreted as a pass.\n')
+              .addRaw('Project Gate and Status fields are not modified; no broad project-scoped PAT is stored in Actions.\n');
+            await summary.write();
