@@ -19,15 +19,15 @@ export function CreatorLoginRoute({
   onNavigateMode,
   onSuccess,
 }: CreatorLoginRouteProps) {
-  const { login, register, forgotPassword } = useCreatorSession();
+  const { login, register } = useCreatorSession();
 
   return (
     <AuthView
       variant="page"
       audience="creator"
-      mode={mode}
+      mode={mode === "forgot-password" ? "login" : mode}
       allowRegister={true}
-      allowForgotPassword={true}
+      allowForgotPassword={false}
       allowOAuth={false}
       allowUsername={true}
       onNavigateMode={onNavigateMode}
@@ -47,9 +47,6 @@ export function CreatorLoginRoute({
           password: data.password,
           penName: data.penName,
         });
-      }}
-      onForgotPasswordSubmit={async (data) => {
-        await forgotPassword(data.email);
       }}
       onSuccess={(completedMode) => {
         if (completedMode !== "forgot-password") onSuccess?.();

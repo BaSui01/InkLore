@@ -368,3 +368,10 @@ INK-253 的 GitHub 自动化权限、默认分支生效约束与取舍见 [工�
 
 [PR #71](https://github.com/BaSui01/InkLore/pull/71) 已将 quic-go v0.59.1、x/net v0.55.0、Vite v7.3.7、source-map-js v1.2.2、markdown-it v14.3.3 的五项 Dependabot 补丁按完整校验和整合至 dev；Go1.27.1 mod verify/build/vet/archguard、pnpm11.25.0 frozen-lockfile、Creator/Admin 双端构建、i18n 与 Skills/notes 通过，GitHub [PG17/Redis7/API 回归](https://github.com/BaSui01/InkLore/pull/71) 通过。[PR #79](https://github.com/BaSui01/InkLore/pull/79) 已单独将完全一致的四份 manifest/lockfile 受保护地发布至 private；两个长期分支的相关依赖文件 SHA 已重新核对一致，旧 bot PR #49–#53 均已关闭未重叠合入。没有业务 Go/React 源码变更。真实 QUIC/HTTP3、CSP 与不可信 Markdown 渲染场景未被这一补丁覆盖，后续单独验收，不把此补丁声明为全站安全风险消除。
 
+## INK-264 · 冻结策略引用与模型 ID 的安全保护（review）
+
+为已经持有 PolicyVersionID 的 Agent Run / 问答 / 小说引导阻止策略物理删除，事务内以政策头 FOR UPDATE 同步新建运行的 FOR SHARE，失败返回现有 resource_in_use 错误。对保存的冻结 ModelName 不再次模糊解析，同名不同 Provider 保留原冻结 ModelID。仅修改 Go 应用/基础设施和现有 cmd/ink228verify 验收命令，不改 R1 DDL / API / Secret。新增只使用临时 PG 和环回网络的回归，真实供应商、计费与模型/Provider 删除的完整边界仍需后继验收。详见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-03-frozen-policy-references.md)。
+
+## INK-271 · Creator Agent 会话 403 恢复退出（review）
+
+仅修复 Creator Agent 开书页在恢复旧 session 遇到 403 后无法继续的本地 UI 限制。保留既有 HomeNotice 的拒绝反馈，在无权会话等待恢复时由作者明确点击重新开始，清除其本地恢复指针但不触及服务器数据或绕过鉴权；还阻止自动引导流程因状态重渲染重复发起 POST。详见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-03-creator-guide-denied-recovery.md)。

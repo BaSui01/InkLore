@@ -535,6 +535,11 @@ func strFrom(m map[string]any, k string) string { v, _ := m[k].(string); return 
 func mapObject(v any) map[string]any            { m, _ := v.(map[string]any); return m }
 
 func (s *Catalog) FetchUpstreamModels(ctx context.Context, p identity.Principal, q d.UpstreamModelsQuery) ([]d.UpstreamModelItem, error) {
+	// Discovery performs outbound requests and must never be available to
+	// creator or auditor read roles.
+	if _, err := s.Authorize(ctx, p, true); err != nil {
+		return nil, err
+	}
 	if s.opts.Upstream == nil {
 		return nil, errors.New("llm: upstream model fetcher unavailable")
 	}
