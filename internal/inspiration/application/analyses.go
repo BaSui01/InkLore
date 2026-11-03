@@ -230,6 +230,7 @@ func (s *Service) ExecuteAnalysis(ctx context.Context, p scope.Principal, analys
 
 	// Call LLM Generation port
 	genResp, err := s.o.Generation.Generate(ctx, GenerationRequest{
+		TenantID:        p.TenantID,
 		TaskKind:        claimed.Kind,
 		ContextSegments: contextStrings,
 		Brief:           claimed.Brief,

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	d "InkLore/internal/agent/domain"
 	"InkLore/internal/platform/identity"
@@ -101,7 +102,7 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 	}
 
 	// Validate instruction
-	if len(in.Instruction) < 1 || len(in.Instruction) > MaxInstructionLen {
+	if length := utf8.RuneCountInString(in.Instruction); length < 1 || length > MaxInstructionLen {
 		return nil, d.ErrValidationFailed(map[string]any{"reason": "instruction must be between 1 and 8000 codepoints"})
 	}
 
@@ -216,14 +217,6 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 	if s.gateway == nil {
 		return nil, d.ErrInvalidConfiguration(map[string]any{"reason": "model gateway is not configured"})
 	}
-	policyVerID, err := s.gateway.ResolvePolicy(ctx, p.TenantID, in.TaskKey)
-	if err != nil {
-		return nil, err
-	}
-	if policyVerID == "" {
-		return nil, d.ErrInvalidConfiguration(map[string]any{"reason": "enabled llm policy is required for task_key"})
-	}
-
 	runID := uuid.NewString()
 	now := time.Now().UTC()
 	deadLine := now.Add(DefaultRunDeadline)
@@ -246,7 +239,7 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 		Instruction:         in.Instruction,
 		DefinitionVersionID: defVerID,
 		WorkflowVersionID:   wfVerID,
-		PolicyVersionID:     policyVerID,
+		PolicyVersionID:     "",
 		Status:              d.RunStatusQueued,
 		NextSeq:             2, // Seq 1 is run.started
 		RetainedFromSeq:     1,
@@ -302,6 +295,14 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 
 	// In single UoW transaction: enqueue job, create run + nodes + run.started event
 	err = s.manager.Within(ctx, func(tx context.Context) error {
+		policyVersionID, err := s.gateway.ResolvePolicy(tx, p.TenantID, in.TaskKey)
+		if err != nil {
+			return err
+		}
+		if policyVersionID == "" {
+			return d.ErrInvalidConfiguration(map[string]any{"reason": "enabled llm policy is required for task_key"})
+		}
+		run.PolicyVersionID = policyVersionID
 		jobID, err := s.jobs.EnqueueRunJob(tx, p, runID)
 		if err != nil {
 			return err

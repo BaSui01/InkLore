@@ -375,6 +375,17 @@ func (s *Store) Delete(ctx context.Context, tenant string, kind d.Kind, id strin
 	if err != nil {
 		return err
 	}
+	// Guard immutable versions even if a caller bypasses the Catalog service.
+	// This runs in the existing mutation transaction.
+	if kind == d.Policies {
+		used, err := s.InUse(ctx, tenant, kind, id)
+		if err != nil {
+			return err
+		}
+		if used {
+			return d.ErrInUse
+		}
+	}
 	if kind == d.Models {
 		_ = db.Exec("DELETE FROM llm_channel_models WHERE tenant_id=? AND model_id=?", tenant, id)
 		_ = db.Exec("DELETE FROM llm_pricing_revisions WHERE tenant_id=? AND model_id=?", tenant, id)
@@ -413,6 +424,14 @@ func (s *Store) InUse(ctx context.Context, tenant string, kind d.Kind, id string
 	if err != nil {
 		return false, err
 	}
+	if kind == d.Policies {
+		// Serialize deletion with CreateRun's FOR SHARE on the policy head.
+		// Within Catalog.Delete's UoW this lock remains held until commit.
+		var lockedID string
+		if err := db.Raw("SELECT id::text FROM llm_task_policies WHERE tenant_id=? AND id=? FOR UPDATE", tenant, id).Row().Scan(&lockedID); err != nil {
+			return false, dbError(err)
+		}
+	}
 	var query string
 	switch kind {
 	case d.Providers:
@@ -424,7 +443,12 @@ func (s *Store) InUse(ctx context.Context, tenant string, kind d.Kind, id string
 	case d.Keys:
 		query = "SELECT EXISTS(SELECT 1 FROM llm_reservations WHERE tenant_id=? AND key_id=? AND status IN ('reserved','dispatched'))"
 	case d.Policies:
-		query = "SELECT EXISTS(SELECT 1 FROM llm_reservations r JOIN llm_task_policy_versions v ON v.tenant_id=r.tenant_id AND v.id=r.policy_version_id WHERE r.tenant_id=? AND v.policy_id=? AND r.status IN ('reserved','dispatched'))"
+		query = "SELECT EXISTS(SELECT 1 FROM llm_task_policy_versions v " +
+			"WHERE v.tenant_id=? AND v.policy_id=? AND (" +
+			"EXISTS(SELECT 1 FROM llm_reservations r WHERE r.tenant_id=v.tenant_id AND r.policy_version_id=v.id AND r.status IN ('reserved','dispatched')) " +
+			"OR EXISTS(SELECT 1 FROM agent_runs run WHERE run.tenant_id=v.tenant_id AND run.policy_version_id=v.id) " +
+			"OR EXISTS(SELECT 1 FROM agent_run_questions question WHERE question.tenant_id=v.tenant_id AND question.policy_version_id=v.id) " +
+			"OR EXISTS(SELECT 1 FROM agent_novel_creation_sessions guide WHERE guide.tenant_id=v.tenant_id AND guide.policy_version_id=v.id)))"
 	default:
 		return false, d.ErrInvalid
 	}

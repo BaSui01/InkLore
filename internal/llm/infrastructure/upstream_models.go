@@ -7,16 +7,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
-	"os"
-	"regexp"
 	"strings"
 	"time"
 
 	d "InkLore/internal/llm/domain"
+	"InkLore/internal/platform/httpguard"
 )
-
-var envVarRegex = regexp.MustCompile(`^[A-Z_][A-Z0-9_]*$`)
 
 type UpstreamModelService struct{}
 
@@ -28,14 +24,9 @@ func (s *UpstreamModelService) FetchUpstreamModels(ctx context.Context, q d.Upst
 func FetchUpstreamModels(ctx context.Context, q d.UpstreamModelsQuery) ([]d.UpstreamModelItem, error) {
 	protocol := strings.ToLower(strings.TrimSpace(q.Protocol))
 	baseURL := strings.TrimRight(strings.TrimSpace(q.BaseURL), "/")
+	// Never resolve a client-supplied key string as a server environment variable.
+	// Catalog discovery may use only the literal key explicitly supplied by the operator.
 	apiKey := strings.TrimSpace(q.APIKey)
-
-	// 若传入的是环境变量名引用，尝试解析真实密钥
-	if envVarRegex.MatchString(apiKey) {
-		if envVal := os.Getenv(apiKey); envVal != "" {
-			apiKey = strings.TrimSpace(envVal)
-		}
-	}
 
 	if baseURL == "" {
 		switch protocol {
@@ -55,7 +46,30 @@ func FetchUpstreamModels(ctx context.Context, q d.UpstreamModelsQuery) ([]d.Upst
 	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
+	// Local Ollama is the only intentional loopback exception and only when
+	// the operator omitted the URL; user-supplied endpoints never inherit it.
+	localOllama := protocol == "ollama" && strings.TrimSpace(q.BaseURL) == ""
 	client := &http.Client{Timeout: 10 * time.Second}
+	if !localOllama {
+		policy := httpguard.Policy{
+			Timeout:          10 * time.Second,
+			MaxResponseBytes: 1 << 20,
+			DisableProxy:     true,
+		}
+		validated, err := httpguard.ValidateURL(reqCtx, baseURL, policy)
+		if err != nil {
+			return nil, errors.New("unsafe upstream model endpoint")
+		}
+		if !strings.EqualFold(validated.Scheme, "https") || validated.RawQuery != "" || validated.Fragment != "" {
+			return nil, errors.New("upstream model endpoint requires HTTPS without query or fragment")
+		}
+		client = httpguard.NewClient(policy)
+	}
+	// Never follow provider-controlled redirects, including from local Ollama.
+	// A redirect could otherwise change the destination or forward credentials.
+	client.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
 
 	switch protocol {
 	case "anthropic":
@@ -98,7 +112,7 @@ func fetchOpenAIModels(ctx context.Context, client *http.Client, baseURL, apiKey
 func doFetchOpenAIModels(ctx context.Context, client *http.Client, targetURL, apiKey string) ([]d.UpstreamModelItem, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("invalid upstream model request")
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -109,7 +123,7 @@ func doFetchOpenAIModels(ctx context.Context, client *http.Client, targetURL, ap
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("upstream connection failed: %w", err)
+		return nil, errors.New("upstream connection failed")
 	}
 	defer resp.Body.Close()
 
@@ -119,7 +133,7 @@ func doFetchOpenAIModels(ctx context.Context, client *http.Client, targetURL, ap
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("upstream HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		return nil, fmt.Errorf("upstream HTTP %d", resp.StatusCode)
 	}
 
 	var parsed struct {
@@ -169,7 +183,7 @@ func fetchAnthropicModels(ctx context.Context, client *http.Client, baseURL, api
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("invalid upstream model request")
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -181,7 +195,7 @@ func fetchAnthropicModels(ctx context.Context, client *http.Client, baseURL, api
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("anthropic connection failed: %w", err)
+		return nil, errors.New("anthropic connection failed")
 	}
 	defer resp.Body.Close()
 
@@ -191,7 +205,7 @@ func fetchAnthropicModels(ctx context.Context, client *http.Client, baseURL, api
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("anthropic HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		return nil, fmt.Errorf("anthropic HTTP %d", resp.StatusCode)
 	}
 
 	var parsed struct {
@@ -230,18 +244,11 @@ func fetchGeminiModels(ctx context.Context, client *http.Client, baseURL, apiKey
 		targetURL = targetURL + "/models"
 	}
 
-	if apiKey != "" {
-		if u, err := url.Parse(targetURL); err == nil {
-			q := u.Query()
-			q.Set("key", apiKey)
-			u.RawQuery = q.Encode()
-			targetURL = u.String()
-		}
-	}
+	// Gemini accepts x-goog-api-key; never duplicate a secret in the URL query.
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("invalid upstream model request")
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -252,7 +259,7 @@ func fetchGeminiModels(ctx context.Context, client *http.Client, baseURL, apiKey
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("gemini connection failed: %w", err)
+		return nil, errors.New("gemini connection failed")
 	}
 	defer resp.Body.Close()
 
@@ -262,7 +269,7 @@ func fetchGeminiModels(ctx context.Context, client *http.Client, baseURL, apiKey
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("gemini HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		return nil, fmt.Errorf("gemini HTTP %d", resp.StatusCode)
 	}
 
 	var parsed struct {
