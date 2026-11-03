@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### 五项依赖补丁批量整合（INK-261，待独立验收）
+
+- 汇总 Dependabot #49–#53 的 quic-go、x/net、Vite、source-map-js、markdown-it 补丁版本和锁文件校验和，先进入 dev 做兼容与实际 API/双端构建验收。
+- 不修改业务代码、数据库或密钥；不直接合入 private，不宣称五项补丁解决所有依赖漏洞或真实模型/浏览器业务验收。
+
+
 ### 自动合并敏感路径收紧（INK-254，review）
 
 - 默认分支安全 PR Gate 增加 internal/platform/identity 和所有领域的 infrastructure 路径，防止拥有 auto-merge-approved 标签的认证/持久化 PR 绕过人工审查；低风险路径、原有 CI 与 Review 门禁保持不变。
