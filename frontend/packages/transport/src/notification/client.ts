@@ -13,6 +13,7 @@
 import { PlatformNotificationMessage } from "@inklore/contracts";
 import { AuthSession } from "../http/session";
 import { reportSafeDiagnostic } from "../http/diagnostic";
+import { stripTrailingSlashes } from "../base-url";
 
 export type NotificationHandler = (msg: PlatformNotificationMessage) => void;
 
@@ -35,7 +36,7 @@ export class NotificationClient {
   private static readonly MAX_SEEN_EVENTS = 500;
 
   constructor(options: NotificationClientOptions) {
-    this.baseUrl = (options.baseUrl || "").replace(/\/+$/, "");
+    this.baseUrl = stripTrailingSlashes(options.baseUrl || "");
     this.session = options.session;
   }
 
