@@ -6,11 +6,10 @@
 
 ## [Unreleased]
 
-### 五项依赖补丁批量整合（INK-261，待独立验收）
+### 五项依赖补丁批量整合（INK-261，已发布）
 
-- 汇总 Dependabot #49–#53 的 quic-go、x/net、Vite、source-map-js、markdown-it 补丁版本和锁文件校验和，先进入 dev 做兼容与实际 API/双端构建验收。
-- 不修改业务代码、数据库或密钥；不直接合入 private，不宣称五项补丁解决所有依赖漏洞或真实模型/浏览器业务验收。
-
+- [PR #71](https://github.com/BaSui01/InkLore/pull/71) 在 dev 合并 quic-go 0.59.1、x/net 0.55.0、vite 7.3.7、source-map-js 1.2.2、markdown-it 14.3.3；Go mod verify/build/vet/archguard、pnpm frozen、Creator/Admin 构建及 PG17/Redis7 API 回归通过。
+- [PR #79](https://github.com/BaSui01/InkLore/pull/79) 经独立受保护 CI 合入 private，双方 manifest/lockfile 版本和 SHA 一致；原 Dependabot #49–#53 均以 superseded 方式关闭，不重复合并。当前补丁不声称真实 QUIC/HTTP3、CSP/Markdown 或所有安全告警已通过端到端验收。
 
 ### 双端 UI/UX 设计实施包（INK-259，review）
 
@@ -26,10 +25,10 @@
 - PR #19 在临时 PostgreSQL 中已验证双租户渠道与冻结 Run/Job、发布锁竞争；新增环回 HTTP 伪 Provider 验证租户 Key / upstream_model 的实际网络路由及无授权外发，必须在最终 head 通过。付费真实 Provider、计费审计和 Creator 策略目录、兼容 sunset 仍未完成，整体任务维持 doing。
 
 
-### Go 加密依赖安全升级（INK-258，待独立验收）
+### Go 加密依赖安全升级（INK-258，已发布）
 
-- 以 Dependabot PR #28 为版本来源，在 dev 提交 x/crypto 0.48.0→0.52.0，联动 x/net、x/text、x/sys、x/sync 的必要版本与校验和更新；未直接更改业务源代码。
-- 加密、认证与网络依赖图变化需要最新 CI 和隔离服务的实际认证/租户回归证据。稳定 private 分支暂不直接合入，仍须受保护发布 PR。
+- [PR #43](https://github.com/BaSui01/InkLore/pull/43) 已在 dev 合并 x/crypto 0.48.0→0.52.0 及关联 x/net/text/sys/sync 更新；Go 模块校验和常规构建通过。
+- [GitHub 临时 PG17/Redis7 运行验收](https://github.com/BaSui01/InkLore/actions/runs/41492434905) 覆盖注册、会话、匿名拒绝、重复注册、权限及事务；[PR #47](https://github.com/BaSui01/InkLore/pull/47) 已将同版本依赖受保护地发布到默认 private。剩余外部模型/生产压测风险保留为业务运行验收，不声称本依赖补丁消除所有安全告警。
 
 ### 在线隔离 CI / Supabase 预检（INK-255，待验收）
 
