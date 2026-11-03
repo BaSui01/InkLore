@@ -7,7 +7,22 @@
 - [Issues](https://github.com/BaSui01/InkLore/issues)：使用缺陷、功能、实施 / 验收表单。若已有 INK 编号，则引用原任务，不重复创建。
 - [Pull Requests](https://github.com/BaSui01/InkLore/pulls)：所有代码与治理文件先向 `dev` 提 PR。敏感变更加 `manual-review` 标签，禁止在未完成验收时切换为可自动合并。
 - [InkLore Projects](https://github.com/users/BaSui01/projects/1)：协作可视化看板，已关联本仓库。仓库 `docs/backlog.md` 是唯一任务状态与验收事实来源，GitHub Project 的 Status 只作为视图。
+- [交付里程碑](https://github.com/BaSui01/InkLore/milestones)：以 GitHub 原生 Milestone 聚合 Issue/PR 的验收关卡；阶段说明与退出条件以各 Milestone 描述为准。
 - [贡献指南](../CONTRIBUTING.md) 与 [治理规则](repository-governance.md) 给出分支政策。
+
+### 交付里程碑与验收口径（2026-11-03）
+
+| Milestone | 交付关卡 | 已有执行入口示例 |
+| --- | --- | --- |
+| [M0 · 安全与 CI 基线](https://github.com/BaSui01/InkLore/milestone/1) | 已知安全缺陷与登录风险收敛、最新开发 CI 可信 | [INK-262](https://github.com/BaSui01/InkLore/issues/74)、[INK-263](https://github.com/BaSui01/InkLore/issues/75)、[INK-272](https://github.com/BaSui01/InkLore/issues/97) |
+| [M1 · 身份与模型服务闭环](https://github.com/BaSui01/InkLore/milestone/2) | SMTP/OTP 真实投递、多供应商模型协议与预算验收 | [INK-273](https://github.com/BaSui01/InkLore/issues/98)、[INK-205](https://github.com/BaSui01/InkLore/issues/103) |
+| [M2 · Agent 持久执行与策略可信](https://github.com/BaSui01/InkLore/milestone/3) | 策略冻结、工具授权、Question、审批和 Worker 恢复 | [INK-228](https://github.com/BaSui01/InkLore/issues/3)、[INK-229](https://github.com/BaSui01/InkLore/issues/104)、[INK-264](https://github.com/BaSui01/InkLore/issues/83) |
+| [M3 · Creator 小说创作闭环](https://github.com/BaSui01/InkLore/milestone/4) | 开书到章节交付、双端问答与跨域真实验收 | [INK-230](https://github.com/BaSui01/InkLore/issues/106)、[INK-236](https://github.com/BaSui01/InkLore/issues/4)、[INK-274](https://github.com/BaSui01/InkLore/issues/107) |
+| [M4 · Staging 验收与受保护发布](https://github.com/BaSui01/InkLore/milestone/5) | 隔离云端验收、dev/private 分叉收敛及人工发布审查 | [INK-255](https://github.com/BaSui01/InkLore/issues/105)、[INK-256](https://github.com/BaSui01/InkLore/issues/39)、[发布 PR #101](https://github.com/BaSui01/InkLore/pull/101) |
+
+约定：里程碑按交付验收而非代码目录分组，阶段间允许并行实施，**完成判定依赖真实验收证据**。GitHub 的进度百分比只统计关联 Issue/PR 的开闭状态，不能替代 `docs/backlog.md` 的 todo/doing/review/done/blocked 事实；已写入旧任务编号继续复用，不批量把历史 done 重新计入新阶段。没有经确认的交付排期，不设置虚构 due date，也不为凑齐进度强行关闭 Issue。
+
+跨阶段依赖写在 Issue 正文而非重复创建同义任务。发现 [INK-265 #89](https://github.com/BaSui01/InkLore/issues/89) 与 [INK-271 #91](https://github.com/BaSui01/InkLore/issues/91) 的 403 会话处理策略冲突，先按现行 backlog 的人工重新开始语义核对并留记录，**不自动合并相反实现**。已被新 500KiB 规则覆盖的旧 50KiB 任务也需先核对实际已合并代码，再决定是否关闭；待分流项可暂不绑定 Milestone。
 
 ## 2. 依赖关系与 Dependabot
 
