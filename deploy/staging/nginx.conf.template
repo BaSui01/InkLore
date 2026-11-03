@@ -1,0 +1,65 @@
+# Substitute only deployment-controlled variables; keep Nginx $variables intact.
+events { worker_connections 1024; }
+http {
+  include /etc/nginx/mime.types;
+  default_type application/octet-stream;
+  sendfile on;
+  server_tokens off;
+
+  map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+  }
+
+  server {
+    listen ${PORT};
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header X-Frame-Options DENY always;
+
+    # Same-origin proxy prevents browsers needing a public API domain.
+    # The upstream must be the PRIVATE Railway API service.
+    location ^~ /v1/ {
+      proxy_pass ${API_UPSTREAM};
+      proxy_http_version 1.1;
+      proxy_set_header Host $http_host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection $connection_upgrade;
+      proxy_set_header X-Request-ID $request_id;
+      proxy_buffering off;
+      proxy_request_buffering off;
+      proxy_read_timeout 3600s;
+      proxy_send_timeout 3600s;
+    }
+
+    location = /healthz {
+      proxy_pass ${API_UPSTREAM};
+      proxy_set_header Host $http_host;
+    }
+    location = /readyz {
+      proxy_pass ${API_UPSTREAM};
+      proxy_set_header Host $http_host;
+    }
+
+    location ^~ /assets/ {
+      try_files $uri =404;
+      add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+    location ~ /\\. {
+      deny all;
+    }
+    location = /index.html {
+      add_header Cache-Control "no-store";
+    }
+    location / {
+      try_files $uri $uri/ /index.html;
+    }
+  }
+}
