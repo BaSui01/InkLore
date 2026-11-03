@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### 保护分支定期 Supabase 监控与跨端 E2E 验收（INK-270，review）
+
+- Supabase 的只读 IPv4 Session Pooler 预检保持 GitHub 受保护 Environment Secret，仅在默认分支每天 03:17 UTC 定时运行（也可手动运行），禁止写入真实业务数据。
+- 独立 GitHub Actions 在 PR、dev/private push 以及每周两次的默认分支计划任务中，使用临时 PG17/Redis7、Go 后端/部署 CLI、Creator/Admin React 生产构建与 Chromium，验收 Creator 注册/小说 CRUD 与租户隔离、Admin 治理访问、Agent 定义及无权限 Run 的真实拒绝。
+- 浏览器依赖固定 Playwright 版本并安装在 Runner 临时目录，不引入生产依赖；真实模型调用、Agent Worker 产出、SSE 和断线恢复保留独立验收。
+
 ### Supabase IPv4 Session Pooler 远程预检修复（INK-262）
 
 - 修复受保护 GitHub Actions 在 Supabase 免费项目 IPv6 Direct 端点连接失败的问题；不重置已保存的环境 Secret，不购买 IPv4 Add-on。

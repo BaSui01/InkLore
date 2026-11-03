@@ -2,9 +2,16 @@ name: Supabase Staging Preflight
 
 on:
   workflow_dispatch:
+  schedule:
+    # Daily 03:17 UTC (11:17 Asia/Shanghai), default protected branch only.
+    - cron: '17 3 * * *'
 
 permissions:
   contents: read
+
+concurrency:
+  group: supabase-preflight-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   verify-supabase:
