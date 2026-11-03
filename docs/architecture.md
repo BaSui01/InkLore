@@ -363,3 +363,7 @@ INK-253 的 GitHub 自动化权限、默认分支生效约束与取舍见 [工�
 ## INK-258 · Go 加密与网络依赖安全更新（review）
 
 基于原 Dependabot PR #28 的模块解析快照，将 golang.org/x/crypto 从 v0.48.0 升至 v0.52.0，同步更新 x/net、x/text、x/sys、x/sync；本阶段只改 go.mod/go.sum，原 Go 应用源代码、SQL 和前端运行路径不变。依赖图变更仍可能影响加密、密码校验、JWT、传输安全等可达运行行为，因此不能仅根据静态构建认定功能兼容；必须在隔离环境验收实际授权与失败路径，再经受保护发布 PR 同步 private。详情见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-go-crypto-security-upgrade.md)。
+
+## INK-261 · Go 网络与前端依赖补丁整合（review）
+
+本轮仅整合来自 Dependabot #49–#53 的五项版本更新：quic-go v0.59.1、golang.org/x/net v0.55.0、Vite v7.3.7、source-map-js v1.2.2 与 markdown-it v14.3.3。变更范围限 go.mod/go.sum、frontend/package.json/pnpm-lock.yaml 和工程记录，无应用 Go/React/SQL/冻结设计逻辑改动。依赖解析、浏览器渲染和 HTTP/3 行为仍可能受库变更影响，不能把模块构建视为实际业务回归。所有版本和 integrity 均从独立 bot PR 出处汇总、按同一基础锁文件差异无重叠合成。具体风险、验证与双分支发布边界见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-dependabot-batch-review.md)。
