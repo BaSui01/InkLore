@@ -1,0 +1,121 @@
+# InkLore isolated no-cost Staging. Zero paid plans and no committed credentials.
+# Requires a restricted Supabase DSN at initial Blueprint creation.
+services:
+  - type: keyvalue
+    name: inklore-basui01-staging-kv
+    region: singapore
+    plan: free
+    maxmemoryPolicy: noeviction
+    persistenceMode: 'off'
+    ipAllowList: []
+
+  - type: web
+    runtime: docker
+    name: inklore-basui01-staging-api
+    region: singapore
+    plan: free
+    branch: dev
+    dockerfilePath: ./deploy/render/Dockerfile.api
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeployTrigger: 'off'
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: HTTP_ADDR
+        value: 0.0.0.0:10000
+      - key: PORT
+        value: '10000'
+      - key: MIGRATE_ON_START
+        value: 'false'
+      - key: DATABASE_DRIVER
+        value: postgres
+      - key: DATABASE_DSN
+        sync: false
+      - key: JWT_SIGNING_KEY
+        generateValue: true
+      - key: CSRF_KEY
+        generateValue: true
+      - key: IDEMPOTENCY_HASH_KEY
+        generateValue: true
+      - key: CURSOR_SIGNING_KEY
+        generateValue: true
+      - key: CREATOR_ORIGIN
+        value: https://inklore-basui01-staging-creator.onrender.com
+      - key: ADMIN_ORIGIN
+        value: https://inklore-basui01-staging-admin.onrender.com
+      - key: COOKIE_SECURE
+        value: 'true'
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: inklore-basui01-staging-kv
+          property: connectionString
+
+  - type: web
+    runtime: static
+    name: inklore-basui01-staging-creator
+    branch: dev
+    autoDeployTrigger: 'off'
+    buildCommand: cd frontend && npx --yes pnpm@11.25.0 install --frozen-lockfile && npx --yes pnpm@11.25.0 run build:creator
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+    routes:
+      - type: rewrite
+        source: /v1/*
+        destination: https://inklore-basui01-staging-api.onrender.com/v1/*
+      - type: rewrite
+        source: /healthz
+        destination: https://inklore-basui01-staging-api.onrender.com/healthz
+      - type: rewrite
+        source: /readyz
+        destination: https://inklore-basui01-staging-api.onrender.com/readyz
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+
+  - type: web
+    runtime: static
+    name: inklore-basui01-staging-admin
+    branch: dev
+    autoDeployTrigger: 'off'
+    buildCommand: cd frontend && npx --yes pnpm@11.25.0 install --frozen-lockfile && npx --yes pnpm@11.25.0 run build:admin
+    staticPublishPath: ./frontend/dist-admin
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+    routes:
+      - type: rewrite
+        source: /v1/*
+        destination: https://inklore-basui01-staging-api.onrender.com/v1/*
+      - type: rewrite
+        source: /healthz
+        destination: https://inklore-basui01-staging-api.onrender.com/healthz
+      - type: rewrite
+        source: /readyz
+        destination: https://inklore-basui01-staging-api.onrender.com/readyz
+      - type: rewrite
+        source: /*
+        destination: /admin.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin

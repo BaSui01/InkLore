@@ -1,0 +1,76 @@
+name: Render Free Staging Blueprint
+
+on:
+  pull_request:
+    paths:
+      - 'render.yaml'
+      - 'deploy/render/**'
+      - '.github/workflows/render-free-staging.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  free-blueprint:
+    name: Render free-only blueprint and Go container
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install isolated YAML parser
+        run: python -m pip install --disable-pip-version-check PyYAML==6.0.2
+      - name: Assert no paid or production resources
+        shell: bash
+        run: |
+          python - <<'PY'
+          import pathlib, yaml
+          d = yaml.safe_load(pathlib.Path('render.yaml').read_text())
+          s = d['services']
+          assert 'databases' not in d, 'Do not create a new database'
+          assert len(s) == 4, 'Require exactly 4 services'
+          names = {x['name']: x for x in s}
+          suffix = ['api', 'creator', 'admin', 'kv']
+          assert set(names) == {'inklore-basui01-staging-' + n for n in suffix}
+          assert sum(x['type'] == 'keyvalue' for x in s) == 1
+          assert sum(x.get('runtime') == 'static' for x in s) == 2
+          assert all(x.get('plan', 'free') == 'free' for x in s)
+          assert all(x.get('autoDeployTrigger') == 'off' for x in s if x['type'] == 'web')
+          assert all(x.get('branch') == 'dev' for x in s if x['type'] == 'web')
+          kv = names['inklore-basui01-staging-kv']
+          assert kv['ipAllowList'] == [] and kv['persistenceMode'] == 'off'
+          assert kv['maxmemoryPolicy'] == 'noeviction'
+          api = names['inklore-basui01-staging-api']
+          assert api['runtime'] == 'docker' and api['plan'] == 'free'
+          env = {x['key']: x for x in api['envVars']}
+          assert env['DATABASE_DSN'] == {'key': 'DATABASE_DSN', 'sync': False}
+          assert all(env[k].get('generateValue') is True for k in
+                     ('JWT_SIGNING_KEY','CSRF_KEY','IDEMPOTENCY_HASH_KEY','CURSOR_SIGNING_KEY'))
+          assert env['REDIS_URL']['fromService']['property'] == 'connectionString'
+          for label in ('creator', 'admin'):
+              site = names['inklore-basui01-staging-' + label]
+              assert site['runtime'] == 'static' and 'plan' not in site
+              routes = site['routes']
+              assert routes[0]['source'] == '/v1/*'
+              assert routes[0]['destination'].startswith('https://inklore-basui01-staging-api.onrender.com/v1/')
+          print('Render blueprint: free-only topology, no credentials, no automatic deploy: PASS')
+          PY
+      - name: Check staging entrypoint shell syntax
+        run: sh -n deploy/render/entrypoint.sh
+      - name: Build Go API image without secrets
+        run: docker build --progress=plain -f deploy/render/Dockerfile.api -t inklore-render-api:ci .
+      - name: Verify image refuses missing secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          docker run --rm inklore-render-api:ci >/tmp/render-api-startup.log 2>&1
+          status=$?
+          set -e
+          test "$status" -ne 0
+          grep -q 'DATABASE_DSN' /tmp/render-api-startup.log
+          ! grep -Ei 'postgres://|password=' /tmp/render-api-startup.log
+          echo 'No DSN: startup correctly fails closed.'
