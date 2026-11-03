@@ -9,6 +9,10 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# The CI workflow compiles untrusted PR code but never needs a writable GITHUB_TOKEN.
+permissions:
+  contents: read
+
 jobs:
   project-skills:
     name: 项目 Skills 与工程记忆校验
