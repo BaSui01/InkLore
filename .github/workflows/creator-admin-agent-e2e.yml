@@ -1,0 +1,137 @@
+name: Creator Admin Agent E2E
+
+on:
+  pull_request:
+    branches: [private, dev]
+  push:
+    branches: [private, dev]
+  workflow_dispatch:
+  schedule:
+    # Twice weekly, UTC; only runs on GitHub default branch.
+    - cron: '43 2 * * 1,4'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: real-e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-and-http:
+    name: Creator / Admin / Agent 真实 HTTP 与 Chromium 验收
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: inklore_e2e
+          POSTGRES_USER: inklore_e2e
+          POSTGRES_PASSWORD: disposable-ci-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U inklore_e2e -d inklore_e2e"
+          --health-interval 5s --health-timeout 5s --health-retries 24
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 24
+    env:
+      APP_ENV: test
+      DATABASE_DRIVER: postgres
+      DATABASE_DSN: postgres://inklore_e2e:disposable-ci-only@127.0.0.1:5432/inklore_e2e?sslmode=disable
+      REDIS_ADDR: 127.0.0.1:6379
+      REDIS_ENABLED: 'true'
+      MIGRATE_ON_START: 'false'
+      HTTP_ADDR: 127.0.0.1:18080
+      CREATOR_ORIGIN: http://127.0.0.1:3000
+      ADMIN_ORIGIN: http://127.0.0.1:3001
+      VITE_BACKEND_URL: http://127.0.0.1:18080
+      VITE_CREATOR_PORT: '3000'
+      VITE_ADMIN_PORT: '3001'
+      E2E_FIXTURE_PATH: /tmp/inklore-e2e-fixture.json
+      GOTOOLCHAIN: auto
+    steps:
+      - name: Checkout unprivileged source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Prepare disposable database and API binaries
+        run: |
+          set -euo pipefail
+          go run ./cmd/migrate -cmd up -timeout 180s
+          go build -o /tmp/inklore-ci-admin ./cmd/admin
+          go build -o /tmp/inklore-ci-server ./cmd/server
+      - name: Build both React applications
+        run: |
+          set -euo pipefail
+          pnpm --dir frontend install --frozen-lockfile
+          pnpm --dir frontend run build
+      - name: Install pinned Chromium driver outside the repository
+        run: |
+          set -euo pipefail
+          npm install --prefix /tmp/inklore-ci-browser --no-save --no-package-lock \
+            --no-audit --no-fund --ignore-scripts playwright@1.64.1
+          /tmp/inklore-ci-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Execute real Creator / Admin / Agent API and browser journeys
+        shell: bash
+        run: |
+          set -euo pipefail
+          export E2E_ADMIN_EMAIL="ci-admin-$(openssl rand -hex 8)@example.invalid"
+          export E2E_ADMIN_PASSWORD="$(openssl rand -hex 24)"
+          export E2E_CREATOR_EMAIL="ci-creator-$(openssl rand -hex 8)@example.invalid"
+          export E2E_CREATOR_PASSWORD="$(openssl rand -hex 24)"
+          export JWT_SIGNING_KEY="$(openssl rand -hex 32)"
+          export CSRF_KEY="$(openssl rand -hex 32)"
+          export IDEMPOTENCY_HASH_KEY="$(openssl rand -hex 32)"
+          export CURSOR_SIGNING_KEY="$(openssl rand -hex 32)"
+          export INKLORE_BOOTSTRAP_PASSWORD="$E2E_ADMIN_PASSWORD"
+          /tmp/inklore-ci-admin bootstrap -tenant-name 'CI Governance' \
+            -email "$E2E_ADMIN_EMAIL" -display-name 'CI Operator' -username root >/dev/null
+          unset INKLORE_BOOTSTRAP_PASSWORD
+          /tmp/inklore-ci-server >/tmp/inklore-ci-server.log 2>&1 &
+          server_pid=$!
+          (cd frontend && pnpm exec vite preview --host 127.0.0.1 --port 3000 --strictPort) >/tmp/inklore-creator.log 2>&1 &
+          creator_pid=$!
+          (cd frontend && pnpm exec vite preview --config vite.admin.config.ts --host 127.0.0.1 --port 3001 --strictPort) >/tmp/inklore-admin.log 2>&1 &
+          admin_pid=$!
+          cleanup() {
+            kill "$server_pid" "$creator_pid" "$admin_pid" 2>/dev/null || true
+            wait "$server_pid" "$creator_pid" "$admin_pid" 2>/dev/null || true
+            rm -f "$E2E_FIXTURE_PATH"
+          }
+          trap cleanup EXIT
+          ready=0
+          for attempt in $(seq 1 45); do
+            if curl --silent --fail --max-time 2 http://127.0.0.1:18080/readyz >/dev/null &&
+               curl --silent --fail --max-time 2 http://127.0.0.1:3000/ >/dev/null &&
+               curl --silent --fail --max-time 2 http://127.0.0.1:3001/login >/dev/null; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              echo "::error::Disposable InkLore API exited before readiness."
+              exit 1
+            fi
+            sleep 2
+          done
+          test "$ready" -eq 1
+          python3 scripts/ci/creator_admin_agent_acceptance.py
+          export PLAYWRIGHT_PACKAGE_PATH=/tmp/inklore-ci-browser/node_modules/playwright
+          node scripts/ci/creator_admin_agent_browser.cjs
