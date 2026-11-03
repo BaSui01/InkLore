@@ -564,7 +564,7 @@ export function ChannelModal({
       setFormError(t("admin.channels.err_title_required"));
       return;
     }
-    if (!baseUrl && formProtocol !== "ollama") {
+    if (!baseUrl) {
       setFormError(t("admin.channels.err_base_url_required"));
       return;
     }
@@ -649,7 +649,7 @@ export function ChannelModal({
           expected_revision: editingChannel.revision,
           provider_id: providerId || editingChannel.provider_id,
           title,
-          base_url: upstreamBaseUrl(),
+          base_url: baseUrl,
           priority,
           weight,
           rpm,
@@ -684,7 +684,7 @@ export function ChannelModal({
         const createdChannel = await createLlmChannel({
           provider_id: providerId,
           title,
-          base_url: upstreamBaseUrl(),
+          base_url: baseUrl,
           priority,
           weight,
           rpm,
