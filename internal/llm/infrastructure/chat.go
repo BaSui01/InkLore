@@ -119,18 +119,11 @@ func (r *ProviderRouter) GenerateChat(ctx context.Context, req domain.TextGenera
 	if r == nil || !r.isLiveAPI {
 		return domain.TextGenerationResponse{}, domain.ErrProviderNotConfigured
 	}
-	target, targetErr := r.resolveUpstream(ctx)
+	target, model, targetErr := r.resolveChatTarget(ctx, req)
 	if targetErr != nil {
 		return domain.TextGenerationResponse{}, targetErr
 	}
-	model := req.Model
-	if model == "" || strings.HasPrefix(model, "novel-") {
-		model = r.config.ActiveModel
-	}
-	if model == "" {
-		model = defaultModelForProtocol(r.protocol, true)
-	}
-	if nativeProtocol(r.protocol) {
+	if nativeProtocol(target.protocol) {
 		return r.generateNativeToolChat(ctx, target, req, model)
 	}
 

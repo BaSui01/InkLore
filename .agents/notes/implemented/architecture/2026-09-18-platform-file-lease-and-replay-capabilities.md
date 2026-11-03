@@ -25,4 +25,4 @@ Prepared私有bytes在事务外校验后原子写bytea；引用经消费Port且�
 
 主独立go run ./cmd/acceptance/ink162 all与conditional_download均退出0，六组含真实WS、实际App重放权限/审计及304空body条件下载；通用jobs机制使用真实PG/scope验收adapter，领域消费者边界明确留给171/172。
 
-详见 [任务验收](../../../../docs/acceptance-INK-162.md)。
+详见 [任务验收](../testing/2026-09-18-acceptance-ink-162.md)。

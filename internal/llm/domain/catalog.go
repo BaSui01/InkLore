@@ -34,6 +34,10 @@ type CatalogRepository interface {
 	InUse(context.Context, string, Kind, string) (bool, error)
 	Publish(context.Context, string, string, int64, PolicyInput) (Policy, error)
 	Price(context.Context, string, PricingInput) (Pricing, error)
+	CurrentPolicyVersion(context.Context, string, string) (string, error)
+	ReadFrozenPolicy(context.Context, string, string) (FrozenPolicy, error)
+	ResolveEnabledModel(context.Context, string, string) (EnabledModel, error)
+	CurrentPolicySnapshot(context.Context, string, string) (FrozenPolicy, error)
 }
 
 type SecretMetadataPort interface {
@@ -183,6 +187,22 @@ type Key struct {
 	Enabled     bool      `json:"enabled"`
 	Fingerprint *string   `json:"fingerprint"`
 	Health      string    `json:"health"`
+}
+
+// EnabledModel identifies the selected model without relying on a potentially ambiguous upstream name.
+type EnabledModel struct {
+	ID   string
+	Name string
+}
+
+// FrozenPolicy is the immutable model configuration used by an existing Agent run.
+type FrozenPolicy struct {
+	VersionID       string
+	TaskKey         string
+	ModelID         string
+	ModelName       string
+	MaxOutputTokens int
+	Temperature     float64
 }
 
 type PolicyInput struct {

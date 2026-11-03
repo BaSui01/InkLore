@@ -419,6 +419,7 @@ func (s *Scheduler) executeNodeTAO(ctx context.Context, lease *d.RunJobLease, ru
 			RunID:             runID,
 			NodeKey:           node.NodeKey,
 			TaskKey:           run.TaskKey,
+			PolicyVersionID:   run.PolicyVersionID,
 			Model:             userModel,
 			SystemInstruction: sysInstruction,
 			UserInstruction:   run.Instruction,

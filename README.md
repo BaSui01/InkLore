@@ -45,7 +45,7 @@ pnpm install --frozen-lockfile
 pnpm run build
 ```
 
-上述命令适用于默认分支；完整的 PR 历史封印检查还需要真实 Git 基线，权威步骤以 [GitHub Actions CI](.github/workflows/ci.yml) 为准。
+上述命令适用于默认分支；完整的 PR 历史封印检查还需要真实 Git 基线，权威步骤以 [GitHub Actions CI](.github/workflows/ci.yml) 为准。完整本地门禁可在仓库根目录执行 `make ci NOTES_BASE=<base-commit>`。
 
 开发约定端口：**API 8080 · Creator 3000 · Admin 3001**。本地 PostgreSQL / Redis 配置见 [docker-compose.dev.yml](docker-compose.dev.yml)。仅使用示例环境文件，不提交真实密钥。
 
@@ -67,6 +67,12 @@ pnpm run build
 - 合并后自动删除短期 PR 分支，保护长期集成分支。
 
 详见 [贡献指南](CONTRIBUTING.md) 与 [仓库治理策略](docs/repository-governance.md)。
+
+## GitHub 协作入口
+
+[Issues](https://github.com/BaSui01/InkLore/issues) · [Pull Requests](https://github.com/BaSui01/InkLore/pulls) · [Projects 看板](https://github.com/users/BaSui01/projects/1) · [Actions](https://github.com/BaSui01/InkLore/actions) · [Insights](https://github.com/BaSui01/InkLore/pulse) · [依赖关系](https://github.com/BaSui01/InkLore/network/dependencies) · [安全](https://github.com/BaSui01/InkLore/security) · [Wiki](https://github.com/BaSui01/InkLore/wiki)
+
+[GitHub 功能与安全治理指南](docs/github-platform.md)；Wiki 发布前的页面草稿见 [docs/wiki](docs/wiki/Home.md)。
 
 ## 状态声明
 
