@@ -6,6 +6,11 @@
 
 ## [Unreleased]
 
+### Go 加密依赖安全升级（INK-258，待独立验收）
+
+- 以 Dependabot PR #28 为版本来源，在 dev 提交 x/crypto 0.48.0→0.52.0，联动 x/net、x/text、x/sys、x/sync 的必要版本与校验和更新；未直接更改业务源代码。
+- 加密、认证与网络依赖图变化需要最新 CI 和隔离服务的实际认证/租户回归证据。稳定 private 分支暂不直接合入，仍须受保护发布 PR。
+
 ### INK-256：dev 超前 20 个提交后发布 PR（review）
 
 - 采用默认分支可信工作流按 GitHub Commit Compare 阈值自动创建 release 快照 PR；安全满足时启用 Merge Commit auto-merge，分叉、敏感或 CI 未通过时保留人工复核。保护 dev 不被删除或强推，发布不等于部署或业务验收。
