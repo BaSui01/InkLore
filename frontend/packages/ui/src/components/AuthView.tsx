@@ -322,7 +322,7 @@ export function AuthView({
       setErrorMsg(t("auth.pen_name_required"));
       return;
     }
-    if (!verifyCode.trim()) {
+    if (onSendVerificationCode && !verifyCode.trim()) {
       setErrorMsg(t("auth.verify_code_required"));
       return;
     }
@@ -729,7 +729,7 @@ export function AuthView({
 
           {/* 仅在真实邮件验证码后端接通时展示 */}
           {onSendVerificationCode && (
-          <div>
+            <div>
             <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
               {t("auth.verify_code")}
             </label>
