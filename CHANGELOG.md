@@ -6,6 +6,13 @@
 
 ## [Unreleased]
 
+### Supabase IPv4 Session Pooler 远程预检修复（INK-261）
+
+- 修复受保护 GitHub Actions 在 Supabase 免费项目 IPv6 Direct 端点连接失败的问题；不重置已保存的环境 Secret，不购买 IPv4 Add-on。
+- 改为使用真实身份和数据库结构查询验证官方 IPv4 Session Pooler 地址；连接凭据只在 GitHub-hosted Runner 内存中使用，不输出密码、完整 DSN 或身份验证错误详情。
+- 首次 IPv6 失败证据：Actions #41570140594；改进后必须以新的人工验收 Success 为交付依据。
+
+
 ### 自动合并敏感路径收紧（INK-254，review）
 
 - 默认分支安全 PR Gate 增加 internal/platform/identity 和所有领域的 infrastructure 路径，防止拥有 auto-merge-approved 标签的认证/持久化 PR 绕过人工审查；低风险路径、原有 CI 与 Review 门禁保持不变。
