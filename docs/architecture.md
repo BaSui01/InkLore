@@ -384,3 +384,6 @@ INK-253 的 GitHub 自动化权限、默认分支生效约束与取舍见 [工�
 
 默认分支的 safe-auto-merge 安全路径规则补充 identity 和任意深度 infrastructure 目录覆盖。仅收紧 dev PR 的自动合并分类，保持敏感路径人工 Review、已有 CI/分支保护，不改变运行时代码。动机、取舍和验收案例见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-sensitive-path-auto-merge-failclosed.md)。
 
+## INK-263 · 前端线性 BaseURL 与邮箱基础校验（review）
+
+以 [dev PR #76](https://github.com/BaSui01/InkLore/pull/76) 验证过的六个前端源码文件为依据，最小范围移植线性尾部斜杠删除与邮箱基础检查至 private，避免旧正则潜在超长回溯。所有输入最终授权由服务端决定，不更改 Cookie、会话、HTTP 或 WebSocket 路由协议。前端构建与 CodeQL 不替代真实浏览器异常场景验收；方案取舍和测试见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-03-frontend-redos-normalization.md)。

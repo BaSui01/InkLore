@@ -37,3 +37,14 @@ CodeQL 在上游模型目录的四处 `http.Client.Do` 处报告 Critical `go/re
 - 这是目录辅助查询的安全硬化，可能拒绝从公网提供纯 HTTP 或从私网提供的自定义 Ollama/LLM 模型目录；若真实产品依赖，必须先给出受限 allowlist 和隔离网络策略，不应关闭安全守卫。
 - `httpguard` 现有默认代理行为未改，新增 `DisableProxy` 只在本目录调用中开启；需要验证不同部署环境对代理的依赖。
 - CodeQL 静态数据流不一定识别自定义 Sanitizer；只有实际独立动态验证与安全审查均通过，才能认定漏洞关闭。
+
+## Follow-up hardening: error and key disclosure
+
+- Upstream catalog errors now expose only the HTTP status; untrusted upstream response bodies are not forwarded to application error handling.
+- Request construction, DNS/network and malformed endpoint failures return URL-free errors to avoid leaking full request URLs or user-provided secrets.
+- Gemini discovery uses the existing `x-goog-api-key` header exclusively; the credential is no longer appended as `?key=` to the target URL.
+- This is defense in depth on top of the SSRF guard. Isolated redirect/DNS/HTTP_PROXY probes, CodeQL and browser/operator validation remain independent release gates.
+
+## Isolated negative probes added to INK-228 CI
+
+The existing `cmd/ink228verify/upstream.go` now checks that explicit custom catalog URLs for OpenAI, Anthropic, Gemini and Ollama cannot contact its own local HTTP or HTTPS listener, that reserved IPv4/IPv6 IP categories are rejected without a socket, and that a synthetic DNS answer containing both public and private IPs fails closed. `cmd/ink228verify/main.go` runs the probes during disposable PG17/Redis7 validation. These tests never dial real metadata/private addresses. They do not yet exercise live DNS rebinding at connection time, redirect response variants, or a real public HTTPS Gemini endpoint. Those remain manual/security Review items.
