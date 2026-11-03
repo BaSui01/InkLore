@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### 五项依赖补丁批量整合（INK-261，待独立验收）
+
+- 汇总 Dependabot #49–#53 的 quic-go、x/net、Vite、source-map-js、markdown-it 补丁版本和锁文件校验和，先进入 dev 做兼容与实际 API/双端构建验收。
+- 不修改业务代码、数据库或密钥；不直接合入 private，不宣称五项补丁解决所有依赖漏洞或真实模型/浏览器业务验收。
+
+
 ### 自动合并敏感路径收紧（INK-254，review）
 
 - 默认分支安全 PR Gate 增加 internal/platform/identity 和所有领域的 infrastructure 路径，防止拥有 auto-merge-approved 标签的认证/持久化 PR 绕过人工审查；低风险路径、原有 CI 与 Review 门禁保持不变。
@@ -17,10 +23,10 @@
 - 从已验证的 dev 最小同步两个 GitHub Actions 工作流和所需的测试环境权限 SQL，不混入 70 文件发布候选 PR #41。
 - 隔离作业的临时 PG17/Redis7 验证真实 R1 迁移、回滚、权限、Go API/Creator 身份；Supabase 只读预检只在受保护分支手动触发且需要独立最小权限凭据，现有 Secret 未配置。
 
-### Go 加密依赖安全升级（INK-258，待独立验收）
+### Go 加密依赖安全升级（INK-258，已发布）
 
-- 以 Dependabot PR #28 为版本来源，在 dev 提交 x/crypto 0.48.0→0.52.0，联动 x/net、x/text、x/sys、x/sync 的必要版本与校验和更新；未直接更改业务源代码。
-- 加密、认证与网络依赖图变化需要最新 CI 和隔离服务的实际认证/租户回归证据。稳定 private 分支暂不直接合入，仍须受保护发布 PR。
+- [PR #43](https://github.com/BaSui01/InkLore/pull/43) 已在 dev 合并 x/crypto 0.48.0→0.52.0 及关联 x/net/text/sys/sync 更新；Go 模块校验和常规构建通过。
+- [GitHub 临时 PG17/Redis7 运行验收](https://github.com/BaSui01/InkLore/actions/runs/41492434905) 覆盖注册、会话、匿名拒绝、重复注册、权限及事务；[PR #47](https://github.com/BaSui01/InkLore/pull/47) 已将同版本依赖受保护地发布到默认 private。剩余外部模型/生产压测风险保留为业务运行验收，不声称本依赖补丁消除所有安全告警。
 
 ### INK-256：dev 超前 20 个提交后发布 PR（review）
 
