@@ -35,3 +35,13 @@
 - 本仓库启用了 Wiki 功能；源文档为 [docs/wiki](wiki/Home.md)，包含 `Home.md`、`Architecture.md`、`Development.md`、`Governance.md` 与 `_Sidebar.md`。
 - Wiki 是**单独的 Git 仓库**，不会因为 `docs/wiki` 被合并就自动上线。若尚未初始化，请先打开 [Wiki](https://github.com/BaSui01/InkLore/wiki)，手工创建并保存第一个 `Home` 页面；此后可克隆 `https://github.com/BaSui01/InkLore.wiki.git` 并复制上述文件推送。
 - 仅同步导航和公开适用的说明，绝不复制本地环境凭据、部署密钥、内部敏感信息或未审查的运维记录。同步应由受信任的维护者执行，不把 Wiki 写权限交给任意 PR。
+
+## 6. Projects 自动收录与 CI 状态追踪（INK-253）
+
+- GitHub Projects 控制台：https://github.com/users/BaSui01/projects/1。字段 `Track` / `Priority` / `Gate` / `Target` 和各个视图属于协作展示层，不替代 `docs/backlog.md` 的验收事实。
+- **自动收录首选 GitHub 原生 Auto-add**：打开 Projects → 顶部菜单 → Workflows → Auto-add to project → Edit，仓库选 `BaSui01/InkLore`，过滤条件 `is:open`，点 `Save and turn on workflow`。启用后新建或更新的符合条件 Issue/PR 才会自动进入项目；既有项不自动补录，需要单独导入。此设置无法通过当前 GitHub 官方 Projects GraphQL/CLI 写入，不得用广权限 PAT 充当临时替代。
+- **CI 实时事实**：PR 的 [Checks](https://github.com/BaSui01/InkLore/pulls)、分支的 [Actions](https://github.com/BaSui01/InkLore/actions) 及 GitHub branch protection 是权威源。Project 的 `Gate` 由维护者记录审核步骤，`Verified` 不表示自动读取了 GitHub Check Run，也不代表真实业务验收通过。
+- **只读 CI 摘要工作流**：[InkLore CI Status Overview](https://github.com/BaSui01/InkLore/actions/workflows/ci-status-overview.yml)（源文件 [ci-status-overview.yml](../.github/workflows/ci-status-overview.yml)）：默认分支发布后支持手动运行、每六小时轮询，以及在 CI/Isolated Integration 完成后生成 Job Summary。展示 `private` / `dev` 分支头的 CI、隔离验收、Qodana 与 CodeQL 最近可观察状态，最多 25 个开放 PR 的独立检查入口。超过最近 100 个 Runs、PR 合成合并 SHA 或尚无记录时，明确标记 `Not observed` / `STALE`，**不得当作绿色检查**。
+- 工作流所有权限均为只读；不检出 PR 代码、不执行外部提交、不读 Secret、不写 Projects、不合并 PR、不部署服务。GitHub 原生 Project Auto-add 不需要创建新的 PAT 或在 Actions 中储存项目级 Token。
+- 提交此配置到 `dev` **不会立刻激活 schedule/workflow_run**，需要独立验收后通过受保护的发布 PR 进入默认 `private` 才能开始定时运行。不得为激活周报绕过发布安全门禁。
+- [代码扫描](https://github.com/BaSui01/InkLore/security/code-scanning)、[Dependabot 告警](https://github.com/BaSui01/InkLore/security/dependabot) 和 [Security Policy](../SECURITY.md) 由 GitHub 管理；静态扫描、无告警均不等价于历史凭据已吊销或 Agent/LLM/多租户已完成独立运行验收。
