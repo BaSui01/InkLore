@@ -8,15 +8,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
-	"regexp"
 	"strings"
 	"time"
 
 	d "InkLore/internal/llm/domain"
+	"InkLore/internal/platform/httpguard"
 )
-
-var envVarRegex = regexp.MustCompile(`^[A-Z_][A-Z0-9_]*$`)
 
 type UpstreamModelService struct{}
 
@@ -28,14 +25,9 @@ func (s *UpstreamModelService) FetchUpstreamModels(ctx context.Context, q d.Upst
 func FetchUpstreamModels(ctx context.Context, q d.UpstreamModelsQuery) ([]d.UpstreamModelItem, error) {
 	protocol := strings.ToLower(strings.TrimSpace(q.Protocol))
 	baseURL := strings.TrimRight(strings.TrimSpace(q.BaseURL), "/")
+	// Never resolve a client-supplied key string as a server environment variable.
+	// Catalog discovery may use only the literal key explicitly supplied by the operator.
 	apiKey := strings.TrimSpace(q.APIKey)
-
-	// 若传入的是环境变量名引用，尝试解析真实密钥
-	if envVarRegex.MatchString(apiKey) {
-		if envVal := os.Getenv(apiKey); envVal != "" {
-			apiKey = strings.TrimSpace(envVal)
-		}
-	}
 
 	if baseURL == "" {
 		switch protocol {
@@ -55,7 +47,30 @@ func FetchUpstreamModels(ctx context.Context, q d.UpstreamModelsQuery) ([]d.Upst
 	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
+	// Local Ollama is the only intentional loopback exception and only when
+	// the operator omitted the URL; user-supplied endpoints never inherit it.
+	localOllama := protocol == "ollama" && strings.TrimSpace(q.BaseURL) == ""
 	client := &http.Client{Timeout: 10 * time.Second}
+	if !localOllama {
+		policy := httpguard.Policy{
+			Timeout:          10 * time.Second,
+			MaxResponseBytes: 1 << 20,
+			DisableProxy:     true,
+		}
+		validated, err := httpguard.ValidateURL(reqCtx, baseURL, policy)
+		if err != nil {
+			return nil, fmt.Errorf("unsafe upstream model endpoint: %w", err)
+		}
+		if !strings.EqualFold(validated.Scheme, "https") || validated.RawQuery != "" || validated.Fragment != "" {
+			return nil, errors.New("upstream model endpoint requires HTTPS without query or fragment")
+		}
+		client = httpguard.NewClient(policy)
+	}
+	// Never follow provider-controlled redirects, including from local Ollama.
+	// A redirect could otherwise change the destination or forward credentials.
+	client.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
 
 	switch protocol {
 	case "anthropic":
