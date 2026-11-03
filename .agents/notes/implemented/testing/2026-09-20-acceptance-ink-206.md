@@ -29,7 +29,7 @@ Scope: 原 docs/acceptance-INK-206.md 的历史材料迁移与链接维护
 
 ### INK-206 / INK-211 首页与自动登录验收
 
-日期：2026-09-20。任务状态以 [backlog](../../../../docs/backlog.md) 为准。
+日期：2026-09-20。任务状态以 [backlog](../../reference/planning/backlog.md) 为准。
 
 ### 交付范围
 
@@ -72,12 +72,12 @@ Chrome DevTools MCP 连接真实本地 Vite 与已运行的 29080 后端。数�
 
 ### 截图
 
-- [桌面首屏](../../../../docs/evidence/INK-206/home-desktop.png)
-- [真实书架](../../../../docs/evidence/INK-206/bookshelf.png)
-- [功能与指南](../../../../docs/evidence/INK-206/features.png)
-- [320 手机](../../../../docs/evidence/INK-206/home-mobile-320.png)
-- [英文深色手机](../../../../docs/evidence/INK-206/home-mobile-dark-en.png)
-- [刷新失败保留作品](../../../../docs/evidence/INK-206/refresh-error.png)
+- [桌面首屏](../../reference/evidence/INK-206/home-desktop.png)
+- [真实书架](../../reference/evidence/INK-206/bookshelf.png)
+- [功能与指南](../../reference/evidence/INK-206/features.png)
+- [320 手机](../../reference/evidence/INK-206/home-mobile-320.png)
+- [英文深色手机](../../reference/evidence/INK-206/home-mobile-dark-en.png)
+- [刷新失败保留作品](../../reference/evidence/INK-206/refresh-error.png)
 
 截图由 Chrome DevTools MCP 获取，再将工具返回的图像字节存入本工作区；未通过截屏修改业务数据。
 

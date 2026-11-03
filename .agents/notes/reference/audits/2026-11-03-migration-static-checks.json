@@ -1,0 +1,24 @@
+[
+  {
+    "name": "Python helper syntax",
+    "pass": true
+  },
+  {
+    "name": ".github/workflows/isolated-integration.yml YAML and embedded Bash syntax; service/environment unchanged",
+    "pass": true
+  },
+  {
+    "name": ".github/workflows/ink228-integration.yml YAML and embedded Bash syntax; service/environment unchanged",
+    "pass": true
+  },
+  {
+    "name": "scripts/sql/supabase-staging-permissions.sql byte-for-byte unchanged",
+    "pass": true,
+    "sha256": "17adf23bddb9e7b7c57d86b65a6e253cb3ed73510fd0f14835694d93ba6aa70e"
+  },
+  {
+    "name": "migrations/r1/000009_permissions.sql byte-for-byte unchanged",
+    "pass": true,
+    "sha256": "b79199d51e9fefa53cef3df41b56dcbbdc4b609ce6a33ca6d4a26570d2cd1175"
+  }
+]

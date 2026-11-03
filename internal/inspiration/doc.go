@@ -7,8 +7,8 @@
 // revocation never rolls back or mutates the target novel text or facts.
 //
 // Subpackages:
-//   - domain/r1: Value types, invariants, chunking, and normalization.
-//   - application/r1: Use cases, ports, and lifecycle orchestration.
-//   - infrastructure/r1: Persistence scoped strictly to inspiration tables.
-//   - transport/http/r1: HTTP REST handlers and route registrations.
+//   - domain: Value types, invariants, chunking, and normalization.
+//   - application: Use cases, ports, and lifecycle orchestration.
+//   - infrastructure: Persistence scoped strictly to inspiration tables.
+//   - transport/http: HTTP REST handlers and route registrations.
 package inspiration

@@ -1,12 +1,12 @@
 # GitHub 功能整合与运维入口（INK-253）
 
-本文件是 GitHub 页面功能的操作指南，不替代 AGENTS、R1 设计、backlog 或运行验收。功能开关、收费与可用性应以 GitHub 当前页面为准。
+本文件是 GitHub 页面功能的操作指南，不替代 AGENTS 或运行验收。功能开关、收费与可用性应以 GitHub 当前页面为准。
 
 ## 1. 任务与看板
 
 - [Issues](https://github.com/BaSui01/InkLore/issues)：使用缺陷、功能、实施 / 验收表单。若已有 INK 编号，则引用原任务，不重复创建。
 - [Pull Requests](https://github.com/BaSui01/InkLore/pulls)：所有代码与治理文件先向 `dev` 提 PR。敏感变更加 `manual-review` 标签，禁止在未完成验收时切换为可自动合并。
-- [InkLore Projects](https://github.com/users/BaSui01/projects/1)：协作可视化看板，已关联本仓库。仓库 `docs/backlog.md` 是唯一任务状态与验收事实来源，GitHub Project 的 Status 只作为视图。
+- [InkLore Projects](https://github.com/users/BaSui01/projects/1)：协作可视化看板，已关联本仓库。Issues / Milestones 是任务状态与验收入口，Project 作为协作视图，不在文档复制状态。
 - [贡献指南](../CONTRIBUTING.md) 与 [治理规则](repository-governance.md) 给出分支政策。
 
 ## 2. 依赖关系与 Dependabot
@@ -20,7 +20,7 @@
 
 - [Security and quality](https://github.com/BaSui01/InkLore/security) 可查看 Dependabot、代码扫描与安全策略；[SECURITY.md](../SECURITY.md) 指引私密报告与密钥轮换。
 - 安全告警不会因为开启 Dependabot 就自动解决；代码扫描与私有仓库 Secret Scanning / Push Protection 受当前套餐、授权与仓库设置限制，需要在 **Settings → Advanced Security** 检查。
-- 已有 [INK-252](backlog.md) 记录公开前凭据治理阻塞。未轮换真实凭据、未检查可达 Git 历史与 PR diff 前，不切换为 Public。
+- 历史凭据治理见 [Issue #27](https://github.com/BaSui01/InkLore/issues/27)。当前安全状态需检查实际设置、可达历史和告警，不能沿用旧看板结论。
 - 分支保护已要求三项 CI：Skills / notes、Go 构建与护栏、前端类型检查与构建；规则变更在 [Settings → Branches](https://github.com/BaSui01/InkLore/settings/branches) 审核，不能只看是否存在 Rulesets。
 
 ## 4. Actions 与 Insights
@@ -38,7 +38,7 @@
 
 ## 6. Projects 自动收录与 CI 状态追踪（INK-253）
 
-- GitHub Projects 控制台：https://github.com/users/BaSui01/projects/1。字段 `Track` / `Priority` / `Gate` / `Target` 和各个视图属于协作展示层，不替代 `docs/backlog.md` 的验收事实。
+- GitHub Projects 控制台：https://github.com/users/BaSui01/projects/1。字段 `Track` / `Priority` / `Gate` / `Target` 和各个视图属于协作展示层，不替代 Issue 中的实际验收证据。
 - **自动收录首选 GitHub 原生 Auto-add**：打开 Projects → 顶部菜单 → Workflows → Auto-add to project → Edit，仓库选 `BaSui01/InkLore`，过滤条件 `is:open`，点 `Save and turn on workflow`。启用后新建或更新的符合条件 Issue/PR 才会自动进入项目；既有项不自动补录，需要单独导入。此设置无法通过当前 GitHub 官方 Projects GraphQL/CLI 写入，不得用广权限 PAT 充当临时替代。
 - **CI 实时事实**：PR 的 [Checks](https://github.com/BaSui01/InkLore/pulls)、分支的 [Actions](https://github.com/BaSui01/InkLore/actions) 及 GitHub branch protection 是权威源。Project 的 `Gate` 由维护者记录审核步骤，`Verified` 不表示自动读取了 GitHub Check Run，也不代表真实业务验收通过。
 - **只读 CI 摘要工作流**：[InkLore CI Status Overview](https://github.com/BaSui01/InkLore/actions/workflows/ci-status-overview.yml)（源文件 [ci-status-overview.yml](../.github/workflows/ci-status-overview.yml)）：默认分支发布后支持手动运行、每六小时轮询，以及在 CI/Isolated Integration 完成后生成 Job Summary。展示 `private` / `dev` 分支头的 CI、隔离验收、Qodana 与 CodeQL 最近可观察状态，最多 25 个开放 PR 的独立检查入口。超过最近 100 个 Runs、PR 合成合并 SHA 或尚无记录时，明确标记 `Not observed` / `STALE`，**不得当作绿色检查**。

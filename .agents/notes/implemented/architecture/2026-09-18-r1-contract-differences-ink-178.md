@@ -29,7 +29,7 @@ Scope: 原 docs/r1-contract-differences-INK-178.md 的历史材料迁移与链�
 
 ### INK-178 · R1.1契约勘误记录
 
-用户先选择“保持冻结，推进无冲突部分”；无冲突验收完成后，于2026-09-18明确批准“四项最小勘误，继续开发”。[ADR-0018](../../reference/decisions/0018-r1-minimal-contract-errata.md)已Accepted，R1.1源与派生资产已同步。状态以[backlog](../../../../docs/backlog.md)为准。
+用户先选择“保持冻结，推进无冲突部分”；无冲突验收完成后，于2026-09-18明确批准“四项最小勘误，继续开发”。[ADR-0018](../../reference/decisions/0018-r1-minimal-contract-errata.md)已Accepted，R1.1源与派生资产已同步。状态以[backlog](../../reference/planning/backlog.md)为准。
 
 ### 原差异与已批准处理
 

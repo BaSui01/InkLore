@@ -1,0 +1,50 @@
+[
+  {
+    "name": "exact Go LoadMigrations manifest accepted",
+    "exit": 0,
+    "output": "17\n",
+    "pass": true
+  },
+  {
+    "name": "missing migration",
+    "exit": 1,
+    "output": "Applied migration history differs from repository versions, names or checksums\n",
+    "pass": true
+  },
+  {
+    "name": "same count but wrong name",
+    "exit": 1,
+    "output": "Applied migration history differs from repository versions, names or checksums\n",
+    "pass": true
+  },
+  {
+    "name": "same count but wrong checksum",
+    "exit": 1,
+    "output": "Applied migration history differs from repository versions, names or checksums\n",
+    "pass": true
+  },
+  {
+    "name": "same count but wrong version",
+    "exit": 1,
+    "output": "Applied migration history differs from repository versions, names or checksums\n",
+    "pass": true
+  },
+  {
+    "name": "unknown additional migration",
+    "exit": 1,
+    "output": "Applied migration history differs from repository versions, names or checksums\n",
+    "pass": true
+  },
+  {
+    "name": "future repository migration accepted with CRLF-normalized checksum",
+    "exit": 0,
+    "output": "18\n",
+    "pass": true
+  },
+  {
+    "name": "duplicate repository version rejected",
+    "exit": 1,
+    "output": "Repository migration stream is empty or contains duplicate versions\n",
+    "pass": true
+  }
+]

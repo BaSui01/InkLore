@@ -10,7 +10,7 @@
 
 `internal/llm/infrastructure/image_adapters.go` 仍将模型名包含 `imagen` 的请求发送到已退出的 Gemini Imagen `:predict` 合同，并在 OpenAI 图生图场景把参考图数量拼入 prompt 后继续请求 `/images/generations`。Gemini 图片请求还默认发送 `BLOCK_NONE` 安全阈值。这三条路径会把一个已不存在、未上传图片或绕过安全策略的调用伪装成受支持的图片能力。
 
-R1 的公开 Provider 枚举、数据库和 HTTP API 不因此改变；本决策只收紧 LLM infrastructure 的上游请求序列化。它遵守 [LLM Gateway R1 设计](../../../../docs/system-design/09-DOMAIN-LLM-GATEWAY-SPEC.md) 中“能力不匹配返回 `llm.capability_mismatch`、不得静默删除约束”的规则，以及 [供应商协议规范](../../../../docs/llm-provider-specifications.md) 的当前图片合同。
+R1 的公开 Provider 枚举、数据库和 HTTP API 不因此改变；本决策只收紧 LLM infrastructure 的上游请求序列化。它遵守 [LLM Gateway R1 设计](../system-design/09-DOMAIN-LLM-GATEWAY-SPEC.md) 中“能力不匹配返回 `llm.capability_mismatch`、不得静默删除约束”的规则，以及 [供应商协议规范](../../../../docs/llm-provider-specifications.md) 的当前图片合同。
 
 ## 决策（Decision）
 

@@ -25,4 +25,4 @@ Scope: docs/system-design设计资产、旧文档清理与离线契约检查，�
 
 ## Verification
 
-node docs/system-design/tools/build-contracts.cjs退出0：152路径、233操作、95错误码。node docs/system-design/tools/check-design.cjs退出0：7593本地refs、420文档链接、74表Owner引用、无重复operationId/缺幂等/CAS等结构问题。node scripts/check-project-skills.mjs退出0。go build ./...退出0。清理manifest的30路径均不存在。最终报告以[design-validation.json](../../../../docs/system-design/implementation/design-validation.json)为准；未执行设计SQL或业务重构，不宣称运行功能通过。
+node docs/system-design/tools/build-contracts.cjs退出0：152路径、233操作、95错误码。node docs/system-design/tools/check-design.cjs退出0：7593本地refs、420文档链接、74表Owner引用、无重复operationId/缺幂等/CAS等结构问题。node scripts/check-project-skills.mjs退出0。go build ./...退出0。清理manifest的30路径均不存在。最终报告以[design-validation.json](../../reference/system-design/implementation/design-validation.json)为准；未执行设计SQL或业务重构，不宣称运行功能通过。

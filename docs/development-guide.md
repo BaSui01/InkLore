@@ -1,66 +1,45 @@
-# InkLore 开发维护指南与 Skills
+# 开发与维护
 
-本指南是项目流程入口。工程红线见 [AGENTS](../AGENTS.md)，现状见 [architecture](./architecture.md)，设计从 [system-design](./system-design/00-INDEX.md) 进入，任务只在 [backlog](./backlog.md) 管理。
+先读 [AGENTS](../AGENTS.md)，定位真实调用链，再参照 [当前架构](architecture.md)。
+任务和验收目标来自 [GitHub Issues](https://github.com/BaSui01/InkLore/issues)。
 
-## 三个技能
+## 本地开发
 
-| 技能 | 使用时机 | 入口 |
-| --- | --- | --- |
-| inklore-development | 新功能、修复、重构、前后端接线、任务验收 | [SKILL](../.agents/skills/inklore-development/SKILL.md) |
-| inklore-decisions | 选型、历史理由、ADR、新旧决定替代、设计治理 | [SKILL](../.agents/skills/inklore-decisions/SKILL.md) |
-| inklore-maintenance | 排障、配置对账、文档巡检、发布回滚准备 | [SKILL](../.agents/skills/inklore-maintenance/SKILL.md) |
+Go 版本以 go.mod 为准；前端以 package.json、pnpm-lock.yaml 和 CI 配置为准。
+API、Creator、Admin 默认端口为 8080、3000、3001，实际地址以配置为准。
 
-它们位于仓库级 .agents/skills，随项目版本管理；不覆盖用户全局 skills。支持该目录的工具可发现其 name/description。本次 DSH 会话已发现并成功加载全部三个技能；其他客户端的自动发现能力取决于其配置，不能仅凭目录存在宣称安装成功。
+```bash
+go build ./...
+go vet ./...
+pnpm --dir frontend install --frozen-lockfile
+pnpm --dir frontend run build
+make ci NOTES_BASE=<本次修改前的真实提交>
+```
 
-## 如何使用
+配置参考 [本地环境](local-environment.md)、[docker-compose.dev.yml](../docker-compose.dev.yml) 和 .env.example。
+仅在已授权的隔离环境操作数据库或模型，不复制真实密钥进仓库。
 
-可直接向代理提出：
+## 按影响面验证
 
-- “使用 inklore-development 处理 INK-xxx，先核对依赖和验收条件，再实施。”
-- “使用 inklore-decisions 查清章节确认的历史约束，为这个方案准备 ADR。”
-- “使用 inklore-maintenance 排查模型配置保存后不生效，记录真实消费路径与证据。”
-- “使用 inklore-maintenance 巡检 docs 与源码差异，先登记问题，再修复本次授权范围。”
-
-如果客户端没有列出技能，明确要求它读取相应 SKILL.md 后按链接继续，无需复制一份技能。新会话先读 AGENTS；技能可以组合使用，但不重复建任务，不覆盖已有授权。
-
-## 一次交付的路径
-
-1. 核对规则、当前接线和目标任务，读相关域设计与历史决定。
-2. 明确现状、目标、依赖、Owner、验收标准；需要架构决策时先写 ADR。
-3. 沿真实调用链实现，保留别人未提交的工作和历史约束。
-4. 用构建、护栏、实际请求或浏览器场景验证，不创建项目禁止的测试文件。
-5. 同步相应文档、任务与交付日志；验收齐全后从 review 转为 done。
-
-详见 [文档路由](../.agents/skills/inklore-development/references/doc-routing.md)、[验证矩阵](../.agents/skills/inklore-development/references/verification.md)、[验收模板](../.agents/skills/inklore-development/templates/acceptance.md)、[复盘模板](../.agents/skills/inklore-maintenance/templates/incident.md)。
-
-## 与现有文档融合
-
-技能提供执行流程，docs 保存项目事实与设计；不把所有核心文档复制进提示词。AGENTS 与已接受 ADR 仍约束设计；R1 是重构目标，architecture 是运行现状。两者冲突时记录具体条款并裁决，不从“冻结设计”推断“代码完成”。
-
-ADR 保存正式架构裁决，backlog 管理唯一任务状态，[.agents/notes](../.agents/notes/README.md) 集中保存实现因果、隐含约束与失败方案。notes 按四生命周期和六分类组织；非平凡改动先检索、同批更新，纯机械改动免写。已接受 ADR 不照搬上游的原地事实修订；正文保持不可变。来源、采用点与未采用点见 [融合说明](../.agents/skills/inklore-decisions/references/source-adaptation.md)。
-
-## 机械检查与维护
-
-在仓库根运行：
-
-~~~sh
-node scripts/check-project-skills.mjs
-node scripts/agent-notes.mjs check
-node scripts/agent-notes.mjs check --base HEAD
-~~~
-
-检查三个技能的 name/description、目录命名、正文行数、Markdown 文件大小、Emoji 与本地文件链接。脚本无第三方依赖；Node 22 可运行。它不校验远程链接、Markdown fragment、ADR 决策正确性，也不声称验证了业务运行。CI 执行技能检查和笔记检查；本地无需安装前端依赖。笔记工具还验证任务关联、节结构与归档哈希；带 --base 才比较既有封印是否被删除或改写。
-
-修改技能或移动被引用文档后重跑该检查。技能正文保持短小，细节放 references/templates；只更新一个权威源，其他地方用相对链接。现有 Go/前端验收按验证矩阵执行。
-
-## 人工场景走查
-
-| 输入场景 | 预期执行路线 |
+| 改动 | 检查 |
 | --- | --- |
-| 修复一个默认值 | 开发技能追到真实消费方；有非显然取舍则写 note 并由任务引用，无需机械新建 ADR |
-| 新增跨域写入 | 开发技能核对Owner与Port；决策技能检查已有ADR，违反边界时停止该方案并提出裁决 |
-| 按 R1 实施新事件协议 | 同时核对目标、既有ADR与运行协议；完成迁移与验收前不更新为已实现 |
-| 只改样式 | 读取相关UI约束、适当构建与浏览器检查，不生成冗余决策笔记 |
-| 发布故障 | 维护技能定位版本/探针/依赖，按实际授权修复或回滚，记录恢复证据 |
+| Go / 装配 | build、vet、gofmt、archguard；按风险增加针对性测试 |
+| 前端 | 双端类型检查和构建，受影响页面的请求、状态和错误恢复 |
+| API / 数据 | 字段一致性，迁移、权限、事务和冲突的实际结果 |
+| Agent / 模型 | 上下文、工具、审批、恢复、产物、费用与失败状态 |
+| 文档 / 技能 | 链接、技能元数据、notes 结构与历史封印 |
+| 契约资产 | 语义和错误目录同步，失败不得通过改写历史迁移掩盖 |
 
-[Skills 初始交付](../.agents/notes/implemented/process/2026-09-29-skill-delivery-ink-142.md) 和 [工程记忆交付](../.agents/notes/implemented/process/2026-09-18-notes-delivery-ink-143.md) 分别记录对应轮次的真实验收与限制。
+```bash
+node scripts/check-project-skills.mjs
+node scripts/agent-notes.mjs check --base <本次修改前的真实提交>
+node docs/system-design/tools/check-design.cjs
+node scripts/check-platform-contracts.mjs
+```
+
+后两项检查暴露契约差距，应记录实际结果。构建、静态检查、隔离迁移和业务验收分别标注；缺环境时写 NOT_VERIFIED。
+
+## 协作资料
+
+按需使用 [开发技能](../.agents/skills/inklore-development/SKILL.md)、[决策技能](../.agents/skills/inklore-decisions/SKILL.md)、[维护技能](../.agents/skills/inklore-maintenance/SKILL.md)。
+历史设计、研究和验收在 [工程记忆](../.agents/notes/README.md)，无需每次加载完整历史。

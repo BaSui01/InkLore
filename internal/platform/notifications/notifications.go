@@ -1,4 +1,4 @@
-// Package notifications implements safe R1 WebSocket notifications only.
+// Package notifications implements safe WebSocket notifications only.
 package notifications
 
 import (

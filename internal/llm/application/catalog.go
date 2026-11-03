@@ -1,4 +1,4 @@
-// Package r1 implements LLM administration and dispatch boundaries without legacy fallbacks.
+// Package application implements LLM administration and dispatch boundaries without legacy fallbacks.
 package application
 
 import (

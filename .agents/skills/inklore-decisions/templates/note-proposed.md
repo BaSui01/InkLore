@@ -2,7 +2,7 @@
 
 Status: proposed
 
-Task: INK-XXX
+Task: #NUMBER
 Scope: 填写真实机制或代码路径
 
 ## Problem
@@ -11,7 +11,7 @@ Scope: 填写真实机制或代码路径
 
 ## Proposal
 
-填写候选方案、范围、不变量及关联ADR；明确尚未实现。
+填写候选方案、范围、不变量及相关证据；明确尚未实现。
 
 ## Alternatives considered
 

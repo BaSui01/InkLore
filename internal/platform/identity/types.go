@@ -1,4 +1,4 @@
-// Package identity implements R1 identities independently of legacy auth tokens.
+// Package identity implements identities independently of legacy auth tokens.
 package identity
 
 import (

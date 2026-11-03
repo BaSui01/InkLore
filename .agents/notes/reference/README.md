@@ -1,6 +1,12 @@
-# 正式架构裁决参考资料
+# 历史与参考资料
 
-此目录是从 docs/decisions 原样迁入的 ADR 及其附件。请从 [ADR 索引](decisions/README.md) 阅读。
-正式裁决的编号、状态、取舍与替代关系保持有效，迁移不代表重开或撤销决定。
-Reference 不采用工程笔记生命周期格式，也不参与普通笔记归档与封印。
-冻结系统设计、OpenAPI、DDL 与代码生成工具仍保留在 [系统设计目录](../../../docs/system-design/00-INDEX.md)。
+这里保存设计、决策、研究、实施与验收资料，不维护任务状态，不要求当前开发服从旧方案。
+
+- [历史设计](system-design/README.md)：分册、固定计划、冻结清单与旧报告。
+- [历史 ADR](decisions/README.md)：保留当时理由，Accepted 不代表永久正确。
+- [历史任务](planning/backlog.md) / [历史实施](implementation/architecture-history.md)：状态仅代表当时。
+- [源码审计](audits/2026-11-03-source-baseline.md)：本次基线、证据与未验收边界。
+- [UI 研究](ui-ux/README.md)：历史规划。
+- evidence 保留旧验收引用的原始图片。
+
+当前入口为 [AGENTS](../../../AGENTS.md)、[docs](../../../docs/README.md) 和 [GitHub Issues](https://github.com/BaSui01/InkLore/issues)。

@@ -49,15 +49,15 @@ function substantive(body) {
       && !/^(?:todo|tbd|fixme|placeholder|待补充|待填写|占位文本)\s*[:：]/i.test(line);
   });
 }
-function validateNote(text, meta, tasks) {
+function validateNote(text, meta) {
   if (/\p{Extended_Pictographic}/u.test(text)) throw new Error('Extended_Pictographic is forbidden');
   const lines = normalize(text).replace(/^\uFEFF/, '').split('\n');
   if (!/^# Agent Note: \S.*$/.test(lines[0]) || lines[1] !== '') throw new Error('expected title and blank first two lines');
   const status = meta.lifecycle === 'rejected' ? /^Status: rejected — \S.*$/ : new RegExp('^Status: ' + meta.lifecycle + '$');
   if (!status.test(lines[2] ?? '')) throw new Error('Status must match lifecycle (rejected needs an em-dash reason)');
   if (lines[3] !== '') throw new Error('line 4 must be blank');
-  const task = /^Task: (INK-\d{3,})$/.exec(lines[4] ?? '');
-  if (!task || !tasks.has(task[1])) throw new Error('line 5 Task must name a backlog table task INK-<at least three digits>');
+  const task = /^Task: (?:INK-\d{3,}|#[1-9]\d*|https:\/\/github\.com\/BaSui01\/InkLore\/(?:issues|pull)\/[1-9]\d*)$/.test(lines[4] ?? '');
+  if (!task) throw new Error('line 5 Task must name a GitHub issue/PR URL, #number or historical INK-<at least three digits>');
   if (!/^Scope: \S.*$/.test(lines[5] ?? '')) throw new Error('line 6 Scope must be nonempty');
   const body = prose(lines.slice(6).join('\n'));
   const headings = [...body.matchAll(/^ {0,3}(#{1,6})[ \t]+(.+?)[ \t]*$/gm)];
@@ -93,8 +93,6 @@ export async function checkTree(root) {
   const files = new Map(), identities = new Set(), errors = [];
   const report = (file, message) => errors.push(label(root, file) + ': ' + message);
   await safePath(root, notes);
-  const backlog = await utf8(path.join(root, 'docs', 'backlog.md'));
-  const tasks = new Set([...prose(backlog).matchAll(/^\s*\|\s*(INK-\d{3,})\s*\|.+\|\s*$/gm)].map(match => match[1]));
   async function walk(directory, parts = []) {
     for (const entry of (await readdir(directory, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
       const file = path.join(directory, entry.name), next = [...parts, entry.name];
@@ -106,9 +104,9 @@ export async function checkTree(root) {
         continue;
       }
       if (!entry.isFile()) { report(file, 'only regular files allowed'); continue; }
-      // Reference files are preserved ADRs, not lifecycle notes.
+      // 历史参考和截图保留原格式，不套用生命周期笔记模板。
       if (next[0] === 'reference') {
-        if (!/\.(?:md|json)$/i.test(entry.name)) report(file, 'unsupported reference file');
+        if (!/\.(?:md|json|png)$/i.test(entry.name)) report(file, 'unsupported reference file');
         continue;
       }
       const relative = next.join('/');
@@ -122,7 +120,7 @@ export async function checkTree(root) {
           const identity = meta.category + '/' + meta.basename;
           if (identities.has(identity)) report(file, 'duplicate class and basename across lifecycles');
           identities.add(identity);
-          validateNote(text, meta, tasks);
+          validateNote(text, meta);
           files.set(relative, { file, text, ...meta });
         }
         await checkLinks(root, file, text);

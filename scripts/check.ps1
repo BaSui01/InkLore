@@ -10,7 +10,7 @@
     额外输出运行路径可达性报告（哪些包不在 cmd/server 依赖图中）。
 
 .PARAMETER IncludeFrontend
-    额外执行前端类型检查与构建（npm run build）。
+    额外执行前端类型检查与构建（pnpm run build）。
 
 .EXAMPLE
     pwsh scripts/check.ps1
@@ -75,7 +75,7 @@ Test-Step 'archguard 架构红线校验' {
 if ($IncludeFrontend) {
     Test-Step '前端类型检查与构建' {
         Push-Location (Join-Path $root 'frontend')
-        try { npm run build } finally { Pop-Location }
+        try { pnpm run build } finally { Pop-Location }
     }
 }
 
