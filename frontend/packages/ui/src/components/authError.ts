@@ -28,6 +28,17 @@ export function formatAuthError(
     (typeof err?.message === "string" && err.message.startsWith("auth.") ? err.message : "") ||
     "";
 
+  // 对真实验证码挑战的拒绝给出可操作提示，不向用户输出内部校验结构。
+  const rejectedField = err?.details?.field;
+  const fieldErrors = err?.details?.field_errors;
+  const rejectedCaptcha =
+    rejectedField === "captcha_code" || rejectedField === "captcha_id" ||
+    (Array.isArray(fieldErrors) &&
+      fieldErrors.some((item: { field?: string }) => item?.field === "captcha_code" || item?.field === "captcha_id"));
+  if (code === "platform.validation_failed" && rejectedCaptcha) {
+    return t("auth.captcha_mismatch");
+  }
+
   // 3. 特殊错误码附带动态参数（如限流重试倒计时）
   if (code === "auth.rate_limited") {
     const retrySec =

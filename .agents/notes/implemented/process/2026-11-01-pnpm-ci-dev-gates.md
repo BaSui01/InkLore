@@ -3,7 +3,7 @@
 Status: implemented
 
 Task: INK-248
-Scope: Makefile、.github/workflows/ci.yml 与开发验证指南
+Scope: Makefile、.github/workflows/ci.yml、scripts/agent-notes.mjs 与开发验证指南
 
 ## Problem
 
@@ -39,3 +39,11 @@ dot 云端复用 Makefile 的 make ci，顺序执行 Skills、历史 notes、格
 - Makefile diff 空白检查与配方解析通过。完整业务请求、DB、浏览器及独立验收未完成。
 
 本地证据：`/workspace/shared/inklore-ci-local-draft/actual-*.log`；来源快照报告 `/workspace/shared/inklore-env/PR5-VALIDATION.md`。这些是本轮 dot 工作区证据路径，不是仓库可下载附件或未来环境保证。完整门禁未全过，INK-248 保持 review、PR 保持 draft，不合并。
+
+### 2026-11-03：Windows 隔离检出独立复核与 Git 基线兼容
+
+在用户授权的独立 Windows 主机上创建临时 `dev@cbaf773d8fb04f159114d8aab2587189e5945516` 检出（不同于旧 dot 工作区），真实基线为 `f9fccf8d41d7603694e54686e5333ea4877af1e1`。GNU Make 4.4.1 已安装。先在原始脚本下运行 `make ci`，notes 进入 `read-only git operation failed` 后失败；针对原 `git rev-parse --verify --end-of-options <base>^{commit}`，独立脚本验证该 Windows Git 环境对 `^{commit}` 返回 128，而 `^{}` 能正确解析。同一 Git 仓库用 `git cat-file -t <oid>` 确认解析结果类型为 commit，并沿用原归档封印对比，不忽略、不抹除历史检查。
+
+只在隔离工作副本应用本轮 `^{ }` 对象剥离等价修复（实际源码使用无空格 `^{}`）及显式 commit 类型检查后，执行完整 `make ci NOTES_BASE=f9fccf8d41d7603694e54686e5333ea4877af1e1 NODE=node GO=go PNPM='npx --yes pnpm@11.25.0'`，退出 **0**。日志分别确认：Skills 12 文件/74 链接、notes 74 条与旧封印校验、gofmt 空输出、Go build/vet、archguard R1–R5 全通过、i18n 920/920 一致、pnpm 11.25 frozen-lockfile（9 workspace、226 供应链条目校验）、Creator/Admin 类型检查及生产构建全部成功。Node 24.18.0，Go 工具链按 go.mod 自动选择，不能替代 Node 22 的 GitHub CI；GitHub CI 对最终提交仍须复核。
+
+Windows 主机不等于 Issue 原先指定的 dot 云端，故这是独立环境的补充验证，**不能写成 dot 已运行**。该工作副本未运行付费模型/生产数据库/浏览器业务流程，也未将任何配置密钥写入仓库。

@@ -32,8 +32,9 @@ function git(args) {
 }
 function checkBase(base, manifest) {
   if (!base || base.startsWith('-') || /[\0\r\n]/.test(base)) throw new Error('invalid --base ref');
-  const oid = git(['rev-parse', '--verify', '--end-of-options', base + '^{commit}']).trim();
+  const oid = git(['rev-parse', '--verify', '--end-of-options', base + '^{}']).trim();
   if (!/^[0-9a-f]{40,64}$/.test(oid)) throw new Error('git returned an invalid commit object');
+    if (git(['cat-file', '-t', oid]).trim() !== 'commit') throw new Error('base object must be a commit');
   const location = '.agents/notes/archive-manifest.json';
   const entries = git(['ls-tree', '-z', oid, '--', location]).split('\0').filter(Boolean);
   if (!entries.length) {
