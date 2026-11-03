@@ -1,0 +1,50 @@
+name: Staging Images Build Verification
+
+on:
+  pull_request:
+    paths:
+      - 'deploy/staging/**'
+      - 'frontend/**'
+      - 'cmd/server/**'
+      - 'internal/**'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/staging-images.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  staging-images:
+    name: Build reviewed staging ${{ matrix.component }} container
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [api, creator, admin]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build staging image with no secrets or deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build --progress=plain \
+            -f "deploy/staging/Dockerfile.${{ matrix.component }}" \
+            -t "inklore-staging-${{ matrix.component }}:ci" .
+      - name: Check artifact layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="inklore-staging-${{ matrix.component }}:ci"
+          if [ "${{ matrix.component }}" = api ]; then
+            docker run --rm --entrypoint sh "$image" -ec \
+              'test -x /app/server && test -r /app/configs/config.yaml'
+          else
+            docker run --rm --entrypoint sh "$image" -ec \
+              'test -s /usr/share/nginx/html/index.html && test -s /etc/nginx/nginx.conf.template'
+            docker run --rm --entrypoint sh -e PORT=8080 \
+              -e API_UPSTREAM=http://127.0.0.1:8080 "$image" -ec \
+              "envsubst '$PORT $API_UPSTREAM' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -t"
+          fi
