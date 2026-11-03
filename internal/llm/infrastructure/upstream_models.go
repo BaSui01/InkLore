@@ -15,7 +15,6 @@ import (
 	"InkLore/internal/platform/httpguard"
 )
 
-
 type UpstreamModelService struct{}
 
 func (s *UpstreamModelService) FetchUpstreamModels(ctx context.Context, q d.UpstreamModelsQuery) ([]d.UpstreamModelItem, error) {
