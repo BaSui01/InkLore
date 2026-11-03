@@ -2,7 +2,7 @@
 
 Status: implemented
 
-Task: INK-261
+Task: INK-262
 Scope: scripts/ci/supabase_staging_preflight.py 与 .github/workflows/supabase-staging-preflight.yml
 
 ## Problem

@@ -6,11 +6,16 @@
 
 ## [Unreleased]
 
-### Supabase IPv4 Session Pooler 远程预检修复（INK-261）
+### Supabase IPv4 Session Pooler 远程预检修复（INK-262）
 
 - 修复受保护 GitHub Actions 在 Supabase 免费项目 IPv6 Direct 端点连接失败的问题；不重置已保存的环境 Secret，不购买 IPv4 Add-on。
 - 改为使用真实身份和数据库结构查询验证官方 IPv4 Session Pooler 地址；连接凭据只在 GitHub-hosted Runner 内存中使用，不输出密码、完整 DSN 或身份验证错误详情。
 - 首次 IPv6 失败证据：Actions #41570140594；改进后必须以新的人工验收 Success 为交付依据。
+
+### 五项依赖补丁批量整合（INK-261，待独立验收）
+
+- 汇总 Dependabot #49–#53 的 quic-go、x/net、Vite、source-map-js、markdown-it 补丁版本和锁文件校验和，先进入 dev 做兼容与实际 API/双端构建验收。
+- 不修改业务代码、数据库或密钥；不直接合入 private，不宣称五项补丁解决所有依赖漏洞或真实模型/浏览器业务验收。
 
 
 ### 自动合并敏感路径收紧（INK-254，review）

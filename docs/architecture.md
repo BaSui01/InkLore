@@ -335,3 +335,7 @@ archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，�
 ## INK-254 · 自动合并的身份与持久化路径保护（review）
 
 默认分支的 safe-auto-merge 安全路径规则补充 identity 和任意深度 infrastructure 目录覆盖。仅收紧 dev PR 的自动合并分类，保持敏感路径人工 Review、已有 CI/分支保护，不改变运行时代码。动机、取舍和验收案例见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-sensitive-path-auto-merge-failclosed.md)。
+
+## INK-261 · Go 网络与前端依赖补丁整合（review）
+
+本轮仅整合来自 Dependabot #49–#53 的五项版本更新：quic-go v0.59.1、golang.org/x/net v0.55.0、Vite v7.3.7、source-map-js v1.2.2 与 markdown-it v14.3.3。变更范围限 go.mod/go.sum、frontend/package.json/pnpm-lock.yaml 和工程记录，无应用 Go/React/SQL/冻结设计逻辑改动。依赖解析、浏览器渲染和 HTTP/3 行为仍可能受库变更影响，不能把模块构建视为实际业务回归。所有版本和 integrity 均从独立 bot PR 出处汇总、按同一基础锁文件差异无重叠合成。具体风险、验证与双分支发布边界见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-dependabot-batch-review.md)。
