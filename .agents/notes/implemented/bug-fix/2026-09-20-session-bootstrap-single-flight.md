@@ -25,4 +25,4 @@ bootstrap 保存一个在途 Promise；同时进入的调用共享整个 CSRF/re
 
 ## Verification
 
-[首页验收](../../../../docs/acceptance-INK-206.md)记录真实 Chrome 刷新前后请求：修复后 CSRF 200 和 refresh 200 各一次，书架读取 200，重载仍在首页并保留作品。双端构建和 go build 通过；未编写测试文件。运行影响局限于共享前端身份初始化，服务端安全规则保持原行为。
+[首页验收](../testing/2026-09-20-acceptance-ink-206.md)记录真实 Chrome 刷新前后请求：修复后 CSRF 200 和 refresh 200 各一次，书架读取 200，重载仍在首页并保留作品。双端构建和 go build 通过；未编写测试文件。运行影响局限于共享前端身份初始化，服务端安全规则保持原行为。

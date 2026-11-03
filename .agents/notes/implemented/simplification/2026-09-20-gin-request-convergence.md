@@ -23,4 +23,4 @@ Gin binding 标签可减少接线，但重复字段规则会继续漂移。运�
 
 ## Verification
 
-`node scripts/build-request-schemas.cjs` 生成233操作/103 JSON请求/28资源；全部请求Schema离线编译通过。临时 Gin 请求探针65场景与可信代理正反例通过；`go build ./...`、公共包 vet、archguard 通过。详 [验收](../../../../docs/acceptance-INK-203.md)。尚不代表真实PG事务、模型与浏览器验收。
+`node scripts/build-request-schemas.cjs` 生成233操作/103 JSON请求/28资源；全部请求Schema离线编译通过。临时 Gin 请求探针65场景与可信代理正反例通过；`go build ./...`、公共包 vet、archguard 通过。详 [验收](../testing/2026-09-20-acceptance-ink-203.md)。尚不代表真实PG事务、模型与浏览器验收。

@@ -25,4 +25,4 @@ ExecuteReadConsistent从根启动RR，预检与技术幂等记录同一事务；
 
 主独立go run ./cmd/acceptance/ink165的16组/25操作通过，含独立digest、PG禁止event UPDATE/DELETE、并发及外层回滚、真实审计失败、维护重建。30天擦除补充证据见验收记录。
 
-详见 [任务验收](../../../../docs/acceptance-INK-165.md)。
+详见 [任务验收](../testing/2026-09-18-acceptance-ink-165.md)。

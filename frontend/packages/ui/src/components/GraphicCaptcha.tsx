@@ -1,45 +1,30 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { RotateCw } from "lucide-react";
 
 export interface GraphicCaptchaProps {
-  onCodeChange?: (code: string) => void;
-  onCaptchaChange?: (captcha: { id: string; code?: string }) => void;
+  onCaptchaChange?: (captcha: { id: string }) => void;
   width?: number;
   height?: number;
   className?: string;
   refreshTitle?: string;
+  unavailableTitle?: string;
 }
 
 export function GraphicCaptcha({
-  onCodeChange,
   onCaptchaChange,
   width = 108,
   height = 36,
   className = "",
   refreshTitle = "点击更换验证码",
+  unavailableTitle = "验证码加载失败",
 }: GraphicCaptchaProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [serverSvg, setServerSvg] = useState<string | null>(null);
-  const [isServerCaptcha, setIsServerCaptcha] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
-
-  // 使用 Ref 引用外部回调，切断因父组件重渲染导致 refresh 依赖刷新而产生的死循环
-  const onCodeChangeRef = useRef(onCodeChange);
   const onCaptchaChangeRef = useRef(onCaptchaChange);
+
   useEffect(() => {
-    onCodeChangeRef.current = onCodeChange;
     onCaptchaChangeRef.current = onCaptchaChange;
   });
-
-  // 客户端备用生成随机验证码字符（网络离线/纯前端预览时降级）
-  const generateRandomCode = useCallback(() => {
-    const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-    let code = "";
-    for (let i = 0; i < 4; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
-  }, []);
 
   // 对 SVG 实施主题适配（防御性保证：即使用户的后端服务未重启仍返回旧版深色 SVG，前端也能动态清洗重绘成与浅色底纹完全融合的样式）
   const adaptSvg = useCallback((rawSvg: string): string => {
@@ -78,152 +63,61 @@ export function GraphicCaptcha({
     return svg;
   }, []);
 
-  // 绘制带有防刷噪点与干扰线的本地 Canvas 图形验证码（降级路径，动态跟随系统/应用主题）
-  const drawFallbackCaptcha = useCallback(
-    (code: string) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      const isDark =
-        typeof document !== "undefined" &&
-        document.documentElement.classList.contains("dark");
-
-      const theme = getComputedStyle(canvas.closest(".auth-shell") || document.documentElement);
-      ctx.fillStyle = theme.getPropertyValue("--bg-subtle").trim() || (isDark ? "#303a33" : "#edf0ec");
-      ctx.fillRect(0, 0, width, height);
-
-      // 2. 绘制随机干扰线
-      const lineStroke = isDark
-        ? "rgba(169, 192, 176, 0.42)"
-        : "rgba(83, 96, 87, 0.3)";
-      for (let i = 0; i < 4; i++) {
-        ctx.strokeStyle = lineStroke;
-        ctx.lineWidth = Math.random() * 1.5 + 1;
-        ctx.beginPath();
-        ctx.moveTo(Math.random() * width, Math.random() * height);
-        ctx.bezierCurveTo(
-          Math.random() * width,
-          Math.random() * height,
-          Math.random() * width,
-          Math.random() * height,
-          Math.random() * width,
-          Math.random() * height
-        );
-        ctx.stroke();
-      }
-
-      // 3. 绘制随机噪点
-      const dotColor = isDark
-        ? "rgba(255, 255, 255, 0.2)"
-        : "rgba(32, 41, 35, 0.16)";
-      for (let i = 0; i < 28; i++) {
-        ctx.fillStyle = dotColor;
-        ctx.beginPath();
-        ctx.arc(
-          Math.random() * width,
-          Math.random() * height,
-          Math.random() * 1.5,
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
-      }
-
-      // 4. 逐字绘制字符：高对比度色板
-      const colors = [
-        theme.getPropertyValue("--auth-captcha-a").trim(),
-        theme.getPropertyValue("--auth-captcha-b").trim(),
-        theme.getPropertyValue("--auth-captcha-c").trim(),
-        theme.getPropertyValue("--auth-captcha-d").trim(),
-        theme.getPropertyValue("--auth-captcha-e").trim(),
-      ].filter(Boolean);
-      ctx.textBaseline = "middle";
-
-      for (let i = 0; i < code.length; i++) {
-        const char = code[i];
-        const fontSize = Math.floor(Math.random() * 4 + 21);
-        ctx.font = `bold ${fontSize}px monospace`;
-        ctx.fillStyle = colors[i % colors.length];
-
-        ctx.save();
-        const x = 14 + i * 22;
-        const y = height / 2 + (Math.random() * 4 - 2);
-        const angle = (Math.random() * 30 - 15) * (Math.PI / 180);
-
-        ctx.translate(x, y);
-        ctx.rotate(angle);
-        ctx.fillText(char, 0, 0);
-        ctx.restore();
-      }
-    },
-    [width, height]
-  );
-
-  // 优先请求后端提供的安全图形验证码 (/v1/auth/captcha)
+  // 图形验证码只允许使用服务端签发的一次性挑战。
   const refresh = useCallback(async () => {
+    onCaptchaChangeRef.current?.({ id: "" });
+    setServerSvg(null);
     setIsSpinning(true);
     try {
       const res = await fetch("/v1/auth/captcha", {
         method: "GET",
         headers: { Accept: "application/json" },
+        cache: "no-store",
       });
-      if (res.ok) {
-        const body = await res.json();
-        if (body?.data?.svg && body?.data?.captcha_id) {
-          const adapted = adaptSvg(body.data.svg);
-          setServerSvg(adapted);
-          setIsServerCaptcha(true);
-          onCaptchaChangeRef.current?.({ id: body.data.captcha_id });
-          setTimeout(() => setIsSpinning(false), 300);
-          return;
-        }
+      if (!res.ok) throw new Error("captcha unavailable");
+      const body = await res.json();
+      if (typeof body?.data?.svg !== "string" || typeof body?.data?.captcha_id !== "string") {
+        throw new Error("invalid captcha response");
       }
+      setServerSvg(adaptSvg(body.data.svg));
+      onCaptchaChangeRef.current?.({ id: body.data.captcha_id });
     } catch {
-      // 后端服务不可达时平滑降级至本地生成
+      // API 不可用时禁止本地伪造挑战与绕过校验。
+      setServerSvg(null);
+    } finally {
+      setIsSpinning(false);
     }
-
-    // 本地 Canvas 降级方案
-    setIsServerCaptcha(false);
-    setServerSvg(null);
-    const newCode = generateRandomCode();
-    drawFallbackCaptcha(newCode);
-    onCodeChangeRef.current?.(newCode);
-    onCaptchaChangeRef.current?.({ id: "", code: newCode });
-    setTimeout(() => setIsSpinning(false), 300);
-  }, [generateRandomCode, drawFallbackCaptcha, adaptSvg]);
+  }, [adaptSvg]);
 
   useEffect(() => {
-    refresh();
+    void refresh();
   }, [refresh]);
 
   return (
     <button
       type="button"
-      onClick={refresh}
+      onClick={() => { void refresh(); }}
       title={refreshTitle}
       className={`flex items-center justify-between p-1 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-decorative)] hover:border-[var(--border-control)] transition-all cursor-pointer shadow-xs shrink-0 select-none group overflow-hidden ${className}`}
     >
-      {isServerCaptcha && serverSvg ? (
+      {serverSvg ? (
         <div
           className="rounded-lg overflow-hidden pointer-events-none flex items-center justify-center w-full h-full"
           style={{ width, height }}
           dangerouslySetInnerHTML={{ __html: serverSvg }}
         />
       ) : (
-        <canvas
-          ref={canvasRef}
-          width={width}
-          height={height}
-          className="rounded-lg pointer-events-none"
-        />
+        <div
+          role="status"
+          className="rounded-lg text-center text-[10px] leading-tight text-[var(--text-muted)] flex items-center justify-center"
+          style={{ width, height }}
+        >
+          {isSpinning ? refreshTitle : unavailableTitle}
+        </div>
       )}
       <div className="px-1.5 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-colors flex items-center justify-center">
         <RotateCw
-          className={`w-3.5 h-3.5 transition-transform duration-300 ${
-            isSpinning ? "rotate-180" : ""
-          }`}
+          className={`w-3.5 h-3.5 transition-transform duration-300 ${isSpinning ? "rotate-180" : ""}`}
         />
       </div>
     </button>

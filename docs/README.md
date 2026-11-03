@@ -10,6 +10,6 @@
 - [任务看板](backlog.md)、[代码实施现状](architecture.md)、[决策理由](decisions/README.md)只记录执行事实与选择依据，不形成第二套目标设计。
 - [开发维护指南](development-guide.md)编排仓库Skills；新任务必须先读当前契约基线，不沿旧包路径猜接口。
 - [本地环境与数据库配置](local-environment.md)：记录开发机 PostgreSQL 17、Redis 7、统一随机密码与 DBX 客户端连接。
-- [长期工程记忆](../.agents/notes/README.md)保存实现约束、真实备选和故障根因；[INK-143验收](notes-delivery-INK-143.md)记录笔记与归档门禁验证。
+- [长期工程记忆](../.agents/notes/README.md)保存实现约束、真实备选和故障根因；[INK-143验收](../.agents/notes/implemented/process/2026-09-18-notes-delivery-ink-143.md)记录笔记与归档门禁验证。
 
 “冻结”表示开发不再临时发明核心契约；发现真实缺陷按契约变更流程统一修订。历史ADR、迁移和验收编号保持可追溯，不将发行代号当作现行架构名称。
