@@ -6,7 +6,7 @@
 #   docker build --build-arg APP_VERSION=1.0.0 --build-arg GIT_COMMIT=$(git rev-parse --short HEAD) -t inklore/server:1.0.0 .
 
 # ── 构建阶段 ────────────────────────────────────────────────
-FROM golang:1.27.1-alpine AS builder
+FROM golang:1.27.3-alpine AS builder
 
 WORKDIR /src
 
