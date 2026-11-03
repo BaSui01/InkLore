@@ -1,0 +1,225 @@
+name: Isolated Integration
+
+on:
+  push:
+    branches: [dev, private]
+  pull_request:
+    branches: [dev, private]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: isolated-integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres-redis:
+    name: R1 PostgreSQL 17 + Redis 7 真实迁移验收
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: inklore_ci
+          POSTGRES_USER: inklore_ci
+          POSTGRES_PASSWORD: ci-only-not-production
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U inklore_ci -d inklore_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 24
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 24
+    env:
+      APP_ENV: development
+      DATABASE_DRIVER: postgres
+      DATABASE_DSN: postgres://inklore_ci:ci-only-not-production@127.0.0.1:5432/inklore_ci?sslmode=disable
+      REDIS_ENABLED: 'true'
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: '6379'
+      REDIS_ADDR: 127.0.0.1:6379
+      MIGRATE_ON_START: 'false'
+      GOTOOLCHAIN: auto
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Install database clients
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client redis-tools
+      - name: Verify isolated services and DB identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(PGPASSWORD=ci-only-not-production psql -h 127.0.0.1 -U inklore_ci -d inklore_ci -Atqc 'select current_database()')" = "inklore_ci"
+          test "$(redis-cli -h 127.0.0.1 ping)" = "PONG"
+          echo 'Temporary CI Postgres/Redis ready'
+      - name: Apply R1 migrations to ephemeral PostgreSQL
+        run: go run ./cmd/migrate -cmd up -timeout 180s
+      - name: Verify schema migration, extension and domain tables
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_ci PGDATABASE=inklore_ci PGPASSWORD=ci-only-not-production
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) > 0 FROM schema_migrations" | grep -qx t
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT to_regclass('platform_tenants') IS NOT NULL" | grep -qx t
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='vector')" | grep -qx t
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='pg_trgm')" | grep -qx t
+      - name: Reapply and verify migration idempotence
+        run: |
+          go run ./cmd/migrate -cmd up -timeout 180s
+          go run ./cmd/migrate -cmd status -timeout 60s
+      - name: Verify Supabase staging permissions against unrelated public objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_ci PGPASSWORD=ci-only-not-production
+          # A second disposable database models a shared Supabase project with unrelated public objects.
+          psql -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE inklore_staging_probe"
+          psql -d inklore_staging_probe -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE SCHEMA extensions;
+          CREATE EXTENSION vector WITH SCHEMA extensions;
+          CREATE EXTENSION pg_trgm WITH SCHEMA extensions;
+          CREATE EXTENSION pgcrypto WITH SCHEMA extensions;
+          CREATE SCHEMA inklore_ci;
+          -- Ephemeral, no-login stand-ins for Supabase Data API roles.
+          CREATE ROLE anon NOLOGIN;
+          CREATE ROLE authenticated NOLOGIN;
+          CREATE ROLE service_role NOLOGIN;
+          REVOKE ALL ON SCHEMA inklore_ci FROM PUBLIC;
+          CREATE TABLE public.ci_unrelated_data(id bigint PRIMARY KEY);
+          CREATE SEQUENCE public.ci_unrelated_sequence;
+          SQL
+          export DATABASE_DSN='postgres://inklore_ci:ci-only-not-production@127.0.0.1:5432/inklore_staging_probe?sslmode=disable&options=-csearch_path%3Dinklore_ci%2Cextensions%2Cpublic'
+          go run ./cmd/migrate -cmd up -timeout 180s
+          psql -d inklore_staging_probe -Atqc "SELECT count(*) FROM inklore_ci.schema_migrations" | grep -qx 17
+          psql -d inklore_staging_probe -Atqc "SELECT count(*) FROM pg_tables WHERE schemaname='inklore_ci'" | grep -qx 80
+          # 000009_permissions intentionally granted public objects prior to the staging overlay.
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_runtime','public.ci_unrelated_data','SELECT')" | grep -qx t
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_retention','public.ci_unrelated_data','DELETE')" | grep -qx t
+          psql -d inklore_staging_probe -Atqc "SELECT has_sequence_privilege('inklore_runtime','public.ci_unrelated_sequence','USAGE')" | grep -qx t
+          psql -d inklore_staging_probe -v ON_ERROR_STOP=1 -f scripts/sql/supabase-staging-permissions.sql
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_runtime','public.ci_unrelated_data','SELECT')" | grep -qx f
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_retention','public.ci_unrelated_data','DELETE')" | grep -qx f
+          psql -d inklore_staging_probe -Atqc "SELECT has_sequence_privilege('inklore_runtime','public.ci_unrelated_sequence','USAGE')" | grep -qx f
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_runtime','inklore_ci.platform_tenants','INSERT')" | grep -qx t
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_runtime','inklore_ci.worldview_fact_ledger_events','UPDATE')" | grep -qx f
+          psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_runtime','inklore_ci.schema_migrations','UPDATE')" | grep -qx f
+          psql -d inklore_staging_probe -Atqc "SELECT has_schema_privilege('anon','inklore_ci','USAGE')" | grep -qx f
+          echo 'Supabase overlay isolates public objects and preserves private role grants.'
+      - name: Verify transaction rollback has no persistent side effects
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_ci PGDATABASE=inklore_ci PGPASSWORD=ci-only-not-production
+          psql -v ON_ERROR_STOP=1 -c "BEGIN; INSERT INTO platform_tenants(name) VALUES ('ci-rollback-guard'); ROLLBACK;"
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) FROM platform_tenants WHERE name='ci-rollback-guard'" | grep -qx 0
+      - name: Build API and inspect code
+        run: |
+          go build ./...
+          go vet ./...
+          go run ./cmd/archguard -reachability
+      - name: Start actual API and check health, readiness and public access boundaries
+        shell: bash
+        env:
+          HTTP_ADDR: 127.0.0.1:18080
+          CREATOR_ORIGIN: http://127.0.0.1:3000
+          ADMIN_ORIGIN: http://127.0.0.1:3001
+        run: |
+          set -euo pipefail
+          export JWT_SIGNING_KEY="$(openssl rand -hex 32)"
+          export CSRF_KEY="$(openssl rand -hex 32)"
+          export IDEMPOTENCY_HASH_KEY="$(openssl rand -hex 32)"
+          export CURSOR_SIGNING_KEY="$(openssl rand -hex 32)"
+          go build -o /tmp/inklore-ci-server ./cmd/server
+          /tmp/inklore-ci-server >/tmp/inklore-ci-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 45); do
+            if curl --silent --fail --max-time 2 http://127.0.0.1:18080/healthz -o /tmp/inklore-health.json; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              echo "::error::InkLore API exited before healthy startup."
+              tail -n 35 /tmp/inklore-ci-server.log | sed -E 's#(postgres(ql)?://)[^[:space:]]+#\1[REDACTED]#g'
+              exit 1
+            fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+          curl --silent --fail --max-time 4 http://127.0.0.1:18080/readyz -o /tmp/inklore-ready.json
+          python3 - <<'PY'
+          import json
+          health = json.load(open('/tmp/inklore-health.json'))
+          ready = json.load(open('/tmp/inklore-ready.json'))
+          assert health.get('data', {}).get('status') == 'ok', 'unexpected health response'
+          assert ready.get('data', {}).get('database') == 'ok', 'database not ready'
+          assert ready.get('data', {}).get('state') == 'ready', 'redis is unexpectedly degraded'
+          PY
+          status=$(curl --silent --max-time 4 --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18080/does-not-exist)
+          test "$status" = 404
+          python3 - <<'PY'
+          import json, secrets, urllib.error, urllib.request
+
+          base = 'http://127.0.0.1:18080'
+          payload = {
+              'email': 'ci-' + secrets.token_hex(12) + '@example.invalid',
+              'password': secrets.token_urlsafe(24),
+              'pen_name': 'CiCreator',
+          }
+
+          def request(path, method='GET', body=None, headers=None):
+              data = None if body is None else json.dumps(body).encode('utf-8')
+              req = urllib.request.Request(base + path, method=method, data=data, headers={
+                  'Content-Type': 'application/json', **(headers or {})
+              })
+              try:
+                  with urllib.request.urlopen(req, timeout=5) as response:
+                      return response.status, json.load(response)
+              except urllib.error.HTTPError as error:
+                  return error.code, json.loads(error.read().decode('utf-8'))
+
+          code, anonymous = request('/v1/auth/me')
+          assert code == 401, 'unauthenticated session unexpectedly accessible'
+
+          code, registered = request('/v1/auth/register', method='POST', body=payload,
+              headers={'Origin': 'http://127.0.0.1:3000'})
+          assert code == 200, 'creator registration failed'
+          session = registered['data']
+          assert session['principal']['audience'] == 'creator'
+          assert session['principal']['tenant_id']
+          assert session['access_token']
+
+          code, principal = request('/v1/auth/me',
+              headers={'Authorization': 'Bearer ' + session['access_token']})
+          assert code == 200, 'creator session not usable'
+          assert principal['data']['user_id'] == session['principal']['user_id']
+
+          code, duplicate = request('/v1/auth/register', method='POST', body=payload,
+              headers={'Origin': 'http://127.0.0.1:3000'})
+          assert code == 409, 'duplicate registration should be rejected'
+          print('API creator registration, persisted session, anonymous deny and duplicate guards passed.')
+          PY
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_ci PGDATABASE=inklore_ci PGPASSWORD=ci-only-not-production
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_users" | grep -qx 1
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_tenants" | grep -qx 1
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_memberships" | grep -qx 1
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_sessions" | grep -qx 1
+          echo "Real Go API health, dependencies and unknown-route checks passed."
