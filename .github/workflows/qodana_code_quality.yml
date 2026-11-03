@@ -9,14 +9,14 @@ on:
   pull_request:
   push:
     branches:
-      - main
-      - main-r1
+      - private
+      - dev
 
 jobs:
   qodana:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
       checks: write
     steps:
@@ -24,8 +24,20 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+      - name: 'Check Qodana token availability'
+        id: token_gate
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+        shell: bash
+        run: |
+          if [[ -n "$QODANA_TOKEN" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 'Qodana Scan'
-        if: ${{ secrets.QODANA_TOKEN != '' }}
+        if: ${{ steps.token_gate.outputs.available == 'true' }}
         uses: JetBrains/qodana-action@v2026.2
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
@@ -40,5 +52,5 @@ jobs:
           # quick-fixes available in Ultimate and Ultimate Plus plans
           push-fixes: 'none'
       - name: 'Qodana Scan Skipped'
-        if: ${{ secrets.QODANA_TOKEN == '' }}
+        if: ${{ steps.token_gate.outputs.available != 'true' }}
         run: echo "QODANA_TOKEN is not available in this workflow context; skipping Qodana scan."
