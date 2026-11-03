@@ -20,6 +20,7 @@ import {
 } from "@inklore/contracts";
 
 import { reportSafeDiagnostic } from "./diagnostic";
+import { stripTrailingSlashes } from "../base-url";
 
 export interface AuthSessionOptions {
   audience: Audience;
@@ -65,7 +66,7 @@ export class AuthSession {
 
   constructor(options: AuthSessionOptions) {
     this.audience = options.audience;
-    this.baseUrl = (options.baseUrl || "").replace(/\/+$/, "");
+    this.baseUrl = stripTrailingSlashes(options.baseUrl || "");
     this.onSessionInvalidCallback = options.onSessionInvalid;
   }
 
