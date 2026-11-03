@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -11,6 +12,7 @@ import (
 
 	llmdomain "InkLore/internal/llm/domain"
 	llminfra "InkLore/internal/llm/infrastructure"
+	"InkLore/internal/platform/httpguard"
 
 	"gorm.io/gorm"
 )
@@ -108,6 +110,79 @@ func checkMockUpstream(ctx context.Context, db *gorm.DB, resolver llminfra.Tenan
 	for i, endpoint := range servers {
 		if endpoint.calls.Load() != 1 || endpoint.invalid.Load() {
 			return fmt.Errorf("tenant %s received unauthorized extra upstream request", fixtures[i].tag)
+		}
+	}
+	return nil
+}
+
+// staticCatalogResolver exercises the existing guard with synthetic DNS replies
+// only. It never performs a real DNS lookup or dials the supplied addresses.
+type staticCatalogResolver struct {
+	addresses []net.IP
+}
+
+func (r staticCatalogResolver) LookupIP(_ context.Context, _ string) ([]net.IP, error) {
+	return r.addresses, nil
+}
+
+// checkCatalogSSRFPreflight uses only isolated httptest listeners and fake DNS.
+// Regressions attempting local HTTP would contact only the test-owned listeners.
+func checkCatalogSSRFPreflight(ctx context.Context) error {
+	var requests atomic.Int64
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		w.WriteHeader(http.StatusOK)
+	})
+	plain := httptest.NewServer(handler)
+	defer plain.Close()
+	secure := httptest.NewTLSServer(handler)
+	defer secure.Close()
+
+	// Even an operator-supplied explicit Ollama URL must not inherit the
+	// default omitted-URL local exception.
+	for _, endpoint := range []string{plain.URL + "/v1", secure.URL + "/v1"} {
+		for _, protocol := range []string{"openai", "anthropic", "gemini", "ollama"} {
+			_, err := llminfra.FetchUpstreamModels(ctx, llmdomain.UpstreamModelsQuery{
+				Protocol: protocol, BaseURL: endpoint, APIKey: "ci-only-not-a-secret",
+			})
+			if err == nil {
+				return fmt.Errorf("catalog accepted a local endpoint for %s", protocol)
+			}
+		}
+	}
+	if requests.Load() != 0 {
+		return fmt.Errorf("catalog sent %d unexpected requests to isolated loopback", requests.Load())
+	}
+
+	// IP classification never opens sockets, including the metadata address.
+	for _, raw := range []string{
+		"127.0.0.1", "10.1.2.3", "172.16.0.1", "192.168.1.1",
+		"169.254.169.254", "100.64.0.1", "::1", "fc00::1", "fe80::1",
+	} {
+		if !httpguard.IsBlockedIP(net.ParseIP(raw)) {
+			return fmt.Errorf("catalog guard did not block reserved address category")
+		}
+	}
+
+	// Synthetic answers prove that all candidate DNS addresses are checked.
+	// No real metadata or private-network endpoint is ever contacted.
+	for _, addresses := range [][]net.IP{
+		{net.ParseIP("192.168.1.1")},
+		{net.ParseIP("8.8.8.8"), net.ParseIP("10.0.0.1")},
+	} {
+		_, err := httpguard.ValidateURL(ctx, "https://ci-catalog.invalid/v1",
+			httpguard.Policy{Resolver: staticCatalogResolver{addresses: addresses}})
+		if err == nil {
+			return fmt.Errorf("catalog guard accepted a private DNS answer")
+		}
+	}
+
+	for _, target := range []string{
+		"file:///tmp/ci-not-present", "https://user:password@ci-catalog.invalid/v1",
+		"https://127.0.0.1:65535/v1",
+	} {
+		if _, err := httpguard.ValidateURL(ctx, target, httpguard.Policy{}); err == nil {
+			return fmt.Errorf("catalog guard accepted invalid or private URL")
 		}
 	}
 	return nil
