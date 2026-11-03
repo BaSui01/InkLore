@@ -4,9 +4,18 @@
 
 本文件只记录实现证据，不维护第二份目标架构。唯一目标设计：[R1索引](system-design/00-INDEX.md)，契约：[00基线](system-design/00-CONTRACT-BASELINE.md)。
 
+## INK-228 · 冻结策略真实消费和租户安全模型路由（实施中）
+
+PR #18 已合入 dev：Run Scheduler、小说引导和 LLM Catalog 查询链携带冻结 PolicyVersionID，不再由 Agent 适配器直接访问 LLM 私表。PR #19 是独立 Draft：通过已授权 Model ID 在 LLM Infrastructure 查询同租户 llm_channel_models/llm_channels/llm_models/llm_providers/llm_keys，所有关联限定 tenant，排除停用或删除资源；路由使用实际渠道协议和 upstream_model；数据库渠道不再向全局密钥/其他租户回退。非事务模型调用读 GORM DB；CreateRun 在现有 Run/Job/事件 UoW 内用 PostgreSQL FOR SHARE 获取 current_version_id 与发布操作序列化。
+
+跨租户通道/失效 Key、真实费用、策略并发发布、真实 Provider/WS/SSE 和登录浏览器尚未在隔离环境穿透；CI 构建通过不等于模型调用成功。灵感/质检现已按当前租户启用的 inspiration/review 策略提供 Model ID/版本/预算上限；缺策略直接失败，真实生成仍需验收。无租户调用仅保留显式全局 pool/env 路径；Creator 安全策略目录、task_policy_version_id 创建与兼容 sunset 仍待实施。根因与测试门禁见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-02-tenant-model-routing.md)。
+
+PR #19 的 cmd/ink228verify 增加 Go 环回 HTTP 伪 Provider：在临时数据库对两租户分别使用独立 Key 与上游模型标识发出真实 HTTP 请求，断言失败配置和跨租户 Model ID 不会产生额外外发。真实模型供应商与对外计费仍未验收，必须以新 head 的独立 CI 为准。
+
 ## INK-228 · 独立云端领域结构门禁（辅助 CI）
 
 GitHub PR #38 新增不接触真实凭据的 PostgreSQL 17 + Redis 7 临时 Runner，执行当前 17 个 R1 迁移及重复运行、Agent/LLM 表和租户外键结构断言；不改任何业务运行路径。初始 head 的云端检查已通过，最终 head CI 仍需验证。详细选择和假设见 [工程笔记](../.agents/notes/implemented/testing/2026-11-03-ink228-isolated-schema-gate.md)。这不是 Agent/LLM 跨租户执行、事务竞争、真实模型或前端链路验收，INK-228 保持现有未完成状态。
+
 ## INK-245 · 接入模型渠道弹窗移除供应商下拉框（review）
 
 Admin `ChannelModal` 的协议与别名仍保留，供应商选择下拉框移除；创建时由所选协议匹配已有供应商，未匹配则由现有保存流程注册，编辑时沿用渠道绑定的供应商。后端接口、Provider/Channel 数据结构及已有资源不变。TypeScript LSP 零问题，Admin 与 Go 构建、i18ncheck（905/905）、notes check 通过。用户要求自行手测，弹窗实际呈现和登录后保存行为未由本轮浏览器验收。
@@ -350,3 +359,7 @@ INK-253 的 GitHub 自动化权限、默认分支生效约束与取舍见 [工�
 `.github/workflows/qodana_code_quality.yml` 原有直接用于步骤 `if` 的 `secrets.QODANA_TOKEN` 表达式不在受支持上下文内，导致 GitHub 工作流初始化失败且 job 为空。本变更通过仅向布尔输出传递 Token 是否存在的信息，保持真实 Token 只在环境变量中；Qodana 扫描仍通过原有 Action 接入。按当前分支职责把推送触发从 main/main-r1 更新到 private/dev，降低 contents 权限为只读。无 Go、React 或数据库业务运行路径变化。实际可用 Token 的云端扫描仍需独立确认，不把工作流解析通过等同 Qodana 代码质量验收。
 
 对应错误的机制、替代方案与真实验收限制见 [工程笔记](../.agents/notes/implemented/bug-fix/2026-11-03-qodana-invalid-step-condition.md)。
+
+## INK-258 · Go 加密与网络依赖安全更新（review）
+
+基于原 Dependabot PR #28 的模块解析快照，将 golang.org/x/crypto 从 v0.48.0 升至 v0.52.0，同步更新 x/net、x/text、x/sys、x/sync；本阶段只改 go.mod/go.sum，原 Go 应用源代码、SQL 和前端运行路径不变。依赖图变更仍可能影响加密、密码校验、JWT、传输安全等可达运行行为，因此不能仅根据静态构建认定功能兼容；必须在隔离环境验收实际授权与失败路径，再经受保护发布 PR 同步 private。详情见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-go-crypto-security-upgrade.md)。

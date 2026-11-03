@@ -11,6 +11,20 @@
 - 新增 [docs/ui-ux](docs/ui-ux/README.md)：管理端/创作者端现有路由盘点、核心页面布局与交互方案、组件复用和响应式/无障碍/权限验收矩阵。
 - 明确与冻结 15/16/17/20 分册、实际业务代码和 API 的边界；高保真设计图及前端功能改造均为后续单独交付，本次没有运行路径变化。
 
+
+### Agent 模型渠道租户安全与策略冻结（INK-228，待隔离验收）
+
+- Agent 的请求由冻结的 PolicyVersionID 与所属租户的精确 Model ID 选择数据库渠道、协议和上游模型名称；停用、缺失和凭据失败不回退到其他租户或全局密钥；不再于组合根无 tenant 读取 LLM 业务表。
+- CreateRun 将策略当前版本读取放入原有 Run/Job/事件 PostgreSQL 事务，用 FOR SHARE 防止发布竞争时产生无授权版本漂移。
+- 灵感分析和合规质检改为使用本租户现行启用的任务策略查询 Model ID/冻结版本；缺少策略明确失败，避免复活原跨租户查询。
+- PR #19 在临时 PostgreSQL 中已验证双租户渠道与冻结 Run/Job、发布锁竞争；新增环回 HTTP 伪 Provider 验证租户 Key / upstream_model 的实际网络路由及无授权外发，必须在最终 head 通过。付费真实 Provider、计费审计和 Creator 策略目录、兼容 sunset 仍未完成，整体任务维持 doing。
+
+
+### Go 加密依赖安全升级（INK-258，待独立验收）
+
+- 以 Dependabot PR #28 为版本来源，在 dev 提交 x/crypto 0.48.0→0.52.0，联动 x/net、x/text、x/sys、x/sync 的必要版本与校验和更新；未直接更改业务源代码。
+- 加密、认证与网络依赖图变化需要最新 CI 和隔离服务的实际认证/租户回归证据。稳定 private 分支暂不直接合入，仍须受保护发布 PR。
+
 ### 在线隔离 CI / Supabase 预检（INK-255，待验收）
 
 - 增加 GitHub Actions 临时 PG17+pgvector/Redis7 集成作业，验证 R1 迁移、幂等重放及后端构建规则；不读取真实 Supabase 凭据。

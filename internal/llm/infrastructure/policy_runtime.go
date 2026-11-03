@@ -16,7 +16,8 @@ func (s *Store) CurrentPolicyVersion(ctx context.Context, tenantID, taskKey stri
 	err = db.Raw(`SELECT current_version_id::text
 		FROM llm_task_policies
 		WHERE tenant_id=? AND task_key=? AND enabled=TRUE
-		  AND deleted_at IS NULL AND current_version_id IS NOT NULL`, tenantID, taskKey).Scan(&versionID).Error
+		  AND deleted_at IS NULL AND current_version_id IS NOT NULL
+		FOR SHARE`, tenantID, taskKey).Scan(&versionID).Error
 	return versionID, err
 }
 
@@ -46,23 +47,26 @@ func (s *Store) ReadFrozenPolicy(ctx context.Context, tenantID, versionID string
 }
 
 // ResolveEnabledModel checks explicit Creator model selections within the same tenant.
-func (s *Store) ResolveEnabledModel(ctx context.Context, tenantID, model string) (string, error) {
+func (s *Store) ResolveEnabledModel(ctx context.Context, tenantID, model string) (d.EnabledModel, error) {
 	db, err := s.manager.DB(ctx)
 	if err != nil {
-		return "", err
+		return d.EnabledModel{}, err
 	}
-	var modelName string
-	result := db.Raw(`SELECT upstream_name
-		FROM llm_models
-		WHERE tenant_id=? AND (id::text=? OR upstream_name=?) AND enabled=TRUE
-		  AND deleted_at IS NULL LIMIT 1`, tenantID, model, model).Scan(&modelName)
-	if result.Error != nil {
-		return "", result.Error
+	var models []d.EnabledModel
+	err = db.Raw(`SELECT m.id::text AS id, m.upstream_name AS name
+		FROM llm_models m
+		JOIN llm_providers pr ON pr.tenant_id=m.tenant_id AND pr.id=m.provider_id
+		WHERE m.tenant_id=? AND (m.id::text=? OR m.upstream_name=?)
+		  AND m.enabled=TRUE AND m.deleted_at IS NULL
+		  AND pr.enabled=TRUE AND pr.deleted_at IS NULL
+		ORDER BY m.id LIMIT 2`, tenantID, model, model).Scan(&models).Error
+	if err != nil {
+		return d.EnabledModel{}, err
 	}
-	if result.RowsAffected != 1 || modelName == "" {
-		return "", d.ErrNotFound
+	if len(models) != 1 {
+		return d.EnabledModel{}, d.ErrNotFound
 	}
-	return modelName, nil
+	return models[0], nil
 }
 
 // CurrentPolicySnapshot provides one coherent policy version for new novel guides.
