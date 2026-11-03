@@ -371,3 +371,7 @@ INK-253 的 GitHub 自动化权限、默认分支生效约束与取舍见 [工�
 ## INK-264 · 冻结策略引用与模型 ID 的安全保护（review）
 
 为已经持有 PolicyVersionID 的 Agent Run / 问答 / 小说引导阻止策略物理删除，事务内以政策头 FOR UPDATE 同步新建运行的 FOR SHARE，失败返回现有 resource_in_use 错误。对保存的冻结 ModelName 不再次模糊解析，同名不同 Provider 保留原冻结 ModelID。仅修改 Go 应用/基础设施和现有 cmd/ink228verify 验收命令，不改 R1 DDL / API / Secret。新增只使用临时 PG 和环回网络的回归，真实供应商、计费与模型/Provider 删除的完整边界仍需后继验收。详见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-03-frozen-policy-references.md)。
+
+## INK-271 · Creator Agent 会话 403 恢复退出（review）
+
+仅修复 Creator Agent 开书页在恢复旧 session 遇到 403 后无法继续的本地 UI 限制。保留既有 HomeNotice 的拒绝反馈，在无权会话等待恢复时由作者明确点击重新开始，清除其本地恢复指针但不触及服务器数据或绕过鉴权；还阻止自动引导流程因状态重渲染重复发起 POST。详见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-03-creator-guide-denied-recovery.md)。
