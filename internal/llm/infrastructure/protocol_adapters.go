@@ -256,7 +256,7 @@ type nativeTextRequest struct {
 }
 
 func (r *ProviderRouter) nativeChat(ctx context.Context, target upstreamTarget, req nativeTextRequest) (domain.TextGenerationResponse, error) {
-	switch normalizeProtocol(r.protocol) {
+	switch normalizeProtocol(target.protocol) {
 	case protocolAnthropic:
 		return r.anthropicChat(ctx, target, req)
 	case protocolGemini:
@@ -266,12 +266,12 @@ func (r *ProviderRouter) nativeChat(ctx context.Context, target upstreamTarget, 
 	case protocolResponses:
 		return r.responsesChat(ctx, target, req)
 	default:
-		return domain.TextGenerationResponse{}, fmt.Errorf("unsupported native protocol %q", r.protocol)
+		return domain.TextGenerationResponse{}, fmt.Errorf("unsupported native protocol %q", target.protocol)
 	}
 }
 
 func (r *ProviderRouter) nativeStream(ctx context.Context, target upstreamTarget, req nativeTextRequest, onEvent domain.StreamEventHandler) error {
-	switch normalizeProtocol(r.protocol) {
+	switch normalizeProtocol(target.protocol) {
 	case protocolAnthropic:
 		return r.anthropicStream(ctx, target, req, onEvent)
 	case protocolGemini:
@@ -281,7 +281,7 @@ func (r *ProviderRouter) nativeStream(ctx context.Context, target upstreamTarget
 	case protocolResponses:
 		return r.responsesStream(ctx, target, req, onEvent)
 	default:
-		return fmt.Errorf("unsupported native protocol %q", r.protocol)
+		return fmt.Errorf("unsupported native protocol %q", target.protocol)
 	}
 }
 
@@ -1010,9 +1010,9 @@ func (r *ProviderRouter) doJSON(ctx context.Context, target upstreamTarget, path
 		return "", err
 	}
 	request.Header.Set("Content-Type", "application/json")
-	if normalizeProtocol(r.protocol) == protocolAnthropic {
+	if normalizeProtocol(target.protocol) == protocolAnthropic {
 		request.Header.Set("x-api-key", target.apiKey)
-	} else if normalizeProtocol(r.protocol) != protocolGemini {
+	} else if normalizeProtocol(target.protocol) != protocolGemini {
 		request.Header.Set("Authorization", "Bearer "+target.apiKey)
 	}
 	if decorate != nil {
@@ -1039,9 +1039,9 @@ func (r *ProviderRouter) nativeSSE(ctx context.Context, target upstreamTarget, p
 	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "text/event-stream")
-	if normalizeProtocol(r.protocol) == protocolAnthropic {
+	if normalizeProtocol(target.protocol) == protocolAnthropic {
 		request.Header.Set("x-api-key", target.apiKey)
-	} else if normalizeProtocol(r.protocol) != protocolGemini {
+	} else if normalizeProtocol(target.protocol) != protocolGemini {
 		request.Header.Set("Authorization", "Bearer "+target.apiKey)
 	}
 	if decorate != nil {

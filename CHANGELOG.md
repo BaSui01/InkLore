@@ -6,6 +6,11 @@
 
 ## [Unreleased]
 
+### INK-273：2026-11-03 dev/private 双向历史基线（待验收）
+
+- 基于当前 private 与 dev 的同一个共同祖先执行双父合并，保留双方独有提交；优先沿用稳定分支已实测的 CI/Supabase/敏感目录保护规则，开发分支最新 Agent、前端、LLM 安全修复通过合并候选 PR 统一验收。
+- 仅新增 Git 合并候选与可重现的测试证据，不部署生产服务器、不执行 Supabase 写入、不改旧 Git 历史。敏感权限和 CodeQL Python 失败仍需在发布前单独评审。
+
 ### 保护分支定期 Supabase 监控与跨端 E2E 验收（INK-270，review）
 
 - Supabase 的只读 IPv4 Session Pooler 预检保持 GitHub 受保护 Environment Secret，仅在默认分支每天 03:17 UTC 定时运行（也可手动运行），禁止写入真实业务数据。
@@ -18,31 +23,81 @@
 - 改为使用真实身份和数据库结构查询验证官方 IPv4 Session Pooler 地址；连接凭据只在 GitHub-hosted Runner 内存中使用，不输出密码、完整 DSN 或身份验证错误详情。
 - 首次 IPv6 失败证据：Actions #41570140594；改进后必须以新的人工验收 Success 为交付依据。
 
-### 五项依赖补丁批量整合（INK-261，已发布）
-
-- [PR #71](https://github.com/BaSui01/InkLore/pull/71) 在 dev 合并 quic-go 0.59.1、x/net 0.55.0、vite 7.3.7、source-map-js 1.2.2、markdown-it 14.3.3；Go mod verify/build/vet/archguard、pnpm frozen、Creator/Admin 构建及 PG17/Redis7 API 回归通过。
-- [PR #79](https://github.com/BaSui01/InkLore/pull/79) 经独立受保护 CI 合入 private，双方 manifest/lockfile 版本和 SHA 一致；原 Dependabot #49–#53 均以 superseded 方式关闭，不重复合并。当前补丁不声称真实 QUIC/HTTP3、CSP/Markdown 或所有安全告警已通过端到端验收。
-
-
 ### 自动合并敏感路径收紧（INK-254，review）
 
 - 默认分支安全 PR Gate 增加 internal/platform/identity 和所有领域的 infrastructure 路径，防止拥有 auto-merge-approved 标签的认证/持久化 PR 绕过人工审查；低风险路径、原有 CI 与 Review 门禁保持不变。
 - 源码与工作流静态测试仍需最终 PR CI 及合并后的事件复核。
-
 
 ### 稳定分支独立接入数据库/Redis 集成测试（INK-260，review）
 
 - 从已验证的 dev 最小同步两个 GitHub Actions 工作流和所需的测试环境权限 SQL，不混入 70 文件发布候选 PR #41。
 - 隔离作业的临时 PG17/Redis7 验证真实 R1 迁移、回滚、权限、Go API/Creator 身份；Supabase 只读预检只在受保护分支手动触发且需要独立最小权限凭据，现有 Secret 未配置。
 
+### INK-256：dev 超前 20 个提交后发布 PR（review）
+
+- 采用默认分支可信工作流按 GitHub Commit Compare 阈值自动创建 release 快照 PR；安全满足时启用 Merge Commit auto-merge，分叉、敏感或 CI 未通过时保留人工复核。保护 dev 不被删除或强推，发布不等于部署或业务验收。
+
+
+### Creator 开书引导 403 本地恢复退出（INK-271，review）
+
+- 为无法访问的历史小说引导会话提供显式“重新开始”，仅在用户点击后清除本地恢复指针并显示新建表单；后端身份与数据权限不变。
+- 防止点击按钮后 initialIdea 自动重新发起 HTTP POST，保持真实浏览器验收为后继要求。
+
+
+### Agent 冻结策略引用保护（INK-264，review）
+
+- 对排队 Agent Run、Agent 问答及小说引导持有的冻结 PolicyVersionID 增加物理删除拦截，保留既有策略版本可读；事务锁与 CreateRun 的 FOR SHARE 串行化。
+- 小说引导请求已经持有冻结模型时，不因同名 Provider 再次解析并错误替换 Model ID；使用临时 PG/Redis 与环回 Provider 验收，未执行付费模型调用。
+
+
+### 五项依赖补丁批量整合（INK-261，已发布）
+
+- [PR #71](https://github.com/BaSui01/InkLore/pull/71) 在 dev 合并 quic-go 0.59.1、x/net 0.55.0、vite 7.3.7、source-map-js 1.2.2、markdown-it 14.3.3；Go mod verify/build/vet/archguard、pnpm frozen、Creator/Admin 构建及 PG17/Redis7 API 回归通过。
+- [PR #79](https://github.com/BaSui01/InkLore/pull/79) 经独立受保护 CI 合入 private，双方 manifest/lockfile 版本和 SHA 一致；原 Dependabot #49–#53 均以 superseded 方式关闭，不重复合并。当前补丁不声称真实 QUIC/HTTP3、CSP/Markdown 或所有安全告警已通过端到端验收。
+
+### 双端 UI/UX 设计实施包（INK-259，review）
+
+- 新增 [docs/ui-ux](docs/ui-ux/README.md)：管理端/创作者端现有路由盘点、核心页面布局与交互方案、组件复用和响应式/无障碍/权限验收矩阵。
+- 明确与冻结 15/16/17/20 分册、实际业务代码和 API 的边界；高保真设计图及前端功能改造均为后续单独交付，本次没有运行路径变化。
+
+
+### Agent 模型渠道租户安全与策略冻结（INK-228，待隔离验收）
+
+- Agent 的请求由冻结的 PolicyVersionID 与所属租户的精确 Model ID 选择数据库渠道、协议和上游模型名称；停用、缺失和凭据失败不回退到其他租户或全局密钥；不再于组合根无 tenant 读取 LLM 业务表。
+- CreateRun 将策略当前版本读取放入原有 Run/Job/事件 PostgreSQL 事务，用 FOR SHARE 防止发布竞争时产生无授权版本漂移。
+- 灵感分析和合规质检改为使用本租户现行启用的任务策略查询 Model ID/冻结版本；缺少策略明确失败，避免复活原跨租户查询。
+- PR #19 在临时 PostgreSQL 中已验证双租户渠道与冻结 Run/Job、发布锁竞争；新增环回 HTTP 伪 Provider 验证租户 Key / upstream_model 的实际网络路由及无授权外发，必须在最终 head 通过。付费真实 Provider、计费审计和 Creator 策略目录、兼容 sunset 仍未完成，整体任务维持 doing。
+
+
 ### Go 加密依赖安全升级（INK-258，已发布）
 
 - [PR #43](https://github.com/BaSui01/InkLore/pull/43) 已在 dev 合并 x/crypto 0.48.0→0.52.0 及关联 x/net/text/sys/sync 更新；Go 模块校验和常规构建通过。
 - [GitHub 临时 PG17/Redis7 运行验收](https://github.com/BaSui01/InkLore/actions/runs/41492434905) 覆盖注册、会话、匿名拒绝、重复注册、权限及事务；[PR #47](https://github.com/BaSui01/InkLore/pull/47) 已将同版本依赖受保护地发布到默认 private。剩余外部模型/生产压测风险保留为业务运行验收，不声称本依赖补丁消除所有安全告警。
 
-### INK-256：dev 超前 20 个提交后发布 PR（review）
+### 在线隔离 CI / Supabase 预检（INK-255，待验收）
 
-- 采用默认分支可信工作流按 GitHub Commit Compare 阈值自动创建 release 快照 PR；安全满足时启用 Merge Commit auto-merge，分叉、敏感或 CI 未通过时保留人工复核。保护 dev 不被删除或强推，发布不等于部署或业务验收。
+- 增加 GitHub Actions 临时 PG17+pgvector/Redis7 集成作业，验证 R1 迁移、幂等重放及后端构建规则；不读取真实 Supabase 凭据。
+- 增加可信人工触发的 Supabase 私有 schema 只读验证工作流，需另行配置最小权限数据库连接与 GitHub Environment。
+- 东京 pgsql 的 inklore_ci 私有 schema 已完成17组 R1 迁移（80张业务表，public 零业务表），pgcrypto/vector/pg_trgm 统一位于 extensions；已执行独立的私有角色权限覆盖并验证 Data API 角色无 schema 访问权。
+- Supabase 四个不可变触发器 search_path 已固定并通过安全 Advisor 零告警验证；独立脚本保留原 R1 迁移 SQL 与 SHA256 不变。临时 CI 新增实际 Creator 注册/会话持久化 HTTP 验证，按最新 PR head 检查证据。
+- 临时 PostgreSQL 模拟 Supabase 已存在的 public 表/序列，修复并验证旧权限迁移的对象授权残留，最新隔离 Actions #41490710935 全绿。修正版暂未在共享 Supabase 再次执行。
+
+### INK-228 隔离 PG17/Redis7 数据库结构冒烟门禁（review）
+
+- 新增面向 Agent/LLM 变更的临时 PostgreSQL 迁移与租户外键检查，固定当前 17 个迁移基线、重复迁移和无持久化服务凭据验证；不执行真实模型或 Supabase 写入。
+- 静态 Schema 门禁不代表 INK-228 的真实多租户路由、冻结策略和 Worker 行为已完成验收。
+
+### Qodana 工作流有效性修复（INK-257，review）
+
+- 将无效的 step `secrets` 条件换成 Token 可用性布尔输出，保留凭据只在受限环境变量中；更新 push 到 private/dev，令工作流可正常解析。
+- 保留缺少 QODANA_TOKEN 时的安全跳过行为，扫描仍须真实 Token/平台执行验收；不将跳过视为安全通过。
+
+
+### GitHub 协作与依赖维护（INK-253，review）
+
+- 新增 Issues 表单、Dependabot 四类依赖周更配置、只读仓库健康周报工作流，准备 Wiki 首页与开发/架构/治理导航。
+- 建立 Projects 看板与 GitHub 页面入口；不修改业务运行路径。配置进入默认分支前周报定时任务和依赖版本更新不声称已启动，Wiki 需独立首次发布与复核。
+
 
 ### INK-254：安全自动合并门禁加固（review）
 
@@ -50,8 +105,13 @@
 
 ### 公开仓库前的凭据安全准备（INK-252，blocked）
 
-- 当前开发配置文档已改为安全的无凭据示例；默认分支的相同文档也同步修复。
-- 凭据轮换与历史提交安全审计仍是公开仓库的阻塞事项，本次不改变可见性。
+- 将包含宿主机实际 PostgreSQL/Redis 共用密码的本地环境记录替换为可公开的无凭据开发模板，同时移除机器专属 DBX 连接信息。
+- 已提交过的凭据仍可能存在于 Git 历史与 PR diff，必须先轮换、再完成历史安全核查；此次修改不宣称历史已清理，也不改变仓库可见性。
+
+### pnpm 与 dev 持续集成配置（INK-248，待完整验收）
+
+- 前端 CI 改用固定 pnpm 11.25.0、已有 pnpm 锁文件及 frozen-lockfile 安装，保留 Creator/Admin 构建；push 增加 dev，保留 main 与 PR 触发。
+- 验证指南同步 pnpm 命令和现有 i18n 目录；未修改依赖、锁文件或业务运行路径。完整构建与远端 CI 尚待独立验收。
 
 ### 管理端渠道弹窗精简（INK-245）
 
@@ -831,6 +891,18 @@ Docker 守护进程可用后，此前三条阻塞的验收全部在真实 Postgr
 
 - INK-201/203：补齐安全HTTP日志request_id白名单；真实PG17只读完整App启动与11HTTP场景通过，中间件panic/流后恢复/日志脱敏探针通过。
 - INK-199/200/201：修复Agent及文件DELETE忽略未声明body，拒绝重复/额外revision查询；删除SSE的last_event_id查询后备。公共guard七请求场景通过。
+
+### INK-250：模型配置手写组件拆分（review）
+
+提取受控 Token 字段组件，修复 ModelConfigRoute 超过50KB的问题，保持保存与校验路径。16项生成契约超限仍待独立裁决，未宣称完整护栏通过。
+
+### INK-249：七个 Go 文件机械格式修复（review）
+
+标准 gofmt 调整七个已记录源码文件，未改业务语义；核实无具体并发修改后补齐两个 novel_creation.go 的格式，不接管 INK-236 功能。全仓格式与 Go 构建通过，不代表其他门禁或独立验收完成。
+
+### INK-248 补充：dot 本地构建入口（待完整验收）
+
+复用 Makefile 聚合全包构建、文档/架构护栏、pnpm 冻结安装与双端构建；显式支持已核验快照的 BUILDVCS=false，不跳过 notes 历史基线。dot 单项构建通过，完整门禁和独立验收仍阻塞，未合并或发布。
 
 ### INK-251：源码大小上限500KiB（review）
 

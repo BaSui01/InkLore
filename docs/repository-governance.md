@@ -43,3 +43,13 @@ GitHub 仓库开启 `allow_auto_merge`、`delete_branch_on_merge` 和 `allow_upd
 - PR 的合并不等于业务 Issue 已验收，Issue 仍按 `docs/backlog.md` 的状态管理。
 - Agent 任务恢复、冻结策略、跨租户路由、Provider Key 及数据库迁移需额外安全验收。
 - 不主动改默认分支、历史提交、已接受的 ADR 或现有持久化数据。
+
+## GitHub 功能整合
+
+协作看板、依赖安全、定时只读 Insights、Wiki 首次发布与 GitHub Security 的使用步骤统一见 [GitHub 功能与运维入口](github-platform.md)。
+
+GitHub Project 的状态不覆盖 `docs/backlog.md`，Dependabot 与健康报表仅在配置进入默认分支后生效；仓库已公开，仍需持续核对凭据轮换、历史风险与 GitHub 安全告警。
+
+## 2026-11-03 双向分支基线
+
+两条受保护长期分支只能经完整 PR/CI 合并，禁止强推、重写历史及自动删除 dev；开发分支安全修复发布前须验证目标 private 的正式 CI、Agent/LLM 跨租户门禁和浏览器 E2E。来源于双向历史分叉的候选基线必须使用保留双父提交的 Merge Commit，不得用 squash/rebase 伪装为已对齐。

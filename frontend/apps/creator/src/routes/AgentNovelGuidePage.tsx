@@ -35,6 +35,7 @@ export function AgentNovelGuidePage({ initialIdea, client, offline, onBack, onCr
   const [description, setDescription] = useState("");
   const [target, setTarget] = useState("0");
   const [restoring, setRestoring] = useState(true);
+  const [restoreAttempt, setRestoreAttempt] = useState(0);
 
   const call = async <T,>(operationId: string, method: "GET" | "POST", path: string, body?: unknown, key?: string) => {
     const result = await client.request<unknown, T>({ operationId, method, path, body, idempotencyKey: key });
@@ -50,6 +51,7 @@ export function AgentNovelGuidePage({ initialIdea, client, offline, onBack, onCr
 
   useEffect(() => {
     let active = true;
+    setRestoring(true);
     const restore = async () => {
       setError(null);
       try {
@@ -60,7 +62,8 @@ export function AgentNovelGuidePage({ initialIdea, client, offline, onBack, onCr
             if (active) hydrate(result);
             return;
           } catch (cause) {
-            if (cause instanceof ApiError && cause.httpStatus !== 404) { if (active) setError(cause); return; }
+            if (!(cause instanceof ApiError && cause.httpStatus === 404)) { if (active) setError(cause); return; }
+            if (!active) return;
             localStorage.removeItem(keys.session);
             localStorage.removeItem(keys.startKey);
             localStorage.removeItem(keys.startIdea);
@@ -82,7 +85,7 @@ export function AgentNovelGuidePage({ initialIdea, client, offline, onBack, onCr
     };
     void restore();
     return () => { active = false; };
-  }, [initialIdea, client, keys.session, keys.startKey, keys.startIdea]);
+  }, [initialIdea, client, keys.session, keys.startKey, keys.startIdea, restoreAttempt]);
 
   useEffect(() => {
     if (guide?.status !== "processing") return;
@@ -139,21 +142,34 @@ export function AgentNovelGuidePage({ initialIdea, client, offline, onBack, onCr
     } catch (cause) { setError(cause); } finally { lock.current = false; setPending(false); }
   };
 
+  const restartGuide = () => {
+    localStorage.removeItem(keys.session);
+    localStorage.removeItem(keys.startKey);
+    localStorage.removeItem(keys.startIdea);
+    startAttempt.current = null;
+    autoStarted.current = true;
+    setGuide(null);
+    setError(null);
+  };
+
+  const hasPendingGuide = !guide && (Boolean(localStorage.getItem(keys.session)) || Boolean(localStorage.getItem(keys.startKey)));
+
   return <div className="creator-home novel-guide-page">
     <header className="novel-guide-header home-container"><Button type="button" className="home-button home-button-secondary" onClick={onBack} icon={<ArrowLeft size={17} />}>{t("home.guide.back")}</Button><span className="home-footer-brand"><Feather size={17} />{t("home.brand")}</span></header>
     <main className="novel-guide-main" aria-labelledby="home-create-title">
       <div className="novel-guide-heading"><span className="home-kicker">{t("home.guide.eyebrow")}</span><h1 id="home-create-title">{t("home.create.title")}</h1><p>{t("home.create.subtitle")}</p></div>
       <form className="novel-guide-form" onSubmit={confirm} aria-busy={pending}>
-        {error != null && <HomeNotice error={error} />}
+        {error != null && <HomeNotice error={error} retry={hasPendingGuide ? () => setRestoreAttempt(value => value + 1) : undefined} busy={restoring} />}
+        {!guide && hasPendingGuide && !restoring && error instanceof ApiError && error.httpStatus === 403 && <Button type="button" className="home-button home-button-secondary" onClick={restartGuide}>{t("home.guide.restart")}</Button>}
         {offline && <p className="home-form-error" role="status">{t("home.offline")}</p>}
         {restoring && <p role="status">{t("home.loading")}</p>}
         {pending && !guide && <div className="home-guide-thread" aria-live="polite"><div className="home-guide-turn"><p><strong>{t("home.guide.yourIdea")}</strong></p><p>{idea}</p></div><p role="status">{t("home.guide.thinking")}</p></div>}
-        {!guide && !restoring && !pending && <><label htmlFor="home-guide-idea">{t("home.ideaLabel")}</label><textarea id="home-guide-idea" rows={5} value={idea} onChange={event => setIdea(event.target.value)} placeholder={t("home.ideaPlaceholder")} />
+        {!guide && !restoring && !pending && !hasPendingGuide && <><label htmlFor="home-guide-idea">{t("home.ideaLabel")}</label><textarea id="home-guide-idea" rows={5} value={idea} onChange={event => setIdea(event.target.value)} placeholder={t("home.ideaPlaceholder")} />
           <p className="home-form-help">{t("home.guide.startHint")}</p><Button type="button" className="home-button home-button-primary" onClick={() => void start()} loading={pending} disabled={offline || !idea.trim()}>{t("home.guide.start")}<ArrowRight size={17} /></Button></>}
         {guide && <div className="home-guide-thread" aria-live="polite">
           {guide.turns.map((turn,index)=><div className="home-guide-turn" key={`${guide.session_id}-${index}`}><p><strong>{turn.question}</strong></p><p>{turn.answer}</p></div>)}
           {guide.status === "processing" && <p role="status">{t("home.guide.thinking")}</p>}
-          {guide.status === "failed" && <section role="alert"><p>{t("home.guide.failed")}</p><Button type="button" className="home-button home-button-secondary" onClick={()=>{localStorage.removeItem(keys.session);localStorage.removeItem(keys.startKey);localStorage.removeItem(keys.startIdea);setGuide(null);setError(null);}}>{t("home.guide.restart")}</Button></section>}
+          {guide.status === "failed" && <section role="alert"><p>{t("home.guide.failed")}</p><Button type="button" className="home-button home-button-secondary" onClick={restartGuide}>{t("home.guide.restart")}</Button></section>}
           {guide.current_question && <section className="home-guide-question"><h3>{guide.current_question.text}</h3><div className="home-guide-suggestions">{guide.current_question.suggestions.map(option=><Button key={option} type="button" className="home-button home-button-secondary" disabled={pending} onClick={()=>void submitAnswer(option)}>{option}</Button>)}</div>
             <label htmlFor="home-guide-answer">{t("home.guide.yourAnswer")}</label><textarea id="home-guide-answer" rows={3} value={answer} onChange={event=>setAnswer(event.target.value)} disabled={pending} placeholder={t("home.guide.answerPlaceholder")} onKeyDown={event=>{if(isImeComposing(event))return;if((event.ctrlKey||event.metaKey)&&event.key==="Enter"){event.preventDefault();void submitAnswer();}}}/>
             <Button type="button" className="home-button home-button-primary" onClick={()=>void submitAnswer()} loading={pending} disabled={offline||!answer.trim()}>{t("home.guide.answer")}</Button></section>}

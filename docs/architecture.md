@@ -4,6 +4,18 @@
 
 本文件只记录实现证据，不维护第二份目标架构。唯一目标设计：[R1索引](system-design/00-INDEX.md)，契约：[00基线](system-design/00-CONTRACT-BASELINE.md)。
 
+## INK-228 · 冻结策略真实消费和租户安全模型路由（实施中）
+
+PR #18 已合入 dev：Run Scheduler、小说引导和 LLM Catalog 查询链携带冻结 PolicyVersionID，不再由 Agent 适配器直接访问 LLM 私表。PR #19 是独立 Draft：通过已授权 Model ID 在 LLM Infrastructure 查询同租户 llm_channel_models/llm_channels/llm_models/llm_providers/llm_keys，所有关联限定 tenant，排除停用或删除资源；路由使用实际渠道协议和 upstream_model；数据库渠道不再向全局密钥/其他租户回退。非事务模型调用读 GORM DB；CreateRun 在现有 Run/Job/事件 UoW 内用 PostgreSQL FOR SHARE 获取 current_version_id 与发布操作序列化。
+
+跨租户通道/失效 Key、真实费用、策略并发发布、真实 Provider/WS/SSE 和登录浏览器尚未在隔离环境穿透；CI 构建通过不等于模型调用成功。灵感/质检现已按当前租户启用的 inspiration/review 策略提供 Model ID/版本/预算上限；缺策略直接失败，真实生成仍需验收。无租户调用仅保留显式全局 pool/env 路径；Creator 安全策略目录、task_policy_version_id 创建与兼容 sunset 仍待实施。根因与测试门禁见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-02-tenant-model-routing.md)。
+
+PR #19 的 cmd/ink228verify 增加 Go 环回 HTTP 伪 Provider：在临时数据库对两租户分别使用独立 Key 与上游模型标识发出真实 HTTP 请求，断言失败配置和跨租户 Model ID 不会产生额外外发。真实模型供应商与对外计费仍未验收，必须以新 head 的独立 CI 为准。
+
+## INK-228 · 独立云端领域结构门禁（辅助 CI）
+
+GitHub PR #38 新增不接触真实凭据的 PostgreSQL 17 + Redis 7 临时 Runner，执行当前 17 个 R1 迁移及重复运行、Agent/LLM 表和租户外键结构断言；不改任何业务运行路径。初始 head 的云端检查已通过，最终 head CI 仍需验证。详细选择和假设见 [工程笔记](../.agents/notes/implemented/testing/2026-11-03-ink228-isolated-schema-gate.md)。这不是 Agent/LLM 跨租户执行、事务竞争、真实模型或前端链路验收，INK-228 保持现有未完成状态。
+
 ## INK-245 · 接入模型渠道弹窗移除供应商下拉框（review）
 
 Admin `ChannelModal` 的协议与别名仍保留，供应商选择下拉框移除；创建时由所选协议匹配已有供应商，未匹配则由现有保存流程注册，编辑时沿用渠道绑定的供应商。后端接口、Provider/Channel 数据结构及已有资源不变。TypeScript LSP 零问题，Admin 与 Go 构建、i18ncheck（905/905）、notes check 通过。用户要求自行手测，弹窗实际呈现和登录后保存行为未由本轮浏览器验收。
@@ -316,6 +328,18 @@ Admin `AgentGovernanceRoute.tsx` 经 `adminApi.ts` 分页读取 definitions/work
 
 本轮 `go build ./...`、`go vet ./...`、`go run ./cmd/archguard -reachability`、`pnpm run build:creator`、`pnpm run build:admin`、i18n、notes、Skills 与 `git diff --check` 均退出 0。未在用户/生产数据库执行 seed；没有隔离 PG/认证 API 会话，因此 seed 重复执行与不覆盖人工版本、run 快照、worker 执行、SSE 断开重连调用次数、取消竞争、跨租户隔离、artifact Owner CAS 均未做运行验收。Chrome 仅能打开本地首页；前序已记录 session-CSRF 403，不能宣称 Creator/Admin 登录后闭环已浏览器验证。详见 [INK-226 工程笔记](../.agents/notes/implemented/feature/2026-09-24-agent-configuration-driven-integration.md)。
 
+## INK-250：模型配置 Token 字段组件边界
+
+Admin App 的 models 视图仍挂载 ModelConfigRoute；该路由保留认证上下文、数据加载、创建/编辑默认值、表单状态与校验、createLlmModel/updateLlmModel 调用及编辑 expected_revision。仅将上下文与最大输出输入区域、预设按钮和原格式化展示函数移至 components/ModelTokenFields，通过两个字符串值与两个 setter 回调受控连接；无新增API、依赖、Go包或业务接线。路由与组件均低于既有50KB限制；archguard仍报告16项生成契约超限，未变更规则或冻结设计。
+
+## INK-249：机械 Go 格式修复
+
+仅标准 gofmt 调整 llm/domain/catalog.go、credit_estimator.go、platform/captcha/captcha.go、platform/membership/write.go、app/adapters/agent_task_model_gateway.go 及 agent/domain/novel_creation.go、agent/application/novel_creation.go 的空白与对齐；去空白前后完全相同，未改包、依赖、接口、业务逻辑或运行接线。补齐后全仓格式与 Go 构建通过。两个 novel_creation.go 经 dev/开放 PR/远端 blob 核对未见并发修改，格式处理不接管 INK-236 功能、不改变其 doing 状态。其他门禁与独立验收仍待完成。
+
+## INK-248：pnpm 与 dev 持续集成配置
+
+`.github/workflows/ci.yml` 的前端任务先安装固定 pnpm 11.25.0，再由 Node 22 配合 pnpm store 缓存和 `frontend/pnpm-lock.yaml` 执行 `pnpm install --frozen-lockfile`、`pnpm run build`。push 触发包含 main/dev，PR 触发与原有后端、Skills、notes 门禁不变。仅调整离线 CI 配置与验证指南，未修改 Go 包、启动入口、领域依赖、业务接线或锁文件。make ci 复用本地完整构建与静态检查，dot 可直接运行，不依赖 Actions。Go 默认 VCS stamping 保持 auto；核验来源的无 Git 快照必须显式 BUILDVCS=false，历史 notes 仍须真实基线。dot 单项 Go build/vet、Skills/i18n、冻结安装和双端构建已通过；notes 基线不可用及既存 fmt/guard 失败仍阻止完整门禁通过，独立验收未完成。
+
 ## INK-251：用户裁决的源码大小上限
 
 archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，扫描生成源码，不增加忽略项。跨域/基座依赖、禁测试文件、Go解析不变；无运行服务/业务包/契约/生成器变化。新规则Go构建、R1–R5护栏及512000/512001边界通过，不代表旧规则通过。PR9页面拆分保持可独立审查，未回滚。
@@ -324,18 +348,39 @@ archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，�
 
 只涉及默认分支的 GitHub Actions 和仓库治理文档；未修改 Go 包、Creator/Admin、运行装配、数据或模型请求路径。自动合并决策先检查实时 PR、敏感路径和标签，再交由 GitHub CI/分支保护执行，不以静态 CI 证明真实 PR 事件场景全部通过。
 
-## INK-256：dev 向 private 的受保护提交批量同步
+## INK-253 · GitHub 协作、依赖与只读周报（review）
 
-仅增加默认分支 GitHub Actions 与治理文档，不改变业务 Go/React 运行路径、数据库迁移或发布镜像。基于 Compare ahead_by≥20 创建 release 源快照；只有 GitHub 的最新检查和保护条件都满足才允许 Merge Commit 自动合入 private，保留 dev 继续开发。当前分支存在 42/6 双向提交分叉以及未完成业务验收，默认阻止无审查发布。
+本轮仅增加 GitHub Issues 表单、Dependabot 版本更新计划、独立 Wiki 页面草稿与只读周报工作流，并在 README / 治理文档建立项目看板与原生 Insights 导航。无 Go/前端/数据库/Agent 运行路径改动，无外部运行时依赖。项目看板已在 GitHub 创建；正式 Wiki 首次发布、默认分支 Dependabot 读取与定时触发须完成平台侧验证。此处的配置就绪不等同于软件依赖漏洞已修复或业务功能验收通过。
+
+INK-253 的 GitHub 自动化权限、默认分支生效约束与取舍见 [工程笔记](../.agents/notes/implemented/process/2026-11-03-github-collaboration-governance.md)。
+
+## INK-257 · Qodana Actions 工作流解析错误（review）
+
+`.github/workflows/qodana_code_quality.yml` 原有直接用于步骤 `if` 的 `secrets.QODANA_TOKEN` 表达式不在受支持上下文内，导致 GitHub 工作流初始化失败且 job 为空。本变更通过仅向布尔输出传递 Token 是否存在的信息，保持真实 Token 只在环境变量中；Qodana 扫描仍通过原有 Action 接入。按当前分支职责把推送触发从 main/main-r1 更新到 private/dev，降低 contents 权限为只读。无 Go、React 或数据库业务运行路径变化。实际可用 Token 的云端扫描仍需独立确认，不把工作流解析通过等同 Qodana 代码质量验收。
+
+对应错误的机制、替代方案与真实验收限制见 [工程笔记](../.agents/notes/implemented/bug-fix/2026-11-03-qodana-invalid-step-condition.md)。
 
 ## INK-258 · Go 加密与网络依赖安全更新（done）
 
-[PR #43](https://github.com/BaSui01/InkLore/pull/43) 已在 dev 验证 `x/crypto` v0.52.0 与联动 `x/net`、`x/text`、`x/sys`、`x/sync` 的升级，Go 1.27.1 模块校验、build/vet/archguard 通过。GitHub [临时 PG17/Redis7 + API 运行验收](https://github.com/BaSui01/InkLore/actions/runs/41492434905) 实际覆盖 17 组迁移与重放、注册 200、会话 200、匿名 401、重复注册 409 与权限/事务路径。范围受控的 [PR #47](https://github.com/BaSui01/InkLore/pull/47) 已通过受保护 CI 合并到默认 private，当前两条长期分支的 `go.mod` 已确认一致。未触碰业务源码、生产数据或外部 Provider Key；真实模型和完整生产认证压测仍作为独立业务验收，不属于这次依赖版本交付。详情见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-go-crypto-security-upgrade.md)。
+[PR #43](https://github.com/BaSui01/InkLore/pull/43) 已在 dev 完成 x/crypto 0.52.0 与 x/net/text/sys/sync 安全更新。真实临时 [PG17/Redis7 HTTP 回归](https://github.com/BaSui01/InkLore/actions/runs/41492434905) 覆盖迁移重放、注册200、会话200、匿名401、重复注册409和授权/事务；[PR #47](https://github.com/BaSui01/InkLore/pull/47) 已经受保护门禁同步到 private。两条长期分支的 go.mod 版本一致。未验证的真实 Provider/生产压测另行跟踪，不把安全升级视为全系统风险解除。
+
+## INK-261 · Go 网络与前端依赖补丁整合（done）
+
+[PR #71](https://github.com/BaSui01/InkLore/pull/71) 已将 quic-go v0.59.1、x/net v0.55.0、Vite v7.3.7、source-map-js v1.2.2、markdown-it v14.3.3 的五项 Dependabot 补丁按完整校验和整合至 dev；Go1.27.1 mod verify/build/vet/archguard、pnpm11.25.0 frozen-lockfile、Creator/Admin 双端构建、i18n 与 Skills/notes 通过，GitHub [PG17/Redis7/API 回归](https://github.com/BaSui01/InkLore/pull/71) 通过。[PR #79](https://github.com/BaSui01/InkLore/pull/79) 已单独将完全一致的四份 manifest/lockfile 受保护地发布至 private；两个长期分支的相关依赖文件 SHA 已重新核对一致，旧 bot PR #49–#53 均已关闭未重叠合入。没有业务 Go/React 源码变更。真实 QUIC/HTTP3、CSP 与不可信 Markdown 渲染场景未被这一补丁覆盖，后续单独验收，不把此补丁声明为全站安全风险消除。
+
+## INK-264 · 冻结策略引用与模型 ID 的安全保护（review）
+
+为已经持有 PolicyVersionID 的 Agent Run / 问答 / 小说引导阻止策略物理删除，事务内以政策头 FOR UPDATE 同步新建运行的 FOR SHARE，失败返回现有 resource_in_use 错误。对保存的冻结 ModelName 不再次模糊解析，同名不同 Provider 保留原冻结 ModelID。仅修改 Go 应用/基础设施和现有 cmd/ink228verify 验收命令，不改 R1 DDL / API / Secret。新增只使用临时 PG 和环回网络的回归，真实供应商、计费与模型/Provider 删除的完整边界仍需后继验收。详见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-03-frozen-policy-references.md)。
+
+## INK-271 · Creator Agent 会话 403 恢复退出（review）
+
+仅修复 Creator Agent 开书页在恢复旧 session 遇到 403 后无法继续的本地 UI 限制。保留既有 HomeNotice 的拒绝反馈，在无权会话等待恢复时由作者明确点击重新开始，清除其本地恢复指针但不触及服务器数据或绕过鉴权；还阻止自动引导流程因状态重渲染重复发起 POST。详见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-03-creator-guide-denied-recovery.md)。
+
+## INK-256：dev 向 private 的受保护提交批量同步
+
+仅增加默认分支 GitHub Actions 与治理文档，不改变业务 Go/React 运行路径、数据库迁移或发布镜像。基于 Compare ahead_by≥20 创建 release 源快照；只有 GitHub 的最新检查和保护条件都满足才允许 Merge Commit 自动合入 private，保留 dev 继续开发。当前分支存在 42/6 双向提交分叉以及未完成业务验收，默认阻止无审查发布。
 
 ## INK-254 · 自动合并的身份与持久化路径保护（review）
 
 默认分支的 safe-auto-merge 安全路径规则补充 identity 和任意深度 infrastructure 目录覆盖。仅收紧 dev PR 的自动合并分类，保持敏感路径人工 Review、已有 CI/分支保护，不改变运行时代码。动机、取舍和验收案例见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-sensitive-path-auto-merge-failclosed.md)。
 
-## INK-261 · Go 网络与前端依赖补丁整合（done）
-
-[PR #71](https://github.com/BaSui01/InkLore/pull/71) 已将 quic-go v0.59.1、x/net v0.55.0、Vite v7.3.7、source-map-js v1.2.2、markdown-it v14.3.3 的五项 Dependabot 补丁按完整校验和整合至 dev；Go1.27.1 mod verify/build/vet/archguard、pnpm11.25.0 frozen-lockfile、Creator/Admin 双端构建、i18n 与 Skills/notes 通过，GitHub [PG17/Redis7/API 回归](https://github.com/BaSui01/InkLore/pull/71) 通过。[PR #79](https://github.com/BaSui01/InkLore/pull/79) 已单独将完全一致的四份 manifest/lockfile 受保护地发布至 private；两个长期分支的相关依赖文件 SHA 已重新核对一致，旧 bot PR #49–#53 均已关闭未重叠合入。没有业务 Go/React 源码变更。真实 QUIC/HTTP3、CSP 与不可信 Markdown 渲染场景未被这一补丁覆盖，后续单独验收，不把此补丁声明为全站安全风险消除。

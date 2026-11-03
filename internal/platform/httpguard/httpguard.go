@@ -22,6 +22,9 @@ type Policy struct {
 	Timeout          time.Duration
 	MaxRedirects     int
 	MaxResponseBytes int64
+	// DisableProxy prevents user-controlled destinations from being resolved
+	// and fetched by an environment proxy outside the guarded dialer.
+	DisableProxy bool
 }
 
 type Resolver interface {
@@ -116,8 +119,12 @@ func NewClient(policy Policy) *http.Client {
 	if maxResponseBytes <= 0 {
 		maxResponseBytes = defaultMaxResponseBytes
 	}
+	proxy := http.ProxyFromEnvironment
+	if policy.DisableProxy {
+		proxy = nil
+	}
 	transport := &http.Transport{
-		Proxy:                 http.ProxyFromEnvironment,
+		Proxy:                 proxy,
 		DialContext:           guardedDialContext(policy, 5*time.Second, 30*time.Second),
 		TLSHandshakeTimeout:   5 * time.Second,
 		ResponseHeaderTimeout: timeout,
