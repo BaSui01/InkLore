@@ -134,6 +134,8 @@ INK-001–140已使用，永不复用；旧任务涉及的旧路由、兼容方�
 
 | INK-252 | 公开仓库前的凭据治理与安全核验 | 仓库安全 | blocked | 当前文档中的宿主机数据库及缓存密码、机器专属连接信息改为安全模板；后续仍须轮换已记载的 PostgreSQL/Redis 凭据，完成所有可达历史与 PR diff 的秘密扫描和历史暴露处置，最后再验证 Actions / 分支保护并切换 Public。仅清理当前文件不视为公开安全验收；本任务不执行数据库密码轮换或强推重写历史。 | 用户授权公开仓库；阻塞：实际凭据轮换与历史公开风险验收 |
 
+| INK-253 | GitHub Issues / Projects / Dependabot / Insights / Wiki 与 CI 状态追踪 | 仓库协作 | review | [Issue #29](https://github.com/BaSui01/InkLore/issues/29) 与 [PR #54](https://github.com/BaSui01/InkLore/pull/54) 已在 dev 交付 Issue 表单、Projects 原生 Auto-add（开放 PR #66–#68 实际自动入板）、Dependabot/周报草稿与只读 CI Overview。默认分支独立 [PR #70](https://github.com/BaSui01/InkLore/pull/70) 只引入 CI Overview，并严格分离 push 分支检查与 pull_request 合成合并检查；完整 CI、Review 对话与合并后 workflow_dispatch Job Summary 实证仍需核实。默认分支的 Dependabot 定时配置、Wiki 正式发布和所有剩余功能仍未验收，不以 CI 汇总替代业务验收。 | 用户授权 Projects 与 CI 治理；PR #70 受保护人工审核 |
+
 | INK-254 | 安全自动合并的事件竞态、权限和敏感路径治理 | 仓库 CI / 安全 | review | 对 dev 非 Draft PR 采用实时状态与路径复核、旧 head 无操作、标签撤销、重命名原路径、低风险文档白名单和源码显式授权标签；敏感目录一律人工合并，private 不自动合并。补充身份与所有领域 infrastructure 目录的敏感路径防漏判修复；需按最新 CI 及事件验收。GitHub 默认分支需部署此策略，合并后仍要运行实际事件验收。[工程笔记](../.agents/notes/implemented/process/2026-11-03-safe-pr-automerge-gates.md) | 用户授权维护仓库自动合并；PR #22、#26 |
 
 | INK-256 | dev 每超前 private 20 个提交自动发起受保护主分支同步 | 仓库发布治理 | review | workflow_run 监听 dev CI，schedule 补偿；Compare ahead_by≥20 时仅创建 release 快照 PR，使用 Merge Commit 保留祖先。无分叉、非敏感、最新 3 项 CI 通过且 GitHub 分支保护满足才尝试原生 auto-merge；否则 manual-review，绝不删除 dev。首次基线 ahead=42/behind=6，必须人工审查。[Issue #39](https://github.com/BaSui01/InkLore/issues/39) / [工程笔记](../.agents/notes/implemented/process/2026-11-03-dev-private-20-commit-promotion.md) | 用户明确授权；INK-254 |
