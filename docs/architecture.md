@@ -367,3 +367,7 @@ INK-253 的 GitHub 自动化权限、默认分支生效约束与取舍见 [工�
 ## INK-261 · Go 网络与前端依赖补丁整合（review）
 
 本轮仅整合来自 Dependabot #49–#53 的五项版本更新：quic-go v0.59.1、golang.org/x/net v0.55.0、Vite v7.3.7、source-map-js v1.2.2 与 markdown-it v14.3.3。变更范围限 go.mod/go.sum、frontend/package.json/pnpm-lock.yaml 和工程记录，无应用 Go/React/SQL/冻结设计逻辑改动。依赖解析、浏览器渲染和 HTTP/3 行为仍可能受库变更影响，不能把模块构建视为实际业务回归。所有版本和 integrity 均从独立 bot PR 出处汇总、按同一基础锁文件差异无重叠合成。具体风险、验证与双分支发布边界见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-dependabot-batch-review.md)。
+
+## INK-264 · 冻结策略引用与模型 ID 的安全保护（review）
+
+为已经持有 PolicyVersionID 的 Agent Run / 问答 / 小说引导阻止策略物理删除，事务内以政策头 FOR UPDATE 同步新建运行的 FOR SHARE，失败返回现有 resource_in_use 错误。对保存的冻结 ModelName 不再次模糊解析，同名不同 Provider 保留原冻结 ModelID。仅修改 Go 应用/基础设施和现有 cmd/ink228verify 验收命令，不改 R1 DDL / API / Secret。新增只使用临时 PG 和环回网络的回归，真实供应商、计费与模型/Provider 删除的完整边界仍需后继验收。详见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-03-frozen-policy-references.md)。

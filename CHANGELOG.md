@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### Agent 冻结策略引用保护（INK-264，review）
+
+- 对排队 Agent Run、Agent 问答及小说引导持有的冻结 PolicyVersionID 增加物理删除拦截，保留既有策略版本可读；事务锁与 CreateRun 的 FOR SHARE 串行化。
+- 小说引导请求已经持有冻结模型时，不因同名 Provider 再次解析并错误替换 Model ID；使用临时 PG/Redis 与环回 Provider 验收，未执行付费模型调用。
+
+
 ### 五项依赖补丁批量整合（INK-261，待独立验收）
 
 - 汇总 Dependabot #49–#53 的 quic-go、x/net、Vite、source-map-js、markdown-it 补丁版本和锁文件校验和，先进入 dev 做兼容与实际 API/双端构建验收。
