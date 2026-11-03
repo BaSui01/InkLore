@@ -38,8 +38,8 @@ bcrypt12在幂等外层UoW内仍可能延长持锁时间；未暴露可信hash�
 
 ## Verification
 
-[INK-161证据](../../../../docs/acceptance-INK-161.md)：全仓构建、真实PG16/Redis7/loopback HTTP的17组场景、bootstrap CLI和INK-160回归。覆盖token轮换/重放提交、双aud、CSRF恢复、成员权限与跨租户重置、并发最后operator、跨租户排序锁、refresh/disable竞争、审计隐私与游标绑定、Redis故障兜底。
+[INK-161证据](../testing/2026-09-18-acceptance-ink-161.md)：全仓构建、真实PG16/Redis7/loopback HTTP的17组场景、bootstrap CLI和INK-160回归。覆盖token轮换/重放提交、双aud、CSRF恢复、成员权限与跨租户重置、并发最后operator、跨租户排序锁、refresh/disable竞争、审计隐私与游标绑定、Redis故障兜底。
 
 本轮补充：沿冻结基线既定jsonschema/v6引入v6.0.3，验收命令预编译完整响应并拒绝网络引用；19组验收覆盖13已挂操作成功响应，另4组真实代理/Cookie容器HTTP通过。封闭对象反例验证校验器确能拒错，不把冻结成功顶层开放属性误报为关闭。初次代理脚本失败因PowerShell保留跨端Origin，清理每次自定义头后通过，没有放宽后端授权。浏览器fixture只在独立验收二进制，随机密码留服务端、令牌只浏览器内存、诊断只输出布尔；实际Chrome连接器不可用，未运行真实浏览器。
 
-没有新增禁用测试文件；未声称真实浏览器或生产TLS通过。完整任务状态只认backlog，待裁决接口见[INK-178](../../../../docs/r1-contract-differences-INK-178.md)。
+没有新增禁用测试文件；未声称真实浏览器或生产TLS通过。完整任务状态只认backlog，待裁决接口见[INK-178](2026-09-18-r1-contract-differences-ink-178.md)。

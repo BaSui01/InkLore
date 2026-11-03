@@ -185,7 +185,7 @@
 **INK-215：Creator普通路径路由**
 
 - 首页、登录和创作工作台改用History路径，旧Hash入口自动转换；登录来源和编辑器作品ID由URL恢复，支持前进后退。
-- Vite深链访问与刷新、Nginx静态托管/API分流、Go与双端构建验证通过，见[验收](docs/acceptance-INK-215.md)。真实认证成功回跳仍待补验。
+- Vite深链访问与刷新、Nginx静态托管/API分流、Go与双端构建验证通过，见[验收](.agents/notes/implemented/testing/2026-09-29-acceptance-ink-215.md)。真实认证成功回跳仍待补验。
 
 **INK-214：独立登录页面与来源回跳**
 
@@ -202,7 +202,7 @@
 - 首页按用户参考重做宋体双栏首屏、纸页钢笔插画、暖金色操作、真实书架、功能区与指南；支持双语、明暗主题和手机导航。
 - 真实作品游标分页、已加载数据搜索、创意开书与指定作品编辑入口闭环；加载、空态、错误、过期快照与离线明确区分，无模型/正文/统计占位。
 - 会话初始化共享在途 Promise，消除开发模式重复刷新造成的登录退出；不改变原账号密码或服务端安全规则。
-- Go 与双端构建、真实 Chrome 创建/留存/分页/失败恢复通过，[截图与验收](docs/acceptance-INK-206.md)已保存；i18n检查器既有误报登记INK-212，真实组合词条一致。
+- Go 与双端构建、真实 Chrome 创建/留存/分页/失败恢复通过，[截图与验收](.agents/notes/implemented/testing/2026-09-20-acceptance-ink-206.md)已保存；i18n检查器既有误报登记INK-212，真实组合词条一致。
 
 
 **INK-205：管理端视觉收敛与真实模型协议接线（待复核）**
@@ -262,7 +262,7 @@
 - 三个领域四层、81个操作与主组合根接线；冻结DDL原样迁移。真实PG/HTTP逐操作Schema、并发CAS、撤权重放及故障整体回滚通过。
 - 内容：正文/版本/目录/proof同事务；大纲：三级节点、场景、伏笔、RR只读节奏；世界观：图谱、整批事实冲突、不可变ledger与维护重建。
 - 补齐RR根事务模式、trash授权与typed冲突详情，修复实测时间精度、UTC、错误映射及审计action集成问题；160/161共50组回归通过。
-- 验收记录：[163](docs/acceptance-INK-163.md)、[164](docs/acceptance-INK-164.md)、[165](docs/acceptance-INK-165.md)。前端、确认用例与大容量运行演练仍留后续任务。
+- 验收记录：[163](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-163.md)、[164](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-164.md)、[165](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-165.md)。前端、确认用例与大容量运行演练仍留后续任务。
 
 **INK-167：LLM R1目录与管理transport进行中**
 
@@ -282,14 +282,14 @@
 
 - 按用户明确批准落ADR-0018，保存原冻结清单；补齐四项契约差异，错误95→97，DDL不变。
 - 15个后端操作接线；本人改密全会话吊销、审计失败回滚、新会话幂等重放；审计NDJSON先校验31天/10000条后完整返回；405 JSON与精确Allow。
-- 24组真实PG/Redis/HTTP与15操作Schema覆盖、26组INK-160回归通过；既有4组双端代理验收保留。真实Chrome与产品前端未验收，留在后续前端/端到端门禁。[证据](docs/acceptance-INK-161.md)。
+- 24组真实PG/Redis/HTTP与15操作Schema覆盖、26组INK-160回归通过；既有4组双端代理验收保留。真实Chrome与产品前端未验收，留在后续前端/端到端门禁。[证据](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-161.md)。
 
 
 **INK-160：R1平台事务、授权投影与幂等基座**
 
 - 建立独立R1迁移流与组合根，旧路由不挂载；迁移名称/checksum门禁、事务级迁移互斥、独立配置装载和PG必需启动。
-- 实施UoW/Recoverable、scope历史证明与CAS、事务幂等及安全HTTP基座；26组真实PG/HTTP正反例、全仓构建、架构/冻结/技能/notes护栏通过。[验收证据](docs/acceptance-INK-160.md)。
-- 冻结设计保持不变；后续操作的契约差异记录于[INK-178](docs/r1-contract-differences-INK-178.md)。
+- 实施UoW/Recoverable、scope历史证明与CAS、事务幂等及安全HTTP基座；26组真实PG/HTTP正反例、全仓构建、架构/冻结/技能/notes护栏通过。[验收证据](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-160.md)。
+- 冻结设计保持不变；后续操作的契约差异记录于[INK-178](.agents/notes/implemented/architecture/2026-09-18-r1-contract-differences-ink-178.md)。
 
 **INK-144：DSH并行开发子代理配置**
 
@@ -312,14 +312,14 @@
 - 增加 `.agents/notes/` 四生命周期与六分类，明确 notes / ADR / backlog 分工，提供提案、已实施与否决模板。
 - 三个项目skills及AGENTS接入改前检索、非平凡变更留因果、同批更新与归档流程。
 - 新增无依赖笔记校验/归档工具，验证结构、任务关联、本地链接与归档哈希；CI对照变更前Git基线保护已有封印。
-- 首篇流程笔记保留真实备选与验证，业务运行路径不变；证据见 [INK-143](docs/notes-delivery-INK-143.md)。
+- 首篇流程笔记保留真实备选与验证，业务运行路径不变；证据见 [INK-143](.agents/notes/implemented/process/2026-09-18-notes-delivery-ink-143.md)。
 
 **INK-142：项目定制开发维护 Skills**
 
 - 新增仓库级 `inklore-development`、`inklore-decisions`、`inklore-maintenance`，融合核心 docs 的按需阅读、七域边界、ADR 历史保护、真实验收与维护流程。
 - 新增文档路由、验证矩阵、验收/复盘模板与来源适配说明；沿用 decisions 和唯一 backlog。
 - 新增无第三方依赖的技能文档校验器及独立 CI 检查，更新 AGENTS 与文档治理入口。
-- 本任务不修改业务运行路径，验证范围与结果见 [INK-142 交付记录](docs/skill-delivery-INK-142.md)。
+- 本任务不修改业务运行路径，验证范围与结果见 [INK-142 交付记录](.agents/notes/implemented/process/2026-09-29-skill-delivery-ink-142.md)。
 
 **M12 · ADR-0014 七域架构治理与大纲域抽取（INK-114，已交付）**
 

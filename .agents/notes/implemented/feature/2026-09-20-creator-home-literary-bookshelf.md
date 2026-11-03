@@ -33,4 +33,4 @@ Scope: frontend/apps/creator/src/routes/HomeRoute.tsx、components/home、domain
 
 ## Verification
 
-[验收记录](../../../../docs/acceptance-INK-206.md)含 Chrome 截图、POST 201、刷新留存、13 条真实分页、指定作品进入、500 首次/刷新失败和离线恢复。go build 与双端生产构建通过，真实组合双语词典 key 一致。原 i18n 检查器的导出名误报登记 INK-212，任务状态保持 review；notes、skills 与定向 diff 校验通过。无新依赖、Go 接线或测试文件。
+[验收记录](../testing/2026-09-20-acceptance-ink-206.md)含 Chrome 截图、POST 201、刷新留存、13 条真实分页、指定作品进入、500 首次/刷新失败和离线恢复。go build 与双端生产构建通过，真实组合双语词典 key 一致。原 i18n 检查器的导出名误报登记 INK-212，任务状态保持 review；notes、skills 与定向 diff 校验通过。无新依赖、Go 接线或测试文件。
