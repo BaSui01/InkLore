@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Recheck PR state, paths and manual-review policy
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const eventPR = context.payload.pull_request;
