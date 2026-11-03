@@ -148,3 +148,5 @@ INK-001–140已使用，永不复用；旧任务涉及的旧路由、兼容方�
 | INK-257 | 修复 Qodana Workflow 无效条件和旧分支触发 | CI/安全质量 | review | 已找到 `.github/workflows/qodana_code_quality.yml` 在 step if 中直接访问 secrets 的配置错误（actionlint 两处报错）；独立 PR 改为无密钥泄漏的 token 可用性步骤输出，更新触发到 dev/private 并收紧 contents 只读。需在最终 PR head 静态校验和真实 Actions 再运行核实；没有 Token 不声明云端扫描通过。[Issue #33](https://github.com/BaSui01/InkLore/issues/33) | 用户授权改善 GitHub 安全质量；区别于 INK-186 静态检查修复 |
 
 | INK-258 | 在 dev 验证 Go x/crypto 与关联依赖的安全更新 | 依赖与安全治理 | review | 独立 PR 复用 Dependabot #28 提供的 x/crypto 0.52.0 及关联 x/net/text/sys/sync 更新，只改 go.mod/go.sum 与治理文档。须确认最新 CI、Go mod 校验、鉴权/密码/租户授权和隔离数据库真实请求；完成前不合并到 private，不将编译通过视为运行验收。参见 [Issue #42](https://github.com/BaSui01/InkLore/issues/42)、[工程笔记](../.agents/notes/proposed/process/2026-11-03-go-crypto-security-upgrade.md) | 用户授权审阅安全依赖；原 Dependabot PR #28 待替代发布 |
+
+| INK-259 | Creator/Admin 双端 UI/UX 优化实施规划 | 前端体验 / 设计文档 | review | 在 dev 实际源码与 R1 15/16/17/20 合同基础上交付 [双端 UI/UX 规划](ui-ux/README.md)：现有路由盘点、双端关键工作台线框、权限/API/状态边界、共享组件与响应式验收、未来视觉稿交接。仅文档、无高保真图片和运行时变更；需后续选稿、浏览器/真实 API 验收并分别登记实现任务，本项不声称 UI 已上线。 | 用户授权；INK-173,174,175；INK-236/247 现状约束 |
