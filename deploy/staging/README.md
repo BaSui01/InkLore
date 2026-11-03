@@ -60,6 +60,12 @@ REDIS_ADDR=redis.railway.internal:6379
 REDIS_HOST=redis.railway.internal
 REDIS_PORT=6379
 COOKIE_SECURE=true
+# Both frontend proxies forward the original client address in
+# X-Forwarded-For. Trusting the private network lets c.ClientIP()
+# recover it, keeping the per-IP login limiter keyed on real clients.
+# 10.0.0.0/8 covers the Railway private network; narrow it to the
+# actual assigned range if your workspace provides one.
+API_TRUSTED_PROXY_CIDRS=10.0.0.0/8
 ```
 
 Configure these additional **independent, random, at least 32-byte**
@@ -93,7 +99,10 @@ The Nginx proxy preserves `/v1/*` on the *same web origin*, including
 SSE and WebSocket upgrades. The API therefore does not require its own
 public Railway domain. Creator and Admin are separate static bundles
 and must have separate public hostnames. The web containers refuse to
-start if `API_UPSTREAM` is missing.
+start if `API_UPSTREAM` is missing. `API_UPSTREAM` is re-resolved at
+runtime through the container DNS resolver (extracted from
+`/etc/resolv.conf` at start), so API redeploys that change the private
+address are picked up without restarting the frontend containers.
 
 ## Safe deployment order and acceptance
 
