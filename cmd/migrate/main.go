@@ -21,8 +21,13 @@ import (
 
 	"InkLore/internal/platform/config"
 	"InkLore/internal/platform/database"
+	"InkLore/migrations/post_r1"
 	"InkLore/migrations/r1"
 )
+
+// postR1Table 是 post-R1 扩展流的独立历史表；冻结 R1 流的
+// schema_migrations 保持恰好 17 条既定记录。
+const postR1Table = "schema_migrations_post_r1"
 
 func main() {
 	configPath := flag.String("config", config.DefaultPath, "配置文件路径")
@@ -71,7 +76,20 @@ func main() {
 		for _, label := range result.Applied {
 			fmt.Printf("  已应用 %s\n", label)
 		}
-		fmt.Printf("up 完成：新应用 %d 条，跳过 %d 条\n", len(result.Applied), len(result.Skipped))
+		fmt.Printf("up 完成（R1 流）：新应用 %d 条，跳过 %d 条\n", len(result.Applied), len(result.Skipped))
+
+		postResult, postErr := database.UpIn(ctx, db, post_r1.FS(), post_r1.Dir, postR1Table)
+		if postErr != nil {
+			fail(1, "post-R1 migration refused; verify database identity, migration checksums and PostgreSQL prerequisites")
+			return
+		}
+		for _, label := range postResult.Skipped {
+			fmt.Printf("  跳过   %s（此前已应用）\n", label)
+		}
+		for _, label := range postResult.Applied {
+			fmt.Printf("  已应用 %s\n", label)
+		}
+		fmt.Printf("up 完成（post-R1 流）：新应用 %d 条，跳过 %d 条\n", len(postResult.Applied), len(postResult.Skipped))
 
 	case "down":
 		reverted, downErr := database.Down(ctx, db, r1.FS(), r1.Dir, *steps)
@@ -88,7 +106,20 @@ func main() {
 		if statusErr != nil {
 			fail(1, "读取迁移状态失败: %v", statusErr)
 		}
+		fmt.Println("[r1]")
 		for _, row := range rows {
+			state := "未应用"
+			if row.Applied {
+				state = "已应用 " + row.AppliedAt.UTC().Format(time.RFC3339)
+			}
+			fmt.Printf("  %s_%s  %s\n", row.Version, row.Name, state)
+		}
+		postRows, postStatusErr := database.StatusIn(ctx, db, post_r1.FS(), post_r1.Dir, postR1Table)
+		if postStatusErr != nil {
+			fail(1, "读取 post-R1 迁移状态失败: %v", postStatusErr)
+		}
+		fmt.Println("[post_r1]")
+		for _, row := range postRows {
 			state := "未应用"
 			if row.Applied {
 				state = "已应用 " + row.AppliedAt.UTC().Format(time.RFC3339)

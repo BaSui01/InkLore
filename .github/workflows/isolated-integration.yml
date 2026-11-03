@@ -81,6 +81,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -Atc "SELECT to_regclass('platform_tenants') IS NOT NULL" | grep -qx t
           psql -v ON_ERROR_STOP=1 -Atc "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='vector')" | grep -qx t
           psql -v ON_ERROR_STOP=1 -Atc "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='pg_trgm')" | grep -qx t
+          test "$(psql -X -Atc 'SELECT count(*) FROM schema_migrations_post_r1')" -ge 2
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT to_regclass('llm_policy_version_references') IS NOT NULL" | grep -qx t
       - name: Reapply and verify migration idempotence
         run: |
           go run ./cmd/migrate -cmd up -timeout 180s
