@@ -112,6 +112,10 @@ func run() error {
 		return fmt.Errorf("concurrency: %w", err)
 	}
 	fmt.Println("PASS: real RunService atomic Run/Job, FOR SHARE publish race and stable frozen policies")
+	if err := checkFrozenRetention(ctx, db, manager, store, a); err != nil {
+		return fmt.Errorf("frozen retention: %w", err)
+	}
+	fmt.Println("PASS: queued Agent policy deletion denied and frozen model IDs preserved")
 	fmt.Println("INK228_REAL_PG_PASS")
 	return nil
 }
