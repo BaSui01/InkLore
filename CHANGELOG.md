@@ -6,6 +6,24 @@
 
 ## [Unreleased]
 
+### 前端 ReDoS 线性 URL/邮箱校验修复（INK-263，private 发布候选）
+
+- 将 dev #76 已验收的尾部斜杠线性处理与基础邮箱校验移植至默认 private；不修改服务端鉴权、数据库或敏感配置。
+- 此修复针对已识别的正则复杂度问题，仍需在默认分支验证 CodeQL 和真实浏览器回归，不等于全部安全告警已修复。
+
+
+### 保护分支定期 Supabase 监控与跨端 E2E 验收（INK-270，review）
+
+- Supabase 的只读 IPv4 Session Pooler 预检保持 GitHub 受保护 Environment Secret，仅在默认分支每天 03:17 UTC 定时运行（也可手动运行），禁止写入真实业务数据。
+- 独立 GitHub Actions 在 PR、dev/private push 以及每周两次的默认分支计划任务中，使用临时 PG17/Redis7、Go 后端/部署 CLI、Creator/Admin React 生产构建与 Chromium，验收 Creator 注册/小说 CRUD 与租户隔离、Admin 治理访问、Agent 定义及无权限 Run 的真实拒绝。
+- 浏览器依赖固定 Playwright 版本并安装在 Runner 临时目录，不引入生产依赖；真实模型调用、Agent Worker 产出、SSE 和断线恢复保留独立验收。
+
+### Supabase IPv4 Session Pooler 远程预检修复（INK-262）
+
+- 修复受保护 GitHub Actions 在 Supabase 免费项目 IPv6 Direct 端点连接失败的问题；不重置已保存的环境 Secret，不购买 IPv4 Add-on。
+- 改为使用真实身份和数据库结构查询验证官方 IPv4 Session Pooler 地址；连接凭据只在 GitHub-hosted Runner 内存中使用，不输出密码、完整 DSN 或身份验证错误详情。
+- 首次 IPv6 失败证据：Actions #41570140594；改进后必须以新的人工验收 Success 为交付依据。
+
 ### Creator 开书引导 403 本地恢复退出（INK-271，review）
 
 - 为无法访问的历史小说引导会话提供显式“重新开始”，仅在用户点击后清除本地恢复指针并显示新建表单；后端身份与数据权限不变。
@@ -22,6 +40,18 @@
 
 - [PR #71](https://github.com/BaSui01/InkLore/pull/71) 在 dev 合并 quic-go 0.59.1、x/net 0.55.0、vite 7.3.7、source-map-js 1.2.2、markdown-it 14.3.3；Go mod verify/build/vet/archguard、pnpm frozen、Creator/Admin 构建及 PG17/Redis7 API 回归通过。
 - [PR #79](https://github.com/BaSui01/InkLore/pull/79) 经独立受保护 CI 合入 private，双方 manifest/lockfile 版本和 SHA 一致；原 Dependabot #49–#53 均以 superseded 方式关闭，不重复合并。当前补丁不声称真实 QUIC/HTTP3、CSP/Markdown 或所有安全告警已通过端到端验收。
+
+
+### 自动合并敏感路径收紧（INK-254，review）
+
+- 默认分支安全 PR Gate 增加 internal/platform/identity 和所有领域的 infrastructure 路径，防止拥有 auto-merge-approved 标签的认证/持久化 PR 绕过人工审查；低风险路径、原有 CI 与 Review 门禁保持不变。
+- 源码与工作流静态测试仍需最终 PR CI 及合并后的事件复核。
+
+
+### 稳定分支独立接入数据库/Redis 集成测试（INK-260，review）
+
+- 从已验证的 dev 最小同步两个 GitHub Actions 工作流和所需的测试环境权限 SQL，不混入 70 文件发布候选 PR #41。
+- 隔离作业的临时 PG17/Redis7 验证真实 R1 迁移、回滚、权限、Go API/Creator 身份；Supabase 只读预检只在受保护分支手动触发且需要独立最小权限凭据，现有 Secret 未配置。
 
 ### 双端 UI/UX 设计实施包（INK-259，review）
 
@@ -41,6 +71,10 @@
 
 - [PR #43](https://github.com/BaSui01/InkLore/pull/43) 已在 dev 合并 x/crypto 0.48.0→0.52.0 及关联 x/net/text/sys/sync 更新；Go 模块校验和常规构建通过。
 - [GitHub 临时 PG17/Redis7 运行验收](https://github.com/BaSui01/InkLore/actions/runs/41492434905) 覆盖注册、会话、匿名拒绝、重复注册、权限及事务；[PR #47](https://github.com/BaSui01/InkLore/pull/47) 已将同版本依赖受保护地发布到默认 private。剩余外部模型/生产压测风险保留为业务运行验收，不声称本依赖补丁消除所有安全告警。
+
+### INK-256：dev 超前 20 个提交后发布 PR（review）
+
+- 采用默认分支可信工作流按 GitHub Commit Compare 阈值自动创建 release 快照 PR；安全满足时启用 Merge Commit auto-merge，分叉、敏感或 CI 未通过时保留人工复核。保护 dev 不被删除或强推，发布不等于部署或业务验收。
 
 ### 在线隔离 CI / Supabase 预检（INK-255，待验收）
 

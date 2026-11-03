@@ -348,6 +348,10 @@ archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，�
 
 只涉及默认分支的 GitHub Actions 和仓库治理文档；未修改 Go 包、Creator/Admin、运行装配、数据或模型请求路径。自动合并决策先检查实时 PR、敏感路径和标签，再交由 GitHub CI/分支保护执行，不以静态 CI 证明真实 PR 事件场景全部通过。
 
+## INK-256：dev 向 private 的受保护提交批量同步
+
+仅增加默认分支 GitHub Actions 与治理文档，不改变业务 Go/React 运行路径、数据库迁移或发布镜像。基于 Compare ahead_by≥20 创建 release 源快照；只有 GitHub 的最新检查和保护条件都满足才允许 Merge Commit 自动合入 private，保留 dev 继续开发。当前分支存在 42/6 双向提交分叉以及未完成业务验收，默认阻止无审查发布。
+
 ## INK-253 · GitHub 协作、依赖与只读周报（review）
 
 本轮仅增加 GitHub Issues 表单、Dependabot 版本更新计划、独立 Wiki 页面草稿与只读周报工作流，并在 README / 治理文档建立项目看板与原生 Insights 导航。无 Go/前端/数据库/Agent 运行路径改动，无外部运行时依赖。项目看板已在 GitHub 创建；正式 Wiki 首次发布、默认分支 Dependabot 读取与定时触发须完成平台侧验证。此处的配置就绪不等同于软件依赖漏洞已修复或业务功能验收通过。
@@ -362,11 +366,19 @@ INK-253 的 GitHub 自动化权限、默认分支生效约束与取舍见 [工�
 
 ## INK-258 · Go 加密与网络依赖安全更新（done）
 
-[PR #43](https://github.com/BaSui01/InkLore/pull/43) 已在 dev 完成 x/crypto 0.52.0 与 x/net/text/sys/sync 安全更新。真实临时 [PG17/Redis7 HTTP 回归](https://github.com/BaSui01/InkLore/actions/runs/41492434905) 覆盖迁移重放、注册200、会话200、匿名401、重复注册409和授权/事务；[PR #47](https://github.com/BaSui01/InkLore/pull/47) 已经受保护门禁同步到 private。两条长期分支的 go.mod 版本一致。未验证的真实 Provider/生产压测另行跟踪，不把安全升级视为全系统风险解除。
+[PR #43](https://github.com/BaSui01/InkLore/pull/43) 已在 dev 验证 `x/crypto` v0.52.0 与联动 `x/net`、`x/text`、`x/sys`、`x/sync` 的升级，Go 1.27.1 模块校验、build/vet/archguard 通过。GitHub [临时 PG17/Redis7 + API 运行验收](https://github.com/BaSui01/InkLore/actions/runs/41492434905) 实际覆盖 17 组迁移与重放、注册 200、会话 200、匿名 401、重复注册 409 与权限/事务路径。范围受控的 [PR #47](https://github.com/BaSui01/InkLore/pull/47) 已通过受保护 CI 合并到默认 private，当前两条长期分支的 `go.mod` 已确认一致。未触碰业务源码、生产数据或外部 Provider Key；真实模型和完整生产认证压测仍作为独立业务验收，不属于这次依赖版本交付。详情见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-go-crypto-security-upgrade.md)。
+
+## INK-254 · 自动合并的身份与持久化路径保护（review）
+
+默认分支的 safe-auto-merge 安全路径规则补充 identity 和任意深度 infrastructure 目录覆盖。仅收紧 dev PR 的自动合并分类，保持敏感路径人工 Review、已有 CI/分支保护，不改变运行时代码。动机、取舍和验收案例见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-sensitive-path-auto-merge-failclosed.md)。
 
 ## INK-261 · Go 网络与前端依赖补丁整合（done）
 
 [PR #71](https://github.com/BaSui01/InkLore/pull/71) 已将 quic-go v0.59.1、x/net v0.55.0、Vite v7.3.7、source-map-js v1.2.2、markdown-it v14.3.3 的五项 Dependabot 补丁按完整校验和整合至 dev；Go1.27.1 mod verify/build/vet/archguard、pnpm11.25.0 frozen-lockfile、Creator/Admin 双端构建、i18n 与 Skills/notes 通过，GitHub [PG17/Redis7/API 回归](https://github.com/BaSui01/InkLore/pull/71) 通过。[PR #79](https://github.com/BaSui01/InkLore/pull/79) 已单独将完全一致的四份 manifest/lockfile 受保护地发布至 private；两个长期分支的相关依赖文件 SHA 已重新核对一致，旧 bot PR #49–#53 均已关闭未重叠合入。没有业务 Go/React 源码变更。真实 QUIC/HTTP3、CSP 与不可信 Markdown 渲染场景未被这一补丁覆盖，后续单独验收，不把此补丁声明为全站安全风险消除。
+
+## INK-263 · 前端线性 BaseURL 与邮箱基础校验（review）
+
+以 [dev PR #76](https://github.com/BaSui01/InkLore/pull/76) 验证过的六个前端源码文件为依据，最小范围移植线性尾部斜杠删除与邮箱基础检查至 private，避免旧正则潜在超长回溯。所有输入最终授权由服务端决定，不更改 Cookie、会话、HTTP 或 WebSocket 路由协议。前端构建与 CodeQL 不替代真实浏览器异常场景验收；方案取舍和测试见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-03-frontend-redos-normalization.md)。
 
 ## INK-264 · 冻结策略引用与模型 ID 的安全保护（review）
 

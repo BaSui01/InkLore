@@ -1,0 +1,173 @@
+name: Promote dev to private after 20 commits
+
+# INK-256: Runs on the trusted default branch. Never checkout or execute PR code.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [dev]
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: dev-to-private-promotion
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  release-gate:
+    name: Check 20-commit promotion threshold
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate dev head and create protected release snapshot PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const repoName = owner + '/' + repo;
+            const threshold = 20;
+            const requiredChecks = [
+              '项目 Skills 与工程记忆校验',
+              '后端（构建 / vet / 格式 / 架构红线）',
+              '前端（类型检查 / 构建）'
+            ];
+            if (context.eventName === 'workflow_run') {
+              const run = context.payload.workflow_run;
+              if (run?.event !== 'push' || run?.head_branch !== 'dev' || run?.conclusion !== 'success') {
+                core.info('Ignore non-successful or non-dev-push CI workflow.');
+                return;
+              }
+            }
+            const metadata = (await github.rest.repos.get({ owner, repo })).data;
+            if (metadata.default_branch !== 'private') {
+              core.setFailed('Unexpected stable branch. No changes made.');
+              return;
+            }
+            const dev = (await github.rest.repos.getBranch({ owner, repo, branch: 'dev' })).data;
+            const stable = (await github.rest.repos.getBranch({ owner, repo, branch: 'private' })).data;
+            const devSha = dev.commit.sha;
+            const stableSha = stable.commit.sha;
+            const comparison = (await github.request(
+              'GET /repos/{owner}/{repo}/compare/{basehead}',
+              { owner, repo, basehead: 'private...dev', per_page: 100 }
+            )).data;
+            const ahead = comparison.ahead_by;
+            const behind = comparison.behind_by;
+            core.info('private...dev: ahead=' + ahead + ', behind=' + behind +
+              ', dev=' + devSha.slice(0, 12) + ', private=' + stableSha.slice(0, 12));
+            if (ahead < threshold) {
+              core.info('Below ' + threshold + ' commits. Keep developing on dev.');
+              return;
+            }
+            const open = await github.paginate(github.rest.pulls.list, {
+              owner, repo, state: 'open', base: 'private', per_page: 100
+            });
+            const existing = open.find(pr => pr.head.repo?.full_name === repoName &&
+              (pr.head.ref.startsWith('release/dev-') || pr.head.ref === 'dev'));
+            if (existing) {
+              core.notice('Existing dev promotion PR #' + existing.number + ' is open; no duplicate created.');
+              return;
+            }
+            const latestDev = (await github.rest.repos.getBranch({ owner, repo, branch: 'dev' })).data;
+            const latestStable = (await github.rest.repos.getBranch({ owner, repo, branch: 'private' })).data;
+            if (latestDev.commit.sha !== devSha || latestStable.commit.sha !== stableSha) {
+              core.info('Refs changed during evaluation. A later run will reevaluate.');
+              return;
+            }
+            const branch = 'release/dev-' + devSha.slice(0, 12);
+            try {
+              await github.rest.git.createRef({
+                owner, repo, ref: 'refs/heads/' + branch, sha: devSha
+              });
+            } catch (error) {
+              if (error.status !== 422) throw error;
+              const ref = (await github.rest.git.getRef({
+                owner, repo, ref: 'heads/' + branch
+              })).data;
+              if (ref.object.sha !== devSha) throw new Error('Existing release ref points to another commit.');
+            }
+            const paths = (comparison.files || []).flatMap(file =>
+              [file.filename, file.previous_filename].filter(Boolean)
+            );
+            const sensitive = [
+              /^\.github\//,
+              /^\.agents\//,
+              /^AGENTS\.md$/,
+              /^SECURITY\.md$/,
+              /^\.env(?:\.|$)/,
+              /^migrations\//,
+              /^configs\//,
+              /^scripts\//,
+              /^docs\/(?:system-design|decisions|local-environment|repository-governance)/,
+              /^(?:go\.mod|go\.sum|Dockerfile|docker-compose[^/]*)$/,
+              /^internal\/platform\/(?:identity|auth|crypto|database|uow|middleware|secret|payments|billing)/,
+              /^internal\/(?:llm|agent)\/infrastructure\//,
+              /^internal\/app\//,
+              /(^|\/)(?:secrets?|credentials?|password|payments?|billing|tenant)(?:[._/-]|$)/i
+            ];
+            const sensitiveFiles = paths.some(path => sensitive.some(rule => rule.test(path)));
+            const truncated = (comparison.files || []).length >= 300 || comparison.total_commits > 250;
+            const latestChecks = (await github.rest.checks.listForRef({
+              owner, repo, ref: devSha, per_page: 100
+            })).data.check_runs;
+            const failures = requiredChecks.filter(name => {
+              const check = latestChecks.filter(run => run.name === name)
+                .sort((a, b) => b.id - a.id)[0];
+              return !check || check.conclusion !== 'success';
+            });
+            const requiresHuman = behind > 0 || sensitiveFiles || truncated || failures.length > 0;
+            const reasons = [
+              behind > 0 ? ('private contains ' + behind + ' commits absent from dev') : '',
+              sensitiveFiles ? 'sensitive files changed' : '',
+              truncated ? 'large comparison requires manual review' : '',
+              failures.length ? ('missing or failing dev CI: ' + failures.join(', ')) : ''
+            ].filter(Boolean);
+            const body = [
+              '## Automatic dev → private promotion (INK-256)',
+              '',
+              '- Snapshot branch: ' + branch + '; source commit: ' + devSha,
+              '- Comparison at creation: dev ahead ' + ahead + ' commits, behind ' + behind + '.',
+              '- The release PR is intentionally sourced from a temporary branch, **never from dev**.',
+              '- Use a **merge commit**, not squash or rebase, so the promoted dev ancestry resets the 20-commit counter.',
+              '- All GitHub branch protection checks and unresolved review conversations still block a merge.',
+              '',
+              requiresHuman
+                ? '**Human review required:** ' + reasons.join('; ') + '.'
+                : '**Eligible for auto-merge** after GitHub checks and branch protection permit it.',
+              '',
+              'Never force-push or delete dev. This PR never deploys application data or secrets.',
+              '',
+              'Refs: #39; docs/repository-governance.md'
+            ].join('\n');
+            const created = (await github.rest.pulls.create({
+              owner, repo,
+              head: branch,
+              base: 'private',
+              title: 'chore(release): promote dev to private (' + ahead + ' commits)',
+              body,
+              draft: false
+            })).data;
+            core.notice('Created promotion PR #' + created.number + ' from ' + branch);
+            if (requiresHuman) {
+              await github.rest.issues.addLabels({
+                owner, repo, issue_number: created.number, labels: ['manual-review']
+              });
+              core.warning('Promotion held for manual review: ' + reasons.join('; '));
+              return;
+            }
+            try {
+              await github.graphql(
+                'mutation($id: ID!) { enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: MERGE}) { pullRequest { number } } }',
+                { id: created.node_id }
+              );
+              core.notice('Merge-commit auto-merge enabled. GitHub checks/branch protection remain authoritative.');
+            } catch (error) {
+              core.warning('Release PR created but auto-merge not enabled: ' + error.message);
+              core.warning('The PR must remain blocked until GitHub checks permit merging; no bypass attempted.');
+            }
