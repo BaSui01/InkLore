@@ -35,6 +35,26 @@ BEGIN
   EXCEPTION WHEN check_violation THEN
     NULL;
   END;
+  BEGIN
+    UPDATE platform_mail_settings SET credential_kind='env' WHERE id=1;
+    RAISE EXCEPTION 'env credential without locator must fail';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
+  BEGIN
+    UPDATE platform_mail_settings SET credential_kind='encrypted',credential_key_version=1 WHERE id=1;
+    RAISE EXCEPTION 'encrypted credential without ciphertext must fail';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
+  BEGIN
+    UPDATE platform_mail_settings SET provider='smtp',enabled=true,smtp_host='smtp.example.net',
+      smtp_username='noreply',sender_email='noreply@example.net',
+      credential_kind='env',credential_locator='MAIL_SMTP_PASSWORD' WHERE id=1;
+    RAISE EXCEPTION 'enabled SMTP with NULL port must fail';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
 
   INSERT INTO platform_email_challenges(
     purpose,audience,recipient_hash,code_hash,status,sent_at,expires_at

@@ -23,26 +23,30 @@ CREATE TABLE platform_mail_settings (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT platform_mail_secret_exclusive CHECK (
-    (credential_kind IS NULL AND credential_locator IS NULL AND credential_ciphertext IS NULL AND credential_key_version IS NULL)
-    OR (credential_kind = 'env' AND credential_locator ~ '^[A-Z_][A-Z0-9_]*$' AND credential_ciphertext IS NULL AND credential_key_version IS NULL)
-    OR (credential_kind = 'encrypted' AND credential_locator IS NULL AND credential_ciphertext LIKE 'enc:v1:%' AND credential_key_version IS NOT NULL)
+    (
+      (credential_kind IS NULL AND credential_locator IS NULL AND credential_ciphertext IS NULL AND credential_key_version IS NULL)
+      OR (credential_kind = 'env' AND credential_locator ~ '^[A-Z_][A-Z0-9_]*$' AND credential_ciphertext IS NULL AND credential_key_version IS NULL)
+      OR (credential_kind = 'encrypted' AND credential_locator IS NULL AND credential_ciphertext LIKE 'enc:v1:%' AND credential_key_version IS NOT NULL)
+    ) IS TRUE
   ),
   CONSTRAINT platform_mail_enabled_config CHECK (
-    NOT enabled OR (
-      provider = 'smtp'
-      AND smtp_host IS NOT NULL AND length(btrim(smtp_host)) > 0
-      AND smtp_port IN (465,587)
-      AND smtp_security IS NOT NULL
-      AND ((smtp_port = 465 AND smtp_security = 'implicit_tls')
-           OR (smtp_port = 587 AND smtp_security = 'starttls'))
-      AND smtp_username IS NOT NULL
-      AND sender_email IS NOT NULL
-      AND credential_kind IS NOT NULL
-    ) OR (
-      provider = 'resend'
-      AND sender_email IS NOT NULL
-      AND credential_kind IS NOT NULL
-    )
+    (
+      NOT enabled OR (
+        provider = 'smtp'
+        AND smtp_host IS NOT NULL AND length(btrim(smtp_host)) > 0
+        AND smtp_port IN (465,587)
+        AND smtp_security IS NOT NULL
+        AND ((smtp_port = 465 AND smtp_security = 'implicit_tls')
+             OR (smtp_port = 587 AND smtp_security = 'starttls'))
+        AND smtp_username IS NOT NULL
+        AND sender_email IS NOT NULL
+        AND credential_kind IS NOT NULL
+      ) OR (
+        provider = 'resend'
+        AND sender_email IS NOT NULL
+        AND credential_kind IS NOT NULL
+      )
+    ) IS TRUE
   )
 );
 COMMENT ON TABLE platform_mail_settings IS 'Global Admin-only SMTP/HTTPS email configuration. Credentials encrypted or external env references; no plaintext.';
