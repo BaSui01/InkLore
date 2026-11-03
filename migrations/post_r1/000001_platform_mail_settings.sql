@@ -78,7 +78,7 @@ COMMENT ON TABLE platform_email_challenges IS 'Single-use hashed email OTP state
 
 -- The application HTTP identity is deliberately limited to reading/updating
 -- these two new tables; deletion is reserved for a future audited retention identity.
-REVOKE ALL ON platform_mail_settings, platform_email_challenges FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON platform_mail_settings, platform_email_challenges FROM PUBLIC;
 GRANT SELECT,INSERT,UPDATE ON platform_mail_settings, platform_email_challenges TO inklore_runtime;
 REVOKE DELETE ON platform_mail_settings, platform_email_challenges FROM inklore_runtime;
 GRANT SELECT,DELETE ON platform_email_challenges TO inklore_retention;
