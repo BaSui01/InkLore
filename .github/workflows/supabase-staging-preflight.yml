@@ -13,6 +13,10 @@ jobs:
     timeout-minutes: 10
     environment: supabase-staging
     steps:
+      - name: Checkout trusted repository scripts
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Confirm credentials exist
         env:
           STAGING_DSN: ${{ secrets.SUPABASE_STAGING_DATABASE_URL }}
