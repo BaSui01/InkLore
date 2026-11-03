@@ -339,3 +339,7 @@ archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，�
 ## INK-261 · Go 网络与前端依赖补丁整合（done）
 
 [PR #71](https://github.com/BaSui01/InkLore/pull/71) 已将 quic-go v0.59.1、x/net v0.55.0、Vite v7.3.7、source-map-js v1.2.2、markdown-it v14.3.3 的五项 Dependabot 补丁按完整校验和整合至 dev；Go1.27.1 mod verify/build/vet/archguard、pnpm11.25.0 frozen-lockfile、Creator/Admin 双端构建、i18n 与 Skills/notes 通过，GitHub [PG17/Redis7/API 回归](https://github.com/BaSui01/InkLore/pull/71) 通过。[PR #79](https://github.com/BaSui01/InkLore/pull/79) 已单独将完全一致的四份 manifest/lockfile 受保护地发布至 private；两个长期分支的相关依赖文件 SHA 已重新核对一致，旧 bot PR #49–#53 均已关闭未重叠合入。没有业务 Go/React 源码变更。真实 QUIC/HTTP3、CSP 与不可信 Markdown 渲染场景未被这一补丁覆盖，后续单独验收，不把此补丁声明为全站安全风险消除。
+
+## INK-263 · 前端线性 BaseURL 与邮箱基础校验（review）
+
+以 [dev PR #76](https://github.com/BaSui01/InkLore/pull/76) 验证过的六个前端源码文件为依据，最小范围移植线性尾部斜杠删除与邮箱基础检查至 private，避免旧正则潜在超长回溯。所有输入最终授权由服务端决定，不更改 Cookie、会话、HTTP 或 WebSocket 路由协议。前端构建与 CodeQL 不替代真实浏览器异常场景验收；方案取舍和测试见 [工程笔记](../.agents/notes/proposed/bug-fix/2026-11-03-frontend-redos-normalization.md)。

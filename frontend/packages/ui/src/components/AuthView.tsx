@@ -201,7 +201,13 @@ export function AuthView({
   }, [codeCooldown]);
 
   const validateEmail = (val: string): boolean => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+    const email = val.trim();
+    const at = email.indexOf("@");
+    if (at <= 0 || at === email.length - 1 || email.indexOf("@", at + 1) !== -1) {
+      return false;
+    }
+    const dot = email.indexOf(".", at + 2);
+    return dot !== -1 && dot < email.length - 1 && !/\s/.test(email);
   };
 
   const validateLoginIdentifier = (val: string): boolean =>
