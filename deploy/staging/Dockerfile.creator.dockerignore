@@ -1,0 +1,17 @@
+# Dockerfile-specific context: Creator Vite build needs frontend/ which the
+# API's root .dockerignore intentionally excludes.
+.git
+.github
+.env
+.env.*
+**/.env
+**/.env.*
+**/node_modules
+**/dist
+**/dist-admin
+bin
+tmp
+vendor
+configs/config.yaml
+*.pem
+*.key

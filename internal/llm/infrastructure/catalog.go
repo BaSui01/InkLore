@@ -1,4 +1,4 @@
-// Package r1 provides PostgreSQL and deployment adapters for frozen LLM ports.
+// Package infrastructure provides PostgreSQL and deployment adapters for frozen LLM ports.
 package infrastructure
 
 import (
@@ -443,12 +443,13 @@ func (s *Store) InUse(ctx context.Context, tenant string, kind d.Kind, id string
 	case d.Keys:
 		query = "SELECT EXISTS(SELECT 1 FROM llm_reservations WHERE tenant_id=? AND key_id=? AND status IN ('reserved','dispatched'))"
 	case d.Policies:
+		// Reference pins live in the LLM-owned ledger that Agent populates
+		// through the application boundary; querying Agent-owned private
+		// tables here would create a forbidden llm -> agent dependency.
 		query = "SELECT EXISTS(SELECT 1 FROM llm_task_policy_versions v " +
 			"WHERE v.tenant_id=? AND v.policy_id=? AND (" +
 			"EXISTS(SELECT 1 FROM llm_reservations r WHERE r.tenant_id=v.tenant_id AND r.policy_version_id=v.id AND r.status IN ('reserved','dispatched')) " +
-			"OR EXISTS(SELECT 1 FROM agent_runs run WHERE run.tenant_id=v.tenant_id AND run.policy_version_id=v.id) " +
-			"OR EXISTS(SELECT 1 FROM agent_run_questions question WHERE question.tenant_id=v.tenant_id AND question.policy_version_id=v.id) " +
-			"OR EXISTS(SELECT 1 FROM agent_novel_creation_sessions guide WHERE guide.tenant_id=v.tenant_id AND guide.policy_version_id=v.id)))"
+			"OR EXISTS(SELECT 1 FROM llm_policy_version_references ref WHERE ref.tenant_id=v.tenant_id AND ref.policy_version_id=v.id)))"
 	default:
 		return false, d.ErrInvalid
 	}

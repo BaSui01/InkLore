@@ -18,10 +18,10 @@ import (
 	inspapp "InkLore/internal/inspiration/application"
 	inspinfra "InkLore/internal/inspiration/infrastructure"
 	insphttp "InkLore/internal/inspiration/transport/http"
-	llmr1app "InkLore/internal/llm/application"
-	llmr1domain "InkLore/internal/llm/domain"
-	llmr1infra "InkLore/internal/llm/infrastructure"
-	llmr1http "InkLore/internal/llm/transport/http"
+	llmapp "InkLore/internal/llm/application"
+	llmdomain "InkLore/internal/llm/domain"
+	llminfra "InkLore/internal/llm/infrastructure"
+	llmhttp "InkLore/internal/llm/transport/http"
 	outlineapp "InkLore/internal/outline/application"
 	outlineinfra "InkLore/internal/outline/infrastructure"
 	outlinehttp "InkLore/internal/outline/transport/http"
@@ -40,9 +40,9 @@ type DomainRuntime struct {
 	Content     *contentapp.Service
 	Outline     *outlineapp.Service
 	Worldview   *worldviewapp.Service
-	LLM         *llmr1app.Catalog
-	Gateway     *llmr1app.GatewayService
-	Budget      *llmr1app.Budget
+	LLM         *llmapp.Catalog
+	Gateway     *llmapp.GatewayService
+	Budget      *llmapp.Budget
 	Outbox      *outbox.Service
 	Inspiration *inspapp.Service
 	Compliance  *compapp.Service
@@ -88,25 +88,25 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 	}
 	a.domains.Outline = outline
 	a.domains.Worldview = world
-	validateLLM := func(llmr1domain.Kind, []byte) error { return nil }
+	validateLLM := func(llmdomain.Kind, []byte) error { return nil }
 	secrets, err := adapters.NewLLMSecrets()
 	if err != nil {
 		return err
 	}
-	llmStore, err := llmr1infra.NewStore(p.UoW)
+	llmStore, err := llminfra.NewStore(p.UoW)
 	if err != nil {
 		return err
 	}
-	llmCatalog, err := llmr1app.NewCatalog(llmr1app.CatalogOptions{
+	llmCatalog, err := llmapp.NewCatalog(llmapp.CatalogOptions{
 		Repository:    llmStore,
 		UoW:           p.UoW,
 		Identity:      adapters.LLMAuthorizer{Service: p.Identity},
 		Secrets:       secrets,
 		ValidateInput: validateLLM,
-		Upstream:      &llmr1infra.UpstreamModelService{},
-		OnMutation: func(ctx context.Context, m llmr1app.Mutation) error {
+		Upstream:      &llminfra.UpstreamModelService{},
+		OnMutation: func(ctx context.Context, m llmapp.Mutation) error {
 			kind := string(m.Kind)
-			if m.Kind == llmr1domain.Policies {
+			if m.Kind == llmdomain.Policies {
 				kind = "task_policies"
 			}
 			return a.recordDomainMutation(ctx, "llm", "llm.catalog_mutation", scope.Principal{TenantID: m.Principal.TenantID, ActorID: m.Principal.UserID, SessionID: m.Principal.SessionID, Audience: m.Principal.Audience}, kind, m.ID, "", m.Revision)
@@ -115,32 +115,32 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 	if err != nil {
 		return err
 	}
-	budgetRepo := llmr1infra.NewBudgetRepository(p.UoW)
-	llmBudget, err := llmr1app.NewBudget(llmr1app.BudgetOptions{
+	budgetRepo := llminfra.NewBudgetRepository(p.UoW)
+	llmBudget, err := llmapp.NewBudget(llmapp.BudgetOptions{
 		Repository: budgetRepo,
 		UoW:        p.UoW,
 		Identity:   adapters.LLMAuthorizer{Service: p.Identity},
-		OnEvent: func(ctx context.Context, e llmr1domain.BudgetEvent) error {
+		OnEvent: func(ctx context.Context, e llmdomain.BudgetEvent) error {
 			return a.recordDomainMutation(ctx, "llm", e.Action, scope.Principal{TenantID: e.TenantID, Audience: "system"}, "budget", e.ResourceID, "", e.Revision)
 		},
 	})
 	if err != nil {
 		return err
 	}
-	llmHandler, err := llmr1http.NewHandler(llmr1http.HTTPOptions{Catalog: llmCatalog, Budget: llmBudget, Identity: p.Identity, Idempotency: p.Idempotency, Cursor: p.Cursor})
+	llmHandler, err := llmhttp.NewHandler(llmhttp.HTTPOptions{Catalog: llmCatalog, Budget: llmBudget, Identity: p.Identity, Idempotency: p.Idempotency, Cursor: p.Cursor})
 	if err != nil {
 		return err
 	}
 	a.domains.LLM = llmCatalog
 	a.domains.Budget = llmBudget
 	llmHandler.Register(engine)
-	providerRouter := llmr1infra.NewProviderRouter()
-	tenantResolver, err := llmr1infra.NewTenantChannelResolver(p.UoW)
+	providerRouter := llminfra.NewProviderRouter()
+	tenantResolver, err := llminfra.NewTenantChannelResolver(p.UoW)
 	if err != nil {
 		return err
 	}
 	providerRouter.SetTenantResolver(tenantResolver)
-	llmGateway := llmr1app.NewGatewayService(providerRouter)
+	llmGateway := llmapp.NewGatewayService(providerRouter)
 	a.domains.Gateway = llmGateway
 	contenthttp.New(content).RegisterRoutes(engine)
 	handler, err := outlinehttp.NewHandler(outlinehttp.Options{Service: outline, Identity: p.Identity, Idempotency: p.Idempotency, Cursor: p.Cursor})
@@ -222,6 +222,9 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 		return err
 	}
 	agentModelGateway := adapters.NewAgentTaskModelGateway(llmGateway, llmCatalog)
+	// Member cleanup releases LLM-owned policy pins inside its own deletion
+	// transaction through the composition-root adapter.
+	p.Members.SetPolicyReferenceReleaser(adapters.NewMembershipPolicyReferenceReleaser(llmCatalog))
 	agentNovelGuideRepo, err := agentinfra.NewNovelGuideRepository(p.UoW)
 	if err != nil {
 		return err

@@ -38,6 +38,8 @@ type CatalogRepository interface {
 	ReadFrozenPolicy(context.Context, string, string) (FrozenPolicy, error)
 	ResolveEnabledModel(context.Context, string, string) (EnabledModel, error)
 	CurrentPolicySnapshot(context.Context, string, string) (FrozenPolicy, error)
+	RecordPolicyVersionReference(context.Context, string, string, string, string) error
+	ReleasePolicyVersionReferences(context.Context, string, string, []string) error
 }
 
 type SecretMetadataPort interface {
@@ -191,8 +193,9 @@ type Key struct {
 
 // EnabledModel identifies the selected model without relying on a potentially ambiguous upstream name.
 type EnabledModel struct {
-	ID   string
-	Name string
+	ID              string
+	Name            string
+	MaxOutputTokens int64
 }
 
 // FrozenPolicy is the immutable model configuration used by an existing Agent run.

@@ -12,6 +12,11 @@
 - 此修复针对已识别的正则复杂度问题，仍需在默认分支验证 CodeQL 和真实浏览器回归，不等于全部安全告警已修复。
 
 
+### INK-273：2026-11-03 dev/private 双向历史基线（待验收）
+
+- 基于当前 private 与 dev 的同一个共同祖先执行双父合并，保留双方独有提交；优先沿用稳定分支已实测的 CI/Supabase/敏感目录保护规则，开发分支最新 Agent、前端、LLM 安全修复通过合并候选 PR 统一验收。
+- 仅新增 Git 合并候选与可重现的测试证据，不部署生产服务器、不执行 Supabase 写入、不改旧 Git 历史。敏感权限和 CodeQL Python 失败仍需在发布前单独评审。
+
 ### 保护分支定期 Supabase 监控与跨端 E2E 验收（INK-270，review）
 
 - Supabase 的只读 IPv4 Session Pooler 预检保持 GitHub 受保护 Environment Secret，仅在默认分支每天 03:17 UTC 定时运行（也可手动运行），禁止写入真实业务数据。
@@ -23,6 +28,21 @@
 - 修复受保护 GitHub Actions 在 Supabase 免费项目 IPv6 Direct 端点连接失败的问题；不重置已保存的环境 Secret，不购买 IPv4 Add-on。
 - 改为使用真实身份和数据库结构查询验证官方 IPv4 Session Pooler 地址；连接凭据只在 GitHub-hosted Runner 内存中使用，不输出密码、完整 DSN 或身份验证错误详情。
 - 首次 IPv6 失败证据：Actions #41570140594；改进后必须以新的人工验收 Success 为交付依据。
+
+### 自动合并敏感路径收紧（INK-254，review）
+
+- 默认分支安全 PR Gate 增加 internal/platform/identity 和所有领域的 infrastructure 路径，防止拥有 auto-merge-approved 标签的认证/持久化 PR 绕过人工审查；低风险路径、原有 CI 与 Review 门禁保持不变。
+- 源码与工作流静态测试仍需最终 PR CI 及合并后的事件复核。
+
+### 稳定分支独立接入数据库/Redis 集成测试（INK-260，review）
+
+- 从已验证的 dev 最小同步两个 GitHub Actions 工作流和所需的测试环境权限 SQL，不混入 70 文件发布候选 PR #41。
+- 隔离作业的临时 PG17/Redis7 验证真实 R1 迁移、回滚、权限、Go API/Creator 身份；Supabase 只读预检只在受保护分支手动触发且需要独立最小权限凭据，现有 Secret 未配置。
+
+### INK-256：dev 超前 20 个提交后发布 PR（review）
+
+- 采用默认分支可信工作流按 GitHub Commit Compare 阈值自动创建 release 快照 PR；安全满足时启用 Merge Commit auto-merge，分叉、敏感或 CI 未通过时保留人工复核。保护 dev 不被删除或强推，发布不等于部署或业务验收。
+
 
 ### Creator 开书引导 403 本地恢复退出（INK-271，review）
 
@@ -41,21 +61,9 @@
 - [PR #71](https://github.com/BaSui01/InkLore/pull/71) 在 dev 合并 quic-go 0.59.1、x/net 0.55.0、vite 7.3.7、source-map-js 1.2.2、markdown-it 14.3.3；Go mod verify/build/vet/archguard、pnpm frozen、Creator/Admin 构建及 PG17/Redis7 API 回归通过。
 - [PR #79](https://github.com/BaSui01/InkLore/pull/79) 经独立受保护 CI 合入 private，双方 manifest/lockfile 版本和 SHA 一致；原 Dependabot #49–#53 均以 superseded 方式关闭，不重复合并。当前补丁不声称真实 QUIC/HTTP3、CSP/Markdown 或所有安全告警已通过端到端验收。
 
-
-### 自动合并敏感路径收紧（INK-254，review）
-
-- 默认分支安全 PR Gate 增加 internal/platform/identity 和所有领域的 infrastructure 路径，防止拥有 auto-merge-approved 标签的认证/持久化 PR 绕过人工审查；低风险路径、原有 CI 与 Review 门禁保持不变。
-- 源码与工作流静态测试仍需最终 PR CI 及合并后的事件复核。
-
-
-### 稳定分支独立接入数据库/Redis 集成测试（INK-260，review）
-
-- 从已验证的 dev 最小同步两个 GitHub Actions 工作流和所需的测试环境权限 SQL，不混入 70 文件发布候选 PR #41。
-- 隔离作业的临时 PG17/Redis7 验证真实 R1 迁移、回滚、权限、Go API/Creator 身份；Supabase 只读预检只在受保护分支手动触发且需要独立最小权限凭据，现有 Secret 未配置。
-
 ### 双端 UI/UX 设计实施包（INK-259，review）
 
-- 新增 [docs/ui-ux](docs/ui-ux/README.md)：管理端/创作者端现有路由盘点、核心页面布局与交互方案、组件复用和响应式/无障碍/权限验收矩阵。
+- 新增 [docs/ui-ux](.agents/notes/reference/ui-ux/README.md)：管理端/创作者端现有路由盘点、核心页面布局与交互方案、组件复用和响应式/无障碍/权限验收矩阵。
 - 明确与冻结 15/16/17/20 分册、实际业务代码和 API 的边界；高保真设计图及前端功能改造均为后续单独交付，本次没有运行路径变化。
 
 
@@ -71,10 +79,6 @@
 
 - [PR #43](https://github.com/BaSui01/InkLore/pull/43) 已在 dev 合并 x/crypto 0.48.0→0.52.0 及关联 x/net/text/sys/sync 更新；Go 模块校验和常规构建通过。
 - [GitHub 临时 PG17/Redis7 运行验收](https://github.com/BaSui01/InkLore/actions/runs/41492434905) 覆盖注册、会话、匿名拒绝、重复注册、权限及事务；[PR #47](https://github.com/BaSui01/InkLore/pull/47) 已将同版本依赖受保护地发布到默认 private。剩余外部模型/生产压测风险保留为业务运行验收，不声称本依赖补丁消除所有安全告警。
-
-### INK-256：dev 超前 20 个提交后发布 PR（review）
-
-- 采用默认分支可信工作流按 GitHub Commit Compare 阈值自动创建 release 快照 PR；安全满足时启用 Merge Commit auto-merge，分叉、敏感或 CI 未通过时保留人工复核。保护 dev 不被删除或强推，发布不等于部署或业务验收。
 
 ### 在线隔离 CI / Supabase 预检（INK-255，待验收）
 
@@ -379,7 +383,7 @@
 
 **M12 · ADR-0014 七域架构治理与大纲域抽取（INK-114，已交付）**
 
-- 新增 [ADR-0014](docs/decisions/0014-domain-boundary-expansion-to-seven-contexts.md)：业务限界上下文由 3 个（`novel`/`agent`/`llm`）扩张为 7 个（`content`/`outline`/`worldview`/`inspiration`/`compliance`/`agent`/`llm`）。**Supersedes ADR-0001 第 2 条**，ADR-0001 顶部已加替代说明（正文按「已接受 ADR 不修改」约定保持原样），`docs/decisions/README.md` 索引同步
+- 新增 [ADR-0014](.agents/notes/reference/decisions/0014-domain-boundary-expansion-to-seven-contexts.md)：业务限界上下文由 3 个（`novel`/`agent`/`llm`）扩张为 7 个（`content`/`outline`/`worldview`/`inspiration`/`compliance`/`agent`/`llm`）。**Supersedes ADR-0001 第 2 条**，ADR-0001 顶部已加替代说明（正文按「已接受 ADR 不修改」约定保持原样），`.agents/notes/reference/decisions/README.md` 索引同步
 - 更新 `AGENTS.md`：§1 架构图改为 7 域拓扑并标注域间单向 DAG；§1.2 域清单、四层骨架义务、跨域红线与唯一受控例外（跨域只读值类型）；§2 领域职责按 7 域重写，事实权威重新划界（作品与正文归 `content`，设定与事实账本归 `worldview`）
 - 更新 `cmd/archguard`：`businessDomains` 由 3 域扩为 7 域（`novel` 暂留为过渡容器并加 TODO），R1 跨域护栏即时覆盖新域
 - **抽取 `internal/outline`**（ADR-0014 strangler 步骤 2，11 文件 / 4 层）：`domain`（`OutlineNode` 及其中间过程值对象 + `OutlineNodeRepository`）、`application`（`OutlineService` + 消费方自定义的只读引用端口 `ContentReference`）、`infrastructure`（SQL 与内存两档实现）、`transport/http`（独立 `Handler` 与 `RegisterRoutes`，复用 `/v1/novels` 下的 `outline` 子路径，端点不变）
@@ -464,7 +468,7 @@
 - 删除内置引擎中伪造的 `call_fact_check_001` 工具调用与 `success` 回执：伪造的执行轨迹比伪造正文更具误导性
 - `ProviderInfo` 如实上报：默认 `type=none`；开启演示后名称/类型/能力均标明离线演示与 `template_based`
 - `GatewayService` 与 LLM HTTP 层统一错误映射：`503 + llm_provider_not_configured`，不再被二次包装成通用 `llm_generation_failed`
-- 新增 [ADR-0005](docs/decisions/0005-no-fabrication-without-provider.md) 记录该决策
+- 新增 [ADR-0005](.agents/notes/reference/decisions/0005-no-fabrication-without-provider.md) 记录该决策
 - 验证：探针 14 项断言（默认模式零产出、演示模式 tool 事件恒为 0）全部通过；`POST /v1/llm/generate` 默认返回 503 `llm_provider_not_configured`；`/v1/llm/provider/status` 默认 `type=none`
 
 **M6：前端 i18n 完整性校验（INK-042）**
@@ -529,7 +533,7 @@
   · `required` 但未配置密钥时**进程拒绝启动**
 - 新增 `cmd/tokengen`：本地签发令牌（密钥只从环境读取）
 - 新增 `GET /v1/auth/whoami`：回显主体、租户与请求上下文中的租户
-- 新增 [ADR-0006](docs/decisions/0006-platform-token-and-auth-mode.md) 记录认证契约
+- 新增 [ADR-0006](.agents/notes/reference/decisions/0006-platform-token-and-auth-mode.md) 记录认证契约
 
 **验证（11 项断言全部通过）**：无 Token / 伪造 / 缺 `tid` / 过期 → 401 且 code 明确；
 有效 Token → 200；`whoami` 租户绑定正确；`/healthz`、`/readyz`、`/v1/architecture`
@@ -635,7 +639,7 @@ Docker 守护进程可用后，此前三条阻塞的验收全部在真实 Postgr
 - 新增 `POST /v1/novels/:novelID/chapters/:chapterID/confirm`
   · 冲突返回 **409 + 结构化冲突清单**（含旧值、提议值、来源章节、原因）
   · 冲突经由 `ConfirmResult` 传递而非 error 通道 —— error 无法承载结构化清单
-- 新增 [ADR-0007](docs/decisions/0007-chapter-confirmation-and-fact-versioning.md)
+- 新增 [ADR-0007](.agents/notes/reference/decisions/0007-chapter-confirmation-and-fact-versioning.md)
 
 **验证（18 项断言全部通过，真实 PostgreSQL）**：首次确认入账且可回溯来源章节、
 章节状态转 confirmed；同值重复确认识别为 unchanged 且不重复写入；
@@ -659,7 +663,7 @@ Docker 守护进程可用后，此前三条阻塞的验收全部在真实 Postgr
 
 **M1：制品库存储选型定案（INK-020）**
 
-- 新增 [ADR-0008](docs/decisions/0008-artifact-store-postgres-jsonb.md)：Agent 制品库统一落 PostgreSQL JSONB，**不引入 MongoDB**
+- 新增 [ADR-0008](.agents/notes/reference/decisions/0008-artifact-store-postgres-jsonb.md)：Agent 制品库统一落 PostgreSQL JSONB，**不引入 MongoDB**
 - 依据：两份编排文件本就只启动 postgres + redis，`MongoStore` 从未接线（不可达包）；项目红线是模块化单体，第二套数据平面会额外带来备份、监控与租户隔离成本（现有租户隔离建立在每条 SQL 带 `tenant_id` 之上）
 - `docs/architecture.md` §6.2 存储职责表据此改写：MongoDB 行标注为不引入，原先的 ⚠️「待 ADR 决策」说明撤除
 - 登记 INK-046（删除 `artifactstore` 的 Mongo 实现）与 INK-045（制品表随统一建表迁移落地）
@@ -868,7 +872,7 @@ Docker 守护进程可用后，此前三条阻塞的验收全部在真实 Postgr
 
 **M4：工具审批端到端接入（INK-012）**
 
-- `platform/auth` 新增 `WithPrincipal` / `PrincipalFromContext`，`middleware.Auth` 校验通过后把认证主体**同时**写入 gin 上下文与请求上下文，使域内授权判定无需依赖传输层（新增 [ADR-0009](docs/decisions/0009-principal-context-and-approval-authorization.md)）
+- `platform/auth` 新增 `WithPrincipal` / `PrincipalFromContext`，`middleware.Auth` 校验通过后把认证主体**同时**写入 gin 上下文与请求上下文，使域内授权判定无需依赖传输层（新增 [ADR-0009](.agents/notes/reference/decisions/0009-principal-context-and-approval-authorization.md)）
 - 新增 `adapters.NewApprovalPrincipalResolver`：只信任请求上下文中的主体，要求 `UserID` 与审批归属一致、角色照搬；主体不带权限时按「当前无权限中心、平台令牌即操作员凭证」补通配权限；认证强制且无主体时直接拒绝
 - `runtimeapp.Service` 新增审批服务依赖；`RunInput` 透传 `UserID` / `ApprovalTokens` / `PermissionLevel`，并把运行记录 ID 作为 `RunID` 关联到审批单（审批单可按运行追溯）
 

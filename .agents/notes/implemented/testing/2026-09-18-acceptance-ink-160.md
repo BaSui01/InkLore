@@ -29,7 +29,7 @@ Scope: docs/acceptance-INK-160.md 的历史验收记录与迁移
 
 ### INK-160 · 平台事务与API基座验收
 
-验收日期：2026-09-18，北京时间。任务状态唯一来源为 [backlog](../../../../docs/backlog.md)。本轮只交付INK-160，不把平台表存在当作账号、队列、文件或业务域功能完成。
+验收日期：2026-09-18，北京时间。任务状态唯一来源为 [backlog](../../reference/planning/backlog.md)。本轮只交付INK-160，不把平台表存在当作账号、队列、文件或业务域功能完成。
 
 ### 实现与运行路径
 
@@ -96,4 +96,3 @@ UoW context同步使用、不逃逸、不并发。Authorize必须绑定实际请
 未做真实模型调用、账号登录/refresh/CSRF/审计业务、文件和作业运行、七域业务、双端浏览器、生产部署、旧库导入或容量恢复验收；这些属于后续任务。R1源契约未改，改密幂等头与缺失错误响应差异记录于 [INK-178](../architecture/2026-09-18-r1-contract-differences-ink-178.md)，进入受影响任务前需裁决。
 
 工程理由见 [事务与幂等笔记](../architecture/2026-09-18-r1-platform-atomic-command-boundary.md)。
-

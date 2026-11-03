@@ -11,7 +11,7 @@ Creator登录页使用HTML email字段，root被浏览器校验拦截；后端�
 
 ## Decision
 
-按[ADR-0031](../../../../docs/decisions/0031-creator-root-username-login.md)，Creator/Auth共享登录表单允许email或唯一保留名root，Creator路由将root发送为`username`，其他标识发送为`email`。platform Login在两种audience接受username=root，但Creator仍要求有效活动Creator membership，资源请求继续使用既有tenant和owner scope。注册、找回密码仍仅接收email。
+按[ADR-0031](../../reference/decisions/0031-creator-root-username-login.md)，Creator/Auth共享登录表单允许email或唯一保留名root，Creator路由将root发送为`username`，其他标识发送为`email`。platform Login在两种audience接受username=root，但Creator仍要求有效活动Creator membership，资源请求继续使用既有tenant和owner scope。注册、找回密码仍仅接收email。
 
 本机Creator/Admin origin采用`127.0.0.1`，与用户当前浏览器URL一致；CORS保持逐origin精确匹配。
 

@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   postgres-redis:
-    name: R1 PostgreSQL 17 + Redis 7 真实迁移验收
+    name: PostgreSQL 17 + Redis 7 真实迁移验收
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
@@ -69,17 +69,20 @@ jobs:
           test "$(PGPASSWORD=ci-only-not-production psql -h 127.0.0.1 -U inklore_ci -d inklore_ci -Atqc 'select current_database()')" = "inklore_ci"
           test "$(redis-cli -h 127.0.0.1 ping)" = "PONG"
           echo 'Temporary CI Postgres/Redis ready'
-      - name: Apply R1 migrations to ephemeral PostgreSQL
+      - name: Apply repository migrations to ephemeral PostgreSQL
         run: go run ./cmd/migrate -cmd up -timeout 180s
       - name: Verify schema migration, extension and domain tables
         shell: bash
         run: |
           set -euo pipefail
           export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_ci PGDATABASE=inklore_ci PGPASSWORD=ci-only-not-production
-          psql -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) > 0 FROM schema_migrations" | grep -qx t
+          migration_count=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT COALESCE(json_agg(json_build_object('version',version,'name',name,'checksum',checksum) ORDER BY version)::text,'[]') FROM schema_migrations" | python3 scripts/ci/check-migration-history.py)
+          echo "Repository migration history verified: $migration_count migrations"
           psql -v ON_ERROR_STOP=1 -Atc "SELECT to_regclass('platform_tenants') IS NOT NULL" | grep -qx t
           psql -v ON_ERROR_STOP=1 -Atc "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='vector')" | grep -qx t
           psql -v ON_ERROR_STOP=1 -Atc "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='pg_trgm')" | grep -qx t
+          test "$(psql -X -Atc 'SELECT count(*) FROM schema_migrations_post_r1')" -ge 2
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT to_regclass('llm_policy_version_references') IS NOT NULL" | grep -qx t
       - name: Reapply and verify migration idempotence
         run: |
           go run ./cmd/migrate -cmd up -timeout 180s
@@ -107,12 +110,16 @@ jobs:
           SQL
           export DATABASE_DSN='postgres://inklore_ci:ci-only-not-production@127.0.0.1:5432/inklore_staging_probe?sslmode=disable&options=-csearch_path%3Dinklore_ci%2Cextensions%2Cpublic'
           go run ./cmd/migrate -cmd up -timeout 180s
-          psql -d inklore_staging_probe -Atqc "SELECT count(*) FROM inklore_ci.schema_migrations" | grep -qx 17
-          psql -d inklore_staging_probe -Atqc "SELECT count(*) FROM pg_tables WHERE schemaname='inklore_ci'" | grep -qx 80
+          migration_count=$(psql -X -d inklore_staging_probe -v ON_ERROR_STOP=1 -Atc "SELECT COALESCE(json_agg(json_build_object('version',version,'name',name,'checksum',checksum) ORDER BY version)::text,'[]') FROM inklore_ci.schema_migrations" | python3 scripts/ci/check-migration-history.py)
+          echo "Staging probe migration history verified: $migration_count migrations"
+          expected_tables=$(psql -X -d inklore_ci -v ON_ERROR_STOP=1 -Atc "SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename")
+          staging_tables=$(psql -X -d inklore_staging_probe -v ON_ERROR_STOP=1 -Atc "SELECT tablename FROM pg_tables WHERE schemaname='inklore_ci' ORDER BY tablename")
+          test "$expected_tables" = "$staging_tables"
           # 000009_permissions intentionally granted public objects prior to the staging overlay.
           psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_runtime','public.ci_unrelated_data','SELECT')" | grep -qx t
           psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_retention','public.ci_unrelated_data','DELETE')" | grep -qx t
           psql -d inklore_staging_probe -Atqc "SELECT has_sequence_privilege('inklore_runtime','public.ci_unrelated_sequence','USAGE')" | grep -qx t
+          # The overlay keeps its reviewed migration scope; new migrations require a separate permission review.
           psql -d inklore_staging_probe -v ON_ERROR_STOP=1 -f scripts/sql/supabase-staging-permissions.sql
           psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_runtime','public.ci_unrelated_data','SELECT')" | grep -qx f
           psql -d inklore_staging_probe -Atqc "SELECT has_table_privilege('inklore_retention','public.ci_unrelated_data','DELETE')" | grep -qx f

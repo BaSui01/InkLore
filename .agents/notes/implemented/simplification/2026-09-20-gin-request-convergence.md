@@ -11,7 +11,7 @@ Scope: internal/platform/strictjson、httpguard、requestschema 与请求生成�
 
 ## Decision
 
-按 [ADR-0020](../../../../docs/decisions/0020-gin-http-convergence.md) 使用不依赖 Gin 的 strictjson 解析，保留 json.Number。HTTP 读取一次、2MiB/深度64、Schema 校验后再转 DTO。生成器仅从已有机读源生成 embed 资源及路由操作映射；注册编译器拒绝未注册引用，不运行时读取仓库。对外失败不携请求值。
+按 [ADR-0020](../../reference/decisions/0020-gin-http-convergence.md) 使用不依赖 Gin 的 strictjson 解析，保留 json.Number。HTTP 读取一次、2MiB/深度64、Schema 校验后再转 DTO。生成器仅从已有机读源生成 embed 资源及路由操作映射；注册编译器拒绝未注册引用，不运行时读取仓库。对外失败不携请求值。
 
 ## Alternatives considered
 

@@ -33,6 +33,9 @@ type gatedModel struct {
 func (g *gatedModel) Generate(context.Context, agentdomain.ModelGenerateInput) (*agentdomain.ModelGenerateOutput, error) {
 	return nil, fmt.Errorf("CI forbids upstream model calls")
 }
+func (g *gatedModel) RecordPolicyVersionReference(ctx context.Context, tenantID, policyVersionID, referenceKind, referenceID string) error {
+	return g.store.RecordPolicyVersionReference(ctx, tenantID, policyVersionID, referenceKind, referenceID)
+}
 func (g *gatedModel) ResolvePolicy(ctx context.Context, tenantID, taskKey string) (string, error) {
 	version, err := g.store.CurrentPolicyVersion(ctx, tenantID, taskKey)
 	if err != nil {

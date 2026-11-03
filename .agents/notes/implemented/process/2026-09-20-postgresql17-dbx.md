@@ -11,7 +11,7 @@ Scope: Compose、dbx、数据库运行基线
 
 ## Decision
 
-按[ADR-0022](../../../../docs/decisions/0022-postgresql-17-baseline.md)采用PG17。dbx使用项目既有连接参数，实际查询服务版本与扩展。Compose使用pg17供新部署；既有PG16卷须备份迁移到新目录，不直接换镜像挂旧卷。
+按[ADR-0022](../../reference/decisions/0022-postgresql-17-baseline.md)采用PG17。dbx使用项目既有连接参数，实际查询服务版本与扩展。Compose使用pg17供新部署；既有PG16卷须备份迁移到新目录，不直接换镜像挂旧卷。
 
 ## Alternatives considered
 

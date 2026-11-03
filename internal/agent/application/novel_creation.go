@@ -83,7 +83,12 @@ func (s *NovelGuideService) Start(ctx context.Context, p identity.Principal, ide
 	err = s.manager.Within(ctx, func(tx context.Context) error {
 		var e error
 		created, e = s.repo.CreateNovelGuide(tx, session)
-		return e
+		if e != nil || !created {
+			return e
+		}
+		// Pin the frozen policy version on the LLM-owned ledger inside the
+		// same UoW so deletion refusal never reads Agent private tables.
+		return s.model.RecordPolicyVersionReference(tx, p.TenantID, session.PolicyVersionID, "guide_session", session.ID)
 	})
 	if err != nil {
 		return nil, err
