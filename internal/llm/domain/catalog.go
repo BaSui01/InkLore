@@ -39,6 +39,7 @@ type CatalogRepository interface {
 	ResolveEnabledModel(context.Context, string, string) (EnabledModel, error)
 	CurrentPolicySnapshot(context.Context, string, string) (FrozenPolicy, error)
 	RecordPolicyVersionReference(context.Context, string, string, string, string) error
+	ReleasePolicyVersionReferences(context.Context, string, string, []string) error
 }
 
 type SecretMetadataPort interface {

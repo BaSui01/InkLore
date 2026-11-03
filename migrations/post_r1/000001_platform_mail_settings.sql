@@ -1,7 +1,6 @@
 -- INK-273: post-R1 extension. Do not modify or re-run frozen R1 000001-000017.
 -- Apply once only to an explicitly selected, isolated application schema.
 -- The deployment's migration runner must set search_path before execution.
-BEGIN;
 
 CREATE TABLE platform_mail_settings (
   id smallint PRIMARY KEY DEFAULT 1 CHECK(id = 1),
@@ -87,5 +86,3 @@ GRANT SELECT,INSERT,UPDATE ON platform_mail_settings, platform_email_challenges 
 REVOKE DELETE ON platform_mail_settings, platform_email_challenges FROM inklore_runtime;
 GRANT SELECT,DELETE ON platform_email_challenges TO inklore_retention;
 REVOKE DELETE ON platform_mail_settings FROM inklore_retention;
-
-COMMIT;

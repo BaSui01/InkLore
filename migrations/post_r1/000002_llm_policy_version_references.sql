@@ -4,7 +4,6 @@
 -- dependency), Agent registers each pin here through the existing
 -- agent -> llm application boundary inside its own creation transaction.
 -- Do not modify or re-run frozen R1 000001-000017 or post_r1 000001.
-BEGIN;
 
 CREATE TABLE llm_policy_version_references (
   tenant_id uuid NOT NULL,
@@ -21,5 +20,3 @@ COMMENT ON TABLE llm_policy_version_references IS
 
 REVOKE ALL ON llm_policy_version_references FROM PUBLIC;
 GRANT SELECT,INSERT,DELETE ON llm_policy_version_references TO inklore_runtime;
-
-COMMIT;

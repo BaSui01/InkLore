@@ -87,6 +87,21 @@ func (s *Store) RecordPolicyVersionReference(ctx context.Context, tenantID, vers
 	return nil
 }
 
+// ReleasePolicyVersionReferences drops ledger pins for entities that no
+// longer exist, keeping frozen-version deletion refusal accurate.
+func (s *Store) ReleasePolicyVersionReferences(ctx context.Context, tenantID, referenceKind string, referenceIDs []string) error {
+	db, err := s.manager.DB(ctx)
+	if err != nil {
+		return err
+	}
+	result := db.Exec("DELETE FROM llm_policy_version_references WHERE tenant_id=? AND reference_kind=? AND reference_id IN ?",
+		tenantID, referenceKind, referenceIDs)
+	if result.Error != nil {
+		return dbError(result.Error)
+	}
+	return nil
+}
+
 // CurrentPolicySnapshot provides one coherent policy version for new novel guides.
 func (s *Store) CurrentPolicySnapshot(ctx context.Context, tenantID, taskKey string) (d.FrozenPolicy, error) {
 	db, err := s.manager.DB(ctx)

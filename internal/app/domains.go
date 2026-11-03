@@ -222,6 +222,9 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 		return err
 	}
 	agentModelGateway := adapters.NewAgentTaskModelGateway(llmGateway, llmCatalog)
+	// Member cleanup releases LLM-owned policy pins inside its own deletion
+	// transaction through the composition-root adapter.
+	p.Members.SetPolicyReferenceReleaser(adapters.NewMembershipPolicyReferenceReleaser(llmCatalog))
 	agentNovelGuideRepo, err := agentinfra.NewNovelGuideRepository(p.UoW)
 	if err != nil {
 		return err

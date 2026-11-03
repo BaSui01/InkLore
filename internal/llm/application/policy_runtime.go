@@ -30,3 +30,9 @@ func (s *Catalog) CurrentPolicySnapshot(ctx context.Context, tenantID, taskKey s
 func (s *Catalog) RecordPolicyVersionReference(ctx context.Context, tenantID, versionID, referenceKind, referenceID string) error {
 	return s.opts.Repository.RecordPolicyVersionReference(ctx, tenantID, versionID, referenceKind, referenceID)
 }
+
+// ReleasePolicyVersionReferences drops ledger pins for entities deleted by
+// their owning domain, inside that domain's own transaction.
+func (s *Catalog) ReleasePolicyVersionReferences(ctx context.Context, tenantID, referenceKind string, referenceIDs []string) error {
+	return s.opts.Repository.ReleasePolicyVersionReferences(ctx, tenantID, referenceKind, referenceIDs)
+}
