@@ -328,9 +328,9 @@ archguard继续扫描相同扩展与目录，阈值由50*1024改为500*1024，�
 
 仅增加默认分支 GitHub Actions 与治理文档，不改变业务 Go/React 运行路径、数据库迁移或发布镜像。基于 Compare ahead_by≥20 创建 release 源快照；只有 GitHub 的最新检查和保护条件都满足才允许 Merge Commit 自动合入 private，保留 dev 继续开发。当前分支存在 42/6 双向提交分叉以及未完成业务验收，默认阻止无审查发布。
 
-## INK-258 · Go 加密与网络依赖安全更新（review）
+## INK-258 · Go 加密与网络依赖安全更新（done）
 
-基于原 Dependabot PR #28 的模块解析快照，将 golang.org/x/crypto 从 v0.48.0 升至 v0.52.0，同步更新 x/net、x/text、x/sys、x/sync；本阶段只改 go.mod/go.sum，原 Go 应用源代码、SQL 和前端运行路径不变。依赖图变更仍可能影响加密、密码校验、JWT、传输安全等可达运行行为，因此不能仅根据静态构建认定功能兼容；必须在隔离环境验收实际授权与失败路径，再经受保护发布 PR 同步 private。详情见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-go-crypto-security-upgrade.md)。
+[PR #43](https://github.com/BaSui01/InkLore/pull/43) 已在 dev 验证 `x/crypto` v0.52.0 与联动 `x/net`、`x/text`、`x/sys`、`x/sync` 的升级，Go 1.27.1 模块校验、build/vet/archguard 通过。GitHub [临时 PG17/Redis7 + API 运行验收](https://github.com/BaSui01/InkLore/actions/runs/41492434905) 实际覆盖 17 组迁移与重放、注册 200、会话 200、匿名 401、重复注册 409 与权限/事务路径。范围受控的 [PR #47](https://github.com/BaSui01/InkLore/pull/47) 已通过受保护 CI 合并到默认 private，当前两条长期分支的 `go.mod` 已确认一致。未触碰业务源码、生产数据或外部 Provider Key；真实模型和完整生产认证压测仍作为独立业务验收，不属于这次依赖版本交付。详情见 [工程笔记](../.agents/notes/proposed/process/2026-11-03-go-crypto-security-upgrade.md)。
 
 ## INK-254 · 自动合并的身份与持久化路径保护（review）
 
