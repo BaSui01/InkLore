@@ -1,0 +1,17 @@
+# Creator-only Vite static bundle; Admin assets are NOT included.
+FROM node:22-alpine AS build
+RUN npm install -g pnpm@11.25.0
+WORKDIR /src
+COPY frontend ./frontend
+WORKDIR /src/frontend
+RUN pnpm install --frozen-lockfile
+RUN pnpm run build:creator
+
+FROM nginx:1.28-alpine
+COPY --from=build /src/frontend/dist/ /usr/share/nginx/html/
+COPY deploy/staging/nginx.conf.template /etc/nginx/nginx.conf.template
+ENV PORT=8080
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1
+CMD ["sh", "-ec", ": \"\${API_UPSTREAM:?configure private API upstream}\"; envsubst '\${PORT} \${API_UPSTREAM}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf; nginx -t; exec nginx -g 'daemon off;'"]
