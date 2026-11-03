@@ -53,7 +53,7 @@
 | 新笔记必须在旧 backlog 有 INK 行 | REPLACE | Task 接受真实 Issue/PR URL、#编号；兼容历史 INK | 格式检查不替代任务真实性，不再复制状态看板 |
 | Accepted ADR 永远有效、局部修改一律 ADR-First | SIMPLIFY | 明确历史假设可被证据替代；重要长期选择记录原因，常规修改不过度仪式化 | 原 ADR 原文与独特理由保留，索引说明替代范围 |
 | Skills 与 DSH 固定阶段/任务顺序 | REPLACE | 同步三个项目技能、模板与角色提示词 | DSH 模型、供应商、工具及权限配置未改 |
-| 重复设计与阶段完成记录 | REPLACE | 历史设计、UI 规划、旧 backlog、旧架构、交接和截图转 reference；当前 docs 提炼真实说明 | 生成器消费的 API JSON、聚合 SQL 及工具保持原路径 |
+| 重复设计与阶段完成记录 | REPLACE | 历史设计、UI 规划、旧 backlog、旧架构、交接和截图转 reference；当前 docs 提炼真实说明 | 生成器消费的 API JSON、聚合 SQL 及工具保持原路径；OpenAPI 仅更新标题/说明元数据 |
 | 内部 llmr1 导入别名和当前 UI 文案 | SIMPLIFY | 改稳定能力名称及注释，保留未接线的界面限制说明 | Go token 等价核对通过；不改公开错误、路由或持久化值 |
 | 普通 CI 固定 17 次迁移 / 80 张表 | REPLACE | 按仓库实际版本、名称、校验和核对；隔离 schema 与同轮主库比较实际表集合 | 非固定版本阻断；同名但历史内容变化仍失败 |
 | staging 权限覆盖仅适用前 17 次迁移 | NEEDS_DECISION | 明确保留权限复核 guard，不更改授权 SQL | 新迁移涉及新表授权，不能自动扩大 GRANT；需另行安全审查 |
@@ -174,7 +174,7 @@
 | 迁移CI正反例与脚本语法 | PASS；8/8行为检查、YAML/Bash/Python语法 | 真实Go loader的17项清单通过；缺项、等数量错版本/名称/hash、多项和重复版本拒绝；隔离新增第18项含CRLF通过 |
 | 生成器隔离对比 | PASS | 34输入相同，70产物逐字节相同；仅OpenAPI标题描述/README及不再生成旧FR报告有预期差异；重复生成确定 |
 | Go业务token等价 | PASS | 18文件中17个仅注释，domains.go仅4个导入别名等价；排除主动改逻辑的archguard |
-| migrations、配置、依赖清单、权限SQL及现有API JSON/DDL | PASS；相对dev基线无差异 | 历史SQL、机器协议源及生成资产不因清理改变；不代表现有契约无缺陷 |
+| migrations、配置、依赖清单、权限SQL及API/DDL | PASS；仅OpenAPI标题和说明两项元数据变化 | 逐JSON结构比较确认接口版本、路由、请求响应与错误码不变；其他机器资产、历史SQL和依赖相对dev无差异；不代表现有契约无缺陷 |
 | 最新PR CI/隔离PG/Redis | 以PR对应最新head记录为准 | 不沿用旧提交绿灯；不将限定迁移/身份冒烟扩写为完整创作运行通过 |
 | PowerShell脚本、DSH实际调度 | NOT_VERIFIED | 环境没有pwsh与已配置DSH；DSH非提示词配置等价已单独验证 |
 | 真实模型、完整浏览器、共享Staging | NOT_RUNTIME_VERIFIED | 未获得这些场景的当前运行证据 |
