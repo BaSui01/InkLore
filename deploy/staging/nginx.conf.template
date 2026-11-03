@@ -52,7 +52,7 @@ http {
       try_files $uri =404;
       add_header Cache-Control "public, max-age=31536000, immutable";
     }
-    location ~ /\\. {
+    location ~ /[.](env|git|ht|svn) {
       deny all;
     }
     location = /index.html {
