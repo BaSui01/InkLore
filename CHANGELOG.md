@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+### 五项依赖补丁批量整合（INK-261，待独立验收）
+
+- 汇总 Dependabot #49–#53 的 quic-go、x/net、Vite、source-map-js、markdown-it 补丁版本和锁文件校验和，先进入 dev 做兼容与实际 API/双端构建验收。
+- 不修改业务代码、数据库或密钥；不直接合入 private，不宣称五项补丁解决所有依赖漏洞或真实模型/浏览器业务验收。
+
+
 ### 双端 UI/UX 设计实施包（INK-259，review）
 
 - 新增 [docs/ui-ux](docs/ui-ux/README.md)：管理端/创作者端现有路由盘点、核心页面布局与交互方案、组件复用和响应式/无障碍/权限验收矩阵。
