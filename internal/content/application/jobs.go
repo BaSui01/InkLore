@@ -199,7 +199,6 @@ func (s *Service) CommitImport(ctx context.Context, c Command, jobID string, r d
 		}
 
 		now := s.now()
-		var addedTotalWords int64
 		for i, item := range selectedItems {
 			pos := maxPos + int64(i) + 1
 			if pos > 1999 {
@@ -233,13 +232,11 @@ func (s *Service) CommitImport(ctx context.Context, c Command, jobID string, r d
 			if err := s.projectChapter(tx, o, ch, 0); err != nil {
 				return nil, err
 			}
-			addedTotalWords += item.WordCount
 		}
 
 		if err := s.o.Repo.MarkImportItemsSelected(tx, o, jobID, r.SelectedItemIDs); err != nil {
 			return nil, err
 		}
-		n.WordCount += addedTotalWords
 		if err := s.bumpNovel(tx, o, &n); err != nil {
 			return nil, err
 		}
@@ -449,18 +446,20 @@ func (s *Service) CopyNovel(ctx context.Context, c Command, novel string, r d.Co
 		now := s.now()
 		newNovelID := uuid.NewString()
 		newNovel := d.Novel{
-			ID:          newNovelID,
-			TenantID:    o.TenantID,
-			OwnerID:     o.ActorID,
-			Title:       r.Title,
-			Summary:     n.Summary,
-			Category:    n.Category,
-			TargetWords: n.TargetWords,
-			WordCount:   n.WordCount,
-			Status:      "active",
-			Revision:    1,
-			CreatedAt:   now,
-			UpdatedAt:   now,
+			ID:                   newNovelID,
+			TenantID:             o.TenantID,
+			OwnerID:              o.ActorID,
+			Title:                r.Title,
+			Summary:              n.Summary,
+			Category:             n.Category,
+			TargetWords:          n.TargetWords,
+			TargetCompletionDate: n.TargetCompletionDate,
+			// Copied chapters are drafts and must be confirmed by their author.
+			WordCount: 0,
+			Status:    "active",
+			Revision:  1,
+			CreatedAt: now,
+			UpdatedAt: now,
 		}
 		if err := s.o.Repo.InsertNovel(tx, Owner{TenantID: o.TenantID, ActorID: o.ActorID, NovelID: newNovelID}, newNovel); err != nil {
 			return nil, err

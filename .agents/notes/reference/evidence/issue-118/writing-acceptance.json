@@ -1,0 +1,450 @@
+{
+  "status": "PASS",
+  "novel_id": "056b03ff-1580-4ca9-af86-d4cf64350671",
+  "timezone": "Asia/Shanghai",
+  "confirmed_words": 8,
+  "added_today": 22,
+  "removed_today": 14,
+  "confirmation_and_state_events": 9,
+  "goal_percent": 160,
+  "migration_replays": 2,
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/v1/content/novels",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/volumes",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/chapters",
+      "status": 201
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/body",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/worldview/novels/056b03ff-1580-4ca9-af86-d4cf64350671/world-revision",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/confirm",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/confirm",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/body",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/worldview/novels/056b03ff-1580-4ca9-af86-d4cf64350671/world-revision",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/confirm",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/confirm",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/body",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/confirm",
+      "status": 409
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/worldview/novels/056b03ff-1580-4ca9-af86-d4cf64350671/world-revision",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/confirm",
+      "status": 500
+    },
+    {
+      "method": "GET",
+      "path": "/v1/worldview/novels/056b03ff-1580-4ca9-af86-d4cf64350671/world-revision",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/worldview/novels/056b03ff-1580-4ca9-af86-d4cf64350671/world-revision",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/confirm",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/confirm",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/rollback",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/worldview/novels/056b03ff-1580-4ca9-af86-d4cf64350671/world-revision",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/confirm",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/confirm",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/body",
+      "status": 200
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171?expected_revision=10",
+      "status": 200
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171?expected_revision=10",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/restore",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/restore",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171?expected_revision=12",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/restore",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/restore",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/content/chapters/cff5fc14-183e-4e90-bcf5-59f125956171/body",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/worldview/novels/056b03ff-1580-4ca9-af86-d4cf64350671/world-revision",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 409
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 422
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 404
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 404
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/copy",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/33a979c3-9c7a-4c43-b4f4-c94b0444fd68",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/imports/69a5dee9-bf1c-4c9e-92e2-d3db49853867/commit",
+      "status": 202
+    },
+    {
+      "method": "POST",
+      "path": "/v1/content/imports/69a5dee9-bf1c-4c9e-92e2-d3db49853867/commit",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/chapters/b1fc7ecc-fe58-45e2-9650-ba8d21748e04",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671/statistics?from=2026-11-05&to=2026-11-05",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/content/novels/056b03ff-1580-4ca9-af86-d4cf64350671",
+      "status": 200
+    }
+  ],
+  "checks": [
+    "Unicode",
+    "draft exclusion",
+    "idempotency",
+    "world CAS rollback",
+    "statistics failure transaction rollback",
+    "chapter CAS concurrency",
+    "rollback confirmation",
+    "deletion/restoration",
+    "goal/date/clear",
+    "tenant denial",
+    "copy drafts",
+    "real import commit from PG preview fixture",
+    "legacy event exclusion",
+    "upgrade backfill",
+    "PG midnight grouping"
+  ]
+}

@@ -260,7 +260,7 @@ export class ApiClient {
         });
       }
 
-      const rawJson = await res.json().catch(() => ({ code: "ok", data: null }));
+      const rawJson = await this.readSuccessBody(res);
       return this.normalizeSuccessEnvelope<TRes>(rawJson, res);
     }
 
@@ -308,7 +308,7 @@ export class ApiClient {
     }
 
     if (res.ok) {
-      const rawJson = await res.json().catch(() => ({ code: "ok", data: null }));
+      const rawJson = await this.readSuccessBody(res);
       return this.normalizeSuccessEnvelope<TRes>(rawJson, res);
     }
 
@@ -487,6 +487,16 @@ export class ApiClient {
         request_id: res.headers.get("x-request-id") || "",
         trace_id: res.headers.get("x-trace-id") || "",
       };
+    }
+  }
+
+  private async readSuccessBody(res: Response): Promise<unknown> {
+    if (res.status === 204) return { code: "ok", data: null };
+    try {
+      return await res.json();
+    } catch (cause) {
+      // The write may already have committed. Keep its operation key recoverable.
+      throw new NetworkError("Response body was not completely received", cause);
     }
   }
 

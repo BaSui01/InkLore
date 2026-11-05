@@ -18,6 +18,7 @@ export interface Novel {
   status: "active" | "archived" | "deleted";
   previous_status?: "active" | "archived" | null;
   target_words: number;
+  target_completion_date: string | null;
   word_count: number;
   revision: number;
   created_at: string;
@@ -29,6 +30,31 @@ export interface CreateNovelInput {
   summary?: string;
   category?: string;
   target_words?: number;
+  target_completion_date?: string | null;
+}
+
+export interface UpdateNovelInput {
+  expected_revision: number;
+  title: string;
+  summary: string;
+  category: string;
+  target_words: number;
+  target_completion_date: string | null;
+}
+
+export interface WritingStatistics {
+  novel_id: string;
+  from: string;
+  to: string;
+  current_word_count: number;
+  days: Array<{
+    date: string;
+    added_words: number;
+    removed_words: number;
+    net_words: number;
+    save_count: number;
+    timezone: "Asia/Shanghai";
+  }>;
 }
 
 export interface Volume {

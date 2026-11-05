@@ -1,3 +1,4 @@
+import { writingEnUS } from "./writing";
 import { foundationEnUS } from "./foundation-en-US";
 /**
  * @inklore/i18n - English Dictionary (en-US)
@@ -938,6 +939,7 @@ const localeDict: Record<string, string> = {
 
 export const enUS: Record<string, string> = {
   ...localeDict,
+  ...writingEnUS,
   ...homeEnUS,
   ...editorEnUS,
   ...complianceEnUS,

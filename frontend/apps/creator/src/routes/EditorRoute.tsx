@@ -43,6 +43,7 @@ import { AgentWorkbench } from "./AgentWorkbench";
 import { PlainTextEditor } from "./PlainTextEditor";
 import { ConflictResolutionModal } from "./ConflictResolutionModal";
 import { ConfirmChapterModal } from "./ConfirmChapterModal";
+import { WritingProgress } from "../components/WritingProgress";
 import { ComplianceReviewModal } from "./ComplianceReviewModal";
 
 export interface EditorRouteProps {
@@ -892,6 +893,7 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
         {/* Center Main Writing Area */}
         <main className="flex-1 flex flex-col overflow-y-auto bg-[#FAF7EE] dark:bg-[#181613]">
           <div className="w-full max-w-4xl mx-auto px-8 py-6 space-y-4">
+            {novel && !accessDenied && <WritingProgress key={novel.id} novel={novel} onChanged={setNovel} />}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-stone-600 dark:text-stone-400" />
@@ -1056,10 +1058,13 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
           chapter={activeChapter}
           onClose={() => setConfirmModalOpen(false)}
           onSuccess={(confirmation) => {
-            const updated = { ...activeChapter, status: "confirmed" as const };
+            const updated = confirmation.chapter;
+            revisionRef.current = updated.revision;
+            setCurrentRevision(updated.revision);
             setActiveChapter(updated);
             activeChapterRef.current = updated;
             setChapters(chapters.map((c) => (c.id === updated.id ? updated : c)));
+            void loadNovelData();
           }}
         />
       )}

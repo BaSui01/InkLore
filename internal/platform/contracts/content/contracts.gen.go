@@ -1210,8 +1210,13 @@ type CreateImportFormat string
 
 // CreateNovel defines model for CreateNovel.
 type CreateNovel struct {
-	Category    string `json:"category"`
-	Summary     string `json:"summary"`
+	Category string `json:"category"`
+	Summary  string `json:"summary"`
+
+	// TargetCompletionDate Optional target completion date (YYYY-MM-DD); null means no date goal. A calendar date without time or timezone.
+	TargetCompletionDate *openapi_types.Date `json:"target_completion_date,omitempty"`
+
+	// TargetWords Optional total word goal: 0 means unset. Progress may exceed 100%.
 	TargetWords int    `json:"target_words"`
 	Title       string `json:"title"`
 }
@@ -1222,14 +1227,19 @@ type CreateVolume struct {
 	Title   string `json:"title"`
 }
 
-// DailyStat defines model for DailyStat.
+// DailyStat Natural day in Asia/Shanghai (the application business timezone; user/tenant timezone preferences are not currently configurable). Confirmation/deletion/restoration events are attributed to their commit day. Net change may be negative; cumulative current_word_count cannot be negative.
 type DailyStat struct {
-	AddedWords   int                `json:"added_words"`
-	Date         openapi_types.Date `json:"date"`
-	NetWords     int                `json:"net_words"`
-	RemovedWords int                `json:"removed_words"`
-	SaveCount    int                `json:"save_count"`
-	Timezone     DailyStatTimezone  `json:"timezone"`
+	// AddedWords Inserted confirmed-body non-whitespace Unicode code points, including restored confirmed text.
+	AddedWords int                `json:"added_words"`
+	Date       openapi_types.Date `json:"date"`
+	NetWords   int                `json:"net_words"`
+
+	// RemovedWords Removed confirmed-body non-whitespace Unicode code points, including deleted confirmed chapters.
+	RemovedWords int `json:"removed_words"`
+
+	// SaveCount Number of committed confirmation/deletion/restoration transitions; retained field name for compatibility. Draft saves are excluded.
+	SaveCount int               `json:"save_count"`
+	Timezone  DailyStatTimezone `json:"timezone"`
 }
 
 // DailyStatTimezone defines model for DailyStat.Timezone.
@@ -1434,11 +1444,18 @@ type Novel struct {
 	Revision       Revision            `json:"revision"`
 	Status         NovelStatus         `json:"status"`
 	Summary        string              `json:"summary"`
-	TargetWords    int                 `json:"target_words"`
-	TenantId       UUID                `json:"tenant_id"`
-	Title          string              `json:"title"`
-	UpdatedAt      Timestamp           `json:"updated_at"`
-	WordCount      int                 `json:"word_count"`
+
+	// TargetCompletionDate Optional target completion date (YYYY-MM-DD); null means no date goal. A calendar date without time or timezone.
+	TargetCompletionDate *openapi_types.Date `json:"target_completion_date"`
+
+	// TargetWords Optional total word goal: 0 means unset. Progress may exceed 100%.
+	TargetWords int       `json:"target_words"`
+	TenantId    UUID      `json:"tenant_id"`
+	Title       string    `json:"title"`
+	UpdatedAt   Timestamp `json:"updated_at"`
+
+	// WordCount Non-whitespace Unicode code points in the current confirmed version of non-deleted chapters. Draft saves, draft rollbacks, imports and copies do not change this total until author confirmation.
+	WordCount int `json:"word_count"`
 }
 
 // NovelPreviousStatus defines model for Novel.PreviousStatus.
@@ -1510,8 +1527,9 @@ type SearchPage struct {
 	NextCursor string      `json:"next_cursor"`
 }
 
-// Statistics defines model for Statistics.
+// Statistics Current confirmed text statistics. Changes are committed atomically with confirmation, deletion or restoration. Previous confirmed text remains counted while a new working draft is edited. Legacy draft events are excluded; migration backfills only current totals, without inventing historical daily activity.
 type Statistics struct {
+	// CurrentWordCount Non-whitespace Unicode code points in the current confirmed version of non-deleted chapters. Draft saves, draft rollbacks, imports and copies do not change this total until author confirmation.
 	CurrentWordCount int                `json:"current_word_count"`
 	Days             []DailyStat        `json:"days"`
 	From             openapi_types.Date `json:"from"`
@@ -1546,8 +1564,13 @@ type UpdateNovel struct {
 	Category         string   `json:"category"`
 	ExpectedRevision Revision `json:"expected_revision"`
 	Summary          string   `json:"summary"`
-	TargetWords      int      `json:"target_words"`
-	Title            string   `json:"title"`
+
+	// TargetCompletionDate Optional target completion date (YYYY-MM-DD); null means no date goal. A calendar date without time or timezone.
+	TargetCompletionDate *openapi_types.Date `json:"target_completion_date,omitempty"`
+
+	// TargetWords Optional total word goal: 0 means unset. Progress may exceed 100%.
+	TargetWords int    `json:"target_words"`
+	Title       string `json:"title"`
 }
 
 // UpdateVolume defines model for UpdateVolume.

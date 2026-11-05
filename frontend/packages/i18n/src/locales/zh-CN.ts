@@ -1,3 +1,4 @@
+import { writingZhCN } from "./writing";
 import { foundationZhCN } from "./foundation-zh-CN";
 /**
  * @inklore/i18n - 简体中文词库 (zh-CN)
@@ -938,6 +939,7 @@ const localeDict: Record<string, string> = {
 
 export const zhCN: Record<string, string> = {
   ...localeDict,
+  ...writingZhCN,
   ...homeZhCN,
   ...editorZhCN,
   ...complianceZhCN,

@@ -115,8 +115,6 @@ func (s *Service) writeBody(ctx context.Context, c Command, id string, revision 
 		if e = d.CAS(ch.Revision, revision); e != nil {
 			return nil, e
 		}
-		before := ch.Body
-		oldCount := ch.WordCount
 		source := mode
 		switch mode {
 		case "metadata":
@@ -158,13 +156,6 @@ func (s *Service) writeBody(ctx context.Context, c Command, id string, revision 
 		if e = s.projectChapter(tx, o, ch, old); e != nil {
 			return nil, e
 		}
-		added, removed := d.WritingDelta(before, ch.Body)
-		now := s.now()
-		we := WritingEvent{ID: uuid.NewString(), TenantID: o.TenantID, NovelID: o.NovelID, ChapterID: id, VersionID: ch.CurrentVersionID, ActorID: o.ActorID, Source: source, AddedWords: added, RemovedWords: removed, CreatedAt: now, UpdatedAt: now}
-		if e = s.o.Repo.InsertWritingEvent(tx, o, we); e != nil {
-			return nil, e
-		}
-		n.WordCount += ch.WordCount - oldCount
 		if e = s.bumpNovel(tx, o, &n); e != nil {
 			return nil, e
 		}
@@ -224,7 +215,6 @@ func (s *Service) chapterState(ctx context.Context, c Command, id string, r d.Re
 					ch.Position++
 				}
 			}
-			n.WordCount += ch.WordCount
 			action = "chapter.restored"
 		} else {
 			if ch.DeletedAt != nil {
@@ -232,10 +222,22 @@ func (s *Service) chapterState(ctx context.Context, c Command, id string, r d.Re
 			}
 			now := s.now()
 			ch.DeletedAt = &now
-			n.WordCount -= ch.WordCount
 		}
 		if e = s.saveChapter(tx, o, &ch); e != nil {
 			return nil, e
+		}
+		confirmed, e := s.confirmedBody(tx, o, ch)
+		if e != nil {
+			return nil, e
+		}
+		if ch.ConfirmedVersionID != nil {
+			before, after, source := confirmed, "", "delete"
+			if restore {
+				before, after, source = "", confirmed, "restore"
+			}
+			if e = s.recordConfirmedWriting(tx, o, &n, ch, *ch.ConfirmedVersionID, source, before, after); e != nil {
+				return nil, e
+			}
 		}
 		if !restore {
 			for _, other := range org.Chapters {
