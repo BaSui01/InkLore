@@ -112,7 +112,7 @@ export function ExportNovelDialog({ open, novelId, onClose }: { open: boolean; n
           {jobs.map((job) => (
             <div key={job.id} className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border-default)] p-2">
               <span>{job.format.toUpperCase()} · {t("export.chapters", job.result_chapter_count)} · {new Date(job.created_at).toLocaleString()}</span>
-              <Button variant="outline" disabled={busy || job.status !== "succeeded" || !job.output_file_id || Date.parse(job.expires_at) <= Date.now()} onClick={() => void downloadPrevious(job)}>{t("export.download")}</Button>
+              <Button variant="outline" className="shrink-0 whitespace-nowrap" disabled={busy || job.status !== "succeeded" || !job.output_file_id || Date.parse(job.expires_at) <= Date.now()} onClick={() => void downloadPrevious(job)}>{t("export.download")}</Button>
             </div>
           ))}
         </section>
