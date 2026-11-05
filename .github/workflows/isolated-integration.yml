@@ -87,6 +87,8 @@ jobs:
         run: |
           go run ./cmd/migrate -cmd up -timeout 180s
           go run ./cmd/migrate -cmd status -timeout 60s
+      - name: Verify migration atomicity and concurrent replay
+        run: INKLORE_MIGRATION_TEST_DSN="$DATABASE_DSN" go test ./internal/platform/database -count=1 -race -v
       - name: Verify Supabase staging permissions against unrelated public objects
         shell: bash
         run: |
