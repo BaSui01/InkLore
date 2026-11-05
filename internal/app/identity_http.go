@@ -143,57 +143,81 @@ func (a *App) registerIdentityRoutes(engine *gin.Engine) {
 		a.setRefreshCookie(c, "creator", result.RefreshToken, result.RefreshExpiresAt)
 		response.OK(c, 200, result)
 	})
-	engine.POST("/v1/auth/forgot-password", func(c *gin.Context) {
-		var input struct {
-			Email       string `json:"email"`
-			CaptchaID   string `json:"captcha_id"`
-			CaptchaCode string `json:"captcha_code"`
-		}
-		if err := httpguard.DecodeJSON(c, &input); err != nil {
-			response.Fail(c, err)
-			return
-		}
-		if input.CaptchaID != "" || input.CaptchaCode != "" {
-			if a.platform.Captcha == nil || !a.platform.Captcha.Verify(input.CaptchaID, input.CaptchaCode) {
-				response.Fail(c, platformerr.Contract(400, "platform.validation_failed", map[string]any{
-					"field":  "captcha_code",
-					"reason": "invalid_or_expired",
-				}))
-				return
-			}
-		}
-		if !a.config.IsDevelopment() {
-			response.Fail(c, platformerr.Contract(503, "platform.dependency_unavailable", nil))
-			return
-		}
+	engine.GET("/v1/auth/email-capabilities", func(c *gin.Context) {
 		c.Header("Cache-Control", "no-store")
-		token, err := service.ForgotPassword(c.Request.Context(), input.Email)
+		result, err := service.EmailCapabilities(c.Request.Context())
 		if err != nil {
 			response.Fail(c, err)
 			return
 		}
-		out := map[string]any{
-			"sent":       false,
-			"expires_in": 900,
-		}
-		if a.config.IsDevelopment() && token != "" {
-			out["dev_token"] = token
-		}
-		response.OK(c, 200, out)
+		response.OK(c, 200, result)
 	})
-	engine.POST("/v1/auth/reset-password", func(c *gin.Context) {
-		var input struct {
-			Token       string `json:"token"`
-			NewPassword string `json:"new_password"`
-		}
+	for _, path := range []string{"/v1/auth/email-challenges", "/v1/auth/forgot-password"} {
+		path := path
+		engine.POST(path, func(c *gin.Context) {
+			var input identity.EmailChallengeInput
+			if err := httpguard.DecodeJSON(c, &input); err != nil {
+				response.Fail(c, err)
+				return
+			}
+			if path == "/v1/auth/forgot-password" {
+				input.Purpose = "reset"
+			}
+			if c.GetHeader("Origin") != "" && !a.sessionOrigin(c, input.Audience, false) {
+				return
+			}
+			input.RequestKey = c.GetHeader("Idempotency-Key")
+			input.ClientIP = c.ClientIP()
+			c.Header("Cache-Control", "no-store")
+			result, err := service.RequestEmailChallenge(c.Request.Context(), input)
+			if err != nil {
+				response.Fail(c, err)
+				return
+			}
+			response.OK(c, 200, result)
+		})
+	}
+	engine.POST("/v1/auth/email-login", func(c *gin.Context) {
+		var input identity.EmailLoginInput
 		if err := httpguard.DecodeJSON(c, &input); err != nil {
 			response.Fail(c, err)
 			return
 		}
-		if err := service.ResetPassword(c.Request.Context(), input.Token, input.NewPassword); err != nil {
+		if c.GetHeader("Origin") != "" && !a.sessionOrigin(c, input.Audience, false) {
+			return
+		}
+		if !a.verifyOptionalEmailCaptcha(c, input.CaptchaID, input.CaptchaCode) {
+			return
+		}
+		input.ClientIP = c.ClientIP()
+		result, err := service.LoginEmail(c.Request.Context(), input)
+		if err != nil {
 			response.Fail(c, err)
 			return
 		}
+		a.setRefreshCookie(c, result.Principal.Audience, result.RefreshToken, result.RefreshExpiresAt)
+		c.Header("Cache-Control", "no-store")
+		response.OK(c, 200, result)
+	})
+	engine.POST("/v1/auth/reset-password", func(c *gin.Context) {
+		var input identity.ResetPasswordInput
+		if err := httpguard.DecodeJSON(c, &input); err != nil {
+			response.Fail(c, err)
+			return
+		}
+		if c.GetHeader("Origin") != "" && !a.sessionOrigin(c, input.Audience, false) {
+			return
+		}
+		if !a.verifyOptionalEmailCaptcha(c, input.CaptchaID, input.CaptchaCode) {
+			return
+		}
+		input.ClientIP = c.ClientIP()
+		if err := service.ResetPassword(c.Request.Context(), input); err != nil {
+			response.Fail(c, err)
+			return
+		}
+		a.setRefreshCookie(c, input.Audience, "", time.Time{})
+		c.Header("Cache-Control", "no-store")
 		response.OK(c, 200, map[string]any{"reset": true})
 	})
 	engine.GET("/v1/auth/session-csrf", func(c *gin.Context) {
@@ -391,4 +415,15 @@ func isOriginEquivalent(actual, expected string) bool {
 		return false
 	}
 	return isHostEquivalent(uAct.Host, uExp.Host)
+}
+
+func (a *App) verifyOptionalEmailCaptcha(c *gin.Context, id, code string) bool {
+	if id == "" && code == "" {
+		return true
+	}
+	if a.platform.Captcha != nil && a.platform.Captcha.Verify(id, code) {
+		return true
+	}
+	response.Fail(c, platformerr.Contract(400, "platform.validation_failed", map[string]any{"field": "captcha_code", "reason": "invalid_or_expired"}))
+	return false
 }

@@ -78,6 +78,8 @@ export interface AuthViewProps {
     captcha_id?: string;
     captcha_code?: string;
   }) => Promise<any>;
+  getEmailCapabilities?: () => Promise<{ enabled: boolean }>;
+  getEmailCooldown?: (email: string) => number;
   onSendVerificationCode?: (email: string, purpose: "login" | "register" | "reset") => Promise<any>;
   onOAuthClick?: (provider: OAuthProvider) => void;
   onSuccess?: (mode: AuthMode) => void;
@@ -100,6 +102,8 @@ export function AuthView({
   onLoginSubmit,
   onRegisterSubmit,
   onForgotPasswordSubmit,
+  getEmailCapabilities,
+  getEmailCooldown,
   onSendVerificationCode,
   onOAuthClick,
   onSuccess,
@@ -152,6 +156,11 @@ export function AuthView({
     setCaptchaId(c.id);
     setCaptchaInput("");
   }, []);
+  const refreshCaptcha = useCallback(() => {
+    setCaptchaInput("");
+    setCaptchaId("");
+    setCaptchaRefreshKey((key) => key + 1);
+  }, []);
   const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
   const [legalTab, setLegalTab] = useState<LegalTab>("terms");
 
@@ -185,6 +194,23 @@ export function AuthView({
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
   const [oauthNotice, setOauthNotice] = useState<string | null>(null);
   const [codeCooldown, setCodeCooldown] = useState(0);
+  const [emailCodeEnabled, setEmailCodeEnabled] = useState(false);
+  const canUseEmailCodes = Boolean(emailCodeEnabled && onSendVerificationCode);
+
+  useEffect(() => {
+    let alive = true;
+    setEmailCodeEnabled(false);
+    getEmailCapabilities?.().then((result) => { if (alive) setEmailCodeEnabled(result.enabled); })
+      .catch((error) => { if (alive) setErrorMsg(formatAuthError(error, t)); });
+    return () => { alive = false; };
+  }, [getEmailCapabilities, t]);
+
+  useEffect(() => {
+    setVerifyCode("");
+    setCodeCooldown(getEmailCooldown?.(email) || 0);
+  }, [email, activeMode, getEmailCooldown]);
+
+  useEffect(() => { if (!canUseEmailCodes) setLoginMethod("password"); }, [canUseEmailCodes]);
 
   useEffect(() => {
     if (codeCooldown <= 0) return;
@@ -230,22 +256,23 @@ export function AuthView({
     setSuccessNotice(null);
 
     const trimmedEmail = email.trim();
-    if (!trimmedEmail || !validateLoginIdentifier(trimmedEmail)) {
+    if (!trimmedEmail || !validateEmail(trimmedEmail)) {
       setErrorMsg(t("auth.email_required"));
       return;
     }
 
-    if (!onSendVerificationCode) {
+    if (!canUseEmailCodes) {
       setErrorMsg(t("auth.email_code_unavailable"));
       return;
     }
     setSendingCode(true);
     try {
-      await onSendVerificationCode(trimmedEmail, purpose);
+      const result = await onSendVerificationCode!(trimmedEmail, purpose);
       setSuccessNotice(t("auth.send_code_success"));
-      setCodeCooldown(60);
+      setCodeCooldown(result?.retry_after_seconds || 60);
     } catch (err: any) {
       setErrorMsg(formatAuthError(err, t));
+      setCodeCooldown(getEmailCooldown?.(trimmedEmail) || 0);
     } finally {
       setSendingCode(false);
     }
@@ -270,7 +297,7 @@ export function AuthView({
         return;
       }
     } else {
-      if (!verifyCode.trim()) {
+      if (!/^[0-9]{6}$/.test(verifyCode.trim())) {
         setErrorMsg(t("auth.verify_code_required"));
         return;
       }
@@ -282,7 +309,8 @@ export function AuthView({
 
     setLoading(true);
     try {
-      if (onLoginSubmit) {
+      if (!onLoginSubmit) throw new Error(t("auth.operation_unavailable"));
+      {
         await onLoginSubmit({
           email: trimmedEmail,
           password: loginMethod === "password" ? password : undefined,
@@ -296,9 +324,7 @@ export function AuthView({
       onSuccess?.("login");
     } catch (err: any) {
       setErrorMsg(formatAuthError(err, t));
-      setCaptchaInput("");
-      setCaptchaId("");
-      setCaptchaRefreshKey((key) => key + 1);
+      refreshCaptcha();
     } finally {
       setLoading(false);
     }
@@ -322,7 +348,7 @@ export function AuthView({
       setErrorMsg(t("auth.pen_name_required"));
       return;
     }
-    if (onSendVerificationCode && !verifyCode.trim()) {
+    if (verifyCode.trim() && !/^[0-9]{6}$/.test(verifyCode.trim())) {
       setErrorMsg(t("auth.verify_code_required"));
       return;
     }
@@ -344,7 +370,8 @@ export function AuthView({
 
     setLoading(true);
     try {
-      if (onRegisterSubmit) {
+      if (!onRegisterSubmit) throw new Error(t("auth.operation_unavailable"));
+      {
         await onRegisterSubmit({
           email: trimmedEmail,
           password,
@@ -358,6 +385,7 @@ export function AuthView({
       onSuccess?.("register");
     } catch (err: any) {
       setErrorMsg(formatAuthError(err, t));
+      refreshCaptcha();
     } finally {
       setLoading(false);
     }
@@ -375,7 +403,7 @@ export function AuthView({
       setErrorMsg(t("auth.email_required"));
       return;
     }
-    if (!verifyCode.trim()) {
+    if (!/^[0-9]{6}$/.test(verifyCode.trim())) {
       setErrorMsg(t("auth.verify_code_required"));
       return;
     }
@@ -393,7 +421,8 @@ export function AuthView({
 
     setLoading(true);
     try {
-      if (onForgotPasswordSubmit) {
+      if (!onForgotPasswordSubmit || !canUseEmailCodes) throw new Error(t("auth.email_code_unavailable"));
+      {
         await onForgotPasswordSubmit({
           email: trimmedEmail,
           code: verifyCode.trim(),
@@ -403,13 +432,14 @@ export function AuthView({
           captcha_code: captchaInput.trim(),
         });
       }
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setVerifyCode("");
       setSuccessNotice(t("auth.reset_success"));
-      setTimeout(() => {
-        changeMode("login");
-      }, 1500);
       onSuccess?.("forgot-password");
     } catch (err: any) {
       setErrorMsg(formatAuthError(err, t));
+      refreshCaptcha();
     } finally {
       setLoading(false);
     }
@@ -484,6 +514,7 @@ export function AuthView({
         </div>
       )}
 
+      {!canUseEmailCodes && <p className="text-xs text-[var(--text-muted)]" role="status">{t("auth.email_code_unavailable")}</p>}
       {/* 2. 登录模式 (Login Mode) */}
       {activeMode === "login" && (
         <form onSubmit={handleLogin} className="space-y-3.5">
@@ -509,8 +540,8 @@ export function AuthView({
                 setLoginMethod("code");
                 setErrorMsg(null);
               }}
-              disabled={!onSendVerificationCode}
-              title={!onSendVerificationCode ? t("auth.email_code_unavailable") : undefined}
+              disabled={!canUseEmailCodes}
+              title={!canUseEmailCodes ? t("auth.email_code_unavailable") : undefined}
               className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                 loginMethod === "code"
                   ? "bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs font-bold"
@@ -548,7 +579,7 @@ export function AuthView({
                 <label className="text-xs font-medium text-[var(--text-secondary)]">
                   {t("auth.password")}
                 </label>
-                {allowForgotPassword && (
+                {allowForgotPassword && canUseEmailCodes && (
                   <button
                     type="button"
                     onClick={() => changeMode("forgot-password")}
@@ -587,7 +618,7 @@ export function AuthView({
                 <label className="text-xs font-medium text-[var(--text-secondary)]">
                   {t("auth.verify_code")}
                 </label>
-                {allowForgotPassword && (
+                {allowForgotPassword && canUseEmailCodes && (
                   <button
                     type="button"
                     onClick={() => changeMode("forgot-password")}
@@ -614,7 +645,7 @@ export function AuthView({
                   type="button"
                   variant="outline"
                   className="h-10.5 px-3 text-xs font-semibold rounded-xl shrink-0 cursor-pointer"
-                  disabled={codeCooldown > 0 || sendingCode}
+                  disabled={!canUseEmailCodes || codeCooldown > 0 || sendingCode}
                   onClick={() => handleSendCode("login")}
                 >
                   {codeCooldown > 0
@@ -728,10 +759,10 @@ export function AuthView({
           </div>
 
           {/* 仅在真实邮件验证码后端接通时展示 */}
-          {onSendVerificationCode && (
+          {canUseEmailCodes && (
             <div>
             <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-              {t("auth.verify_code")}
+              {t("auth.verify_code_optional")}
             </label>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -742,7 +773,6 @@ export function AuthView({
                   placeholder={t("auth.verify_code_ph")}
                   className="pl-9 text-sm h-10 rounded-xl font-mono"
                   maxLength={6}
-                  required
                 />
                 <KeyRound className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -750,7 +780,7 @@ export function AuthView({
                 type="button"
                 variant="outline"
                 className="h-10 px-3 text-xs font-semibold rounded-xl shrink-0 cursor-pointer"
-                disabled={codeCooldown > 0 || sendingCode}
+                disabled={!canUseEmailCodes || codeCooldown > 0 || sendingCode}
                 onClick={() => handleSendCode("register")}
               >
                 {codeCooldown > 0
@@ -943,7 +973,7 @@ export function AuthView({
                 type="button"
                 variant="outline"
                 className="h-10.5 px-3 text-xs font-semibold rounded-xl shrink-0 cursor-pointer"
-                disabled={codeCooldown > 0 || sendingCode}
+                disabled={!canUseEmailCodes || codeCooldown > 0 || sendingCode}
                 onClick={() => handleSendCode("reset")}
               >
                 {codeCooldown > 0

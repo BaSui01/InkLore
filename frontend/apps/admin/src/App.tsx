@@ -16,6 +16,7 @@ import { ModelConfigRoute } from "./routes/ModelConfigRoute";
 import { AgentGovernanceRoute } from "./routes/AgentGovernanceRoute";
 import { AuditTrailRoute } from "./routes/AuditTrailRoute";
 import { ProjectLogsRoute } from "./routes/ProjectLogsRoute";
+import { MailSettingsRoute } from "./routes/MailSettingsRoute";
 import { UserManagementRoute } from "./routes/UserManagementRoute";
 import {
   AdminView,
@@ -89,7 +90,7 @@ function AdminRouter() {
     return (
       <AdminLoginRoute
         mode={authMode}
-        onNavigateMode={() => navigateTo("login", returnToView)}
+        onNavigateMode={(mode) => navigateTo(mode === "forgot-password" ? mode : "login", returnToView)}
         onSuccess={() => {
           const nextView = returnToView || "dashboard";
           navigateTo(nextView, undefined, true);
@@ -116,6 +117,7 @@ function AdminRouter() {
         {currentView === "agents" && <AgentGovernanceRoute />}
         {currentView === "audit" && <AuditTrailRoute />}
         {currentView === "project-logs" && <ProjectLogsRoute />}
+        {currentView === "mail-settings" && <MailSettingsRoute />}
       </div>
     </div>
   );

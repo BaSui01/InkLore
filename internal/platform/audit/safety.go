@@ -26,7 +26,7 @@ func validID(s string) bool {
 func optionalID(s *string) bool { return s == nil || validID(*s) }
 func validAction(s string) bool {
 	switch s {
-	case ActionLogin, ActionRegister, ActionPasswordReset, ActionRefresh, ActionLogout, ActionWSTicket, ActionRefreshReused, ActionCreateMember, ActionUpdateMember, ActionResetPassword, ActionRevokeSessions, ActionBootstrap, ActionPasswordChanged, ActionTenantSwitched:
+	case ActionLogin, ActionRegister, ActionPasswordReset, ActionRefresh, ActionLogout, ActionWSTicket, ActionRefreshReused, ActionCreateMember, ActionUpdateMember, ActionResetPassword, ActionRevokeSessions, ActionBootstrap, ActionPasswordChanged, ActionTenantSwitched, ActionMailSettingsUpdated, ActionMailTestSent:
 		return true
 	}
 	return domainAction(s)

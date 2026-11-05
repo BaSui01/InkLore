@@ -457,6 +457,10 @@ export class ApiClient {
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
+      if (config.method !== "GET") {
+        const csrf = this.session.getCsrfToken();
+        if (csrf) headers["X-CSRF-Token"] = csrf;
+      }
     }
 
     if (idempotencyKey) {

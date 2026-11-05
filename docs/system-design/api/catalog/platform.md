@@ -11,6 +11,9 @@
 | DELETE /v1/platform/files/{file_id} | platformDeleteFile | FR-03 platform.delete_file | [platform.json](../platform.json) |
 | GET /v1/platform/files/{file_id} | platformGetFile | FR-18 platform.file | [platform.json](../platform.json) |
 | POST /v1/platform/files | platformUploadFile | FR-18 platform.upload | [platform.json](../platform.json) |
+| POST /v1/platform/mail-settings/test | platformTestMailSettings | FR-24 platform.mail | [platform-mail.json](../platform-mail.json) |
+| GET /v1/platform/mail-settings | platformGetMailSettings | FR-24 platform.mail | [platform-mail.json](../platform-mail.json) |
+| PUT /v1/platform/mail-settings | platformUpdateMailSettings | FR-24 platform.mail | [platform-mail.json](../platform-mail.json) |
 | POST /v1/platform/members/{member_id}/reset-password | platformResetPassword | FR-24 platform.reset_password | [platform.json](../platform.json) |
 | POST /v1/platform/members/{member_id}/revoke-sessions | platformRevokeSessions | FR-24 platform.revoke_sessions | [platform.json](../platform.json) |
 | GET /v1/platform/members/{member_id} | platformGetMember | FR-24 platform.member | [platform.json](../platform.json) |

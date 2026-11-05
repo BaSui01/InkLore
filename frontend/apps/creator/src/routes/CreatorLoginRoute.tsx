@@ -19,15 +19,19 @@ export function CreatorLoginRoute({
   onNavigateMode,
   onSuccess,
 }: CreatorLoginRouteProps) {
-  const { login, register } = useCreatorSession();
+  const { login, register, emailCapabilities, sendVerificationCode, getEmailCooldown, resetPassword } = useCreatorSession();
 
   return (
     <AuthView
       variant="page"
       audience="creator"
-      mode={mode === "forgot-password" ? "login" : mode}
+      mode={mode}
       allowRegister={true}
-      allowForgotPassword={false}
+      allowForgotPassword={true}
+      getEmailCapabilities={emailCapabilities}
+      getEmailCooldown={getEmailCooldown}
+      onSendVerificationCode={sendVerificationCode}
+      onForgotPasswordSubmit={resetPassword}
       allowOAuth={false}
       allowUsername={true}
       onNavigateMode={onNavigateMode}
@@ -36,6 +40,7 @@ export function CreatorLoginRoute({
         await login({
           ...(identifier === "root" ? { username: "root" } : { email: identifier }),
           password: credentials.password || "",
+          ...(credentials.code ? { code: credentials.code } : {}),
           tenant_id: credentials.tenant_id,
           captcha_id: credentials.captcha_id,
           captcha_code: credentials.captcha_code,
@@ -46,6 +51,7 @@ export function CreatorLoginRoute({
           email: data.email,
           password: data.password,
           penName: data.penName,
+          code: data.code, captcha_id: data.captcha_id, captcha_code: data.captcha_code,
         });
       }}
       onSuccess={(completedMode) => {

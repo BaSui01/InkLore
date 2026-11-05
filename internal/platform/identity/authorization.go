@@ -64,6 +64,10 @@ func (s *Service) member(ctx context.Context, p Principal) (Principal, userRow, 
 	if q.RowsAffected != 1 || m.Status != "active" {
 		return Principal{}, user, unauthenticated()
 	}
+	// Principal is copied by value but its slices may still be shared across
+	// concurrent requests. Decode into fresh storage, never mutate caller roles.
+	p.Roles = nil
+	p.GlobalRoles = nil
 	if err = json.Unmarshal([]byte(m.RolesJSON), &p.Roles); err != nil {
 		return Principal{}, user, err
 	}

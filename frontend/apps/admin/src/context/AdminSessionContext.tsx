@@ -7,12 +7,16 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { SessionSnapshot, UserPrincipal } from "@inklore/contracts";
 import { adminSession } from "../api/adminApi";
-import { LoginCredentials, reportSafeDiagnostic } from "@inklore/transport";
+import { LoginCredentials, EmailCapabilities, EmailChallenge, EmailPurpose, EmailResetData, reportSafeDiagnostic } from "@inklore/transport";
 
 export interface AdminSessionContextValue {
   snapshot: SessionSnapshot;
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<UserPrincipal>;
+  emailCapabilities: () => Promise<EmailCapabilities>;
+  sendVerificationCode: (email: string, purpose: EmailPurpose) => Promise<EmailChallenge>;
+  getEmailCooldown: (email: string) => number;
+  resetPassword: (data: EmailResetData) => Promise<void>;
   switchTenant: (tenantId: string) => Promise<UserPrincipal>;
   logout: () => Promise<void>;
   isLoginModalOpen: boolean;
@@ -51,6 +55,11 @@ export function AdminSessionProvider({ children }: { children: React.ReactNode }
     return principal;
   }, []);
 
+  const emailCapabilities = useCallback(() => adminSession.emailCapabilities(), []);
+  const sendVerificationCode = useCallback((email: string, purpose: EmailPurpose) => adminSession.sendVerificationCode(email, purpose), []);
+  const getEmailCooldown = useCallback((email: string) => adminSession.getEmailCooldown(email), []);
+  const resetPassword = useCallback((data: EmailResetData) => adminSession.resetPassword(data), []);
+
   const switchTenant = useCallback((tenantId: string) => adminSession.switchTenant(tenantId), []);
 
   const logout = useCallback(async () => {
@@ -61,7 +70,7 @@ export function AdminSessionProvider({ children }: { children: React.ReactNode }
     snapshot,
     isAuthenticated: adminSession.isAuthenticated(),
     login,
-    switchTenant,
+    switchTenant, emailCapabilities, sendVerificationCode, getEmailCooldown, resetPassword,
     logout,
     isLoginModalOpen,
     setLoginModalOpen,

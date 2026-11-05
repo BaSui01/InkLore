@@ -283,6 +283,9 @@
      },
      "500": {
       "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
      }
     },
     "requestBody": {
@@ -301,7 +304,7 @@
   "/v1/auth/forgot-password": {
    "post": {
     "operationId": "authForgotPassword",
-    "summary": "请求密码重置令牌",
+    "summary": "请求实际投递的密码重置验证码",
     "tags": [
      "auth"
     ],
@@ -313,18 +316,26 @@
     "x-use-case": "FR-01 auth.forgot_password",
     "x-errors": [
      {
+      "code": "auth.rate_limited",
+      "http_status": 429,
+      "recovery": "retry_later"
+     },
+     {
       "code": "platform.dependency_unavailable",
       "http_status": 503,
       "recovery": "retry_later"
      }
     ],
-    "parameters": [],
+    "parameters": [
+     {
+      "$ref": "./common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
     "responses": {
      "200": {
-      "description": "开发环境未投递邮件，返回短期重置令牌；生产环境仅在投递器可用后返回成功。",
+      "description": "成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。",
       "headers": {
        "Cache-Control": {
-        "required": true,
         "schema": {
          "const": "no-store"
         }
@@ -344,7 +355,7 @@
            ],
            "properties": {
             "data": {
-             "$ref": "./platform-schemas.json#/components/schemas/ForgotPasswordResult"
+             "$ref": "./platform-mail.json#/components/schemas/EmailChallengeResult"
             }
            }
           }
@@ -361,6 +372,18 @@
      },
      "503": {
       "$ref": "./common.json#/components/responses/Unavailable"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
      }
     },
     "requestBody": {
@@ -379,7 +402,7 @@
   "/v1/auth/reset-password": {
    "post": {
     "operationId": "authResetPassword",
-    "summary": "使用重置令牌修改密码并吊销全部会话",
+    "summary": "单次消费重置验证码、修改密码并吊销全部会话",
     "tags": [
      "auth"
     ],
@@ -393,6 +416,21 @@
      {
       "code": "auth.invalid_token",
       "http_status": 400,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "auth.rate_limited",
+      "http_status": 429,
+      "recovery": "retry_later"
+     },
+     {
+      "code": "platform.dependency_unavailable",
+      "http_status": 503,
+      "recovery": "retry_later"
+     },
+     {
+      "code": "auth.invalid_credentials",
+      "http_status": 401,
       "recovery": "fix_input"
      }
     ],
@@ -428,6 +466,21 @@
      },
      "500": {
       "$ref": "./common.json#/components/responses/InternalError"
+     },
+     "401": {
+      "$ref": "./common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "./common.json#/components/responses/Forbidden"
+     },
+     "409": {
+      "$ref": "./common.json#/components/responses/Conflict"
+     },
+     "429": {
+      "$ref": "./common.json#/components/responses/TooManyRequests"
+     },
+     "503": {
+      "$ref": "./common.json#/components/responses/Unavailable"
      }
     },
     "requestBody": {
@@ -2176,8 +2229,7 @@
     ],
     "x-permission": {
      "audience": "admin",
-     "roles": [
-     ],
+     "roles": [],
      "global_roles": [
       "super_admin"
      ],
@@ -2277,8 +2329,7 @@
     ],
     "x-permission": {
      "audience": "admin",
-     "roles": [
-     ],
+     "roles": [],
      "global_roles": [
       "super_admin"
      ],

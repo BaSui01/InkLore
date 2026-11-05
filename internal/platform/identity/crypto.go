@@ -39,7 +39,7 @@ func New(manager *uow.Manager, options Options) (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Service{manager: manager, jwtKey: bytes.Clone(options.JWTKey), csrfKey: bytes.Clone(options.CSRFKey), limiter: options.Limiter, memory: newMemoryLimiter(), dummyHash: hash, onEvent: options.OnEvent, resets: newResetStore()}, nil
+	return &Service{manager: manager, jwtKey: bytes.Clone(options.JWTKey), csrfKey: bytes.Clone(options.CSRFKey), limiter: options.Limiter, memory: newMemoryLimiter(), dummyHash: hash, onEvent: options.OnEvent}, nil
 }
 func ValidatePassword(password string) error {
 	if !utf8.ValidString(password) || utf8.RuneCountInString(password) < 6 || len(password) > 72 {

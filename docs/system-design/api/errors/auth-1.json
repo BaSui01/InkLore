@@ -33,10 +33,12 @@
   {
    "code": "auth.invalid_credentials",
    "http_status": 401,
-   "recovery": "reauthenticate",
+   "recovery": "fix_input",
    "message_key": "errors.auth.invalid_credentials",
    "operations": [
+    "authEmailLogin",
     "authLogin",
+    "authResetPassword",
     "authChangePassword"
    ]
   },
@@ -64,8 +66,16 @@
    "recovery": "retry_later",
    "message_key": "errors.auth.rate_limited",
    "operations": [
+    "authEmailCapabilities",
+    "authRequestEmailChallenge",
+    "authEmailLogin",
+    "platformGetMailSettings",
+    "platformUpdateMailSettings",
+    "platformTestMailSettings",
     "authLogin",
-    "authRegister"
+    "authRegister",
+    "authForgotPassword",
+    "authResetPassword"
    ]
   },
   {

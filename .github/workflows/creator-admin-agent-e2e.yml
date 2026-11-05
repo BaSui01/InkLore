@@ -135,3 +135,13 @@ jobs:
           python3 scripts/ci/creator_admin_agent_acceptance.py
           export PLAYWRIGHT_PACKAGE_PATH=/tmp/inklore-ci-browser/node_modules/playwright
           node scripts/ci/creator_admin_agent_browser.cjs
+          export E2E_MAIL_UI_PG_TEST=1 E2E_RUN_BROWSER=1 E2E_EVIDENCE_DIR=/tmp/inklore-mail-ui-evidence
+          python3 scripts/ci/mail_ui_acceptance.py
+      - name: Upload redacted mail settings browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mail-settings-browser-evidence
+          path: /tmp/inklore-mail-ui-evidence
+          if-no-files-found: warn
+          retention-days: 7

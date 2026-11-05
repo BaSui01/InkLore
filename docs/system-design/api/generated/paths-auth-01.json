@@ -130,10 +130,10 @@
     "security": []
    }
   },
-  "/v1/auth/forgot-password": {
-   "post": {
-    "operationId": "authForgotPassword",
-    "summary": "请求密码重置令牌",
+  "/v1/auth/email-capabilities": {
+   "get": {
+    "operationId": "authEmailCapabilities",
+    "summary": "查询当前邮箱验证码能力",
     "tags": [
      "auth"
     ],
@@ -142,8 +142,13 @@
      "roles": [],
      "scope": "public"
     },
-    "x-use-case": "FR-01 auth.forgot_password",
+    "x-use-case": "FR-01 auth.email",
     "x-errors": [
+     {
+      "code": "auth.rate_limited",
+      "http_status": 429,
+      "recovery": "retry_later"
+     },
      {
       "code": "platform.dependency_unavailable",
       "http_status": 503,
@@ -153,10 +158,9 @@
     "parameters": [],
     "responses": {
      "200": {
-      "description": "开发环境未投递邮件，返回短期重置令牌；生产环境仅在投递器可用后返回成功。",
+      "description": "成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。",
       "headers": {
        "Cache-Control": {
-        "required": true,
         "schema": {
          "const": "no-store"
         }
@@ -176,7 +180,7 @@
            ],
            "properties": {
             "data": {
-             "$ref": "../platform-schemas.json#/components/schemas/ForgotPasswordResult"
+             "$ref": "../platform-mail.json#/components/schemas/EmailCapabilities"
             }
            }
           }
@@ -187,6 +191,303 @@
      },
      "400": {
       "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "security": []
+   }
+  },
+  "/v1/auth/email-challenges": {
+   "post": {
+    "operationId": "authRequestEmailChallenge",
+    "summary": "请求实际投递的用途绑定邮箱验证码",
+    "tags": [
+     "auth"
+    ],
+    "x-permission": {
+     "audience": "public",
+     "roles": [],
+     "scope": "public"
+    },
+    "x-use-case": "FR-01 auth.email",
+    "x-errors": [
+     {
+      "code": "auth.rate_limited",
+      "http_status": 429,
+      "recovery": "retry_later"
+     },
+     {
+      "code": "platform.dependency_unavailable",
+      "http_status": 503,
+      "recovery": "retry_later"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。",
+      "headers": {
+       "Cache-Control": {
+        "schema": {
+         "const": "no-store"
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "$ref": "../platform-mail.json#/components/schemas/EmailChallengeResult"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "security": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../platform-mail.json#/components/schemas/EmailChallengeRequest"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/auth/email-login": {
+   "post": {
+    "operationId": "authEmailLogin",
+    "summary": "单次消费验证码并创建真实身份会话",
+    "tags": [
+     "auth"
+    ],
+    "x-permission": {
+     "audience": "public",
+     "roles": [],
+     "scope": "public"
+    },
+    "x-use-case": "FR-01 auth.email",
+    "x-errors": [
+     {
+      "code": "auth.rate_limited",
+      "http_status": 429,
+      "recovery": "retry_later"
+     },
+     {
+      "code": "platform.dependency_unavailable",
+      "http_status": 503,
+      "recovery": "retry_later"
+     },
+     {
+      "code": "auth.invalid_credentials",
+      "http_status": 401,
+      "recovery": "fix_input"
+     }
+    ],
+    "parameters": [],
+    "responses": {
+     "200": {
+      "description": "成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。",
+      "headers": {
+       "Cache-Control": {
+        "schema": {
+         "const": "no-store"
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "$ref": "../platform-schemas.json#/components/schemas/Session"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
+     "500": {
+      "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
+     }
+    },
+    "security": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "../platform-mail.json#/components/schemas/EmailLogin"
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/auth/forgot-password": {
+   "post": {
+    "operationId": "authForgotPassword",
+    "summary": "请求实际投递的密码重置验证码",
+    "tags": [
+     "auth"
+    ],
+    "x-permission": {
+     "audience": "public",
+     "roles": [],
+     "scope": "public"
+    },
+    "x-use-case": "FR-01 auth.forgot_password",
+    "x-errors": [
+     {
+      "code": "auth.rate_limited",
+      "http_status": 429,
+      "recovery": "retry_later"
+     },
+     {
+      "code": "platform.dependency_unavailable",
+      "http_status": 503,
+      "recovery": "retry_later"
+     }
+    ],
+    "parameters": [
+     {
+      "$ref": "../common.json#/components/parameters/IdempotencyKey"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。",
+      "headers": {
+       "Cache-Control": {
+        "schema": {
+         "const": "no-store"
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "allOf": [
+          {
+           "$ref": "../common.json#/components/schemas/SuccessMeta"
+          },
+          {
+           "type": "object",
+           "required": [
+            "data"
+           ],
+           "properties": {
+            "data": {
+             "$ref": "../platform-mail.json#/components/schemas/EmailChallengeResult"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "../common.json#/components/responses/BadRequest"
+     },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
      },
      "500": {
       "$ref": "../common.json#/components/responses/InternalError"
@@ -681,6 +982,9 @@
      "400": {
       "$ref": "../common.json#/components/responses/BadRequest"
      },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
      "403": {
       "$ref": "../common.json#/components/responses/Forbidden"
      },
@@ -710,7 +1014,7 @@
   "/v1/auth/reset-password": {
    "post": {
     "operationId": "authResetPassword",
-    "summary": "使用重置令牌修改密码并吊销全部会话",
+    "summary": "单次消费重置验证码、修改密码并吊销全部会话",
     "tags": [
      "auth"
     ],
@@ -724,6 +1028,21 @@
      {
       "code": "auth.invalid_token",
       "http_status": 400,
+      "recovery": "fix_input"
+     },
+     {
+      "code": "auth.rate_limited",
+      "http_status": 429,
+      "recovery": "retry_later"
+     },
+     {
+      "code": "platform.dependency_unavailable",
+      "http_status": 503,
+      "recovery": "retry_later"
+     },
+     {
+      "code": "auth.invalid_credentials",
+      "http_status": 401,
       "recovery": "fix_input"
      }
     ],
@@ -757,8 +1076,23 @@
      "400": {
       "$ref": "../common.json#/components/responses/BadRequest"
      },
+     "401": {
+      "$ref": "../common.json#/components/responses/Unauthorized"
+     },
+     "403": {
+      "$ref": "../common.json#/components/responses/Forbidden"
+     },
+     "409": {
+      "$ref": "../common.json#/components/responses/Conflict"
+     },
+     "429": {
+      "$ref": "../common.json#/components/responses/TooManyRequests"
+     },
      "500": {
       "$ref": "../common.json#/components/responses/InternalError"
+     },
+     "503": {
+      "$ref": "../common.json#/components/responses/Unavailable"
      }
     },
     "requestBody": {

@@ -19,7 +19,7 @@ export function AdminLoginRoute({
   onNavigateMode,
   onSuccess,
 }: AdminLoginRouteProps) {
-  const { login } = useAdminSession();
+  const { login, emailCapabilities, sendVerificationCode, getEmailCooldown, resetPassword } = useAdminSession();
 
   return (
     <AuthView
@@ -27,22 +27,26 @@ export function AdminLoginRoute({
       audience="admin"
       mode={mode}
       allowRegister={false}
-      allowForgotPassword={false}
+      allowForgotPassword={true}
+      getEmailCapabilities={emailCapabilities}
+      getEmailCooldown={getEmailCooldown}
+      onSendVerificationCode={sendVerificationCode}
+      onForgotPasswordSubmit={resetPassword}
       allowOAuth={false}
       allowUsername={true}
       onNavigateMode={onNavigateMode}
-      onLoginSubmit={async ({ email, password, tenant_id, captcha_id, captcha_code }) => {
-        if (!password) return;
+      onLoginSubmit={async ({ email, password, code, tenant_id, captcha_id, captcha_code }) => {
         const identifier = email.trim();
         await login({
           ...(identifier === "root" ? { username: "root" } : { email: identifier }),
-          password,
+          password: password || "",
+          ...(code ? { code } : {}),
           tenant_id,
           captcha_id,
           captcha_code,
         });
-        onSuccess?.();
       }}
+      onSuccess={(completed) => { if (completed !== "forgot-password") onSuccess?.(); }}
     />
   );
 }

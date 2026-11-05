@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { SessionSnapshot, UserPrincipal } from "@inklore/contracts";
-import { getApiSDK, AuthSession, LoginCredentials, reportSafeDiagnostic } from "@inklore/transport";
+import { getApiSDK, AuthSession, LoginCredentials, EmailResetData, EmailCapabilities, EmailChallenge, EmailPurpose, RegisterData, reportSafeDiagnostic } from "@inklore/transport";
 import { AuthMode } from "@inklore/ui";
 import { AUTH_VIEWS, authPath, navigateCreator, readCreatorLocation } from "../navigation";
 
@@ -14,7 +14,11 @@ export interface CreatorSessionContextValue {
   isAuthenticated: boolean;
   principal: UserPrincipal | null;
   login: (credentials: LoginCredentials) => Promise<UserPrincipal>;
-  register: (data: { email: string; password: string; penName: string }) => Promise<void>;
+  register: (data: Omit<RegisterData, "pen_name"> & { penName: string }) => Promise<void>;
+  emailCapabilities: () => Promise<EmailCapabilities>;
+  sendVerificationCode: (email: string, purpose: EmailPurpose) => Promise<EmailChallenge>;
+  getEmailCooldown: (email: string) => number;
+  resetPassword: (data: EmailResetData) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   openAuthPage: (mode?: AuthMode) => void;
@@ -56,11 +60,12 @@ export function CreatorSessionProvider({ children }: { children: React.ReactNode
   );
 
   const register = useCallback(
-    async (data: { email: string; password: string; penName: string }) => {
+    async (data: Omit<RegisterData, "pen_name"> & { penName: string }) => {
       await session.register({
         email: data.email,
         password: data.password,
         pen_name: data.penName,
+        code: data.code, challenge_id: data.challenge_id, captcha_id: data.captcha_id, captcha_code: data.captcha_code,
       });
     },
     [session]
@@ -73,6 +78,11 @@ export function CreatorSessionProvider({ children }: { children: React.ReactNode
     [session]
   );
 
+  const emailCapabilities = useCallback(() => session.emailCapabilities(), [session]);
+  const sendVerificationCode = useCallback((email: string, purpose: EmailPurpose) => session.sendVerificationCode(email, purpose), [session]);
+  const getEmailCooldown = useCallback((email: string) => session.getEmailCooldown(email), [session]);
+  const resetPassword = useCallback((data: EmailResetData) => session.resetPassword(data), [session]);
+
   const logout = useCallback(async () => {
     await session.logout();
   }, [session]);
@@ -83,7 +93,7 @@ export function CreatorSessionProvider({ children }: { children: React.ReactNode
     principal: session.getPrincipal(),
     login,
     register,
-    forgotPassword,
+    forgotPassword, emailCapabilities, sendVerificationCode, getEmailCooldown, resetPassword,
     logout,
     openAuthPage,
   };

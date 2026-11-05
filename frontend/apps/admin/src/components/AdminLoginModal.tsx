@@ -10,7 +10,7 @@ import { AuthModal } from "@inklore/ui";
 import { useAdminSession } from "../context/AdminSessionContext";
 
 export function AdminLoginModal() {
-  const { isLoginModalOpen, setLoginModalOpen, login } = useAdminSession();
+  const { isLoginModalOpen, setLoginModalOpen, login, emailCapabilities, sendVerificationCode, getEmailCooldown, resetPassword } = useAdminSession();
 
   if (!isLoginModalOpen) return null;
 
@@ -20,15 +20,19 @@ export function AdminLoginModal() {
       onClose={() => setLoginModalOpen(false)}
       audience="admin"
       allowRegister={false}
-      allowForgotPassword={false}
+      allowForgotPassword={true}
+      getEmailCapabilities={emailCapabilities}
+      getEmailCooldown={getEmailCooldown}
+      onSendVerificationCode={sendVerificationCode}
+      onForgotPasswordSubmit={resetPassword}
       allowOAuth={false}
       allowUsername={true}
-      onLoginSubmit={async ({ email, password, tenant_id, captcha_id, captcha_code }) => {
-        if (!password) return;
+      onLoginSubmit={async ({ email, password, code, tenant_id, captcha_id, captcha_code }) => {
         const identifier = email.trim();
         await login({
           ...(identifier === "root" ? { username: "root" } : { email: identifier }),
-          password: password.trim(),
+          password: password || "",
+          ...(code ? { code } : {}),
           tenant_id,
           captcha_id,
           captcha_code,

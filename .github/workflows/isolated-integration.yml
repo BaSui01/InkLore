@@ -230,3 +230,10 @@ jobs:
           psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_memberships" | grep -qx 1
           psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_sessions" | grep -qx 1
           echo "Real Go API health, dependencies and unknown-route checks passed."
+          E2E_MAIL_UI_PG_TEST=1 python3 scripts/ci/mail_ui_acceptance.py
+      - name: Verify real mail transports, OTP, reset and authenticated settings
+        run: |
+          set -euo pipefail
+          MAIL_AUTH_PG_TEST=1 go test -race ./internal/platform/mail -run TestEmailPostgres -count=1 -v
+          MAIL_AUTH_PG_TEST=1 go test ./internal/app -run TestMailAuthHTTPPostgres -count=1 -v
+          go test -race ./internal/platform/mail -run 'TestSMTP|TestMailSSRF|TestHTTPS' -count=1
