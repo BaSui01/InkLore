@@ -15,6 +15,8 @@ Scope: OpenAPI 幂等声明、权限投影、错误目录与 CI
 
 登记现有三个 question 409、task_policy_version_changed 409 和 auth.invalid_token 400；保留未知错误默认拒绝。现有 CI 加入 contracts-check 和只读例外的正反例。
 
+实际生成过程还暴露 codegen.mjs 捕获 TypeScript/Go 失败后继续报成功，并可能清空导出索引或截断 Go 文件。改为参数数组执行工具、失败立即非零退出；全部八个域的两种输出先生成到临时目录，通过后才发布并更新索引。CI 增加真实子进程缺失工具的失败保护。
+
 ## Alternatives considered
 
 给无副作用目录查询引入幂等数据库写入会增加不必要的状态。跳过全部 POST 或只凭扩展字段放行会掩盖真实写入缺陷。重算历史冻结 hash 无法修复当前错误目录，因此均未采用。
@@ -26,3 +28,5 @@ Scope: OpenAPI 幂等声明、权限投影、错误目录与 CI
 ## Verification
 
 基准的 check-design 退出 1（缺 llm_fetch_upstream_models 幂等声明），修复后 make contracts-check 退出 0，102 个错误映射一致；严格例外三个正反例通过。node docs/system-design/tools/build-contracts.cjs 退出 0，246 个操作、17 个路径分片、102 个错误，无生成问题；保留确定性生成视图。Go build/vet、gofmt、架构检查及工程笔记通过。冻结清单和历史 ADR 未修改；CI 运行结果以本 PR 最新提交为准。
+
+生成器故障验证分别移除 PATH 中的 npx、以及在八个真实 TypeScript 输出完成后指向缺失的 Go 生成器：两次均退出 1，不打印成功，17 个既有生成文件 SHA256 全部不变。恢复实际工具后八域 TypeScript/Go 生成、contracts-check、生成 Go 包构建及双前端类型/构建全部通过；CI 子进程回归也通过。
