@@ -85,7 +85,7 @@ func prepare(r io.Reader, filename, mediaType, purpose string, novelID *string, 
 			return Prepared{}, badType()
 		}
 	case ".docx":
-		if mt != DOCX || validateDOCX(b) != nil {
+		if mt != DOCX || validateDOCX(b, output) != nil {
 			return Prepared{}, badType()
 		}
 	case ".json":
@@ -161,7 +161,7 @@ func validNDJSON(b []byte) bool {
 	}
 	return utf8.Valid(b)
 }
-func validateDOCX(b []byte) error {
+func validateDOCX(b []byte, trustedOutput bool) error {
 	if len(b) < 4 || !bytes.Equal(b[:4], []byte{'P', 'K', 3, 4}) {
 		return badType()
 	}
@@ -189,7 +189,7 @@ func validateDOCX(b []byte) error {
 			return badType()
 		}
 		total += f.UncompressedSize64
-		if f.UncompressedSize64 > 0 && (f.CompressedSize64 == 0 || f.UncompressedSize64/f.CompressedSize64 > 100 || f.UncompressedSize64 > f.CompressedSize64*100) {
+		if !trustedOutput && f.UncompressedSize64 > 0 && (f.CompressedSize64 == 0 || f.UncompressedSize64/f.CompressedSize64 > 100 || f.UncompressedSize64 > f.CompressedSize64*100) {
 			return badType()
 		}
 		lower := strings.ToLower(name)

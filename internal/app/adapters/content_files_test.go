@@ -4,6 +4,7 @@ import (
 	d "InkLore/internal/content/domain"
 	"InkLore/internal/platform/files"
 	"bytes"
+	"strings"
 	"testing"
 	"time"
 )
@@ -37,5 +38,20 @@ func TestRenderedNovelFormatsAreStoredWithoutChangingBytes(t *testing.T) {
 func TestEPUBRejectsInvalidContainer(t *testing.T) {
 	if _, err := files.PrepareOutput(bytes.NewReader([]byte("not a publication")), "novel.epub", "application/epub+zip", "export", nil); err == nil {
 		t.Fatal("invalid EPUB was accepted")
+	}
+}
+
+func TestCompressibleRenderedDOCXPreservesUploadProtection(t *testing.T) {
+	novel := d.ExportNovel{ID: "e4a53d31-62a4-4a53-a748-0f4792250001", Title: "长篇作品"}
+	chapters := []d.ExportChapter{{ID: "chapter", Title: "第一章", Body: strings.Repeat("This is a paragraph.\n", 1000)}}
+	rendered, err := d.RenderExport(d.JobFormatDOCX, novel, nil, chapters, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := files.PrepareOutput(bytes.NewReader(rendered.Payload), rendered.Filename, rendered.MediaType, "export", &novel.ID); err != nil {
+		t.Fatal("trusted repetitive text must remain exportable", err)
+	}
+	if _, err := files.PrepareUpload(bytes.NewReader(rendered.Payload), rendered.Filename, rendered.MediaType, "import", &novel.ID); err == nil {
+		t.Fatal("untrusted uploads must retain compression-ratio protection")
 	}
 }

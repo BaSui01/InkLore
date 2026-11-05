@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button, ErrorPresenter, Modal } from "@inklore/ui";
 import { useTranslation } from "@inklore/i18n";
-import { ContentAPI, generateUUID, isApiError, isNetworkError } from "@inklore/contracts";
+import { ContentAPI, NetworkError, generateUUID, isApiError, isNetworkError } from "@inklore/contracts";
 import { getApiSDK } from "@inklore/transport";
 import { Download } from "lucide-react";
 
@@ -58,10 +58,12 @@ export function ExportNovelDialog({ open, novelId, onClose }: { open: boolean; n
     }
     try {
       const job = await api.content.createExport(novelId, intent.current.body, intent.current.key);
+      if (!job || typeof job.id !== "string" || job.kind !== "export" || job.novel_id !== novelId || job.status !== "succeeded" || typeof job.output_file_id !== "string" || !job.output_file_id) {
+        throw new NetworkError(t("export.missingFile"));
+      }
       intent.current = null;
       setUncertain(false);
       setJobs((items) => [job, ...items.filter((item) => item.id !== job.id)]);
-      if (job.status !== "succeeded" || !job.output_file_id) throw new Error(t("export.missingFile"));
       await download(job);
     } catch (reason) {
       const unknown = isNetworkError(reason) || (isApiError(reason) && (reason.httpStatus >= 500 || reason.code === "platform.operation_in_progress"));
