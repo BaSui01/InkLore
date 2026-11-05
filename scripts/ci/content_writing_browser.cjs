@@ -66,6 +66,11 @@ const origin = "http://127.0.0.1:3000";
     await progress.getByText("完成 200% · 目标 4 字", { exact: true }).waitFor();
     assert.ok((await progress.innerText()).includes("2029-12-31"));
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForFunction(() => {
+      const progress = document.querySelector('[data-testid="novel-writing-progress"]');
+      return progress && progress.getBoundingClientRect().width >= 250;
+    });
+    assert.equal(await page.locator("aside").count(), 0, "Narrow editor starts with a collapsed chapter drawer");
     await page.screenshot({ path: path.join(evidence, "writing-mobile.png") });
 
     stage = "empty writing progress";
