@@ -36,5 +36,6 @@ Admin 在现有 Agent 治理页发布真实 LLM 不可变策略版本，显示�
 - `go run ./cmd/i18ncheck frontend/packages/i18n/src/locales/zh-CN.ts frontend/packages/i18n/src/locales/en-US.ts` 通过；新增 agent 字典中英文键一致。
 - `scripts/ci/agent_ui_acceptance.py` 在隔离 PostgreSQL 17 / Redis 7 / 真实 API 上通过安全目录、策略版本 CAS、旧 key 重放、参数覆盖拒绝、取消、Question 读写与冲突、正文不变、Admin 白名单及跨租户分页验证。
 - Question UI 使用明确标记的 PostgreSQL 暂停态 fixture，随后由真实 API 执行。它不证明线上模型生成，也没有伪造模型成功。
-- `scripts/ci/agent_question_ui_browser.cjs` 提供双端真实认证、390px、IME、刷新、断网、EOF、真实 410、已提交响应截断/null、稳定重试键、Admin 发布/脱敏与真实 403 的 Chromium 验证。凭据只走匿名 stdin 管道。当前本地 Chromium 在启动阶段 TargetClosed，浏览器行为为 NOT_VERIFIED，交给现有 CI 运行。
+- `scripts/ci/agent_question_ui_browser.cjs` 在 GitHub Actions run 41965922098 的真实 Chromium 上通过双端真实认证、390px、IME、刷新、断网、EOF、真实 410、已提交响应截断/null、稳定重试键、Admin 发布/脱敏与真实 403。凭据只走匿名 stdin 管道。本地 Chromium 启动受环境限制，未将其计为通过。移动截图等待实际侧栏收起后再留证。
+- API 验收通过真实作者取消接口终结已回答的临时 Run，仅在明确的 revision CAS 冲突时重新读取。随后同库 `TestQuestionHTTPConcurrentAnswerAndRestartPG -race` 通过（21.753s），避免后续全局队列 Worker 误领验收遗留工作。
 - 真实模型凭据未配置，live provider 验收为 NOT_VERIFIED。

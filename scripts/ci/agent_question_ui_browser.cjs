@@ -198,6 +198,7 @@ async function widthFits(page, selector = '[role="dialog"]') {
     assert.ok(!content.includes(fixture.source_body) && !content.includes("private fixture instruction") && !content.includes("中文输入用于作者澄清"), "Admin audit leaked owner data");
     assert.equal(await admin.page.getByRole("button", { name: "提交回答并继续" }).count(), 0, "Admin can answer owner question");
     await admin.page.setViewportSize({ width: 390, height: 900 });
+    await waitFor(async () => (await admin.page.locator("aside").boundingBox()).width <= 65, "Admin sidebar did not collapse at mobile width");
     await widthFits(admin.page, "#root");
     await admin.page.screenshot({ path: path.join(evidence, "agent-audit-390.png"), fullPage: true });
     verify("Admin publishes immutable policy and sees only tenant-scoped diagnostic fields at 390px");

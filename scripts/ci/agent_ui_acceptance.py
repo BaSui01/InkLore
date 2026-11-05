@@ -59,7 +59,8 @@ def request(path, expected=200, method="GET", body=None, session=None, key=None,
                                         "sameSite": cookie["samesite"].capitalize() or "Lax"})
     except urllib.error.HTTPError as response:
         status, payload = response.code, json.load(response)
-    check(status == expected, f"{method} {path.split('?')[0]} returned {status}, expected {expected}, code={payload.get('code', 'unknown')}")
+    allowed = expected if isinstance(expected, tuple) else (expected,)
+    check(status in allowed, f"{method} {path.split('?')[0]} returned {status}, expected {expected}, code={payload.get('code', 'unknown')}")
     if status >= 300:
         return payload
     check(payload.get("code") == "ok" and "data" in payload, "Invalid API success envelope")
@@ -194,6 +195,19 @@ def main():
         check(page1["items"][0]["id"] != page2["items"][0]["id"], "Run cursor repeated the first page")
         request(path + "?limit=1&cursor=" + urllib.parse.quote(page1["next_cursor"]), 400, session=other if session is creator else other_admin)
     verified("Exact Admin audit allowlist, actual zero receipts, tenant rejection and signed paginated original-run lookup")
+
+    # The answered API-only fixture has no model-dispatch configuration. Cancel
+    # it through the actual owner endpoint before the server stops; otherwise a
+    # later shared-queue worker test could legitimately claim this leftover job.
+    for _ in range(3):
+        pending = request("/v1/agents/runs/" + question["run_id"], session=creator)
+        if pending["status"] in ("succeeded", "failed", "cancelled"):
+            break
+        result = request(f"/v1/agents/runs/{question['run_id']}/cancel", expected=(200, 409), method="POST", body={"expected_revision": pending["revision"]}, session=creator, key=uid())
+        if "code" in result:
+            # Only an actual CAS race permits another read and cancellation.
+            check(result["code"] == "agent.version_conflict", "Unexpected cancellation conflict")
+    check(request("/v1/agents/runs/" + question["run_id"], session=creator)["status"] in ("succeeded", "failed", "cancelled"), "API fixture did not reach an actual terminal state")
 
     fixtures = [seed_question(run["id"], {"type": "string", "minLength": 1, "maxLength": 200}, [], "Text question fixture"), seed_question(run["id"], {"type": "string", "enum": ["first", "third"]}, [{"value": "first", "label_key": "test.first"}, {"value": "third", "label_key": "test.third"}], "Single choice fixture"), seed_question(run["id"], {"type": "array", "uniqueItems": True, "items": {"type": "string", "enum": ["mystery", "family", "travel"]}, "minItems": 1, "maxItems": 2}, [{"value": value, "label_key": "test." + value} for value in ("mystery", "family", "travel")], "Multiple choice fixture")]
     sql("UPDATE agent_run_events SET seq=3 WHERE run_id=" + literal(fixtures[2]["run_id"]) + "; UPDATE agent_runs SET retained_from_seq=3,next_seq=4 WHERE id=" + literal(fixtures[2]["run_id"]) + ";")
