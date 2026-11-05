@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { isApiError, type Novel, type UpdateNovelInput } from "@inklore/contracts";
 import { useI18n } from "@inklore/i18n";
 import { getApiSDK } from "@inklore/transport";
@@ -12,7 +12,15 @@ function beijingDay() {
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
-export function WritingProgress({ novel, onChanged }: { novel: Novel; onChanged: (novel: Novel) => void }) {
+type WritingProgressProps = { novel: Novel; onChanged: (novel: Novel) => void };
+
+export function WritingProgress(props: WritingProgressProps) {
+  const [client] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
+  useEffect(() => () => client.clear(), [client]);
+  return <QueryClientProvider client={client}><WritingProgressContent {...props} /></QueryClientProvider>;
+}
+
+function WritingProgressContent({ novel, onChanged }: WritingProgressProps) {
   const { t, locale } = useI18n();
   const api = getApiSDK();
   const [day, setDay] = useState(beijingDay);

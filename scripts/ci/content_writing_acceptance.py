@@ -209,11 +209,13 @@ def main():
               "confirmation_and_state_events": 9, "goal_percent": 160, "migration_replays": 2, "requests": evidence,
               "checks": ["Unicode", "draft exclusion", "idempotency", "world CAS rollback", "statistics failure transaction rollback", "chapter CAS concurrency", "rollback confirmation", "deletion/restoration", "goal/date/clear", "tenant denial", "copy drafts", "real import commit from PG preview fixture", "legacy event exclusion", "upgrade backfill", "PG midnight grouping"]}
     (output / "writing-acceptance.json").write_text(json.dumps(report, indent=2) + "\n")
-    if os.getenv("E2E_WRITING_FIXTURE"):
-        fixture = Path(os.environ["E2E_WRITING_FIXTURE"])
-        fixture.write_text(json.dumps({"email": email, "password": password, "novel_id": novel["id"]}))
-        fixture.chmod(0o600)
     print("PASS writing goals/statistics: real API + PG, confirmed total 8, daily +22/-14, nine events, 160% goal; migration replay and isolation verified.")
+    if os.getenv("E2E_WRITING_BROWSER") == "1":
+        # Disposable credentials travel only through an anonymous process pipe;
+        # they never enter evidence files, argv, or CI output.
+        subprocess.run(["node", str(Path(__file__).with_name("content_writing_browser.cjs"))],
+                       input=json.dumps({"email": email, "password": password, "novel_id": novel["id"]}),
+                       text=True, check=True)
 
 
 if __name__ == "__main__":

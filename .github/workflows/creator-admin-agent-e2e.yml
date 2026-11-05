@@ -101,7 +101,6 @@ jobs:
           export CSRF_KEY="$(openssl rand -hex 32)"
           export IDEMPOTENCY_HASH_KEY="$(openssl rand -hex 32)"
           export CURSOR_SIGNING_KEY="$(openssl rand -hex 32)"
-          export E2E_WRITING_FIXTURE=/tmp/inklore-writing-fixture.json
           export INKLORE_BOOTSTRAP_PASSWORD="$E2E_ADMIN_PASSWORD"
           /tmp/inklore-ci-admin bootstrap -tenant-name 'CI Governance' \
             -email "$E2E_ADMIN_EMAIL" -display-name 'CI Operator' -username root >/dev/null
@@ -116,7 +115,6 @@ jobs:
             kill "$server_pid" "$creator_pid" "$admin_pid" 2>/dev/null || true
             wait "$server_pid" "$creator_pid" "$admin_pid" 2>/dev/null || true
             rm -f "$E2E_FIXTURE_PATH"
-            rm -f "$E2E_WRITING_FIXTURE"
           }
           trap cleanup EXIT
           ready=0
@@ -138,9 +136,8 @@ jobs:
           export PLAYWRIGHT_PACKAGE_PATH=/tmp/inklore-ci-browser/node_modules/playwright
           node scripts/ci/creator_admin_agent_browser.cjs
           export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_e2e PGDATABASE=inklore_e2e PGPASSWORD=disposable-ci-only
-          export E2E_ALLOW_DISPOSABLE_DB=1 E2E_EVIDENCE_DIR=/tmp/inklore-writing-evidence
+          export E2E_ALLOW_DISPOSABLE_DB=1 E2E_EVIDENCE_DIR=/tmp/inklore-writing-evidence E2E_WRITING_BROWSER=1
           python3 scripts/ci/content_writing_acceptance.py
-          node scripts/ci/content_writing_browser.cjs < "$E2E_WRITING_FIXTURE"
       - name: Upload writing progress evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -14,6 +14,7 @@ const origin = "http://127.0.0.1:3000";
   const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"],
     ...(process.env.E2E_CHROMIUM_PATH ? { executablePath: process.env.E2E_CHROMIUM_PATH } : {}) });
   let page;
+  const pageErrors = [];
   let stage = "login";
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: "zh-CN" });
@@ -23,6 +24,7 @@ const origin = "http://127.0.0.1:3000";
     assert.equal(login.status(), 200);
     const token = (await login.json()).data.access_token;
     page = await context.newPage();
+    page.on("pageerror", error => pageErrors.push(String(error.message).slice(0, 160)));
     page.setDefaultTimeout(20_000);
     stage = "confirmed progress";
     await page.goto(origin + "/editor?novelId=" + fixture.novel_id);
@@ -80,7 +82,7 @@ const origin = "http://127.0.0.1:3000";
     console.log("PASS writing browser: 160%/200% progress, real goal persistence, same-key network/JSON recovery, refresh and empty state.");
   } catch (error) {
     if (page) await page.screenshot({ path: path.join(evidence, "writing-failure.png") }).catch(() => {});
-    throw new Error(stage + ": " + error.name + ": " + String(error.message).split("\n")[0]);
+    throw new Error(stage + ": " + error.name + ": " + String(error.message).split("\n")[0] + (pageErrors.length ? "; page: " + pageErrors[0] : ""));
   } finally { await browser.close(); }
 })().catch(error => {
   console.error("Writing browser acceptance failed: " + String(error.message).slice(0, 240));
