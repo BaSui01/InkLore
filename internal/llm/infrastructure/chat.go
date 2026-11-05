@@ -481,6 +481,14 @@ func decodeOpenAIChatStream(ctx context.Context, body io.Reader, req domain.Text
 	scanner := bufio.NewScanner(body)
 	scanner.Buffer(make([]byte, 64*1024), 4*1024*1024)
 	var finalUsage *domain.TokenUsage
+	// Accounting is independent of completion. A provider can send measured
+	// usage and then disconnect before [DONE]; retain those facts on every exit
+	// while tool calls remain gated by a successfully completed stream below.
+	defer func() {
+		if finalUsage != nil && req.OnUsage != nil {
+			req.OnUsage(finalUsage)
+		}
+	}()
 	completed := false
 	seenChoice := false
 
@@ -582,10 +590,6 @@ func decodeOpenAIChatStream(ctx context.Context, body io.Reader, req domain.Text
 	calls := accumulator.Build()
 	if len(calls) > 0 && req.OnToolCalls != nil {
 		req.OnToolCalls(calls)
-	}
-
-	if finalUsage != nil && req.OnUsage != nil {
-		req.OnUsage(finalUsage)
 	}
 
 	return finalUsage, nil

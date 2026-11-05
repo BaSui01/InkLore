@@ -365,6 +365,14 @@ func (r *BudgetRepository) Renew(ctx context.Context, t, id string, deadline, no
 	return budgetOne(db.Exec("UPDATE llm_reservations SET lease_until=GREATEST(lease_until,?),updated_at=? WHERE tenant_id=? AND id=? AND status='dispatched'", deadline.Add(30*time.Second), now, t, id))
 }
 func (r *BudgetRepository) Release(ctx context.Context, t, id string, now time.Time, onlyExpired bool) (int64, error) {
+	return r.release(ctx, t, id, now, onlyExpired, nil)
+}
+
+func (r *BudgetRepository) ReleasePrepared(ctx context.Context, expected d.Reservation, now time.Time) (int64, error) {
+	return r.release(ctx, expected.TenantID, expected.ID, now, false, &expected)
+}
+
+func (r *BudgetRepository) release(ctx context.Context, t, id string, now time.Time, onlyExpired bool, expected *d.Reservation) (int64, error) {
 	db, err := r.budgetDB(ctx, true)
 	if err != nil {
 		return 0, err
@@ -372,6 +380,19 @@ func (r *BudgetRepository) Release(ctx context.Context, t, id string, now time.T
 	day, v, err := budgetLockedReservation(db, t, id)
 	if err != nil {
 		return 0, err
+	}
+	if expected != nil {
+		if v.InvocationID != expected.InvocationID || v.PolicyVersionID != expected.PolicyVersionID || v.ModelID != expected.ModelID || v.Attempt != expected.Attempt || v.PricingRevisionID != expected.PricingRevisionID || v.ReservedMicros != expected.ReservedMicros || v.DispatchedAt != nil || v.ChannelID != nil || v.KeyID != nil {
+			return 0, d.ErrBudgetState
+		}
+		// Repeating the same completed abort is harmless, but a re-reserved row
+		// has a newer revision and belongs to another admission owner.
+		if v.Status == "released" && v.Revision == expected.Revision+1 {
+			return 0, nil
+		}
+		if v.Status != "reserved" || v.Revision != expected.Revision {
+			return 0, d.ErrBudgetState
+		}
 	}
 	if v.Status == "released" || v.Status == "settled" {
 		return 0, nil

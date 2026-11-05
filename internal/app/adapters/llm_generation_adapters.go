@@ -156,12 +156,12 @@ func (g *ComplianceGeneration) GenerateAudit(ctx context.Context, tenantID, repo
 	return compapp.AuditLLMResult{Summary: payload.Summary, Issues: payload.Issues, UsedTokens: responseTokens(response.Usage), CallsUsed: 1}, nil
 }
 
-func (g *ComplianceGeneration) GenerateRewrite(ctx context.Context, tenantID, novelID, chapterID, text string, issues []compdomain.Issue, round int, budget compdomain.Budget) (compapp.RewriteLLMResult, error) {
+func (g *ComplianceGeneration) GenerateRewrite(ctx context.Context, tenantID, rewriteID, novelID, chapterID, text string, issues []compdomain.Issue, round int, budget compdomain.Budget) (compapp.RewriteLLMResult, error) {
 	if g == nil || g.llm == nil || g.catalog == nil {
 		return compapp.RewriteLLMResult{}, errors.New("compliance model gateway is not configured")
 	}
-	if len(issues) == 0 || issues[0].ReportID == "" {
-		return compapp.RewriteLLMResult{}, errors.New("persisted review report is required for model execution")
+	if rewriteID == "" || len(issues) == 0 || issues[0].ReportID == "" {
+		return compapp.RewriteLLMResult{}, errors.New("persisted rewrite and review report are required for model execution")
 	}
 	issuesJSON, err := json.Marshal(issues)
 	if err != nil {
@@ -186,7 +186,7 @@ func (g *ComplianceGeneration) GenerateRewrite(ctx context.Context, tenantID, no
 		MaxTokens:       capModelOutputTokens(maxTokens, policy.MaxOutputTokens),
 		TaskKey:         "review",
 		RequestID:       chapterID,
-		ExecutionKey:    fmt.Sprintf("compliance/rewrite/%s/%d", issues[0].ReportID, round),
+		ExecutionKey:    fmt.Sprintf("compliance/rewrite/%s/%d", rewriteID, round),
 	})
 	if err != nil {
 		return compapp.RewriteLLMResult{}, err

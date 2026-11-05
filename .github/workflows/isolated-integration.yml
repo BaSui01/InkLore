@@ -237,4 +237,4 @@ jobs:
       - name: Verify Agent usage receipts and original Run question recovery
         env:
           AGENT_QUESTION_PG_TEST: '1'
-        run: go test ./internal/agent/... ./internal/app ./cmd/admin -run 'TestQuestion|TestClarification|TestAgentGatewayUsage|TestLLMSecretReferencesHTTPPG' -count=1 -race -v
+        run: go test ./internal/agent/... ./internal/app ./cmd/admin -run 'TestQuestion|TestClarification|TestAgentGatewayUsage|TestLLMSecretReferencesHTTPPG|TestComplianceRewriteOperationPG' -count=1 -race -v

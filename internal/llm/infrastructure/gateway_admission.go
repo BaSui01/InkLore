@@ -248,7 +248,7 @@ func (a *RedisAdmission) Acquire(ctx context.Context, in d.AdmissionRequest) (d.
 	return d.AdmissionLease{TenantID: in.TenantID, InvocationID: in.InvocationID, ModelID: in.ModelID, ChannelID: values[1], KeyID: values[2], KeyVersion: values[3], Token: token, Attempt: in.Attempt, ExpiresAt: time.UnixMilli(millis).UTC()}, nil
 }
 func gatewayLeaseKeys(l d.AdmissionLease) ([]string, error) {
-	if !gatewayID(l.TenantID) || !gatewayID(l.InvocationID) || !gatewayID(l.ChannelID) || !gatewayID(l.KeyID) || !gatewayID(l.Token) || l.KeyVersion == "" {
+	if !gatewayID(l.TenantID) || !gatewayID(l.InvocationID) || !gatewayID(l.ModelID) || !gatewayID(l.ChannelID) || !gatewayID(l.KeyID) || !gatewayID(l.Token) || l.KeyVersion == "" || l.Attempt < 1 || l.Attempt > 4 {
 		return nil, d.ErrInvalid
 	}
 	p := gatewayPrefix(l.TenantID)
@@ -283,6 +283,24 @@ func (a *RedisAdmission) Renew(ctx context.Context, l d.AdmissionLease) error {
 func (a *RedisAdmission) Release(ctx context.Context, l d.AdmissionLease) error {
 	return a.lease(ctx, l, "release", d.ProviderOutcome{})
 }
+
+func (a *RedisAdmission) AbortUndispatched(ctx context.Context, l d.AdmissionLease) error {
+	keys, err := gatewayLeaseKeys(l)
+	if err != nil {
+		return err
+	}
+	prefix := gatewayPrefix(l.TenantID)
+	keys = append(keys, prefix+"attempt:"+l.InvocationID+":"+strconv.Itoa(l.Attempt), prefix+"channel:"+l.ChannelID+":rpm", prefix+"key:"+l.KeyID+":rpm")
+	values, err := a.eval(ctx, l.TenantID, gatewayAbortLua, keys, l.Token, l.ChannelID, l.KeyID, l.KeyVersion, l.InvocationID+"/"+strconv.Itoa(l.Attempt))
+	if err != nil {
+		return err
+	}
+	if values[0] != "ok" {
+		return gatewayFailure(d.ErrCapacityUnavailable, 30)
+	}
+	return nil
+}
+
 func (a *RedisAdmission) Report(ctx context.Context, l d.AdmissionLease, outcome d.ProviderOutcome) error {
 	switch outcome.Kind {
 	case d.OutcomeSuccess, d.OutcomeServiceFailure, d.OutcomeNeutral:
@@ -459,6 +477,24 @@ for index,state in ipairs({KEYS[5],KEYS[6]}) do
  elseif outcome=='credential_invalid' and index==2 then redis.call('HSET',state,'invalid',1)
  end
 end
+return {'ok'}
+`
+
+// Only the owner of the attempt marker may retract an undispatched admission.
+// This action follows durable PG ReleasePrepared proof; normal Release never
+// removes RPM or dedup. The token guard also fences a delayed abort after retry.
+const gatewayAbortLua = `
+local token=ARGV[1]
+local owner=redis.call('GET',KEYS[7])
+if owner==false then return {'ok'} end
+if owner~=token then return {'lost'} end
+if redis.call('EXISTS',KEYS[2])==1 then
+ if redis.call('HGET',KEYS[2],'token')~=token or redis.call('HGET',KEYS[2],'channel')~=ARGV[2] or redis.call('HGET',KEYS[2],'key')~=ARGV[3] or redis.call('HGET',KEYS[2],'version')~=ARGV[4] then return {'lost'} end
+end
+redis.call('ZREM',KEYS[3],token);redis.call('ZREM',KEYS[4],token)
+redis.call('ZREM',KEYS[8],ARGV[5]);redis.call('ZREM',KEYS[9],ARGV[5])
+for _,state in ipairs({KEYS[5],KEYS[6]}) do if redis.call('HGET',state,'probe')==token then redis.call('HDEL',state,'probe','probe_until') end end
+redis.call('DEL',KEYS[2],KEYS[7])
 return {'ok'}
 `
 

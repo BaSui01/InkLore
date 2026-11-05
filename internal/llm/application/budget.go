@@ -147,6 +147,22 @@ func (s *Budget) Renew(ctx context.Context, tenant, id string, deadline time.Tim
 func (s *Budget) Release(ctx context.Context, tenant, id string) error {
 	return s.release(ctx, tenant, id, false)
 }
+
+// ReleasePrepared proves that this exact reservation generation never
+// dispatched. A settled row or a newer owner is not evidence of a safe abort.
+func (s *Budget) ReleasePrepared(ctx context.Context, expected d.Reservation) error {
+	if !scope.ValidID(expected.TenantID) || !scope.ValidID(expected.ID) || !expected.Fresh || expected.Status != "reserved" || expected.Revision < 1 || expected.Revision >= d.MaxRevision {
+		return d.ErrInvalid
+	}
+	return s.opts.UoW.Within(ctx, func(tx context.Context) error {
+		revision, err := s.opts.Repository.ReleasePrepared(tx, expected, s.opts.Now())
+		if err != nil || revision == 0 {
+			return err
+		}
+		return s.opts.OnEvent(tx, d.BudgetEvent{TenantID: expected.TenantID, ResourceID: expected.ID, Action: "llm.budget_released", Revision: revision})
+	})
+}
+
 func (s *Budget) release(ctx context.Context, tenant, id string, expired bool) error {
 	if !scope.ValidID(tenant) || !scope.ValidID(id) {
 		return d.ErrInvalid

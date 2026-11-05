@@ -170,7 +170,7 @@ func normalizeProviderError(err error) error {
 // and Release own short UoWs; the Redis call is never made inside a PG transaction.
 type GatewayAdmissionBudgetPort interface {
 	Reserve(context.Context, domain.ReserveInput) (domain.Reservation, error)
-	Release(context.Context, string, string) error
+	ReleasePrepared(context.Context, domain.Reservation) error
 }
 type GatewayAdmissionOptions struct {
 	Admission domain.AdmissionPort
@@ -211,8 +211,8 @@ func (s *GatewayAdmissionService) Prepare(ctx context.Context, budget domain.Res
 	}
 	cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancel()
-	if releaseError := s.options.Budget.Release(cleanup, reservation.TenantID, reservation.ID); releaseError != nil {
-		return PendingAdmission{}, errors.Join(e, errors.New("undispatched reservation release failed"))
+	if releaseError := s.options.Budget.ReleasePrepared(cleanup, reservation); releaseError != nil {
+		return PendingAdmission{}, errors.Join(e, fmt.Errorf("undispatched reservation release failed: %w", releaseError))
 	}
 	return PendingAdmission{}, e
 }
@@ -220,11 +220,17 @@ func (s *GatewayAdmissionService) Prepare(ctx context.Context, budget domain.Res
 // Abort releases a still-undispatched prepared attempt. The PG adapter must CAS
 // status=reserved so an abort racing MarkDispatch cannot erase billable usage.
 func (s *GatewayAdmissionService) Abort(ctx context.Context, p PendingAdmission) error {
+	if p.Reservation.TenantID != p.Lease.TenantID || p.Reservation.InvocationID != p.Lease.InvocationID || p.Reservation.ModelID != p.Lease.ModelID || p.Reservation.Attempt != p.Lease.Attempt {
+		return domain.ErrInvalid
+	}
 	cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancel()
-	redisError := s.options.Admission.Release(cleanup, p.Lease)
-	budgetError := s.options.Budget.Release(cleanup, p.Reservation.TenantID, p.Reservation.ID)
-	return errors.Join(redisError, budgetError)
+	// PG must first prove this owner never dispatched. A failed/ambiguous commit
+	// or a newer reservation cannot authorize erasing the Redis dedup marker.
+	if err := s.options.Budget.ReleasePrepared(cleanup, p.Reservation); err != nil {
+		return err
+	}
+	return s.options.Admission.AbortUndispatched(cleanup, p.Lease)
 }
 
 type ThinkStreamFilter = domain.ThinkStreamFilter

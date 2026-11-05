@@ -121,6 +121,7 @@ type BudgetRepository interface {
 	MarkDispatch(context.Context, DispatchInput, time.Time) (Reservation, bool, error)
 	Renew(context.Context, string, string, time.Time, time.Time) error
 	Release(context.Context, string, string, time.Time, bool) (int64, error)
+	ReleasePrepared(context.Context, Reservation, time.Time) (int64, error)
 	Settle(context.Context, SettlementInput, time.Time) (*Usage, bool, error)
 	Expired(context.Context, time.Time, int) ([]Reservation, error)
 }
@@ -174,6 +175,9 @@ type AdmissionPort interface {
 	Acquire(context.Context, AdmissionRequest) (AdmissionLease, error)
 	Renew(context.Context, AdmissionLease) error
 	Release(context.Context, AdmissionLease) error
+	// AbortUndispatched may only follow an ownership-fenced PG release proving
+	// this prepared reservation never dispatched. Normal release retains dedup.
+	AbortUndispatched(context.Context, AdmissionLease) error
 	Report(context.Context, AdmissionLease, ProviderOutcome) error
 }
 

@@ -31,16 +31,25 @@ import (
 // protocol/accounting evidence only, never live-provider acceptance.
 type agentUsageFixture struct {
 	*questionFixture
-	scheduler *a.Scheduler
-	catalog   *llma.Catalog
-	calls     atomic.Int64
-	status    int
-	estimated bool
+	scheduler   *a.Scheduler
+	catalog     *llma.Catalog
+	realGateway *llma.GatewayService
+	calls       atomic.Int64
+	status      int
+	estimated   bool
 }
 
-func newAgentUsageFixture(t *testing.T, status int, estimated bool) *agentUsageFixture {
+func newAgentUsageFixture(t *testing.T, status int, estimated bool, responseContent ...string) *agentUsageFixture {
 	t.Helper()
 	f := &agentUsageFixture{questionFixture: newQuestionFixture(t), status: status, estimated: estimated}
+	content := "Author review suggestion"
+	if len(responseContent) > 0 {
+		content = responseContent[0]
+	}
+	encodedContent, err := json.Marshal(content)
+	if err != nil {
+		t.Fatal(err)
+	}
 	tenant := f.principal.TenantID
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		f.calls.Add(1)
@@ -53,7 +62,7 @@ func newAgentUsageFixture(t *testing.T, status int, estimated bool) *agentUsageF
 			fmt.Fprint(w, `{"choices":[{"message":{"content":"Author review suggestion"},"finish_reason":"stop"}]}`)
 			return
 		}
-		fmt.Fprint(w, `{"choices":[{"message":{"content":"Author review suggestion"},"finish_reason":"stop"}],"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}`)
+		fmt.Fprintf(w, `{"choices":[{"message":{"content":%s},"finish_reason":"stop"}],"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}`, encodedContent)
 	}))
 	t.Cleanup(server.Close)
 	var model struct{ ID, ProviderID string }
@@ -121,6 +130,7 @@ func newAgentUsageFixture(t *testing.T, status int, estimated bool) *agentUsageF
 	provider.SetTenantDispatchResolver(repository.ResolveDispatch)
 	gateway := llma.NewGatewayService(provider)
 	gateway.SetRuntime(runtime)
+	f.realGateway = gateway
 	secrets, err := llmi.NewSecrets(llmi.SecretOptions{Pepper: []byte(strings.Repeat("p", 32)), Resolve: func(context.Context, llmi.SecretBinding) ([]byte, error) { return nil, llmd.ErrSecret }})
 	if err != nil {
 		t.Fatal(err)

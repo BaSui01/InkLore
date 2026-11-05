@@ -162,6 +162,36 @@ func TestChatStreamCompletedToolsAndUsage(t *testing.T) {
 	}
 }
 
+func TestChatStreamRetainsMeasuredUsageOnFailure(t *testing.T) {
+	tool := "data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call-1\",\"function\":{\"name\":\"write\",\"arguments\":\"{}\"}}]}}]}\n\n"
+	usage := "data: {\"choices\":[],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":5,\"total_tokens\":15,\"prompt_tokens_details\":{\"cached_tokens\":2}}}\n\n"
+	for name, tail := range map[string]string{
+		"disconnect before DONE": "",
+		"malformed next event":   "data: invalid\n\n",
+		"provider error":         "data: {\"error\":{\"message\":\"upstream failed\"}}\n\n",
+		"downstream callback":    "data: {\"choices\":[{\"delta\":{\"content\":\"partial\"}}]}\n\ndata: [DONE]\n\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			callbacks, committed := 0, false
+			var measured *domain.TokenUsage
+			result, err := decodeOpenAIChatStream(context.Background(), strings.NewReader(tool+usage+tail), domain.TextGenerationRequest{
+				OnTextChunk: func(string) error { return errors.New("downstream disconnected") },
+				OnToolCalls: func([]domain.ToolCall) { committed = true },
+				OnUsage: func(value *domain.TokenUsage) {
+					callbacks++
+					measured = value
+				},
+			})
+			if err == nil || committed || callbacks != 1 || measured == nil || result != measured || measured.PromptTokens != 10 || measured.CompletionTokens != 5 || measured.CachedTokens != 2 {
+				t.Fatalf("failure lost measured usage or committed tools: error=%v callbacks=%d committed=%t usage=%+v", err, callbacks, committed, measured)
+			}
+			if name == "disconnect before DONE" && !errors.Is(err, io.ErrUnexpectedEOF) {
+				t.Fatalf("missing completion was treated as success: %v", err)
+			}
+		})
+	}
+}
+
 func TestChatStreamPropagatesFlushCallbackFailure(t *testing.T) {
 	callbackErr := errors.New("downstream disconnected")
 	for _, reasoning := range []bool{false, true} {
