@@ -25,6 +25,10 @@ func (h *Handler) createRun(c *gin.Context) {
 		response.Fail(c, err)
 		return
 	}
+	if err := validateCreatorPolicySelection(input, raw); err != nil {
+		response.Fail(c, err)
+		return
+	}
 
 	h.command(c, p, raw, 202, func(ctx context.Context, current identity.Principal) error {
 		return h.Runs.AuthorizeCreateRun(ctx, current, input)
@@ -43,14 +47,20 @@ func (h *Handler) listRuns(c *gin.Context) {
 		return
 	}
 
-	q, err := parsePagination(c)
+	status := c.Query("status")
+	q, binding, err := h.runPageQuery(c, p, "agent_list_runs", status)
 	if err != nil {
 		response.Fail(c, err)
 		return
 	}
 
-	status := c.Query("status")
 	items, nextCursor, hasMore, err := h.Runs.ListRuns(c.Request.Context(), p, status, q)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	// Bind the repository's position even if permissions removed every item.
+	nextCursor, err = h.encodeRunPagePosition(binding, nextCursor)
 	if err != nil {
 		response.Fail(c, err)
 		return

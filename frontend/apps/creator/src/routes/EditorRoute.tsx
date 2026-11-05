@@ -55,7 +55,7 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<"settings" | "outline" | "catalog" | "docs">("catalog");
   const [fontSize, setFontSize] = useState(18);
-  const [workbenchOpen, setWorkbenchOpen] = useState(false);
+  const [workbenchOpen, setWorkbenchOpen] = useState(() => new URL(window.location.href).searchParams.has("agentRun") || new URL(window.location.href).searchParams.has("agentCreate"));
   const [workbenchSelection, setWorkbenchSelection] = useState<{ text: string; startOffset: number; endOffset: number } | null>(null);
   const [availableModels, setAvailableModels] = useState<LlmModel[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string>("");
@@ -194,7 +194,8 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
             activeChapterRef.current = stillPresent;
             setActiveChapter(stillPresent);
           } else if (items.length > 0) {
-            selectChapter(items[0]);
+            const runChapter = new URL(window.location.href).searchParams.get("agentChapter");
+            selectChapter(items.find(chapter => chapter.id === runChapter) ?? items[0]);
           } else {
             bodyLoadTokenRef.current += 1;
             activeChapterRef.current = null;
@@ -256,6 +257,12 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
       return;
     }
     if (chapter.id === loadedChapterIdRef.current && !bodyLoadError) return;
+    if (activeChapterRef.current && activeChapterRef.current.id !== chapter.id) {
+      const url = new URL(window.location.href);
+      for (const key of ["agentRun", "agentCreate", "agentChapter"]) url.searchParams.delete(key);
+      window.history.replaceState(window.history.state, "", url);
+      setWorkbenchOpen(false);
+    }
     activeChapterRef.current = chapter;
     setActiveChapter(chapter);
     setSwitchBlocked(false);
@@ -1065,6 +1072,7 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
       )}
 
       <AgentWorkbench
+        key={`${novelId}:${activeChapter?.id ?? ""}`}
         open={workbenchOpen}
         novelId={novelId}
         chapterId={activeChapter?.id || ""}

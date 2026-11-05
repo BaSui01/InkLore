@@ -38,11 +38,16 @@ func (h *Handler) RegisterRoutes(r gin.IRoutes) {
 	// Creator Catalog
 	r.GET("/v1/agents/catalog/definitions", h.catalogDefinitions)
 	r.GET("/v1/agents/catalog/workflows", h.catalogWorkflows)
+	r.GET("/v1/agents/catalog/task-policies", h.catalogTaskPolicies)
+	r.GET("/v1/agents/audit/runs", h.listAuditRuns)
+	r.GET("/v1/agents/audit/runs/:run_id", h.getAuditRun)
 
 	// Runs
 	r.POST("/v1/agents/runs", h.createRun)
 	r.GET("/v1/agents/runs", h.listRuns)
 	r.GET("/v1/agents/runs/:run_id", h.getRun)
+	r.GET("/v1/agents/runs/:run_id/questions/:question_id", h.getQuestion)
+	r.POST("/v1/agents/runs/:run_id/questions/:question_id/answer", h.answerQuestion)
 	r.POST("/v1/agents/runs/:run_id/cancel", h.cancelRun)
 	r.GET("/v1/agents/runs/:run_id/events", h.subscribeEvents)
 	r.GET("/v1/agents/runs/:run_id/artifacts", h.listArtifacts)

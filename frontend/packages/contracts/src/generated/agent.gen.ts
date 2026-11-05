@@ -838,6 +838,7 @@ export interface components {
             terminal_reason: string | null;
             /** @description 仅提示人工新请求的可能性；未知模型/工具结果固定false，绝不表示可自动重发原run。 */
             retryable: boolean;
+            pending_questions: components["schemas"]["Question"][];
         };
         RunSummary: {
             id: components["schemas"]["UUID"];

@@ -1,3 +1,4 @@
+import { agentEnUS } from "./agent";
 import { foundationEnUS } from "./foundation-en-US";
 /**
  * @inklore/i18n - English Dictionary (en-US)
@@ -12,6 +13,7 @@ import { editorEnUS } from "./editor";
 import { complianceEnUS } from "./compliance";
 
 const localeDict: Record<string, string> = {
+  ...agentEnUS,
   ...foundationEnUS,
 
   "common.create": "Create",

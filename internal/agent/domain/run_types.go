@@ -9,13 +9,14 @@ import (
 type RunStatus string
 
 const (
-	RunStatusQueued          RunStatus = "queued"
-	RunStatusRunning         RunStatus = "running"
-	RunStatusWaitingApproval RunStatus = "waiting_approval"
-	RunStatusCancelling      RunStatus = "cancelling"
-	RunStatusSucceeded       RunStatus = "succeeded"
-	RunStatusFailed          RunStatus = "failed"
-	RunStatusCancelled       RunStatus = "cancelled"
+	RunStatusQueued               RunStatus = "queued"
+	RunStatusRunning              RunStatus = "running"
+	RunStatusWaitingApproval      RunStatus = "waiting_approval"
+	RunStatusWaitingClarification RunStatus = "waiting_clarification"
+	RunStatusCancelling           RunStatus = "cancelling"
+	RunStatusSucceeded            RunStatus = "succeeded"
+	RunStatusFailed               RunStatus = "failed"
+	RunStatusCancelled            RunStatus = "cancelled"
 )
 
 // IsTerminal returns whether the run status is terminal.
@@ -27,15 +28,16 @@ func (s RunStatus) IsTerminal() bool {
 type NodeStatus string
 
 const (
-	NodeStatusPending         NodeStatus = "pending"
-	NodeStatusReady           NodeStatus = "ready"
-	NodeStatusRunning         NodeStatus = "running"
-	NodeStatusWaitingApproval NodeStatus = "waiting_approval"
-	NodeStatusRetryWait       NodeStatus = "retry_wait"
-	NodeStatusSucceeded       NodeStatus = "succeeded"
-	NodeStatusFailed          NodeStatus = "failed"
-	NodeStatusCancelled       NodeStatus = "cancelled"
-	NodeStatusSkipped         NodeStatus = "skipped"
+	NodeStatusPending              NodeStatus = "pending"
+	NodeStatusReady                NodeStatus = "ready"
+	NodeStatusRunning              NodeStatus = "running"
+	NodeStatusWaitingApproval      NodeStatus = "waiting_approval"
+	NodeStatusWaitingClarification NodeStatus = "waiting_clarification"
+	NodeStatusRetryWait            NodeStatus = "retry_wait"
+	NodeStatusSucceeded            NodeStatus = "succeeded"
+	NodeStatusFailed               NodeStatus = "failed"
+	NodeStatusCancelled            NodeStatus = "cancelled"
+	NodeStatusSkipped              NodeStatus = "skipped"
 )
 
 func (s NodeStatus) IsTerminal() bool {
@@ -359,6 +361,7 @@ type RunCancelledPayload struct {
 
 // RunView matches the api/agent-core-schemas.json#/components/schemas/Run schema.
 type RunView struct {
+	PendingQuestions    []Question   `json:"pending_questions"`
 	ID                  string       `json:"id"`
 	Revision            int64        `json:"revision"`
 	CreatedAt           time.Time    `json:"created_at"`
@@ -470,14 +473,15 @@ type ArtifactPage struct {
 // Input DTOs
 
 type CreateRunInput struct {
-	TaskKind     string       `json:"task_kind"`
-	TaskKey      string       `json:"task_key"`
-	Resource     *ResourceRef `json:"resource"`
-	Instruction  string       `json:"instruction"`
-	DefinitionID string       `json:"definition_id"`
-	WorkflowID   *string      `json:"workflow_id,omitempty"`
-	ModelID      *string      `json:"model_id,omitempty"`
-	ModelKey     *string      `json:"model_key,omitempty"`
+	TaskPolicyVersionID string       `json:"task_policy_version_id"`
+	TaskKind            string       `json:"task_kind"`
+	TaskKey             string       `json:"-"`
+	Resource            *ResourceRef `json:"resource"`
+	Instruction         string       `json:"instruction"`
+	DefinitionID        string       `json:"definition_id"`
+	WorkflowID          *string      `json:"workflow_id,omitempty"`
+	ModelID             *string      `json:"-"`
+	ModelKey            *string      `json:"-"`
 }
 
 type CancelRunInput struct {

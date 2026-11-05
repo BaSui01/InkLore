@@ -230,3 +230,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_memberships" | grep -qx 1
           psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_sessions" | grep -qx 1
           echo "Real Go API health, dependencies and unknown-route checks passed."
+          E2E_AGENT_UI_PG_TEST=1 python3 scripts/ci/agent_ui_acceptance.py
+      - name: Verify durable author questions against PostgreSQL
+        env:
+          AGENT_QUESTION_PG_TEST: '1'
+        run: go test ./internal/agent/... ./internal/app ./cmd/admin -run 'TestQuestion|TestClarification' -count=1 -race -v

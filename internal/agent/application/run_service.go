@@ -107,8 +107,8 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 	}
 
 	// Validate task_kind and task_key
-	if in.TaskKind == "" || in.TaskKey == "" {
-		return nil, d.ErrValidationFailed(map[string]any{"reason": "task_kind and task_key are required"})
+	if !d.IsCreatorTaskKind(in.TaskKind) || (in.TaskPolicyVersionID == "" && in.TaskKey == "") || (in.TaskPolicyVersionID != "" && !scope.ValidID(in.TaskPolicyVersionID)) {
+		return nil, d.ErrValidationFailed(map[string]any{"reason": "task_kind and published task policy are required"})
 	}
 
 	// Resource validation
@@ -295,9 +295,26 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 
 	// In single UoW transaction: enqueue job, create run + nodes + run.started event
 	err = s.manager.Within(ctx, func(tx context.Context) error {
-		policyVersionID, err := s.gateway.ResolvePolicy(tx, p.TenantID, in.TaskKey)
-		if err != nil {
-			return err
+		var policyVersionID string
+		if in.TaskPolicyVersionID != "" {
+			resolver, ok := s.gateway.(d.CreatorPolicyPort)
+			if !ok {
+				return d.ErrInvalidConfiguration(map[string]any{"reason": "creator policy resolver is unavailable"})
+			}
+			policy, err := resolver.LockCreatorTaskPolicy(tx, p, in.TaskPolicyVersionID, in.TaskKind)
+			if err != nil {
+				return err
+			}
+			policyVersionID = policy.PolicyVersionID
+			run.TaskKey = policy.TaskKey
+		} else {
+			// Internal maintenance callers retain the legacy task-key boundary.
+			// Creator HTTP requires an explicit immutable version before dispatch.
+			var err error
+			policyVersionID, err = s.gateway.ResolvePolicy(tx, p.TenantID, in.TaskKey)
+			if err != nil {
+				return err
+			}
 		}
 		if policyVersionID == "" {
 			return d.ErrInvalidConfiguration(map[string]any{"reason": "enabled llm policy is required for task_key"})
@@ -345,6 +362,11 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 
 // GetRun fetches a run and its nodes for the owner.
 func (s *RunService) GetRun(ctx context.Context, p identity.Principal, runID string) (*d.RunView, error) {
+	if !uow.InTransaction(ctx) {
+		var view *d.RunView
+		err := s.manager.WithinReadSnapshot(ctx, func(tx context.Context) (err error) { view, err = s.GetRun(tx, p, runID); return err })
+		return view, err
+	}
 	if err := s.AuthorizeCreator(p); err != nil {
 		return nil, err
 	}
@@ -361,6 +383,10 @@ func (s *RunService) GetRun(ctx context.Context, p identity.Principal, runID str
 	}
 
 	view := s.buildRunView(run, nodes)
+	view.PendingQuestions, err = s.repo.ListOpenQuestions(ctx, p.TenantID, runID)
+	if err != nil {
+		return nil, err
+	}
 	if s.resources == nil {
 		return nil, d.ErrNotFound()
 	}
@@ -423,7 +449,7 @@ func (s *RunService) CancelRun(ctx context.Context, p identity.Principal, runID 
 	}
 
 	// If queued or waiting_approval, terminate immediately
-	if run.Status == d.RunStatusQueued || run.Status == d.RunStatusWaitingApproval {
+	if run.Status == d.RunStatusQueued || run.Status == d.RunStatusWaitingApproval || run.Status == d.RunStatusWaitingClarification {
 		terminatedRun, err := s.Terminate(ctx, p.TenantID, runID, run.Revision, d.RunStatusCancelled, "user_requested", "", false, nil)
 		if err != nil {
 			return nil, err
@@ -435,6 +461,9 @@ func (s *RunService) CancelRun(ctx context.Context, p identity.Principal, runID 
 	// If running, move to cancelling first, then terminate
 	if run.Status == d.RunStatusRunning {
 		err = s.manager.Within(ctx, func(tx context.Context) error {
+			if err := s.jobs.LockRunJobCommand(tx, p.TenantID, run.PlatformJobID); err != nil {
+				return err
+			}
 			updated, err := s.repo.UpdateRunStatus(tx, p.TenantID, runID, run.Revision, d.RunStatusCancelling)
 			if err != nil {
 				return err
@@ -473,13 +502,22 @@ func (s *RunService) Terminate(
 
 	var terminatedRun *d.AgentRun
 	err := s.manager.Within(ctx, func(tx context.Context) error {
+		binding, err := s.repo.GetRunOnly(tx, tenantID, runID)
+		if err != nil {
+			return err
+		}
+		if err = s.jobs.LockRunJobCommand(tx, tenantID, binding.PlatformJobID); err != nil {
+			return err
+		}
 		// 1. CAS update run status to terminal
-		var err error
 		terminatedRun, err = s.repo.TerminateRun(tx, tenantID, runID, expectedRev, targetStatus, reason, errorCode, retryable, receiptIDs)
 		if err != nil {
 			return err
 		}
 
+		if err = s.repo.CloseQuestions(tx, tenantID, runID, "cancelled"); err != nil {
+			return err
+		}
 		// 2. Cascade cancel incomplete nodes
 		nodes, err := s.repo.ListNodes(tx, tenantID, runID)
 		if err != nil {
@@ -487,7 +525,9 @@ func (s *RunService) Terminate(
 		}
 		for _, node := range nodes {
 			if !node.Status.IsTerminal() {
-				_ = s.repo.UpdateNodeStatus(tx, tenantID, node.ID, node.Revision, d.NodeStatusCancelled)
+				if err = s.repo.UpdateNodeStatus(tx, tenantID, node.ID, node.Revision, d.NodeStatusCancelled); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -497,7 +537,9 @@ func (s *RunService) Terminate(
 			jobCode = reason
 		}
 		if s.jobs != nil && terminatedRun.PlatformJobID != "" {
-			_ = s.jobs.CancelRunJobCommand(tx, tenantID, terminatedRun.PlatformJobID, jobCode)
+			if err = s.jobs.CancelRunJobCommand(tx, tenantID, terminatedRun.PlatformJobID, jobCode); err != nil {
+				return err
+			}
 		}
 
 		// 4. Allocate next seq and write the unique terminal event
@@ -590,6 +632,7 @@ func (s *RunService) buildRunView(run *d.AgentRun, nodes []d.AgentRunNode) *d.Ru
 	}
 
 	return &d.RunView{
+		PendingQuestions:    []d.Question{},
 		ID:                  run.ID,
 		Revision:            run.Revision,
 		CreatedAt:           run.CreatedAt,

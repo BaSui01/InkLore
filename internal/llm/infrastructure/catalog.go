@@ -485,6 +485,9 @@ func dbError(err error) error {
 
 func (s *Store) Publish(ctx context.Context, tenant, id string, expected int64, input d.PolicyInput) (d.Policy, error) {
 	var out d.Policy
+	if !d.ValidPolicyTaskKinds(input.TaskKinds) {
+		return out, d.ErrInvalid
+	}
 	db, err := s.manager.Require(ctx)
 	if err != nil {
 		return out, err
@@ -518,7 +521,7 @@ func (s *Store) Publish(ctx context.Context, tenant, id string, expected int64, 
 	}
 	versionID := uuid.NewString()
 	raw, _ := json.Marshal(input)
-	err = db.Exec("INSERT INTO llm_task_policy_versions(id,tenant_id,policy_id,version,primary_model_id,fallback_model_ids,max_output_tokens,temperature,timeout_seconds,max_retries,required_capabilities,output_mode) SELECT ?::uuid,?::uuid,?::uuid,?,primary_model_id,fallback_model_ids,max_output_tokens,temperature,timeout_seconds,max_retries,required_capabilities,output_mode FROM jsonb_populate_record(NULL::llm_task_policy_versions,?::jsonb)", versionID, tenant, id, version, string(raw)).Error
+	err = db.Exec("INSERT INTO llm_task_policy_versions(id,tenant_id,policy_id,version,primary_model_id,fallback_model_ids,max_output_tokens,temperature,timeout_seconds,max_retries,required_capabilities,output_mode,task_kinds) SELECT ?::uuid,?::uuid,?::uuid,?,primary_model_id,fallback_model_ids,max_output_tokens,temperature,timeout_seconds,max_retries,required_capabilities,output_mode,task_kinds FROM jsonb_populate_record(NULL::llm_task_policy_versions,?::jsonb)", versionID, tenant, id, version, string(raw)).Error
 	if err != nil {
 		return out, dbError(err)
 	}

@@ -20,13 +20,18 @@ func (h *Handler) listApprovals(c *gin.Context) {
 		return
 	}
 
-	q, err := parsePagination(c)
+	q, binding, err := h.runPageQuery(c, p, "agent_list_approvals", "pending")
 	if err != nil {
 		response.Fail(c, err)
 		return
 	}
 
 	items, nextCursor, hasMore, err := h.Approvals.ListApprovals(c.Request.Context(), p, q)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	nextCursor, err = h.encodeRunPagePosition(binding, nextCursor)
 	if err != nil {
 		response.Fail(c, err)
 		return

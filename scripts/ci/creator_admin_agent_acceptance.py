@@ -142,7 +142,7 @@ def main():
 
     # Real source-ownership check must run BEFORE any workflow or model dispatch.
     bad_resource = {
-        "task_kind": "outline_suggest", "task_key": "outline_suggest",
+        "task_kind": "outline_suggest", "task_policy_version_id": str(uuid.uuid4()),
         "definition_id": definition_id, "instruction": "Test source access",
         "resource": {
             "resource_id": str(uuid.uuid4()), "resource_type": "novel",

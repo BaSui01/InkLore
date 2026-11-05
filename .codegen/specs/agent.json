@@ -4650,6 +4650,13 @@
           "retryable": {
             "type": "boolean",
             "description": "仅提示人工新请求的可能性；未知模型/工具结果固定false，绝不表示可自动重发原run。"
+          },
+          "pending_questions": {
+            "type": "array",
+            "maxItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Question"
+            }
           }
         },
         "required": [
@@ -4673,7 +4680,8 @@
           "started_at",
           "finished_at",
           "terminal_reason",
-          "retryable"
+          "retryable",
+          "pending_questions"
         ],
         "additionalProperties": false,
         "description": "运行由唯一run级platform job调度；所有终态经同一Terminate CAS。实际审批来源变化的409也可伴随已提交failed状态，应重新GET。"

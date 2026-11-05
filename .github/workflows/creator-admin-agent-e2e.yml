@@ -135,3 +135,14 @@ jobs:
           python3 scripts/ci/creator_admin_agent_acceptance.py
           export PLAYWRIGHT_PACKAGE_PATH=/tmp/inklore-ci-browser/node_modules/playwright
           node scripts/ci/creator_admin_agent_browser.cjs
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_e2e PGDATABASE=inklore_e2e PGPASSWORD=disposable-ci-only
+          export E2E_AGENT_UI_PG_TEST=1 E2E_RUN_BROWSER=1 E2E_EVIDENCE_DIR=/tmp/inklore-agent-ui-evidence
+          python3 scripts/ci/agent_ui_acceptance.py
+      - name: Upload redacted Agent UI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-question-ui-evidence
+          path: /tmp/inklore-agent-ui-evidence
+          if-no-files-found: ignore
+          retention-days: 7
