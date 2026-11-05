@@ -1831,18 +1831,19 @@ type Revision = int64
 
 // Run 运行由唯一run级platform job调度；所有终态经同一Terminate CAS。实际审批来源变化的409也可伴随已提交failed状态，应重新GET。
 type Run struct {
-	CreatedAt           Timestamp `json:"created_at"`
-	DeadlineAt          Timestamp `json:"deadline_at"`
-	DefinitionVersionId UUID      `json:"definition_version_id"`
-	ErrorCode           string    `json:"error_code"`
-	FinishedAt          Timestamp `json:"finished_at"`
-	Id                  UUID      `json:"id"`
-	Instruction         string    `json:"instruction"`
-	Kind                RunKind   `json:"kind"`
-	Nodes               []Node    `json:"nodes"`
-	OwnerUserId         UUID      `json:"owner_user_id"`
-	PolicyVersionId     UUID      `json:"policy_version_id"`
-	Resource            Resource  `json:"resource"`
+	CreatedAt           Timestamp  `json:"created_at"`
+	DeadlineAt          Timestamp  `json:"deadline_at"`
+	DefinitionVersionId UUID       `json:"definition_version_id"`
+	ErrorCode           string     `json:"error_code"`
+	FinishedAt          Timestamp  `json:"finished_at"`
+	Id                  UUID       `json:"id"`
+	Instruction         string     `json:"instruction"`
+	Kind                RunKind    `json:"kind"`
+	Nodes               []Node     `json:"nodes"`
+	OwnerUserId         UUID       `json:"owner_user_id"`
+	PendingQuestions    []Question `json:"pending_questions"`
+	PolicyVersionId     UUID       `json:"policy_version_id"`
+	Resource            Resource   `json:"resource"`
 
 	// Retryable 仅提示人工新请求的可能性；未知模型/工具结果固定false，绝不表示可自动重发原run。
 	Retryable bool      `json:"retryable"`

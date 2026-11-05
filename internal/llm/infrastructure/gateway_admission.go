@@ -69,10 +69,24 @@ func (a *RedisAdmission) markFailed(tenant string) {
 func (a *RedisAdmission) begin(ctx context.Context, tenant string) error {
 	a.mu.Lock()
 	needs := !a.known[tenant] || a.dirty[tenant]
-	a.known[tenant] = true
+	dirty := a.dirty[tenant]
 	a.mu.Unlock()
 	if !needs {
 		return nil
+	}
+	if !dirty {
+		ready, err := a.client.HGet(ctx, gatewayPrefix(tenant)+"guard", "ready").Result()
+		if err != nil && !errors.Is(err, redis.Nil) {
+			a.markFailed(tenant)
+			return gatewayFailure(d.ErrCapacityUnavailable, 60)
+		}
+		if ready == "1" {
+			a.mu.Lock()
+			a.known[tenant] = true
+			a.mu.Unlock()
+			return nil
+		}
+		return a.ReconcileRecovery(ctx, tenant)
 	}
 	_, e := a.client.Eval(ctx, gatewayRecoveryLua, []string{gatewayPrefix(tenant) + "guard"}, "begin", "0", "0").Result()
 	if e != nil {
@@ -82,7 +96,7 @@ func (a *RedisAdmission) begin(ctx context.Context, tenant string) error {
 	a.mu.Lock()
 	delete(a.dirty, tenant)
 	a.mu.Unlock()
-	return nil
+	return a.ReconcileRecovery(ctx, tenant)
 }
 
 // ReconcileRecovery requires a fresh PG reservation query on every attempted
@@ -212,6 +226,16 @@ func (a *RedisAdmission) Acquire(ctx context.Context, in d.AdmissionRequest) (d.
 		return d.AdmissionLease{}, gatewayFailure(d.ErrCapacity, gatewayRetry(values))
 	}
 	if values[0] != "ok" {
+		if values[0] == "unavailable" {
+			if len(values) > 2 && values[2] == "missing" {
+				if _, err := a.eval(ctx, in.TenantID, gatewayRecoveryLua, []string{gatewayPrefix(in.TenantID) + "guard"}, "begin", "0", "0"); err != nil {
+					return d.AdmissionLease{}, err
+				}
+			}
+			if recoveryErr := a.ReconcileRecovery(ctx, in.TenantID); recoveryErr != nil {
+				return d.AdmissionLease{}, recoveryErr
+			}
+		}
 		return d.AdmissionLease{}, gatewayFailure(d.ErrCapacityUnavailable, gatewayRetry(values))
 	}
 	if len(values) != 5 {
@@ -322,6 +346,7 @@ const gatewayAcquireLua = `
 local clock=redis.call('TIME')
 local now=tonumber(clock[1])*1000+math.floor(tonumber(clock[2])/1000)
 local guard=KEYS[1]
+if redis.call('EXISTS',guard)==0 then return {'unavailable','30','missing'} end
 if redis.call('HGET',guard,'ready')~='1' then return {'unavailable','30'} end
 if redis.call('EXISTS',KEYS[2])==1 then return {'duplicate','30'} end
 local groups=cjson.decode(ARGV[1])
@@ -443,7 +468,7 @@ local mode=ARGV[1]
 local exists=redis.call('EXISTS',KEYS[1])
 local untilTime=tonumber(redis.call('HGET',KEYS[1],'until') or '0')
 if mode=='begin' then
- untilTime=math.max(untilTime,now+30000)
+ untilTime=math.max(untilTime,now+60000)
  redis.call('HSET',KEYS[1],'ready',0,'until',untilTime)
 elseif mode=='check' and exists==0 then
  untilTime=0

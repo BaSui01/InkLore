@@ -130,6 +130,24 @@ func (e KeyHealth) Valid() bool {
 	}
 }
 
+// Defines values for KeySecretRefKind.
+const (
+	KeySecretRefKindEnv         KeySecretRefKind = "env"
+	KeySecretRefKindSecretStore KeySecretRefKind = "secret_store"
+)
+
+// Valid indicates whether the value is a known member of the KeySecretRefKind enum.
+func (e KeySecretRefKind) Valid() bool {
+	switch e {
+	case KeySecretRefKindEnv:
+		return true
+	case KeySecretRefKindSecretStore:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ModelEmbeddingDimensions.
 const (
 	ModelEmbeddingDimensionsN1536 ModelEmbeddingDimensions = 1536
@@ -351,19 +369,19 @@ func (e ProviderUpdateProtocol) Valid() bool {
 
 // Defines values for SecretRefKind.
 const (
-	Env         SecretRefKind = "env"
-	Plain       SecretRefKind = "plain"
-	SecretStore SecretRefKind = "secret_store"
+	SecretRefKindEnv         SecretRefKind = "env"
+	SecretRefKindPlain       SecretRefKind = "plain"
+	SecretRefKindSecretStore SecretRefKind = "secret_store"
 )
 
 // Valid indicates whether the value is a known member of the SecretRefKind enum.
 func (e SecretRefKind) Valid() bool {
 	switch e {
-	case Env:
+	case SecretRefKindEnv:
 		return true
-	case Plain:
+	case SecretRefKindPlain:
 		return true
-	case SecretStore:
+	case SecretRefKindSecretStore:
 		return true
 	default:
 		return false
@@ -1136,10 +1154,12 @@ type Key struct {
 	Id          UUID      `json:"id"`
 	Revision    Revision  `json:"revision"`
 	Rpm         int       `json:"rpm"`
-	SecretRef   SecretRef `json:"secret_ref"`
-	Title       string    `json:"title"`
-	UpdatedAt   Timestamp `json:"updated_at"`
-	Weight      int       `json:"weight"`
+
+	// SecretRef Read-only credential metadata. Legacy sensitive locators are returned as a fixed mask.
+	SecretRef SecretRef `json:"secret_ref"`
+	Title     string    `json:"title"`
+	UpdatedAt Timestamp `json:"updated_at"`
+	Weight    int       `json:"weight"`
 }
 
 // KeyHealth defines model for Key.Health.
@@ -1147,13 +1167,15 @@ type KeyHealth string
 
 // KeyInput defines model for KeyInput.
 type KeyInput struct {
-	ChannelId   UUID      `json:"channel_id"`
-	Concurrency int       `json:"concurrency"`
-	Enabled     bool      `json:"enabled"`
-	Rpm         int       `json:"rpm"`
-	SecretRef   SecretRef `json:"secret_ref"`
-	Title       string    `json:"title"`
-	Weight      int       `json:"weight"`
+	ChannelId   UUID `json:"channel_id"`
+	Concurrency int  `json:"concurrency"`
+	Enabled     bool `json:"enabled"`
+	Rpm         int  `json:"rpm"`
+
+	// SecretRef A deployment-managed credential reference. Plaintext keys and legacy encrypted locators cannot be written.
+	SecretRef KeySecretRef `json:"secret_ref"`
+	Title     string       `json:"title"`
+	Weight    int          `json:"weight"`
 }
 
 // KeyPage defines model for KeyPage.
@@ -1163,16 +1185,28 @@ type KeyPage struct {
 	NextCursor string `json:"next_cursor"`
 }
 
+// KeySecretRef A deployment-managed credential reference. Plaintext keys and legacy encrypted locators cannot be written.
+type KeySecretRef struct {
+	Kind    KeySecretRefKind `json:"kind"`
+	Locator string           `json:"locator"`
+	Version string           `json:"version"`
+}
+
+// KeySecretRefKind defines model for KeySecretRef.Kind.
+type KeySecretRefKind string
+
 // KeyUpdate defines model for KeyUpdate.
 type KeyUpdate struct {
-	ChannelId        UUID      `json:"channel_id"`
-	Concurrency      int       `json:"concurrency"`
-	Enabled          bool      `json:"enabled"`
-	ExpectedRevision Revision  `json:"expected_revision"`
-	Rpm              int       `json:"rpm"`
-	SecretRef        SecretRef `json:"secret_ref"`
-	Title            string    `json:"title"`
-	Weight           int       `json:"weight"`
+	ChannelId        UUID     `json:"channel_id"`
+	Concurrency      int      `json:"concurrency"`
+	Enabled          bool     `json:"enabled"`
+	ExpectedRevision Revision `json:"expected_revision"`
+	Rpm              int      `json:"rpm"`
+
+	// SecretRef A deployment-managed credential reference. Plaintext keys and legacy encrypted locators cannot be written.
+	SecretRef KeySecretRef `json:"secret_ref"`
+	Title     string       `json:"title"`
+	Weight    int          `json:"weight"`
 }
 
 // Model defines model for Model.
@@ -1395,7 +1429,7 @@ type ProviderUpdateProtocol string
 // Revision defines model for Revision.
 type Revision = int64
 
-// SecretRef defines model for SecretRef.
+// SecretRef Read-only credential metadata. Legacy sensitive locators are returned as a fixed mask.
 type SecretRef struct {
 	Kind    SecretRefKind `json:"kind"`
 	Locator string        `json:"locator"`

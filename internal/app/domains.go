@@ -135,12 +135,25 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 	a.domains.Budget = llmBudget
 	llmHandler.Register(engine)
 	providerRouter := llminfra.NewProviderRouter()
-	tenantResolver, err := llminfra.NewTenantChannelResolver(p.UoW)
+	runtimeRepo, err := llminfra.NewGatewayRuntimeRepository(p.UoW)
 	if err != nil {
 		return err
 	}
-	providerRouter.SetTenantResolver(tenantResolver)
+	providerRouter.SetTenantDispatchResolver(runtimeRepo.ResolveDispatch)
 	llmGateway := llmapp.NewGatewayService(providerRouter)
+	// Without Redis the API can still configure the gateway, but tenant
+	// generation remains capacity_unavailable and never bypasses admission.
+	if p.Redis != nil {
+		admission, err := llminfra.NewRedisAdmission(llminfra.GatewayRedisOptions{Client: p.Redis, Recovery: runtimeRepo, KeyHealth: runtimeRepo})
+		if err != nil {
+			return err
+		}
+		runtime, err := llmapp.NewGatewayRuntime(llmapp.GatewayRuntimeOptions{Budget: llmBudget, Admission: admission, Repository: runtimeRepo, UoW: p.UoW})
+		if err != nil {
+			return err
+		}
+		llmGateway.SetRuntime(runtime)
+	}
 	a.domains.Gateway = llmGateway
 	contenthttp.New(content).RegisterRoutes(engine)
 	handler, err := outlinehttp.NewHandler(outlinehttp.Options{Service: outline, Identity: p.Identity, Idempotency: p.Idempotency, Cursor: p.Cursor})

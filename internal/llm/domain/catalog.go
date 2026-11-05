@@ -285,31 +285,32 @@ type Budget struct {
 }
 
 type Usage struct {
-	ID                string        `json:"id"`
-	CreatedAt         string        `json:"created_at"`
-	UpdatedAt         string        `json:"updated_at"`
-	InvocationID      string        `json:"invocation_id"`
-	Attempt           int64         `json:"attempt"`
-	ReservationID     string        `json:"reservation_id"`
-	PolicyVersionID   string        `json:"policy_version_id"`
-	ModelID           string        `json:"model_id"`
-	ChannelID         *string       `json:"channel_id"`
-	KeyID             *string       `json:"key_id"`
-	PricingRevisionID string        `json:"pricing_revision_id"`
-	BusinessDate      string        `json:"business_date"`
-	InputTokens       int64         `json:"input_tokens"`
-	OutputTokens      int64         `json:"output_tokens"`
-	CachedInputTokens int64         `json:"cached_input_tokens"`
-	CostMicros        int64         `json:"cost_micros"`
-	AdjustmentMicros  int64         `json:"adjustment_micros"`
-	Currency          string        `json:"currency"`
-	PriceSnapshot     PriceSnapshot `json:"price_snapshot"`
-	Estimated         bool          `json:"estimated"`
-	EstimateReason    *string       `json:"estimate_reason"`
-	Status            string        `json:"status"`
-	ErrorCode         *string       `json:"error_code"`
-	DurationMs        int64         `json:"duration_ms"`
-	TraceID           string        `json:"trace_id"`
+	ReservationRevision int64         `json:"-"`
+	ID                  string        `json:"id"`
+	CreatedAt           string        `json:"created_at"`
+	UpdatedAt           string        `json:"updated_at"`
+	InvocationID        string        `json:"invocation_id"`
+	Attempt             int64         `json:"attempt"`
+	ReservationID       string        `json:"reservation_id"`
+	PolicyVersionID     string        `json:"policy_version_id"`
+	ModelID             string        `json:"model_id"`
+	ChannelID           *string       `json:"channel_id"`
+	KeyID               *string       `json:"key_id"`
+	PricingRevisionID   string        `json:"pricing_revision_id"`
+	BusinessDate        string        `json:"business_date"`
+	InputTokens         int64         `json:"input_tokens"`
+	OutputTokens        int64         `json:"output_tokens"`
+	CachedInputTokens   int64         `json:"cached_input_tokens"`
+	CostMicros          int64         `json:"cost_micros"`
+	AdjustmentMicros    int64         `json:"adjustment_micros"`
+	Currency            string        `json:"currency"`
+	PriceSnapshot       PriceSnapshot `json:"price_snapshot"`
+	Estimated           bool          `json:"estimated"`
+	EstimateReason      *string       `json:"estimate_reason"`
+	Status              string        `json:"status"`
+	ErrorCode           *string       `json:"error_code"`
+	DurationMs          int64         `json:"duration_ms"`
+	TraceID             string        `json:"trace_id"`
 }
 
 // ProviderRecord 表达系统接入的模型供应商实体

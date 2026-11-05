@@ -32,8 +32,9 @@ type ProviderRouter struct {
 	usageRecorder domain.UsageRecorder
 	// metricsRecorder 为可选的进程内指标消费者（INK-056）；未注入时不记录。
 	// 与审计解耦：没有数据库时指标依然可用。
-	metricsRecorder domain.MetricsRecorder
-	tenantResolver  TenantChannelResolver
+	metricsRecorder        domain.MetricsRecorder
+	tenantResolver         TenantChannelResolver
+	tenantDispatchResolver func(context.Context, domain.TextGenerationRequest) (TenantChannelTarget, error)
 }
 
 func NewProviderRouter() *ProviderRouter {
@@ -56,7 +57,8 @@ func NewProviderRouter() *ProviderRouter {
 
 	return &ProviderRouter{
 		client: &http.Client{
-			Timeout: 90 * time.Second,
+			Timeout:       90 * time.Second,
+			CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse },
 		},
 		apiKey:    apiKey,
 		baseURL:   strings.TrimRight(baseURL, "/"),
@@ -269,11 +271,9 @@ func (r *ProviderRouter) GenerateChatStream(ctx context.Context, req domain.Text
 
 	reasoning := isReasoningModel(model)
 	temp := req.Temperature
-	maxTokens := req.MaxTokens
-	maxCompletionTokens := req.MaxTokens
+	maxTokens, maxCompletionTokens := chatTokenLimits(target.protocol, model, req.MaxTokens)
 	if reasoning {
 		temp = 0
-		maxTokens = 0
 	}
 
 	payload := openAIToolChatRequest{
@@ -452,7 +452,11 @@ func (r *ProviderRouter) generateUpstream(ctx context.Context, req domain.Genera
 // 是 ClassifyExecutionError 能把 5xx 归类为"可重试/上游不可用"的前提，
 // 也是密钥级熔断能够累加计数的前提。
 func newUpstreamStatusError(status int, reason string) error {
-	return &upstreamStatusError{status: status, reason: strings.TrimSpace(reason)}
+	reason = logger.SanitizeTransportErrorMessage(reason)
+	if reason == "" {
+		reason = http.StatusText(status)
+	}
+	return &upstreamStatusError{status: status, reason: reason}
 }
 
 type upstreamStatusError struct {
@@ -515,6 +519,13 @@ func (r *ProviderRouter) SetTenantResolver(resolver TenantChannelResolver) {
 // resolveChatTarget never falls back to global credentials for tenant-bound work.
 func (r *ProviderRouter) resolveChatTarget(ctx context.Context, req domain.TextGenerationRequest) (upstreamTarget, string, error) {
 	if req.TenantID != "" || req.ModelID != "" || req.PolicyVersionID != "" {
+		if r.tenantDispatchResolver != nil {
+			resolved, err := r.tenantDispatchResolver(ctx, req)
+			if err != nil {
+				return upstreamTarget{}, "", err
+			}
+			return upstreamTarget{baseURL: resolved.BaseURL, apiKey: resolved.APIKey, protocol: resolved.Protocol, leaseID: -1}, resolved.UpstreamModel, nil
+		}
 		if strings.TrimSpace(req.TenantID) == "" || strings.TrimSpace(req.ModelID) == "" ||
 			strings.TrimSpace(req.PolicyVersionID) == "" || r.tenantResolver == nil {
 			return upstreamTarget{}, "", fmt.Errorf("tenant model route requires tenant, model and frozen policy")
@@ -594,6 +605,14 @@ func (r *ProviderRouter) resolveUpstream(ctx context.Context, requestedModel ...
 		return upstreamTarget{baseURL: r.baseURL, apiKey: r.apiKey, leaseID: -1, protocol: r.protocol}, nil
 	}
 	return upstreamTarget{}, domain.ErrProviderNotConfigured
+}
+
+// SetTenantDispatchResolver installs the selected, PG-verified tenant route.
+func (r *ProviderRouter) SetTenantDispatchResolver(resolver func(context.Context, domain.TextGenerationRequest) (TenantChannelTarget, error)) {
+	r.tenantDispatchResolver = resolver
+	if resolver != nil {
+		r.isLiveAPI = true
+	}
 }
 
 // recordUpstream 回报调用结果；未走选路的直连目标无需回报。

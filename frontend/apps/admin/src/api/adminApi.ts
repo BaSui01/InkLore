@@ -91,7 +91,7 @@ export interface LlmChannel {
 }
 
 export interface SecretRef {
-  kind: string;
+  kind: "env" | "secret_store" | "plain";
   locator: string;
   version: string;
 }
@@ -361,7 +361,7 @@ export async function fetchUpstreamModels(payload: FetchUpstreamModelsPayload): 
 export interface CreateKeyPayload {
   channel_id: string;
   title: string;
-  secret_ref: SecretRef;
+  secret_ref: Omit<SecretRef, "kind"> & { kind: "env" | "secret_store" };
   weight: number;
   rpm: number;
   concurrency: number;

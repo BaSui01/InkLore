@@ -67,6 +67,8 @@ type Reservation struct {
 	Attempt                                                                                       int
 	ReservedMicros                                                                                int64
 	LeaseUntil                                                                                    time.Time
+	Fresh                                                                                         bool
+	Revision                                                                                      int64
 }
 
 type Settlement struct {
@@ -98,6 +100,7 @@ type BudgetEvent struct {
 
 type DispatchInput struct {
 	TenantID, ReservationID, ChannelID, KeyID string
+	SecretVersion                             string
 	Deadline                                  time.Time
 }
 
@@ -117,7 +120,7 @@ type BudgetRepository interface {
 	Reserve(context.Context, ReserveInput, time.Time) (Reservation, bool, error)
 	MarkDispatch(context.Context, DispatchInput, time.Time) (Reservation, bool, error)
 	Renew(context.Context, string, string, time.Time, time.Time) error
-	Release(context.Context, string, string, time.Time, bool) (bool, error)
+	Release(context.Context, string, string, time.Time, bool) (int64, error)
 	Settle(context.Context, SettlementInput, time.Time) (*Usage, bool, error)
 	Expired(context.Context, time.Time, int) ([]Reservation, error)
 }

@@ -14,6 +14,7 @@ import (
 // GatewayService 编排 LLM 的核心用例。
 type GatewayService struct {
 	gateway domain.Gateway
+	runtime *GatewayRuntime
 }
 
 func NewGatewayService(gateway domain.Gateway) *GatewayService {
@@ -81,12 +82,25 @@ func (s *GatewayService) GenerateChatStream(ctx context.Context, request domain.
 	if s == nil || s.gateway == nil {
 		return providerNotConfiguredError()
 	}
+	if tenantChat(request) {
+		if s.runtime == nil {
+			return public(domain.ErrCapacityUnavailable)
+		}
+		return runtimePublicError(s.runtime.generateStream(ctx, s.gateway, request))
+	}
 	return normalizeProviderError(s.gateway.GenerateChatStream(ctx, request))
 }
 
 func (s *GatewayService) GenerateChat(ctx context.Context, request domain.TextGenerationRequest) (domain.TextGenerationResponse, error) {
 	if s == nil || s.gateway == nil {
 		return domain.TextGenerationResponse{}, providerNotConfiguredError()
+	}
+	if tenantChat(request) {
+		if s.runtime == nil {
+			return domain.TextGenerationResponse{}, public(domain.ErrCapacityUnavailable)
+		}
+		response, err := s.runtime.generate(ctx, s.gateway, request)
+		return response, runtimePublicError(err)
 	}
 	resp, err := s.gateway.GenerateChat(ctx, request)
 	if err != nil {
@@ -156,7 +170,7 @@ func normalizeProviderError(err error) error {
 // and Release own short UoWs; the Redis call is never made inside a PG transaction.
 type GatewayAdmissionBudgetPort interface {
 	Reserve(context.Context, domain.ReserveInput) (domain.Reservation, error)
-	Release(context.Context, domain.Reservation) error
+	Release(context.Context, string, string) error
 }
 type GatewayAdmissionOptions struct {
 	Admission domain.AdmissionPort
@@ -188,7 +202,7 @@ func (s *GatewayAdmissionService) Prepare(ctx context.Context, budget domain.Res
 	}
 	// A replay that has already dispatched must never acquire another Redis slot
 	// or release its chargeable reservation, even when the original response was lost.
-	if reservation.Status != "reserved" {
+	if reservation.Status != "reserved" || !reservation.Fresh {
 		return PendingAdmission{}, domain.ErrOutcomeUnknown
 	}
 	lease, e := s.options.Admission.Acquire(ctx, in)
@@ -197,7 +211,7 @@ func (s *GatewayAdmissionService) Prepare(ctx context.Context, budget domain.Res
 	}
 	cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancel()
-	if releaseError := s.options.Budget.Release(cleanup, reservation); releaseError != nil {
+	if releaseError := s.options.Budget.Release(cleanup, reservation.TenantID, reservation.ID); releaseError != nil {
 		return PendingAdmission{}, errors.Join(e, errors.New("undispatched reservation release failed"))
 	}
 	return PendingAdmission{}, e
@@ -209,7 +223,7 @@ func (s *GatewayAdmissionService) Abort(ctx context.Context, p PendingAdmission)
 	cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancel()
 	redisError := s.options.Admission.Release(cleanup, p.Lease)
-	budgetError := s.options.Budget.Release(cleanup, p.Reservation)
+	budgetError := s.options.Budget.Release(cleanup, p.Reservation.TenantID, p.Reservation.ID)
 	return errors.Join(redisError, budgetError)
 }
 

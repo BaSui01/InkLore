@@ -234,13 +234,20 @@ func (a *JobsAdapter) WakeRunJob(ctx context.Context, tenantID, jobID string) er
 	if err != nil {
 		return err
 	}
-	return db.Exec(`
+	result := db.Exec(`
 		UPDATE platform_jobs
 		SET state = 'queued', available_at = clock_timestamp(), lease_owner = NULL, lease_until = NULL,
 		    revision = revision + 1, updated_at = clock_timestamp()
 		WHERE tenant_id = ? AND id = ?
 		  AND (state IN ('queued', 'retry_wait') OR (state = 'leased' AND lease_until <= clock_timestamp()))
-	`, tenantID, jobID).Error
+	`, tenantID, jobID)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected != 1 {
+		return jobs.ErrLeaseLost
+	}
+	return nil
 }
 
 func (a *JobsAdapter) CompleteRunJob(ctx context.Context, lease *d.RunJobLease, state, code string) error {
@@ -298,3 +305,60 @@ func (a *JobsAdapter) CancelRunJobCommand(ctx context.Context, tenantID, jobID s
 }
 
 var _ d.JobsPort = (*JobsAdapter)(nil)
+
+// WithRunJobLease locks the platform Job before Agent state and validates the
+// original lease again before commit, including if the callback suspended it.
+func (a *JobsAdapter) WithRunJobLease(ctx context.Context, lease *d.RunJobLease, fn func(context.Context) error) error {
+	if lease == nil || fn == nil {
+		return jobs.ErrLeaseLost
+	}
+	if a.jobsService != nil {
+		a.mu.RLock()
+		l, ok := a.leases[lease.JobID]
+		a.mu.RUnlock()
+		if !ok {
+			return jobs.ErrLeaseLost
+		}
+		return a.jobsService.Checkpoint(ctx, l, func(tx context.Context, _ jobs.Job) error { return fn(tx) })
+	}
+	return a.manager.Within(ctx, func(tx context.Context) error {
+		db, err := a.manager.Require(tx)
+		if err != nil {
+			return err
+		}
+		var until time.Time
+		result := db.Raw(`SELECT lease_until FROM platform_jobs WHERE tenant_id=? AND id=? AND domain='agent' AND state='leased' AND lease_owner=? AND lease_epoch=? AND lease_until>clock_timestamp() FOR UPDATE`, lease.TenantID, lease.JobID, lease.WorkerID, lease.LeaseEpoch).Scan(&until)
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected != 1 {
+			return jobs.ErrLeaseLost
+		}
+		if err = fn(tx); err != nil {
+			return err
+		}
+		var live bool
+		if err = db.Raw(`SELECT clock_timestamp() < ?::timestamptz`, until).Scan(&live).Error; err != nil {
+			return err
+		}
+		if !live {
+			return jobs.ErrLeaseLost
+		}
+		return nil
+	})
+}
+func (a *JobsAdapter) LockRunJobCommand(ctx context.Context, tenantID, jobID string) error {
+	db, err := a.manager.Require(ctx)
+	if err != nil {
+		return err
+	}
+	var id string
+	result := db.Raw(`SELECT id FROM platform_jobs WHERE tenant_id=? AND id=? AND domain='agent' AND job_kind='run' FOR UPDATE`, tenantID, jobID).Scan(&id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected != 1 {
+		return d.ErrNotFound()
+	}
+	return nil
+}

@@ -11,7 +11,7 @@ import (
 // startAgentWorker starts only after routes, dependencies, and runtime validation succeeded.
 // The process owns one worker; its context is independent of HTTP request lifetimes.
 func (a *App) startAgentWorker() {
-	if a.agentScheduler == nil {
+	if a.agentScheduler == nil && a.domains.Budget == nil {
 		return
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -19,10 +19,19 @@ func (a *App) startAgentWorker() {
 	a.workerCancel, a.workerDone = cancel, done
 	go func() {
 		defer close(done)
+		if a.domains.Budget != nil {
+			recovered := make(chan struct{})
+			go func() { defer close(recovered); a.recoverLLMReservations(ctx) }()
+			defer func() { cancel(); <-recovered }()
+		}
 		workerID := uuid.NewString()
 		backoff := time.Second
 		for ctx.Err() == nil {
-			claimed, err := a.agentScheduler.ClaimAndExecute(ctx, workerID)
+			var claimed bool
+			var err error
+			if a.agentScheduler != nil {
+				claimed, err = a.agentScheduler.ClaimAndExecute(ctx, workerID)
+			}
 			if ctx.Err() != nil {
 				return
 			}
@@ -51,5 +60,25 @@ func (a *App) startAgentWorker() {
 	}()
 	if a.activateAgentTools != nil {
 		a.activateAgentTools()
+	}
+}
+
+// Reservation recovery has its own bounded loop so a slow model request
+// cannot delay crash settlement or permit resending an unknown dispatch.
+func (a *App) recoverLLMReservations(ctx context.Context) {
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
+	for ctx.Err() == nil {
+		cycle, cancel := context.WithTimeout(ctx, 10*time.Second)
+		_, err := a.domains.Budget.RecoverReservations(cycle, 100)
+		cancel()
+		if err != nil && ctx.Err() == nil {
+			log.Printf("llm reservation recovery failed: %T", err)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
 	}
 }

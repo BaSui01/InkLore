@@ -29,6 +29,9 @@ func (g *AgentTaskModelGateway) Generate(ctx context.Context, input agentdomain.
 	if strings.TrimSpace(input.PolicyVersionID) == "" {
 		return nil, errors.New("frozen model policy version is required")
 	}
+	if strings.TrimSpace(input.ExecutionKey) == "" {
+		return nil, errors.New("persisted model execution key is required")
+	}
 	policy, err := g.catalog.ReadFrozenPolicy(ctx, input.TenantID, input.PolicyVersionID)
 	if err != nil {
 		return nil, err
@@ -72,6 +75,7 @@ func (g *AgentTaskModelGateway) Generate(ctx context.Context, input agentdomain.
 		Temperature:       policy.Temperature,
 		TaskKey:           policy.TaskKey,
 		RequestID:         input.RunID,
+		ExecutionKey:      "agent/" + input.ExecutionKey,
 		ToolChoice:        input.ToolChoice,
 		ParallelToolCalls: input.ParallelToolCalls,
 	}
@@ -93,13 +97,15 @@ func (g *AgentTaskModelGateway) Generate(ctx context.Context, input agentdomain.
 	}
 
 	response, err := g.llm.GenerateChat(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-
 	result := &agentdomain.ModelGenerateOutput{
 		InputTokens:  int64(tokenInput(response.Usage)),
 		OutputTokens: int64(tokenOutput(response.Usage)),
+	}
+	if response.Receipt != nil {
+		result = agentReceiptOutput(response.Receipt)
+	}
+	if err != nil {
+		return result, err
 	}
 	if response.Content != "" {
 		text := response.Content
@@ -115,9 +121,30 @@ func (g *AgentTaskModelGateway) Generate(ctx context.Context, input agentdomain.
 		})
 	}
 	if result.FinalText == nil && len(result.ToolCalls) == 0 {
-		return nil, errors.New("model response contained neither text nor tool calls")
+		return result, errors.New("model response contained neither text nor tool calls")
 	}
 	return result, nil
+}
+
+// RecoverUsage reads the original operation's ledger only. It never invokes a
+// model, executes a tool, or turns an interrupted response into author content.
+func (g *AgentTaskModelGateway) RecoverUsage(ctx context.Context, tenantID, executionKey string) (*agentdomain.ModelGenerateOutput, error) {
+	if g == nil || g.catalog == nil {
+		return nil, errors.New("agent usage recovery is not configured")
+	}
+	receipt, err := g.catalog.FindOperationUsage(ctx, tenantID, "agent/"+executionKey)
+	if err != nil || receipt == nil {
+		return nil, err
+	}
+	return agentReceiptOutput(receipt), nil
+}
+
+func agentReceiptOutput(receipt *llmdomain.Usage) *agentdomain.ModelGenerateOutput {
+	return &agentdomain.ModelGenerateOutput{
+		InputTokens: receipt.InputTokens, OutputTokens: receipt.OutputTokens,
+		CostMicros: receipt.CostMicros, Estimated: receipt.Estimated,
+		UsageReceiptID: &receipt.ID,
+	}
 }
 
 func (g *AgentTaskModelGateway) ResolvePolicy(ctx context.Context, tenantID, taskKey string) (string, error) {

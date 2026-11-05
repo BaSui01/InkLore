@@ -1751,11 +1751,14 @@
       "post": {
         "operationId": "llm_fetch_upstream_models",
         "x-use-case": "FR-21 llm.fetch_upstream_models",
+        "x-idempotency": {
+          "mode": "read_only",
+          "reason": "Reads provider model catalogs with outbound GET requests and does not persist credentials or mutate catalog state; POST keeps the supplied API key out of URLs."
+        },
         "x-permission": {
           "audience": "admin",
           "roles": [
-            "operator",
-            "auditor"
+            "operator"
           ],
           "scope": "tenant"
         },
@@ -3534,7 +3537,8 @@
           "locator",
           "version"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Read-only credential metadata. Legacy sensitive locators are returned as a fixed mask."
       },
       "KeyInput": {
         "type": "object",
@@ -3548,7 +3552,7 @@
             "maxLength": 120
           },
           "secret_ref": {
-            "$ref": "#/components/schemas/SecretRef"
+            "$ref": "#/components/schemas/KeySecretRef"
           },
           "weight": {
             "type": "integer",
@@ -4463,7 +4467,7 @@
             "maxLength": 120
           },
           "secret_ref": {
-            "$ref": "#/components/schemas/SecretRef"
+            "$ref": "#/components/schemas/KeySecretRef"
           },
           "weight": {
             "type": "integer",
@@ -4885,6 +4889,35 @@
           "items"
         ],
         "additionalProperties": false
+      },
+      "KeySecretRef": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "env",
+              "secret_store"
+            ]
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "kind",
+          "locator",
+          "version"
+        ],
+        "additionalProperties": false,
+        "description": "A deployment-managed credential reference. Plaintext keys and legacy encrypted locators cannot be written."
       }
     },
     "responses": {

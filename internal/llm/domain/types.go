@@ -111,11 +111,14 @@ type TextGenerationRequest struct {
 	TenantID          string                   `json:"-"`
 	PolicyVersionID   string                   `json:"-"`
 	ModelID           string                   `json:"-"`
+	ExecutionKey      string                   `json:"-"`
+	Dispatch          *GatewayDispatch         `json:"-"`
 	RequestID         string                   `json:"request_id,omitempty"`
 	OnReasoningChunk  func(chunk string) error `json:"-"`
 	OnTextChunk       func(chunk string) error `json:"-"`
 	OnToolCalls       func(calls []ToolCall)   `json:"-"`
 	OnUsage           func(usage *TokenUsage)  `json:"-"`
+	OnReceipt         func(receipt *Usage)     `json:"-"`
 }
 
 type TextGenerationResponse struct {
@@ -125,6 +128,7 @@ type TextGenerationResponse struct {
 	Model        string      `json:"model"`
 	FinishReason string      `json:"finish_reason"`
 	Usage        *TokenUsage `json:"usage,omitempty"`
+	Receipt      *Usage      `json:"-"`
 }
 
 func CloneTokenUsage(u *TokenUsage) *TokenUsage {
