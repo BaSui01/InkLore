@@ -160,6 +160,17 @@ func parseQueryRevision(c *gin.Context) (int64, error) {
 type commandAuthorizer func(context.Context, identity.Principal) error
 
 func (h *Handler) command(c *gin.Context, p identity.Principal, body []byte, status int, authorize commandAuthorizer, fn func(context.Context) (any, error)) {
+	h.commandOutcome(c, p, body, authorize, func(ctx context.Context) (idempotency.CommandOutcome, error) {
+		out, err := fn(ctx)
+		if err != nil {
+			return idempotency.CommandOutcome{}, err
+		}
+		raw, err := json.Marshal(out)
+		return idempotency.CommandOutcome{Commit: true, Result: idempotency.Result{Status: status, Body: raw}}, err
+	})
+}
+
+func (h *Handler) commandOutcome(c *gin.Context, p identity.Principal, body []byte, authorize commandAuthorizer, fn func(context.Context) (idempotency.CommandOutcome, error)) {
 	key := strings.TrimSpace(c.GetHeader("Idempotency-Key"))
 	if !scope.ValidID(key) {
 		response.Fail(c, bad())
@@ -187,14 +198,7 @@ func (h *Handler) command(c *gin.Context, p identity.Principal, body []byte, sta
 			return err
 		}
 		return authorize(ctx, current)
-	}, func(ctx context.Context) (idempotency.CommandOutcome, error) {
-		out, err := fn(ctx)
-		if err != nil {
-			return idempotency.CommandOutcome{}, err
-		}
-		raw, err := json.Marshal(out)
-		return idempotency.CommandOutcome{Commit: true, Result: idempotency.Result{Status: status, Body: raw}}, err
-	})
+	}, fn)
 	if err != nil {
 		response.Fail(c, err)
 		return

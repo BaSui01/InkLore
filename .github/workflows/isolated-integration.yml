@@ -229,4 +229,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_tenants" | grep -qx 1
           psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_memberships" | grep -qx 1
           psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_sessions" | grep -qx 1
+      - name: Verify durable Agent clarification, answer CAS and original Run recovery
+        env:
+          AGENT_QUESTION_PG_TEST: '1'
+        run: go test ./internal/agent/... ./internal/app ./cmd/admin -run 'TestQuestion|TestClarification' -count=1 -race -v
           echo "Real Go API health, dependencies and unknown-route checks passed."

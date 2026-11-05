@@ -227,6 +227,20 @@ func (s *EventService) sanitizePayload(eventName string, raw json.RawMessage) (j
 		cleanBytes, _ := json.Marshal(summary)
 		return cleanBytes, true
 
+	case "question.required":
+		var payload d.QuestionRequiredPayload
+		if json.Unmarshal(raw, &payload) != nil {
+			return nil, false
+		}
+		clean, err := json.Marshal(payload)
+		return clean, err == nil
+	case "question.answered":
+		var payload d.QuestionAnsweredPayload
+		if json.Unmarshal(raw, &payload) != nil {
+			return nil, false
+		}
+		clean, err := json.Marshal(payload)
+		return clean, err == nil
 	case "run.started", "text.delta", "tool.started", "tool.completed",
 		"approval.required", "node.updated", "usage.updated",
 		"run.succeeded", "run.failed", "run.cancelled":
