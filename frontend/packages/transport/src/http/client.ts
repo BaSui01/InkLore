@@ -327,11 +327,16 @@ export class ApiClient {
    * 二进制文件安全下载
    */
   async download(config: DownloadConfig): Promise<DownloadResult> {
+    const initialEpoch = this.session.getSessionEpoch();
     const url = this.buildUrl(config.path, config.pathParams, config.query, config.method || "GET");
     const headers: Record<string, string> = {
       "X-Request-ID": generateUUID(),
     };
 
+    const expiresAt = this.session.getSnapshot().accessExpiresAt;
+    if (this.session.getStatus() === "authenticated" && expiresAt !== null && expiresAt <= Date.now() + 10000) {
+      await this.session.refresh();
+    }
     const token = this.session.getAccessToken();
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
@@ -372,6 +377,12 @@ export class ApiClient {
     }
 
     const blob = await res.blob();
+    if (this.session.getSessionEpoch() !== initialEpoch) {
+      throw new ApiError({ httpStatus: 409, code: "auth.session_epoch_mismatch", details: {} });
+    }
+    if (!contentDisposition.toLowerCase().startsWith("attachment")) {
+      throw new ApiError({ httpStatus: 502, code: "platform.download_failed", details: {} });
+    }
     return {
       blob,
       filename,

@@ -63,6 +63,14 @@ func prepare(r io.Reader, filename, mediaType, purpose string, novelID *string, 
 	}
 	ext := strings.ToLower(path.Ext(filename))
 	switch ext {
+	case ".md":
+		if !output || purpose != "export" || mt != "text/markdown" || !utf8.Valid(b) || !validText(b) {
+			return Prepared{}, badType()
+		}
+	case ".epub":
+		if !output || purpose != "export" || mt != "application/epub+zip" || validateEPUB(b) != nil {
+			return Prepared{}, badType()
+		}
 	case ".txt":
 		if mt != "text/plain" || !validText(b) {
 			return Prepared{}, badType()

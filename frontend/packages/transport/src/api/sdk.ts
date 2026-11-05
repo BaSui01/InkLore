@@ -39,6 +39,8 @@ import {
   ComplianceIssue,
   CreateScanInput,
   PagedList,
+  ContentAPI,
+  DownloadResult,
 } from "@inklore/contracts";
 
 function requirePagedItems<T>(page: PagedList<T>): T[] {
@@ -63,6 +65,30 @@ export class ApiSDK {
   // 1. 内容域 (Content Domain)
   // ==========================================
   readonly content = {
+    createExport: async (novelId: string, input: ContentAPI.components["schemas"]["CreateExport"], idempotencyKey: string): Promise<ContentAPI.components["schemas"]["Job"]> => {
+      const res = await this.client.request<typeof input, ContentAPI.components["schemas"]["Job"]>({
+        operationId: "content_createExport", method: "POST",
+        path: "/v1/content/novels/:novel_id/exports", pathParams: { novel_id: novelId },
+        body: input, idempotencyKey,
+      });
+      return res.data;
+    },
+
+    listJobs: async (novelId: string): Promise<ContentAPI.components["schemas"]["Job"][]> => {
+      const res = await this.client.request<unknown, ContentAPI.components["schemas"]["JobPage"]>({
+        operationId: "content_listJobs", method: "GET",
+        path: "/v1/content/novels/:novel_id/jobs", pathParams: { novel_id: novelId }, query: { limit: 20 },
+      });
+      return requirePagedItems(res.data);
+    },
+
+    downloadExport: async (fileId: string): Promise<DownloadResult> => {
+      return this.client.download({
+        operationId: "platform_downloadFile", path: "/v1/platform/files/:file_id/download",
+        pathParams: { file_id: fileId },
+      });
+    },
+
     /** 获取作品书架列表 (GET /v1/content/novels) */
     listNovels: async (params?: { limit?: number; cursor?: string; status?: string }): Promise<Novel[]> => {
       const res = await this.client.request<unknown, PagedList<Novel>>({
@@ -280,12 +306,12 @@ export class ApiSDK {
       return requirePagedItems(res.data);
     },
 
-    /** 获取世界观当前修订版本号 (GET /v1/worldview/novels/:novel_id/revision) */
+    /** 获取世界观当前修订版本号 */
     getWorldRevision: async (novelId: string): Promise<WorldRevisionResponse> => {
       const res = await this.client.request<unknown, WorldRevisionResponse>({
         operationId: "worldview_getWorldRevision",
         method: "GET",
-        path: "/v1/worldview/novels/:novel_id/revision",
+        path: "/v1/worldview/novels/:novel_id/world-revision",
         pathParams: { novel_id: novelId },
       });
       return res.data;

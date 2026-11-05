@@ -2,6 +2,7 @@ package application
 
 import (
 	d "InkLore/internal/content/domain"
+	pe "InkLore/internal/platform/errors"
 	"InkLore/internal/platform/idempotency"
 	"InkLore/internal/platform/identity"
 	"InkLore/internal/platform/scope"
@@ -15,6 +16,9 @@ func (s *Service) CreateImport(ctx context.Context, c Command, novel string, r d
 	bind(&c, "POST", "/v1/content/novels/"+novel+"/imports", r)
 	if err := d.ValidateCreateImport(r); err != nil {
 		return idempotency.Result{}, err
+	}
+	if s.o.Files == nil {
+		return idempotency.Result{}, pe.Contract(503, "platform.dependency_unavailable", nil)
 	}
 	return s.execute(ctx, c, "novel", novel, false, false, 202, func(tx context.Context, o Owner) (any, error) {
 		n, e := s.active(tx, o)
@@ -39,16 +43,13 @@ func (s *Service) CreateImport(ctx context.Context, c Command, novel string, r d
 			return nil, d.CapacityExceeded()
 		}
 
-		var parsed []d.ParsedChapter
-		if s.o.Files != nil {
-			_, _, payload, err := s.o.Files.GetFile(tx, o.TenantID, r.FileID)
-			if err != nil {
-				return nil, err
-			}
-			parsed, err = d.ParseImport(r.Format, payload)
-			if err != nil {
-				return nil, err
-			}
+		_, _, payload, err := s.o.Files.GetFile(tx, c.Principal, novel, r.FileID)
+		if err != nil {
+			return nil, err
+		}
+		parsed, err := d.ParseImport(r.Format, payload)
+		if err != nil {
+			return nil, err
 		}
 
 		now := s.now()
@@ -57,11 +58,6 @@ func (s *Service) CreateImport(ctx context.Context, c Command, novel string, r d
 		status := d.JobStatusPreviewReady
 		stage := d.JobStagePreview
 		progress := 60
-		if s.o.Files == nil {
-			status = d.JobStatusPreviewReady
-			stage = d.JobStagePreview
-			progress = 60
-		}
 
 		job := JobRecord{
 			Job: d.Job{
@@ -266,6 +262,9 @@ func (s *Service) CreateExport(ctx context.Context, c Command, novel string, r d
 	if err := d.ValidateCreateExport(r); err != nil {
 		return idempotency.Result{}, err
 	}
+	if s.o.Files == nil || s.o.Reviews == nil {
+		return idempotency.Result{}, pe.Contract(503, "platform.dependency_unavailable", nil)
+	}
 	return s.execute(ctx, c, "novel", novel, false, false, 202, func(tx context.Context, o Owner) (any, error) {
 		n, e := s.active(tx, o)
 		if e != nil {
@@ -350,10 +349,8 @@ func (s *Service) CreateExport(ctx context.Context, c Command, novel string, r d
 			}
 		}
 
-		if s.o.Reviews != nil {
-			if err := s.o.Reviews.ValidateReviewTicket(tx, c.Principal, novel, r.ReviewTicket, snapshots); err != nil {
-				return nil, err
-			}
+		if err := s.o.Reviews.ValidateReviewTicket(tx, c.Principal, novel, r.ReviewTicket, snapshots); err != nil {
+			return nil, err
 		}
 
 		expNovel := d.ExportNovel{ID: n.ID, Title: n.Title, Summary: n.Summary, AuthorName: o.ActorID}
@@ -373,13 +370,9 @@ func (s *Service) CreateExport(ctx context.Context, c Command, novel string, r d
 			return nil, err
 		}
 
-		var outputFileID *string
-		if s.o.Files != nil {
-			fid, err := s.o.Files.PutFile(tx, c.Principal, &novel, rend.Filename, rend.MediaType, "export", rend.Payload)
-			if err != nil {
-				return nil, err
-			}
-			outputFileID = &fid
+		fid, err := s.o.Files.PutFile(tx, c.Principal, &novel, rend.Filename, rend.MediaType, "export", rend.Payload)
+		if err != nil {
+			return nil, err
 		}
 
 		job := JobRecord{
@@ -395,7 +388,7 @@ func (s *Service) CreateExport(ctx context.Context, c Command, novel string, r d
 				Status:             d.JobStatusSucceeded,
 				Stage:              d.JobStageComplete,
 				Progress:           100,
-				OutputFileID:       outputFileID,
+				OutputFileID:       &fid,
 				Format:             r.Format,
 				SourceRevision:     r.ExpectedRevision,
 				ExpiresAt:          now.Add(7 * 24 * time.Hour),
