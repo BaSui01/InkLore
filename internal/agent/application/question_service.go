@@ -24,6 +24,19 @@ type nodeCheckpoint struct {
 	Clarifications []json.RawMessage `json:"clarifications,omitempty"`
 }
 
+// Each answer travels with the immutable question which gave its value meaning.
+// This is private, untrusted model context, never a public Question response.
+type questionContinuation struct {
+	QuestionID      string                   `json:"question_id"`
+	QuestionVersion int                      `json:"question_version"`
+	TitleKey        string                   `json:"title_key"`
+	HelpKey         string                   `json:"help_key"`
+	ContextSummary  string                   `json:"context_summary"`
+	ResponseSchema  d.QuestionResponseSchema `json:"response_schema"`
+	Options         []d.QuestionOption       `json:"options"`
+	Answer          json.RawMessage          `json:"answer"`
+}
+
 func (s *RunService) GetQuestion(ctx context.Context, p identity.Principal, runID, questionID string) (*d.Question, error) {
 	if !uow.InTransaction(ctx) {
 		var question *d.Question
@@ -222,7 +235,11 @@ func (s *RunService) AnswerQuestion(ctx context.Context, p identity.Principal, r
 			return e
 		}
 		checkpoint.QuestionID = ""
-		checkpoint.Clarifications = append(checkpoint.Clarifications, answer)
+		continuation, e := json.Marshal(questionContinuation{QuestionID: q.ID, QuestionVersion: q.QuestionVersion, TitleKey: q.TitleKey, HelpKey: q.HelpKey, ContextSummary: q.ContextSummary, ResponseSchema: q.ResponseSchema, Options: q.Options, Answer: answer})
+		if e != nil {
+			return e
+		}
+		checkpoint.Clarifications = append(checkpoint.Clarifications, continuation)
 		encoded, e := json.Marshal(checkpoint)
 		if e != nil {
 			return e
