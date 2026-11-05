@@ -17,17 +17,25 @@ let pageForFailure;
 const checks = [];
 const verify = message => { checks.push(message); console.log("PASS browser " + message); };
 
-async function login(browser, principal, width = 1280, locale = "zh-CN") {
+async function login(browser, principal, width = 1280, locale = "zh-CN", session) {
   const origin = principal.audience === "admin" ? "http://127.0.0.1:3001" : "http://127.0.0.1:3000";
   const context = await browser.newContext({ locale, viewport: { width, height: 900 } });
-  const response = await context.request.post(origin + "/v1/auth/login", { data: principal, headers: { Origin: origin } });
-  assert.equal(response.status(), 200, "Fixture login failed");
-  const result = await response.json();
-  assert.equal(result.code, "ok");
+  let token;
+  if (session) {
+    assert.ok(session.cookies.length > 0 && session.cookies.every(cookie => cookie.httpOnly), "Missing real server-issued HttpOnly session");
+    await context.addCookies(session.cookies);
+    token = session.access_token;
+  } else {
+    const response = await context.request.post(origin + "/v1/auth/login", { data: principal, headers: { Origin: origin } });
+    const result = await response.json();
+    assert.equal(response.status(), 200, `Fixture ${principal.audience} login failed: HTTP ${response.status()}, code ${result.code}`);
+    assert.equal(result.code, "ok");
+    token = result.data.access_token;
+  }
   const page = await context.newPage();
   const scriptErrors = [];
   page.on("pageerror", error => scriptErrors.push(error.name));
-  return { context, page, origin, token: result.data.access_token, scriptErrors };
+  return { context, page, origin, token, scriptErrors };
 }
 function runURL(question) {
   return "http://127.0.0.1:3000/editor?" + new URLSearchParams({ novelId: fixture.novel_id, agentChapter: fixture.chapter_id, agentRun: question.run_id });
@@ -53,7 +61,7 @@ async function widthFits(page, selector = '[role="dialog"]') {
   const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE } : {}), args: ["--no-sandbox"] });
   try {
     const creator = await login(browser, fixture.creator, 390);
-    const admin = await login(browser, fixture.admin);
+    const admin = await login(browser, fixture.admin, 1280, "zh-CN", fixture.admin_session);
     const page = creator.page;
     pageForFailure = page;
     let creates = 0;

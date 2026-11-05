@@ -6,6 +6,7 @@ No HTTP result, UI data, provider response, or model success is mocked. These
 checks do not claim live-provider generation; that requires configured keys.
 """
 import hashlib
+from http.cookies import SimpleCookie
 import json
 import os
 from pathlib import Path
@@ -32,7 +33,7 @@ def verified(message):
     print("PASS " + message, flush=True)
 
 
-def request(path, expected=200, method="GET", body=None, session=None, key=None):
+def request(path, expected=200, method="GET", body=None, session=None, key=None, cookies=None):
     headers = {"Accept": "application/json"}
     if session:
         headers.update(Authorization="Bearer " + session["access_token"], Origin=ORIGINS[session["principal"]["audience"]])
@@ -45,6 +46,17 @@ def request(path, expected=200, method="GET", body=None, session=None, key=None)
     try:
         with urllib.request.urlopen(urllib.request.Request(BASE + path, method=method, data=data, headers=headers), timeout=20) as response:
             status, payload = response.status, json.load(response)
+            if cookies is not None:
+                for header in response.headers.get_all("Set-Cookie", []):
+                    parsed = SimpleCookie()
+                    parsed.load(header)
+                    for name, cookie in parsed.items():
+                        cookies.append({"name": name, "value": cookie.value,
+                                        "domain": urllib.parse.urlparse(BASE).hostname,
+                                        "path": cookie["path"] or "/",
+                                        "httpOnly": bool(cookie["httponly"]),
+                                        "secure": bool(cookie["secure"]),
+                                        "sameSite": cookie["samesite"].capitalize() or "Lax"})
     except urllib.error.HTTPError as response:
         status, payload = response.code, json.load(response)
     check(status == expected, f"{method} {path.split('?')[0]} returned {status}, expected {expected}, code={payload.get('code', 'unknown')}")
@@ -102,7 +114,8 @@ def main():
     other = request("/v1/auth/register", method="POST", body={"email": f"ui-other-{suffix}@example.invalid", "password": secrets.token_urlsafe(24), "pen_name": "Other Author"})
     tenant = creator["principal"]["tenant_id"]
     admin_login = {"email": admin_email, "password": admin_password, "audience": "admin", "tenant_id": tenant}
-    admin = request("/v1/auth/login", method="POST", body=admin_login)
+    admin_cookies = []
+    admin = request("/v1/auth/login", method="POST", body=admin_login, cookies=admin_cookies)
     other_admin = request("/v1/auth/login", method="POST", body={**admin_login, "tenant_id": other["principal"]["tenant_id"]})
     provider = request("/v1/llm/providers", 201, "POST", {"code": "ui_" + suffix, "title": "UI acceptance", "protocol": "openai", "enabled": True}, admin, uid())
     model = request("/v1/llm/models", 201, "POST", {"provider_id": provider["id"], "upstream_name": "fixture-no-dispatch", "title": "UI acceptance model", "capabilities": ["text", "tools"], "context_window": 8192, "max_output_tokens": 4096, "embedding_dimensions": None, "enabled": True}, admin, uid())
@@ -188,7 +201,9 @@ def main():
     evidence.mkdir(parents=True, exist_ok=True)
     (evidence / "agent-ui-api.json").write_text(json.dumps({"checks": CHECKS, "model": "NOT_VERIFIED: no live provider credentials", "question_source": "explicit paused PG fixture", "browser": "PENDING" if os.getenv("E2E_RUN_BROWSER") == "1" else "NOT_RUN"}, ensure_ascii=False, indent=2))
     if os.getenv("E2E_RUN_BROWSER") == "1":
-        fixture = {"creator": {"email": email, "password": password, "audience": "creator"}, "admin": admin_login, "novel_id": novel["id"], "chapter_id": chapter["id"], "policy_id": policy["id"], "questions": fixtures, "source_body": original}
+        # Reuse this journey's real HttpOnly session: preceding CI journeys and
+        # tenant-isolation checks already consume the operator's login quota.
+        fixture = {"creator": {"email": email, "password": password, "audience": "creator"}, "admin": admin_login, "admin_session": {"access_token": admin["access_token"], "cookies": admin_cookies}, "novel_id": novel["id"], "chapter_id": chapter["id"], "policy_id": policy["id"], "questions": fixtures, "source_body": original}
         # Generated fixture secrets are passed through an anonymous pipe only.
         completed = subprocess.run(["node", "scripts/ci/agent_question_ui_browser.cjs"], input=json.dumps(fixture), text=True)
         check(completed.returncode == 0, "Real Chromium Agent UI acceptance failed")
