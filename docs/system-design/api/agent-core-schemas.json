@@ -1019,7 +1019,8 @@
       "maximum": 2147483647
      },
      "cost_micros": {
-      "type": "integer",
+      "type": ["integer", "null"],
+      "description": "Actual persisted receipt total; null when billing evidence is unavailable. Missing receipts do not prove zero cost.",
       "minimum": 0,
       "maximum": 9000000000000000
      },

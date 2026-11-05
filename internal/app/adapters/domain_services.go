@@ -85,6 +85,9 @@ func (a AgentTaskResources) PrepareExecution(ctx context.Context, p identity.Pri
 	if err != nil {
 		return 0, "", err
 	}
+	if res.ResourceType == "chapter" && res.SourceHash != nil && *res.SourceHash != value.hash {
+		return 0, "", agentdomain.ErrVersionConflict(map[string]any{"reason": "chapter source hash changed"})
+	}
 	return value.revision, value.hash, nil
 }
 
@@ -93,12 +96,13 @@ func (a AgentTaskResources) VerifySourceUnchanged(ctx context.Context, p identit
 	if err != nil {
 		return false, err
 	}
-	return value.revision == expectedRevision && value.hash == expectedHash, nil
+	return value.revision == expectedRevision && (value.hash == expectedHash || value.legacyHash != "" && value.legacyHash == expectedHash), nil
 }
 
 type resourceSnapshot struct {
-	revision int64
-	hash     string
+	revision   int64
+	hash       string
+	legacyHash string
 }
 
 func (a AgentTaskResources) loadResource(ctx context.Context, p identity.Principal, taskKind string, res *agentdomain.ResourceRef) (resourceSnapshot, error) {
@@ -122,7 +126,9 @@ func (a AgentTaskResources) loadResource(ctx context.Context, p identity.Princip
 			ContentHash string `json:"content_hash"`
 			Body        string `json:"body"`
 		}{body.Chapter.ID, body.Chapter.Revision, body.Chapter.ContentHash, body.Body}
-		return snapshot(body.Chapter.Revision, payload)
+		value, err := snapshot(body.Chapter.Revision, payload)
+		value.legacyHash, value.hash = value.hash, body.Chapter.ContentHash
+		return value, err
 	case "novel":
 		if a.Content == nil {
 			return resourceSnapshot{}, agentdomain.ErrNotFound()

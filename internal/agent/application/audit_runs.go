@@ -24,6 +24,8 @@ func authorizeRunAudit(p identity.Principal) error {
 func (s *RunService) auditView(ctx context.Context, tenantID string, record d.AuditRunRecord) (d.AuditRunView, error) {
 	view := record.View
 	if len(record.ReceiptIDs) == 0 {
+		// Missing receipts cannot establish that a model-backed run was free.
+		view.CostMicros = nil
 		return view, nil
 	}
 	usage, ok := s.gateway.(d.RunUsagePort)
@@ -34,7 +36,7 @@ func (s *RunService) auditView(ctx context.Context, tenantID string, record d.Au
 	if err != nil {
 		return d.AuditRunView{}, err
 	}
-	view.CostMicros = cost
+	view.CostMicros = &cost
 	return view, nil
 }
 

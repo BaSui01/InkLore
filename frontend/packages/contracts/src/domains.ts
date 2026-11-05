@@ -334,7 +334,7 @@ export interface AgentAuditRun {
   status: AgentRun["status"];
   node_count: number;
   duration_ms: number;
-  cost_micros: number;
+  cost_micros: number | null;
   error_code: string | null;
 }
 

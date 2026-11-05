@@ -1365,7 +1365,8 @@ type ArtifactPage struct {
 
 // AuditRun defines model for AuditRun.
 type AuditRun struct {
-	CostMicros int          `json:"cost_micros"`
+	// CostMicros Actual persisted receipt total; null when billing evidence is unavailable. Missing receipts do not prove zero cost.
+	CostMicros *int         `json:"cost_micros"`
 	CreatedAt  Timestamp    `json:"created_at"`
 	DurationMs int          `json:"duration_ms"`
 	ErrorCode  string       `json:"error_code"`

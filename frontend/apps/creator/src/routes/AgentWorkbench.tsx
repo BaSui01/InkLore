@@ -46,10 +46,13 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
   const [cancelling, setCancelling] = useState(false);
   const [uncertain, setUncertain] = useState(false);
   const [history, setHistory] = useState<AgentRunSummary[]>([]);
+  const [historyChecked, setHistoryChecked] = useState(false);
   const [recoveringCreate, setRecoveringCreate] = useState(() => new URL(window.location.href).searchParams.has("agentCreate"));
   const [review, setReview] = useState<ArtifactView | null>(null);
   const [sourceSnapshot, setSourceSnapshot] = useState("");
   const [sourceHash, setSourceHash] = useState("");
+  const [sourceUnavailable, setSourceUnavailable] = useState(false);
+  const [sourceRefresh, setSourceRefresh] = useState(0);
   const [sourceSelection, setSourceSelection] = useState<AgentWorkbenchProps["initialSelection"]>(null);
   const [offline, setOffline] = useState(!navigator.onLine);
   const createIntent = useRef<{ key: string; body: CreateRunInput } | null>(null);
@@ -95,6 +98,7 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
   const policy = policies.find(item => item.policy_version_id === policyVersionId);
   const legalKinds = policy?.task_kinds.filter(kind => ["chapter_draft", "chapter_rewrite"].includes(kind) && definition?.task_kinds.includes(kind)) ?? [];
   const restoreHistory = useCallback(async () => {
+    setHistoryChecked(false);
     try {
       let cursor: string | undefined;
       const items: AgentRunSummary[] = [];
@@ -107,6 +111,7 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
         if (cursor) seen.add(cursor);
       } while (cursor && items.length < 20);
       setHistory(items);
+      setHistoryChecked(true);
     } catch (cause) { state.handleError(cause); }
   }, [api, props.chapterId, props.novelId, state.handleError]);
   useEffect(() => { if (props.open && recoveringCreate && !run && !state.denied && props.chapterId) void restoreHistory(); }, [props.open, recoveringCreate, run, state.denied, props.chapterId, restoreHistory]);
@@ -155,20 +160,24 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
     } finally { cancelLock.current = false; setCancelling(false); }
   };
   useEffect(() => {
-    if (!run?.resource || sourceHash || run.resource.source_revision !== props.chapterRevision) return;
+    if (!run?.resource || sourceHash || props.chapterRevision === null) return;
+    if (run.resource.source_revision !== props.chapterRevision) { setSourceUnavailable(true); return; }
     let alive = true;
     void api.content.getChapterBody(props.chapterId).then(value => {
-      if (!alive || value.chapter.revision !== run.resource!.source_revision || value.chapter.content_hash !== run.resource!.source_hash) return;
+      if (!alive) return;
+      if (value.chapter.revision !== run.resource!.source_revision || value.chapter.content_hash !== run.resource!.source_hash) { setSourceUnavailable(true); return; }
+      setSourceUnavailable(false);
       setSourceSnapshot(value.body); setSourceHash(value.chapter.content_hash ?? "");
       const selected = run.resource!.selection;
       if (selected) setSourceSelection({ ...selected, startOffset: selected.start_offset, endOffset: selected.end_offset, text: [...value.body].slice(selected.start_offset, selected.end_offset).join("") });
     }).catch(state.handleError);
     return () => { alive = false; };
-  }, [run?.id, props.chapterId, props.chapterRevision, api, sourceHash, state.handleError]);
+  }, [run?.id, props.chapterId, props.chapterRevision, api, sourceHash, sourceRefresh, state.handleError]);
 
-  if (!props.open) return null;
   const selectClass = "w-full min-w-0 rounded border bg-[var(--bg-canvas)] p-2";
-  return <div className="fixed inset-0 z-40 flex justify-end bg-black/40" role="presentation">
+  // Keep the owner question subtree mounted while consulting the chapter so
+  // drafts and unknown-response idempotency intents remain in memory only.
+  return <div hidden={!props.open} className={props.open ? "fixed inset-0 z-40 flex justify-end bg-black/40" : "hidden"} role="presentation">
     <section ref={panel} tabIndex={-1} className="h-full w-full min-w-0 max-w-2xl overflow-y-auto border-l border-[var(--border-decorative)] bg-[var(--bg-surface)] p-5 text-[var(--text-primary)] shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="agent-workbench-title" onKeyDown={event => {
       if (event.key === "Escape" && !ime.shouldBlockKeyAction(event)) props.onClose();
       if (event.key === "Tab") {
@@ -182,7 +191,7 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
       {state.denied && <p role="alert">{t("agentQuestion.denied")}</p>}
       {state.restoring && <p role="status">{t("agentQuestion.restoring")}</p>}
       {state.error != null && <ErrorPresenter error={state.error} onRetry={run || state.restoreId ? () => void state.refresh().catch(() => {}) : undefined} />}
-      {!run && !state.denied && !state.restoring && recoveringCreate && <section className="space-y-3"><p>{t("agentQuestion.restoreCreate")}</p><Button onClick={() => void restoreHistory()}>{t("common.refresh")}</Button>{history.map(item => <Button key={item.id} variant="outline" onClick={() => void state.refresh(item.id).then(value => { if (value) clearCreatePointer(); }).catch(() => {})}>{t("agentQuestion.resume", item.id, t(`agentState.${item.status}`))}</Button>)}</section>}
+      {!run && !state.denied && !state.restoring && recoveringCreate && <section className="space-y-3"><p>{t("agentQuestion.restoreCreate")}</p><Button disabled={offline} onClick={() => void restoreHistory()}>{t("common.refresh")}</Button>{history.map(item => <Button key={item.id} variant="outline" onClick={() => void state.refresh(item.id).then(value => { if (value) clearCreatePointer(); }).catch(() => {})}>{t("agentQuestion.resume", item.id, t(`agentState.${item.status}`))}</Button>)}<p className="text-sm">{t("agentQuestion.abandonCreateNotice")}</p><Button variant="outline" disabled={!historyChecked || offline} onClick={() => { createIntent.current = null; setUncertain(false); state.setError(null); clearCreatePointer(); }}>{t("agentQuestion.abandonCreate")}</Button></section>}
       {!run && !state.denied && !state.restoring && !state.restoreId && !recoveringCreate && <>
         {catalogError != null && <ErrorPresenter error={catalogError} onRetry={() => void loadCatalog()} />}
         {catalogLoading && <p role="status">{t("agentWorkbench.loadingCatalog")}</p>}
@@ -202,6 +211,7 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
         </form>}
       </>}
       {run && <div className="space-y-4">
+        {sourceUnavailable && !sourceHash && <div role="alert" className="rounded border p-3 text-sm"><p>{t("agentQuestion.sourceUnavailable")}</p><Button variant="ghost" disabled={offline} onClick={() => setSourceRefresh(value => value + 1)}>{t("common.refresh")}</Button></div>}
         {state.stale && <p role="status">{t("agentWorkbench.stale")}</p>}
         {state.connection === "reconnecting" && <p role="status">{t("agentWorkbench.reconnecting")}</p>}
         <div className="rounded border p-3 text-sm break-words"><Bot size={16} className="mr-2 inline" />{t("agentWorkbench.runStatus", t(`agentState.${status ?? run.status}`))}<p className="mt-1 text-xs">{t("agentQuestion.frozenPolicy", run.policy_version_id)}</p></div>
@@ -216,7 +226,7 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
         {artifacts.map(artifact => <article key={artifact.id} className="rounded border p-3 space-y-2 break-words"><strong>{artifact.kind}</strong><p className="text-xs">{t("agentWorkbench.sourceRevision", artifact.source_revision)}</p><pre className="max-h-40 overflow-auto whitespace-pre-wrap text-sm">{artifact.text_content ?? ""}</pre><Button variant="outline" disabled={artifact.is_partial || !artifact.text_content || artifact.target_resource_id !== props.chapterId || artifact.source_revision !== props.chapterRevision || !sourceHash} onClick={() => setReview(artifact)}>{t("agentWorkbench.reviewAdopt")}</Button></article>)}
         {terminalRun(status ?? run.status) && <Button variant="outline" icon={<RefreshCw size={16} />} onClick={() => { state.clear(); state.setError(null); setSourceHash(""); setSourceSnapshot(""); setSourceSelection(null); cancelIntent.current = null; }}>{t("agentWorkbench.newRun")}</Button>}
       </div>}
-      {review && <ArtifactReviewModal open originalText={sourceSelection?.text ?? sourceSnapshot} suggestedText={review.text_content ?? ""} actionTitle={t("agentWorkbench.artifactReview")} sourceRevision={review.source_revision} sourceHash={sourceHash} artifactHash={review.content_hash} partial={review.is_partial} onClose={() => setReview(null)} onAdopt={() => { props.onAdopt(review, sourceSelection, sourceSnapshot); setReview(null); }} />}
+      {review && <ArtifactReviewModal open={props.open} originalText={sourceSelection?.text ?? sourceSnapshot} suggestedText={review.text_content ?? ""} actionTitle={t("agentWorkbench.artifactReview")} sourceRevision={review.source_revision} sourceHash={sourceHash} artifactHash={review.content_hash} partial={review.is_partial} onClose={() => setReview(null)} onAdopt={() => { props.onAdopt(review, sourceSelection, sourceSnapshot); setReview(null); }} />}
     </section>
   </div>;
 }

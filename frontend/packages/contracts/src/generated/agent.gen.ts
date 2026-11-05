@@ -861,7 +861,8 @@ export interface components {
             status: components["schemas"]["RunStatus"];
             node_count: number;
             duration_ms: number;
-            cost_micros: number;
+            /** @description Actual persisted receipt total; null when billing evidence is unavailable. Missing receipts do not prove zero cost. */
+            cost_micros: number | null;
             error_code: string | null;
         };
         CancelRun: {

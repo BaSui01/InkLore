@@ -44,7 +44,7 @@ export interface AdminRunInspectorProps {
   status: string;
   nodeCount: number;
   durationMs: number;
-  costMicros?: number;
+  costMicros?: number | null;
   errorCode?: string;
   onRefresh?: () => void;
 }
@@ -87,7 +87,7 @@ export function RunInspector(props: RunInspectorProps) {
           </div>
           {props.costMicros !== undefined && (
             <div>
-              <span style={{ color: "var(--text-muted)" }}>{t("agentAudit.cost")}:</span> {props.costMicros}
+              <span style={{ color: "var(--text-muted)" }}>{t("agentAudit.cost")}:</span> {props.costMicros === null ? t("agentAudit.costUnknown") : props.costMicros}
             </div>
           )}
           {props.errorCode && (

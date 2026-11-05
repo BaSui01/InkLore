@@ -15,7 +15,9 @@ Creator 只选择安全目录中的策略版本与允许的任务类型，提交
 
 URL 只保存 Run、章节与未确认创建请求的标识，作者指令和回答留在内存。刷新选择原章节后 GET 原 Run；网络重连、EOF、游标过期与定期核对均恢复该 Run。410 先 GET 权威状态，再从保留事件起点重订阅；旧订阅清理不能覆盖新游标。403/404、身份变化清除敏感状态。事件缓冲及其聚合展示共同受 2000 条/2MiB 上限约束。
 
-Admin 在现有 Agent 治理页发布真实 LLM 不可变策略版本，显示当前版本、修订、输出预算和超时，使用 CAS 和稳定写入键。审计仓储直接查询允许的 Run 元数据，不加载正文、指令、事件或答案后再做隐藏。账单汇总通过 Agent RunUsagePort 委托 LLM 域；空回执为零，有回执却缺失费用读取能力时明确失败。
+Admin 在现有 Agent 治理页发布真实 LLM 不可变策略版本，显示当前版本、修订、输出预算和超时，使用 CAS 和稳定写入键。审计仓储直接查询允许的 Run 元数据，不加载正文、指令、事件或答案后再做隐藏。账单汇总通过 Agent RunUsagePort 委托 LLM 域；没有回执时 cost_micros 为 null 并显示未知，有回执却缺失费用读取能力时明确失败，只有可核验回执合计为零才显示零。
+
+工作台关闭时保留同章节的问题子树，未提交回答和未知结果的原始载荷/幂等键继续只存在内存；切换章节、身份变化或权限失效仍清除。刷新后若仅有未确认创建标识，必须成功核对真实运行历史才能显式放弃该恢复标识；操作不发新 Run，也不承诺服务端没有接受原请求。新 Run 统一使用正文 content_hash，创建前核对客户端摘要，旧运行的内部验证仍接受同修订的历史封装摘要；前端无法核对时明确显示来源问题并禁止直接采纳。
 
 运行、审批和 Creator 目录分页使用绑定租户、主体、权限修订、操作及排序的签名游标。SDK 检查游标前进，避免错误服务响应形成无限循环。
 
@@ -35,6 +37,7 @@ Admin 在现有 Agent 治理页发布真实 LLM 不可变策略版本，显示�
 - `pnpm --dir frontend run build` 的 Creator/Admin 类型检查和生产构建通过。
 - `go run ./cmd/i18ncheck frontend/packages/i18n/src/locales/zh-CN.ts frontend/packages/i18n/src/locales/en-US.ts` 通过；新增 agent 字典中英文键一致。
 - `scripts/ci/agent_ui_acceptance.py` 在隔离 PostgreSQL 17 / Redis 7 / 真实 API 上通过安全目录、策略版本 CAS、旧 key 重放、参数覆盖拒绝、取消、Question 读写与冲突、正文不变、Admin 白名单及跨租户分页验证。
+- PR #124 评审回归的真实 API 另已验证正文 SHA-256 与 Run 来源一致、错误摘要在创建前 CAS 拒绝且零新增 Run，以及无回执的审计值为 null。关闭/重开草稿、未知回答同键、未到服务端的 CreateRun 刷新后显式退出恢复及未知费用文案加入同一 Chromium 验收，待该提交的 CI 执行后判定。
 - Question UI 使用明确标记的 PostgreSQL 暂停态 fixture，随后由真实 API 执行。它不证明线上模型生成，也没有伪造模型成功。
 - `scripts/ci/agent_question_ui_browser.cjs` 在 GitHub Actions run 41965922098 的真实 Chromium 上通过双端真实认证、390px、IME、刷新、断网、EOF、真实 410、已提交响应截断/null、稳定重试键、Admin 发布/脱敏与真实 403。凭据只走匿名 stdin 管道。本地 Chromium 启动受环境限制，未将其计为通过。移动截图等待实际侧栏收起后再留证。
 - API 验收通过真实作者取消接口终结已回答的临时 Run，仅在明确的 revision CAS 冲突时重新读取。随后同库 `TestQuestionHTTPConcurrentAnswerAndRestartPG -race` 通过（21.753s），避免后续全局队列 Worker 误领验收遗留工作。

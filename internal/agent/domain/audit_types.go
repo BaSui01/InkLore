@@ -17,7 +17,7 @@ type AuditRunView struct {
 	Status     RunStatus `json:"status"`
 	NodeCount  int       `json:"node_count"`
 	DurationMS int64     `json:"duration_ms"`
-	CostMicros int64     `json:"cost_micros"`
+	CostMicros *int64    `json:"cost_micros"`
 	ErrorCode  *string   `json:"error_code"`
 }
 

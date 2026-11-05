@@ -147,13 +147,18 @@ def main():
     novel = request("/v1/content/novels", 201, "POST", {"title": "UI Agent Novel", "summary": "Disposable UI acceptance", "category": "fantasy", "target_words": 10000}, creator, uid())
     volume = request(f"/v1/content/novels/{novel['id']}/volumes", 201, "POST", {"title": "Volume", "summary": ""}, creator, uid())
     # Non-first chapter proves the original Run pointer restores its actual source.
-    request(f"/v1/content/novels/{novel['id']}/chapters", 201, "POST", {"title": "First chapter", "volume_id": volume["id"]}, creator, uid())
+    empty_chapter = request(f"/v1/content/novels/{novel['id']}/chapters", 201, "POST", {"title": "First chapter", "volume_id": volume["id"]}, creator, uid())
     chapter = request(f"/v1/content/novels/{novel['id']}/chapters", 201, "POST", {"title": "Question source", "volume_id": volume["id"]}, creator, uid())
     original = "作者保留的正文。The agent must not change it."
     chapter = request(f"/v1/content/chapters/{chapter['id']}/body", method="PUT", body={"expected_revision": chapter["revision"], "body": original}, session=creator, key=uid())["chapter"]
     body = {"task_kind": "chapter_draft", "task_policy_version_id": policy["current_version_id"], "resource": {"resource_id": chapter["id"], "resource_type": "chapter", "novel_id": novel["id"], "source_revision": chapter["revision"], "source_hash": chapter["content_hash"]}, "definition_id": definition["id"], "instruction": "UI acceptance instruction"}
+    before_runs = sql("SELECT count(*) FROM agent_runs WHERE tenant_id=" + literal(tenant))
+    stale_source = request("/v1/agents/runs", 409, "POST", {**body, "resource": {**body["resource"], "source_hash": "f" * 64}}, creator, uid())
+    check(stale_source["code"] == "agent.version_conflict" and before_runs == sql("SELECT count(*) FROM agent_runs WHERE tenant_id=" + literal(tenant)), "Changed body digest created a Run or returned the wrong CAS error")
     create_key = uid()
     run = request("/v1/agents/runs", 202, "POST", body, creator, create_key)
+    check(run["resource"]["source_hash"] == chapter["content_hash"] == hashlib.sha256(original.encode()).hexdigest(), "Run source cannot be verified against the authoritative chapter body")
+    verified("Run source uses canonical body digest; stale source hash rejects before creating a Run")
     next_policy = request(f"/v1/llm/task-policies/{policy['id']}", method="PUT", body={**policy_body, "expected_revision": policy["revision"], "max_output_tokens": 768}, session=admin, key=uid())
     check(next_policy["version"] == policy["version"] + 1 and next_policy["current_version_id"] != policy["current_version_id"], "Policy publish did not create immutable version")
     replay = request("/v1/agents/runs", 202, "POST", body, creator, create_key)
@@ -185,7 +190,7 @@ def main():
 
     keys = {"id", "revision", "created_at", "updated_at", "kind", "task_kind", "status", "node_count", "duration_ms", "cost_micros", "error_code"}
     audit = request("/v1/agents/audit/runs/" + question["run_id"], session=admin)
-    check(set(audit) == keys and audit["node_count"] == 1 and audit["cost_micros"] == 0, "Admin audit projection is not exact or cost was fabricated")
+    check(set(audit) == keys and audit["node_count"] == 1 and audit["cost_micros"] is None, "Missing billing evidence was incorrectly reported as zero cost")
     request("/v1/agents/audit/runs/" + question["run_id"], 404, session=other_admin)
     request("/v1/agents/audit/runs", 403, session=creator)
     for path, session in [("/v1/agents/runs", creator), ("/v1/agents/audit/runs", admin)]:
@@ -194,7 +199,7 @@ def main():
         page2 = request(path + "?limit=1&cursor=" + urllib.parse.quote(page1["next_cursor"]), session=session)
         check(page1["items"][0]["id"] != page2["items"][0]["id"], "Run cursor repeated the first page")
         request(path + "?limit=1&cursor=" + urllib.parse.quote(page1["next_cursor"]), 400, session=other if session is creator else other_admin)
-    verified("Exact Admin audit allowlist, actual zero receipts, tenant rejection and signed paginated original-run lookup")
+    verified("Exact Admin audit allowlist, unknown cost without receipts, tenant rejection and signed paginated original-run lookup")
 
     # The answered API-only fixture has no model-dispatch configuration. Cancel
     # it through the actual owner endpoint before the server stops; otherwise a
@@ -217,7 +222,7 @@ def main():
     if os.getenv("E2E_RUN_BROWSER") == "1":
         # Reuse this journey's real HttpOnly session: preceding CI journeys and
         # tenant-isolation checks already consume the operator's login quota.
-        fixture = {"creator": {"email": email, "password": password, "audience": "creator"}, "admin": admin_login, "admin_session": {"access_token": admin["access_token"], "cookies": admin_cookies}, "novel_id": novel["id"], "chapter_id": chapter["id"], "policy_id": policy["id"], "questions": fixtures, "source_body": original}
+        fixture = {"creator": {"email": email, "password": password, "audience": "creator"}, "admin": admin_login, "admin_session": {"access_token": admin["access_token"], "cookies": admin_cookies}, "novel_id": novel["id"], "chapter_id": chapter["id"], "empty_chapter_id": empty_chapter["id"], "policy_id": policy["id"], "questions": fixtures, "source_body": original}
         # Generated fixture secrets are passed through an anonymous pipe only.
         completed = subprocess.run(["node", "scripts/ci/agent_question_ui_browser.cjs"], input=json.dumps(fixture), text=True)
         check(completed.returncode == 0, "Real Chromium Agent UI acceptance failed")
