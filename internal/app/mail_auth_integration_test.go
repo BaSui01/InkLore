@@ -2,10 +2,12 @@ package app_test
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -22,10 +24,22 @@ func TestMailAuthHTTPPostgres(t *testing.T) {
 	if os.Getenv("MAIL_AUTH_PG_TEST") != "1" {
 		t.Skip("requires isolated PostgreSQL17 + Redis7")
 	}
-	if !strings.Contains(os.Getenv("DATABASE_DSN"), "127.0.0.1") {
+	dsn, err := url.Parse(os.Getenv("DATABASE_DSN"))
+	if err != nil || (dsn.Hostname() != "127.0.0.1" && dsn.Hostname() != "localhost") || (dsn.Path != "/inklore_ci" && dsn.Path != "/inklore_e2e") {
 		t.Fatal("requires isolated PostgreSQL")
 	}
-	t.Setenv("MAIL_OTP_HASH_KEY", strings.Repeat("otp-key-", 8))
+	// This test creates its own application. A previous CI shell's exported
+	// secrets/origins are neither required nor reused by that application.
+	for _, name := range []string{"JWT_SIGNING_KEY", "CSRF_KEY", "IDEMPOTENCY_HASH_KEY", "CURSOR_SIGNING_KEY", "MAIL_OTP_HASH_KEY"} {
+		key := make([]byte, 32)
+		if _, err := rand.Read(key); err != nil {
+			t.Fatal("generate isolated authentication key")
+		}
+		t.Setenv(name, base64.RawStdEncoding.EncodeToString(key))
+	}
+	t.Setenv("CREATOR_ORIGIN", "http://127.0.0.1:3000")
+	t.Setenv("ADMIN_ORIGIN", "http://127.0.0.1:3001")
+	t.Setenv("MIGRATE_ON_START", "false")
 	t.Setenv("MAIL_ALLOWED_HOSTS", "smtp.inklore.test")
 	keyJSON, _ := json.Marshal(map[string]string{"1": base64.StdEncoding.EncodeToString(bytes.Repeat([]byte("m"), 32))})
 	t.Setenv("MAIL_ENCRYPTION_KEYS", string(keyJSON))

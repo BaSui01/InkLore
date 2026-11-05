@@ -18,6 +18,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
+
+	"InkLore/internal/platform/scope"
 )
 
 // The dial and lookup functions are private test seams. Production always resolves,
@@ -76,6 +79,12 @@ func (t *transport) address(ctx context.Context, host string, port int) (string,
 	return net.JoinHostPort(answers[0].IP.String(), strconv.Itoa(port)), nil
 }
 func (t *transport) send(ctx context.Context, c Settings, secret string, m Message) error {
+	// Validate every envelope/header value again at the final boundary. MIME
+	// encoded words do not encode ASCII CR/LF and are not header sanitizers.
+	if !validAddress(c.SenderEmail) || !validAddress(m.To) || !scope.ValidID(m.ID) ||
+		strings.ContainsAny(c.SenderName+m.Subject, "\r\n\x00") || !utf8.ValidString(c.SenderName+m.Subject+m.Text) {
+		return errors.New("mail message headers are invalid")
+	}
 	bounded, cancel := context.WithTimeout(ctx, t.timeout)
 	defer cancel()
 	switch c.Provider {
@@ -143,7 +152,7 @@ func (t *transport) sendSMTP(ctx context.Context, c Settings, secret string, m M
 		return errors.New("SMTP message refused")
 	}
 	from := (&stdmail.Address{Name: c.SenderName, Address: c.SenderEmail}).String()
-	message := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nDate: %s\r\nMessage-ID: <%s@%s>\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n%s\r\n", from, (&stdmail.Address{Address: m.To}).String(), mime.QEncoding.Encode("utf-8", m.Subject), time.Now().UTC().Format(time.RFC1123Z), m.ID, strings.Split(c.SenderEmail, "@")[1], strings.ReplaceAll(strings.ReplaceAll(m.Text, "\r\n", "\n"), "\n", "\r\n"))
+	message := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nDate: %s\r\nMessage-ID: <%s@%s>\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n%s\r\n", from, (&stdmail.Address{Address: m.To}).String(), mime.QEncoding.Encode("utf-8", m.Subject), time.Now().UTC().Format(time.RFC1123Z), m.ID, c.SenderEmail[strings.LastIndexByte(c.SenderEmail, '@')+1:], strings.ReplaceAll(strings.ReplaceAll(m.Text, "\r\n", "\n"), "\n", "\r\n"))
 	if _, err = io.WriteString(writer, message); err != nil {
 		return errors.New("SMTP message outcome unknown")
 	}

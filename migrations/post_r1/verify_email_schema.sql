@@ -1,6 +1,10 @@
 \set ON_ERROR_STOP on
 -- Disposable PostgreSQL only. No production data or sender credentials.
-INSERT INTO platform_mail_settings(id,provider,enabled) VALUES (1,'disabled',false);
+-- The runtime migration already seeds the singleton. Keep the verifier usable
+-- both before/after that migration, and roll all fixtures back so it can repeat.
+BEGIN;
+INSERT INTO platform_mail_settings(id,provider,enabled) VALUES (1,'disabled',false)
+ON CONFLICT(id) DO NOTHING;
 
 DO $email_contract$
 DECLARE
@@ -12,6 +16,10 @@ BEGIN
   END IF;
   IF (SELECT count(*) FROM platform_mail_settings) <> 1 THEN
     RAISE EXCEPTION 'mail singleton not persisted';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM platform_mail_settings WHERE id=1 AND provider='disabled'
+      AND NOT enabled AND credential_kind IS NULL) THEN
+    RAISE EXCEPTION 'mail schema verification requires the unconfigured disposable singleton';
   END IF;
   IF NOT has_table_privilege('inklore_runtime','platform_mail_settings','SELECT')
       OR NOT has_table_privilege('inklore_runtime','platform_mail_settings','UPDATE')
@@ -78,9 +86,10 @@ BEGIN
   IF updated_rows<>0 THEN
     RAISE EXCEPTION 'OTP replay not rejected';
   END IF;
-  IF (SELECT count(*) FROM platform_email_challenges WHERE status='consumed')<>1 THEN
+  IF (SELECT count(*) FROM platform_email_challenges WHERE id=challenge_id AND status='consumed')<>1 THEN
     RAISE EXCEPTION 'OTP persisted state invalid';
   END IF;
   RAISE NOTICE 'INK-273 isolated mail schema, no plaintext secret, runtime privileges, single-use OTP: PASS';
 END
 $email_contract$;
+ROLLBACK;

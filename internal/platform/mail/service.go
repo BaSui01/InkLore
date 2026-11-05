@@ -200,7 +200,21 @@ func (s *Service) SendVerification(ctx context.Context, id, recipient, purpose, 
 	if uow.InTransaction(ctx) {
 		return errors.New("email delivery must not hold a database transaction")
 	}
-	if !scope.ValidID(id) || !validAddress(recipient) || len(code) != 6 || strings.Trim(code, "0123456789") != "" || purpose != "login" && purpose != "register" && purpose != "reset" {
+	if !scope.ValidID(id) || !validAddress(recipient) || len(code) != 6 || strings.Trim(code, "0123456789") != "" {
+		return invalid()
+	}
+	// Only a fixed label may enter this trusted authentication message. Never
+	// interpolate the HTTP purpose value into delivered content, even after the
+	// identity layer has validated its allowed values.
+	var operation string
+	switch purpose {
+	case "login":
+		operation = "sign-in"
+	case "register":
+		operation = "registration"
+	case "reset":
+		operation = "password-reset"
+	default:
 		return invalid()
 	}
 	row, err := s.load(ctx, false)
@@ -214,7 +228,7 @@ func (s *Service) SendVerification(ctx context.Context, id, recipient, purpose, 
 	if err != nil {
 		return unavailable()
 	}
-	body := "InkLore verification code: " + code + "\n\nThis code expires in 5 minutes and can be used once for the requested " + purpose + " operation. It does not confirm that an account exists. If you did not request it, ignore this email."
+	body := "InkLore verification code: " + code + "\n\nThis code expires in 5 minutes and can be used once for the requested " + operation + " operation. It does not confirm that an account exists. If you did not request it, ignore this email."
 	if err = s.transport.send(ctx, row.summary(), secret, Message{ID: id, To: recipient, Subject: "InkLore verification code", Text: body}); err != nil {
 		plog.WarnContext(ctx, "mail.delivery_failed", "domain", "platform", "operation", "mail.send_verification", "error_code", "platform.dependency_unavailable", "provider", row.Provider, "stage", err.Error())
 		return unavailable()

@@ -23,6 +23,10 @@ Creator/Admin 复用 AuthView、AuthSession、ApiClient、i18n 和现有组件�
 
 真实并发测试暴露 `identity.member` 向复制的 Principal 角色 slice 解码会写共享底层数组。解码前清空两个 slice，使每次实时身份校验拥有独立数组；不改变权限判据。
 
+PR #126 的后续 CI 暴露两处验收环境缺陷：邮件 schema verifier 仍无条件插入已经由 `000007` 播种的单例；App HTTP 测试依赖前一 CI shell 中不会持久到下一步的认证密钥。前者改为兼容已有禁用单例，并把全部验证 fixture 放在显式回滚事务内；保留约束、权限、单次消费和冻结迁移数量断言。后者由测试生成独立的临时随机密钥与本地 Origin，不放宽生产配置检查或更改已应用迁移。
+
+邮件最终传输边界再次验证邮箱、UUID、UTF-8 和邮件头 CR/LF/NUL。验证码内容只使用固定的用途标签，不把 HTTP purpose 值直接拼入邮件。真实 TLS SMTP 回归同时检查中文 MIME 主题、独立点号的 DATA 转义，以及正文中的 `Bcc:` 仍作为纯文本；两种提供商均在 DNS 前拒绝注入的邮件头。
+
 ## Alternatives considered
 
 未复用开发明文重置 token，也未把日志写入当作发送成功。未采用 Redis 作为验证码权威状态，避免故障或进程重启清空消费次数。未为本地验收开放私网目标或关闭证书验证；测试专用 CA 和私有 dial seam 只在 `_test.go` 中把已校验地址接到真实 TLS socket。未知账号直接跳过网络投递会引入响应时间/状态差异，所以统一经过同一受限投递路径。SMTP 结果未知时不会自动重发同一预约。
@@ -43,3 +47,5 @@ Creator/Admin 复用 AuthView、AuthSession、ApiClient、i18n 和现有组件�
 - 本地 Chromium 启动因执行环境 `process_singleton_posix.cc socket() EPERM` 阻塞，未绕过；浏览器真实页面验收需交由已有 CI，标为 `NOT_VERIFIED`。外部 SMTP/Resend 供应商凭据、DNS/发件域名和本人真实邮箱最终收件验证均 `NOT_VERIFIED`，不能关闭 #98。
 - `E2E_MAIL_UI_PG_TEST=1 python3 scripts/ci/mail_ui_acceptance.py` 在真实隔离 PG/Redis/API 通过。专属账号经真实注册/密码登录，只有角色通过显式 PG fixture 设置；Cookie/会话经匿名 stdin 交给 `mail_ui_browser.cjs`，无凭据文件，也不复用其他 CI 旅程的登录额度。`E2E_RUN_BROWSER=1` 供已有 Chromium CI 验证能力关闭、原身份 Cookie 恢复、管理员边界、实际表单写入、并发 API 写入导致的真实 CAS 409/草稿保留、真实主机校验 400 和 390px 布局。整个旅程保持邮件关闭并在 finally 恢复配置，不伪造投递或 HTTP 成功；此浏览器脚本本地仅语法检查，OTP 浏览器全链路仍未验证。
 - 历史迁移 BEGIN/COMMIT 外层事务缺陷由 #105 另行修复；本次迁移成功不作为历史迁移事务原子性证据。上述注入失败验证的是当前业务 UoW 原子性。
+- PR #126 CI 修复在包含 #2 契约依赖的交付基线上通过 `go build ./...`、`go vet ./...`、`go run ./cmd/archguard -reachability`、`node scripts/check-platform-contracts.mjs` 和邮件传输定向 race 测试。CodeQL 邮件内容注入线程需远端重新分析后判定，不能用本地功能测试代替 CodeQL 结论。
+- CI 修复最终在隔离 PG17/Redis7 上再次运行全部邮件 PostgreSQL race 用例与 App HTTP 用例并通过。`psql -X -v ON_ERROR_STOP=1 -f migrations/post_r1/verify_email_schema.sql` 连续两次成功，前后设置完整行和 challenge 数量均不变。HTTP 验证特意清除父环境的 JWT/CSRF/幂等/游标/OTP 密钥及 Creator/Admin Origin 后启动，证明其独立配置真实生效。

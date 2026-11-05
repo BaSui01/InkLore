@@ -13,9 +13,11 @@ import (
 	"encoding/pem"
 	"io"
 	"math/big"
+	"mime"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	stdmail "net/mail"
 	"strings"
 	"sync"
 	"testing"
@@ -138,6 +140,9 @@ func (s *smtpSink) serve(conn net.Conn) {
 				if part == ".\r\n" {
 					break
 				}
+				if strings.HasPrefix(part, "..") {
+					part = part[1:]
+				}
 				data.WriteString(part)
 			}
 			s.mu.Lock()
@@ -204,6 +209,63 @@ func TestSMTPVerifiedTLSProtocols(t *testing.T) {
 				t.Fatal("untrusted certificate accepted")
 			}
 		})
+	}
+}
+
+func TestSMTPHeaderInjectionRejected(t *testing.T) {
+	config := Settings{Provider: "smtp", SMTPHost: "smtp.inklore.test", SMTPPort: 465, SMTPSecurity: "implicit_tls", SMTPUsername: "sender", SenderEmail: "sender@inklore.test", SenderName: "InkLore"}
+	message := Message{ID: "6138ae42-4980-414a-a22f-ea293851f8db", To: "recipient@inklore.test", Subject: "Code", Text: "verification code"}
+	for _, test := range []struct {
+		name   string
+		change func(*Settings, *Message)
+	}{
+		{"sender-name", func(c *Settings, _ *Message) { c.SenderName = "InkLore\r\nBcc: other@inklore.test" }},
+		{"sender-address", func(c *Settings, _ *Message) { c.SenderEmail += "\r\nBcc: other@inklore.test" }},
+		{"recipient", func(_ *Settings, m *Message) { m.To += "\r\nBcc: other@inklore.test" }},
+		{"subject", func(_ *Settings, m *Message) { m.Subject = "Code\r\nBcc: other@inklore.test" }},
+		{"message-id", func(_ *Settings, m *Message) { m.ID += ">\r\nBcc: other@inklore.test" }},
+		{"nul", func(_ *Settings, m *Message) { m.Subject = "Code\x00" }},
+	} {
+		for _, provider := range []string{"smtp", "resend"} {
+			t.Run(provider+"/"+test.name, func(t *testing.T) {
+				c, m := config, message
+				c.Provider = provider
+				test.change(&c, &m)
+				tr := newTransport(Options{AllowedHosts: []string{"smtp.inklore.test", "api.resend.com"}})
+				tr.lookup = func(context.Context, string) ([]net.IPAddr, error) {
+					t.Fatal("invalid mail headers reached provider DNS")
+					return nil, nil
+				}
+				if err := tr.send(context.Background(), c, "test-mail-secret", m); err == nil {
+					t.Fatal("injected mail header was accepted")
+				}
+			})
+		}
+	}
+}
+
+func TestSMTPDataPreservesPlainTextBoundary(t *testing.T) {
+	sink, roots := newSMTPSink(t, false)
+	tr := pinnedTransport(t, Options{AllowedHosts: []string{"smtp.inklore.test"}, RootCAs: roots}, sink.listener)
+	config := Settings{Provider: "smtp", SMTPHost: "smtp.inklore.test", SMTPPort: 465, SMTPSecurity: "implicit_tls", SMTPUsername: "sender", SenderEmail: "sender@inklore.test", SenderName: "InkLore 作者"}
+	message := Message{ID: "6138ae42-4980-414a-a22f-ea293851f8db", To: "recipient@inklore.test", Subject: "验证消息", Text: "first line\n.\nBcc: body-only@inklore.test\n<p>plain text only</p>"}
+	if err := tr.send(context.Background(), config, "test-mail-secret", message); err != nil {
+		t.Fatal(err)
+	}
+	parsed, err := stdmail.ReadMessage(strings.NewReader(sink.message(t)))
+	if err != nil {
+		t.Fatal("SMTP DATA was not a valid MIME message")
+	}
+	if parsed.Header.Get("Bcc") != "" || parsed.Header.Get("Content-Type") != "text/plain; charset=UTF-8" || sink.received() != 1 {
+		t.Fatal("body escaped into headers or another message")
+	}
+	subject, err := new(mime.WordDecoder).DecodeHeader(parsed.Header.Get("Subject"))
+	if err != nil || subject != message.Subject {
+		t.Fatal("encoded subject did not round-trip")
+	}
+	body, err := io.ReadAll(parsed.Body)
+	if err != nil || string(body) != strings.ReplaceAll(message.Text, "\n", "\r\n")+"\r\n" {
+		t.Fatal("SMTP dot-stuffing or plain-text body did not round-trip")
 	}
 }
 func TestMailSSRFRejectsEveryPrivateAnswer(t *testing.T) {
