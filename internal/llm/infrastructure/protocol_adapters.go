@@ -456,6 +456,18 @@ func toAnthropicToolChoice(choice any) any {
 	return choice
 }
 
+// Anthropic reports uncached input separately from cache creation and reads.
+// The ledger's Input convention is inclusive, with cached reads as a subset.
+func anthropicTokenUsage(uncached, created, read, output int) *domain.TokenUsage {
+	input := uncached + created + read
+	return &domain.TokenUsage{
+		PromptTokens: input, InputTokens: input,
+		CompletionTokens: output, OutputTokens: output,
+		TotalTokens: input + output, CachedTokens: read,
+		PromptCacheHitTokens: read, PromptCacheMissTokens: uncached + created,
+	}
+}
+
 func (r *ProviderRouter) anthropicChat(ctx context.Context, target upstreamTarget, req nativeTextRequest) (domain.TextGenerationResponse, error) {
 	maxTokens := req.MaxTokens
 	if maxTokens < 1 {
@@ -467,8 +479,8 @@ func (r *ProviderRouter) anthropicChat(ctx context.Context, target upstreamTarge
 	var topPPtr *float64
 
 	if isAnthropicThinkingEnabled(req) {
-		if maxTokens < 4096 {
-			maxTokens = 4096
+		if maxTokens <= 1024 {
+			return domain.TextGenerationResponse{}, fmt.Errorf("%w: Anthropic thinking needs max_tokens above 1024", domain.ErrCapability)
 		}
 		budget := calculateAnthropicBudget(req.ReasoningEffort, maxTokens)
 		thinking = &anthropicThinking{Type: "enabled", BudgetTokens: budget}
@@ -519,20 +531,11 @@ func (r *ProviderRouter) anthropicChat(ctx context.Context, target upstreamTarge
 		return domain.TextGenerationResponse{}, err
 	}
 
-	cached := decoded.Usage.CacheReadInputTokens
 	result := domain.TextGenerationResponse{
 		Model:        decoded.Model,
 		FinishReason: decoded.Stop,
-		Usage: &domain.TokenUsage{
-			PromptTokens:          decoded.Usage.InputTokens,
-			CompletionTokens:      decoded.Usage.OutputTokens,
-			TotalTokens:           decoded.Usage.InputTokens + decoded.Usage.OutputTokens,
-			CachedTokens:          cached,
-			PromptCacheHitTokens:  cached,
-			PromptCacheMissTokens: decoded.Usage.InputTokens - cached,
-			InputTokens:           decoded.Usage.InputTokens,
-			OutputTokens:          decoded.Usage.OutputTokens,
-		},
+		Usage: anthropicTokenUsage(decoded.Usage.InputTokens, decoded.Usage.CacheCreationInputTokens,
+			decoded.Usage.CacheReadInputTokens, decoded.Usage.OutputTokens),
 	}
 	for _, block := range decoded.Content {
 		if block.Type == "thinking" {
@@ -556,14 +559,17 @@ func (r *ProviderRouter) anthropicChat(ctx context.Context, target upstreamTarge
 }
 
 func (r *ProviderRouter) anthropicStream(ctx context.Context, target upstreamTarget, req nativeTextRequest, onEvent domain.StreamEventHandler) error {
-	maxTokens := maxInt(req.MaxTokens, 8192)
+	maxTokens := req.MaxTokens
+	if maxTokens < 1 {
+		maxTokens = 8192
+	}
 	var thinking *anthropicThinking
 	var tempPtr *float64
 	var topPPtr *float64
 
 	if isAnthropicThinkingEnabled(req) {
-		if maxTokens < 4096 {
-			maxTokens = 4096
+		if maxTokens <= 1024 {
+			return fmt.Errorf("%w: Anthropic thinking needs max_tokens above 1024", domain.ErrCapability)
 		}
 		budget := calculateAnthropicBudget(req.ReasoningEffort, maxTokens)
 		thinking = &anthropicThinking{Type: "enabled", BudgetTokens: budget}
@@ -607,6 +613,15 @@ func (r *ProviderRouter) anthropicStream(ctx context.Context, target upstreamTar
 	}
 
 	usage := domain.GenerationUsage{}
+	var uncachedInput, cacheCreation, cacheRead int
+	usageSeen := false
+	defer func() {
+		if err != nil && usageSeen {
+			// Report measured usage without treating an interrupted stream as done.
+			usage.TotalTokens = usage.InputTokens + usage.OutputTokens
+			_ = onEvent(domain.StreamEvent{Type: domain.StreamEventUsage, Usage: &usage})
+		}
+	}()
 	doneSent := false
 	toolBuilders := make(map[int]*toolCallBuilder)
 
@@ -637,7 +652,9 @@ func (r *ProviderRouter) anthropicStream(ctx context.Context, target upstreamTar
 			} `json:"content_block"`
 			Message struct {
 				Usage struct {
-					InputTokens int `json:"input_tokens"`
+					InputTokens              int `json:"input_tokens"`
+					CacheCreationInputTokens int `json:"cache_creation_input_tokens"`
+					CacheReadInputTokens     int `json:"cache_read_input_tokens"`
 				} `json:"usage"`
 			} `json:"message"`
 			Delta struct {
@@ -647,23 +664,37 @@ func (r *ProviderRouter) anthropicStream(ctx context.Context, target upstreamTar
 				PartialJSON string `json:"partial_json"`
 			} `json:"delta"`
 			Usage struct {
-				InputTokens  int `json:"input_tokens"`
-				OutputTokens int `json:"output_tokens"`
+				InputTokens              int `json:"input_tokens"`
+				CacheCreationInputTokens int `json:"cache_creation_input_tokens"`
+				CacheReadInputTokens     int `json:"cache_read_input_tokens"`
+				OutputTokens             int `json:"output_tokens"`
 			} `json:"usage"`
 		}
 		if json.Unmarshal(data, &payload) != nil {
 			return nil
 		}
 
-		if payload.Message.Usage.InputTokens > 0 {
-			usage.InputTokens = payload.Message.Usage.InputTokens
+		if event == "message_start" {
+			uncachedInput = payload.Message.Usage.InputTokens
+			cacheCreation = payload.Message.Usage.CacheCreationInputTokens
+			cacheRead = payload.Message.Usage.CacheReadInputTokens
+			usageSeen = uncachedInput > 0 || cacheCreation > 0 || cacheRead > 0
 		}
-		if payload.Usage.InputTokens > 0 {
-			usage.InputTokens = payload.Usage.InputTokens
-		}
-		if payload.Usage.OutputTokens > 0 {
+		if event == "message_delta" {
+			if payload.Usage.InputTokens > 0 {
+				uncachedInput = payload.Usage.InputTokens
+			}
+			if payload.Usage.CacheCreationInputTokens > 0 {
+				cacheCreation = payload.Usage.CacheCreationInputTokens
+			}
+			if payload.Usage.CacheReadInputTokens > 0 {
+				cacheRead = payload.Usage.CacheReadInputTokens
+			}
 			usage.OutputTokens = payload.Usage.OutputTokens
+			usageSeen = usageSeen || uncachedInput > 0 || cacheCreation > 0 || cacheRead > 0 || usage.OutputTokens > 0
 		}
+		usage.InputTokens = uncachedInput + cacheCreation + cacheRead
+		usage.CachedTokens = cacheRead
 
 		if event == "content_block_start" && payload.ContentBlock.Type == "tool_use" {
 			toolBuilders[payload.Index] = &toolCallBuilder{
@@ -1132,16 +1163,19 @@ func (r *ProviderRouter) generateNativeChatStream(ctx context.Context, target up
 					Arguments: event.ToolArgs,
 				},
 			})
-		case domain.StreamEventDone:
+		case domain.StreamEventUsage, domain.StreamEventDone:
 			if event.Usage != nil {
 				finalUsage = *event.Usage
 				if req.OnUsage != nil {
 					req.OnUsage(&domain.TokenUsage{
-						PromptTokens:     event.Usage.InputTokens,
-						CompletionTokens: event.Usage.OutputTokens,
-						TotalTokens:      event.Usage.TotalTokens,
-						InputTokens:      event.Usage.InputTokens,
-						OutputTokens:     event.Usage.OutputTokens,
+						PromptTokens:          event.Usage.InputTokens,
+						CompletionTokens:      event.Usage.OutputTokens,
+						TotalTokens:           event.Usage.TotalTokens,
+						InputTokens:           event.Usage.InputTokens,
+						OutputTokens:          event.Usage.OutputTokens,
+						CachedTokens:          event.Usage.CachedTokens,
+						PromptCacheHitTokens:  event.Usage.CachedTokens,
+						PromptCacheMissTokens: event.Usage.InputTokens - event.Usage.CachedTokens,
 					})
 				}
 			}
@@ -1149,7 +1183,7 @@ func (r *ProviderRouter) generateNativeChatStream(ctx context.Context, target up
 		return nil
 	})
 
-	if len(collectedToolCalls) > 0 && req.OnToolCalls != nil {
+	if err == nil && len(collectedToolCalls) > 0 && req.OnToolCalls != nil {
 		req.OnToolCalls(collectedToolCalls)
 	}
 	return err

@@ -24,7 +24,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Button, Modal, Input, isImeComposing } from "@inklore/ui";
-import { reportSafeDiagnostic, safeErrorText } from "@inklore/transport";
+import { safeErrorText } from "@inklore/transport";
 import { useTranslation } from "@inklore/i18n";
 import {
   LlmChannel,
@@ -34,7 +34,6 @@ import {
   updateLlmChannel,
   createLlmProvider,
   createLlmModel,
-  createLlmKey,
   fetchUpstreamModels,
   fetchLlmModels,
   fetchLlmProviders,
@@ -552,8 +551,6 @@ export function ChannelModal({
   const handleSubmit = async () => {
     const title = formTitle.trim();
     const baseUrl = formBaseUrl.trim();
-    const apiKey = formApiKey.trim();
-
     // 调度参数沿用渠道既有值或推荐默认值（UI不再向用户暴露调度策略）
     const priority = editingChannel?.priority ?? 0;
     const weight = editingChannel?.weight ?? 50;
@@ -657,31 +654,9 @@ export function ChannelModal({
           enabled: formEnabled,
           models: channelModels,
         });
-
-        if (apiKey.trim()) {
-          const trimmedKey = apiKey.trim();
-          const isEnv = /^[A-Z_][A-Z0-9_]*$/.test(trimmedKey);
-          try {
-            await createLlmKey({
-              channel_id: editingChannel.id,
-              title: `${title}-key`,
-              secret_ref: {
-                kind: isEnv ? "env" : "plain",
-                locator: trimmedKey,
-                version: "v1",
-              },
-              weight,
-              rpm,
-              concurrency,
-              enabled: true,
-            });
-          } catch {
-            // key 创建失败不阻断保存
-          }
-        }
       } else {
         // 新建模式：单次请求创建渠道实体并绑定多个模型
-        const createdChannel = await createLlmChannel({
+        await createLlmChannel({
           provider_id: providerId,
           title,
           base_url: baseUrl,
@@ -692,28 +667,6 @@ export function ChannelModal({
           enabled: formEnabled,
           models: channelModels,
         });
-
-        if (createdChannel?.id && apiKey.trim()) {
-          const trimmedKey = apiKey.trim();
-          const isEnv = /^[A-Z_][A-Z0-9_]*$/.test(trimmedKey);
-          try {
-            await createLlmKey({
-              channel_id: createdChannel.id,
-              title: `${title}-key`,
-              secret_ref: {
-                kind: isEnv ? "env" : "plain",
-                locator: trimmedKey,
-                version: "v1",
-              },
-              weight,
-              rpm,
-              concurrency,
-              enabled: true,
-            });
-          } catch (keyErr: unknown) {
-            reportSafeDiagnostic("admin.channel_key_auto_create_failed", keyErr);
-          }
-        }
       }
 
       onClose();
@@ -941,10 +894,13 @@ export function ChannelModal({
                   setUpstreamNotice(null);
                 }}
                 placeholder={t("admin.channels.secret_api_key_ph")}
+                autoComplete="off"
               />
             </div>
           </div>
         </div>
+
+        <p className="text-xs text-[var(--text-muted)]">{t("admin.channels.keys_after_create")}</p>
 
         {/* 模块 2：支持模型与路由映射 */}
         <div className="space-y-4 p-4 sm:p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-decorative)]/80 shadow-sm transition-all">

@@ -66,6 +66,7 @@ type ModelGenerateOutput struct {
 	InputTokens      int64
 	OutputTokens     int64
 	CostMicros       int64
+	Estimated        bool
 	UsageReceiptID   *string
 }
 
@@ -77,6 +78,26 @@ type ModelGatewayPort interface {
 	// LLM-owned ledger inside the caller's transaction, keeping deletion
 	// refusal inside the LLM domain without llm -> agent table access.
 	RecordPolicyVersionReference(ctx context.Context, tenantID, policyVersionID, referenceKind, referenceID string) error
+}
+
+// ModelUsageRecoveryPort reads accounting after a lost worker lease. It must
+// never dispatch an upstream request or replay model-generated tool calls.
+type ModelUsageRecoveryPort interface {
+	RecoverUsage(ctx context.Context, tenantID, executionKey string) (*ModelGenerateOutput, error)
+}
+
+// ModelSettledUsage is a read-only LLM receipt mapped to its original Agent node.
+type ModelSettledUsage struct {
+	Cursor   string
+	TenantID string
+	NodeID   string
+	Output   *ModelGenerateOutput
+}
+
+// ModelUsageSweepPort supports recovery after cancellation or terminal Run state.
+// The ledger is the source of truth; scanning never redispatches a model.
+type ModelUsageSweepPort interface {
+	ListSettledAgentUsage(context.Context, string, int) ([]ModelSettledUsage, error)
 }
 
 // ToolCallInput is the input for Act phase tool execution.
@@ -130,9 +151,11 @@ type RunRepository interface {
 	CreateRun(ctx context.Context, tenantID string, run *AgentRun, nodes []AgentRunNode) error
 	GetRun(ctx context.Context, tenantID, runID string) (*AgentRun, []AgentRunNode, error)
 	GetRunOnly(ctx context.Context, tenantID, runID string) (*AgentRun, error)
+	FindRunIDByNode(ctx context.Context, tenantID, nodeID string) (string, error)
 	ListRunsByOwner(ctx context.Context, tenantID, ownerID, status string, query ListQuery) ([]RunSummaryView, *string, bool, error)
 	CountActiveRunsByOwner(ctx context.Context, tenantID, ownerID string) (int, error)
 	UpdateRunStatus(ctx context.Context, tenantID, runID string, expectedRev int64, newStatus RunStatus) (*AgentRun, error)
+	AppendUsageReceipt(ctx context.Context, tenantID, runID string, expectedRev int64, receiptID string) error
 	TerminateRun(ctx context.Context, tenantID, runID string, expectedRev int64, targetStatus RunStatus, reason, errorCode string, retryable bool, receiptIDs []string) (*AgentRun, error)
 	AllocateNextSeq(ctx context.Context, tenantID, runID string) (int64, error)
 

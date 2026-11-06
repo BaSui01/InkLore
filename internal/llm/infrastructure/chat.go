@@ -115,6 +115,19 @@ func isReasoningModel(model string) bool {
 		strings.Contains(m, "qwen3-max")
 }
 
+// Chat-compatible providers do not share OpenAI's reasoning token parameter.
+// Send only one output limit; DeepSeek, Ollama and other compatible models
+// continue to use max_tokens even when their names describe reasoning models.
+func chatTokenLimits(protocol, model string, limit int) (maxTokens, maxCompletionTokens int) {
+	m := strings.ToLower(model)
+	if normalizeProtocol(protocol) == protocolOpenAI &&
+		(strings.HasPrefix(m, "o1") || strings.HasPrefix(m, "o3") ||
+			strings.HasPrefix(m, "o4") || strings.HasPrefix(m, "gpt-5") || strings.HasPrefix(m, "gpt-6")) {
+		return 0, limit
+	}
+	return limit, 0
+}
+
 func (r *ProviderRouter) GenerateChat(ctx context.Context, req domain.TextGenerationRequest) (response domain.TextGenerationResponse, err error) {
 	if r == nil || !r.isLiveAPI {
 		return domain.TextGenerationResponse{}, domain.ErrProviderNotConfigured
@@ -149,12 +162,10 @@ func (r *ProviderRouter) GenerateChat(ctx context.Context, req domain.TextGenera
 
 	reasoning := isReasoningModel(model)
 	temp := req.Temperature
-	maxTokens := req.MaxTokens
-	maxCompletionTokens := req.MaxTokens
+	maxTokens, maxCompletionTokens := chatTokenLimits(target.protocol, model, req.MaxTokens)
 	if reasoning {
-		// OpenAI o1/o3 模型不支持自定义 temperature 与 max_tokens，只接受 max_completion_tokens
+		// Reasoning models may reject custom sampling parameters.
 		temp = 0
-		maxTokens = 0
 	}
 
 	payload := openAIToolChatRequest{
@@ -205,7 +216,10 @@ func (r *ProviderRouter) GenerateChat(ctx context.Context, req domain.TextGenera
 		return domain.TextGenerationResponse{}, platformerr.Internal("llm_decode_failed", "llm.generation_failed", err.Error())
 	}
 	if chatResp.Error != nil {
-		return domain.TextGenerationResponse{}, platformerr.Internal("upstream_error", "llm.generation_failed", chatResp.Error.Message)
+		return domain.TextGenerationResponse{}, platformerr.Wrap(newUpstreamStatusError(http.StatusBadGateway, chatResp.Error.Message), http.StatusInternalServerError, "upstream_error", "llm.generation_failed")
+	}
+	if len(chatResp.Choices) == 0 {
+		return domain.TextGenerationResponse{}, platformerr.Wrap(newUpstreamStatusError(http.StatusBadGateway, "missing chat completion choices"), http.StatusInternalServerError, "upstream_error", "llm.generation_failed")
 	}
 
 	cached := chatResp.Usage.PromptCacheHitTokens
@@ -467,6 +481,16 @@ func decodeOpenAIChatStream(ctx context.Context, body io.Reader, req domain.Text
 	scanner := bufio.NewScanner(body)
 	scanner.Buffer(make([]byte, 64*1024), 4*1024*1024)
 	var finalUsage *domain.TokenUsage
+	// Accounting is independent of completion. A provider can send measured
+	// usage and then disconnect before [DONE]; retain those facts on every exit
+	// while tool calls remain gated by a successfully completed stream below.
+	defer func() {
+		if finalUsage != nil && req.OnUsage != nil {
+			req.OnUsage(finalUsage)
+		}
+	}()
+	completed := false
+	seenChoice := false
 
 	for scanner.Scan() {
 		select {
@@ -476,22 +500,23 @@ func decodeOpenAIChatStream(ctx context.Context, body io.Reader, req domain.Text
 		}
 
 		line := scanner.Text()
-		if !strings.HasPrefix(line, "data: ") {
+		if !strings.HasPrefix(line, "data:") {
 			continue
 		}
-		data := strings.TrimPrefix(line, "data: ")
-		if strings.TrimSpace(data) == "[DONE]" {
+		data := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+		if data == "[DONE]" {
+			completed = true
 			break
 		}
 
 		var chunk openAIStreamChunk
 		if err := json.Unmarshal([]byte(data), &chunk); err != nil {
-			continue
+			return finalUsage, platformerr.Wrap(newUpstreamStatusError(http.StatusBadGateway, "invalid chat stream event"), http.StatusInternalServerError, "upstream_stream_error", "llm.generation_failed")
 		}
 
 		// 拦截流式传输中途上游返回的错误块
-		if chunk.Error != nil && chunk.Error.Message != "" {
-			return finalUsage, platformerr.New(http.StatusInternalServerError, "upstream_stream_error", chunk.Error.Message)
+		if chunk.Error != nil {
+			return finalUsage, platformerr.Wrap(newUpstreamStatusError(http.StatusBadGateway, chunk.Error.Message), http.StatusInternalServerError, "upstream_stream_error", "llm.generation_failed")
 		}
 
 		if chunk.Usage != nil {
@@ -514,6 +539,7 @@ func decodeOpenAIChatStream(ctx context.Context, body io.Reader, req domain.Text
 		}
 
 		if len(chunk.Choices) > 0 {
+			seenChoice = true
 			choice := chunk.Choices[0]
 			if len(choice.Delta.ToolCalls) > 0 {
 				accumulator.Process(choice.Delta.ToolCalls)
@@ -539,22 +565,31 @@ func decodeOpenAIChatStream(ctx context.Context, body io.Reader, req domain.Text
 	if err := scanner.Err(); err != nil {
 		return finalUsage, err
 	}
+	if err := ctx.Err(); err != nil {
+		return finalUsage, err
+	}
+	if !completed {
+		return finalUsage, io.ErrUnexpectedEOF
+	}
+	if !seenChoice {
+		return finalUsage, platformerr.Wrap(newUpstreamStatusError(http.StatusBadGateway, "missing chat stream choices"), http.StatusInternalServerError, "upstream_stream_error", "llm.generation_failed")
+	}
 
 	flushThink, flushContent := thinkFilter.Flush()
 	if flushThink != "" && req.OnReasoningChunk != nil {
-		_ = req.OnReasoningChunk(flushThink)
+		if err := req.OnReasoningChunk(flushThink); err != nil {
+			return finalUsage, err
+		}
 	}
 	if flushContent != "" && req.OnTextChunk != nil {
-		_ = req.OnTextChunk(flushContent)
+		if err := req.OnTextChunk(flushContent); err != nil {
+			return finalUsage, err
+		}
 	}
 
 	calls := accumulator.Build()
 	if len(calls) > 0 && req.OnToolCalls != nil {
 		req.OnToolCalls(calls)
-	}
-
-	if finalUsage != nil && req.OnUsage != nil {
-		req.OnUsage(finalUsage)
 	}
 
 	return finalUsage, nil

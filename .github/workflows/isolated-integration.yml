@@ -87,6 +87,10 @@ jobs:
         run: |
           go run ./cmd/migrate -cmd up -timeout 180s
           go run ./cmd/migrate -cmd status -timeout 60s
+      - name: Verify runtime role grants on generation invocations
+        run: |
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_ci PGDATABASE=inklore_ci PGPASSWORD=ci-only-not-production
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT has_table_privilege('inklore_runtime','llm_generation_invocations','SELECT') AND has_table_privilege('inklore_runtime','llm_generation_invocations','INSERT') AND has_table_privilege('inklore_runtime','llm_generation_invocations','UPDATE') AND NOT has_table_privilege('inklore_runtime','llm_generation_invocations','DELETE')" | grep -qx t
       - name: Verify migration atomicity and concurrent replay
         run: INKLORE_MIGRATION_TEST_DSN="$DATABASE_DSN" go test ./internal/platform/database -count=1 -race -v
       - name: Verify Supabase staging permissions against unrelated public objects
@@ -240,3 +244,11 @@ jobs:
           AGENT_QUESTION_PG_TEST: '1'
         run: |
           go test ./internal/agent/... ./internal/app ./cmd/admin -run 'TestQuestion|TestClarification' -count=1 -race -v
+      - name: Verify Gateway budgets, admission, accounting and crash recovery
+        env:
+          INKLORE_GATEWAY_INTEGRATION: '1'
+        run: go test ./internal/llm/... -count=1 -race -v
+      - name: Verify Agent usage receipts and original Run question recovery
+        env:
+          AGENT_QUESTION_PG_TEST: '1'
+        run: go test ./internal/agent/... ./internal/app ./cmd/admin -run 'TestQuestion|TestClarification|TestAgentGatewayUsage|TestLLMSecretReferencesHTTPPG|TestComplianceRewriteOperationPG' -count=1 -race -v

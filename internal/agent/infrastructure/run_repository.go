@@ -418,7 +418,8 @@ func (r *RunRepositoryPostgres) TerminateRun(
 		UPDATE agent_runs
 		SET status = ?, finished_at = now(), revision = revision + 1,
 		    error_code = NULLIF(?, ''), terminal_reason = NULLIF(?, ''),
-		    retryable = ?, usage_receipt_ids = ?, updated_at = now()
+		    retryable = ?, usage_receipt_ids = ARRAY(SELECT DISTINCT receipt_id
+		      FROM unnest(usage_receipt_ids || ?::uuid[]) AS receipt_id ORDER BY receipt_id), updated_at = now()
 		WHERE tenant_id = ? AND id = ? AND revision = ?
 		  AND status NOT IN ('succeeded', 'failed', 'cancelled')
 		  AND deleted_at IS NULL
@@ -1449,3 +1450,20 @@ func (r *RunRepositoryPostgres) CheckEventCursorExpired(ctx context.Context, ten
 }
 
 var _ d.RunRepository = (*RunRepositoryPostgres)(nil)
+
+// FindRunIDByNode resolves an immutable node owner without consulting LLM tables.
+func (r *RunRepositoryPostgres) FindRunIDByNode(ctx context.Context, tenantID, nodeID string) (string, error) {
+	db, err := r.db(ctx, false)
+	if err != nil {
+		return "", err
+	}
+	var runID string
+	q := db.Raw("SELECT run_id::text FROM agent_run_nodes WHERE tenant_id=? AND id=?", tenantID, nodeID).Scan(&runID)
+	if q.Error != nil {
+		return "", q.Error
+	}
+	if q.RowsAffected != 1 {
+		return "", d.ErrNotFound()
+	}
+	return runID, nil
+}

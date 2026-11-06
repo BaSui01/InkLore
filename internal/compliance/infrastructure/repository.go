@@ -238,7 +238,7 @@ func (r *Repository) CreateRule(ctx context.Context, rule d.Rule) error {
 		return err
 	}
 	query := "INSERT INTO compliance_rules(id, tenant_id, created_at, updated_at, revision, rule_set_id, kind, expression, severity, category, advice, weight, enabled) " +
-		"VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+		"VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	return db.Exec(query, rule.ID, rule.TenantID, rule.CreatedAt, rule.UpdatedAt, rule.Revision, rule.RuleSetID, rule.Kind, rule.Expression, rule.Severity, rule.Category, rule.Advice, rule.Weight, rule.Enabled).Error
 }
 

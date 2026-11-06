@@ -54,6 +54,11 @@ func (g *questionTestGateway) RecordPolicyVersionReference(ctx context.Context, 
 	}
 	return g.store.RecordPolicyVersionReference(ctx, tenant, version, kind, id)
 }
+func (g *questionTestGateway) RecoverUsage(context.Context, string, string) (*d.ModelGenerateOutput, error) {
+	// This upstream fixture never creates an LLM charge. Actual gateway receipt
+	// recovery is exercised separately with PostgreSQL/Redis and HTTP dispatch.
+	return nil, nil
+}
 func (g *questionTestGateway) Generate(_ context.Context, in d.ModelGenerateInput) (*d.ModelGenerateOutput, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()

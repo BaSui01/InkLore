@@ -116,13 +116,36 @@ func (s *Scheduler) ClaimAndExecute(ctx context.Context, workerID string) (proce
 	// An expired lease can leave an in-flight model or tool outcome unknown.
 	// Never send the same external request again merely because a lease was reclaimed.
 	if lease.Recovered {
+		var interrupted []d.AgentRunNode
 		for _, n := range nodes {
 			if n.Status == d.NodeStatusRunning {
+				recovery, ok := s.gateway.(d.ModelUsageRecoveryPort)
+				if !ok {
+					return true, errors.New("agent model usage recovery is not configured")
+				}
+				output, err := recovery.RecoverUsage(ctx, tenantID, n.ID+"/"+strconv.Itoa(n.Iteration))
+				if err != nil {
+					// Keep the interrupted checkpoint until the LLM reservation has
+					// settled. Failing the Run with an empty receipt would lose cost.
+					return true, err
+				}
+				if err := s.recordModelUsage(ctx, tenantID, runID, output); err != nil {
+					return true, err
+				}
+				interrupted = append(interrupted, n)
+			}
+		}
+		if len(interrupted) > 0 {
+			for _, n := range interrupted {
 				if err := s.repo.UpdateNodeStatus(ctx, tenantID, n.ID, n.Revision, d.NodeStatusFailed); err != nil {
 					return true, err
 				}
-				return true, s.completeRun(ctx, lease, run.Revision, d.RunStatusFailed, "agent.execution_outcome_unknown")
 			}
+			current, err := s.repo.GetRunOnly(ctx, tenantID, runID)
+			if err != nil {
+				return true, err
+			}
+			return true, s.completeRun(ctx, lease, current.Revision, d.RunStatusFailed, "agent.execution_outcome_unknown")
 		}
 	}
 
@@ -205,7 +228,7 @@ func (s *Scheduler) ClaimAndExecute(ctx context.Context, workerID string) (proce
 		// A failed required node prevents downstream pending nodes from ever becoming ready.
 		for _, n := range nodes {
 			if n.Required && n.Status == d.NodeStatusFailed {
-				return true, s.completeRun(ctx, lease, run.Revision, d.RunStatusFailed, "agent.node_failed")
+				return true, s.completeRun(ctx, lease, run.Revision, d.RunStatusFailed, requiredNodeFailureCode(nodes))
 			}
 		}
 		// Check if there are nodes waiting for approval
@@ -236,7 +259,7 @@ func (s *Scheduler) ClaimAndExecute(ctx context.Context, workerID string) (proce
 			}
 			for _, n := range nodes {
 				if n.Required && n.Status != d.NodeStatusSucceeded {
-					state, code = d.RunStatusFailed, "agent.node_failed"
+					state, code = d.RunStatusFailed, requiredNodeFailureCode(nodes)
 					break
 				}
 			}
@@ -341,7 +364,7 @@ func (s *Scheduler) ClaimAndExecute(ctx context.Context, workerID string) (proce
 		return true, s.jobs.CompleteRunJob(ctx, lease, string(currentRun.Status), "")
 	}
 	if hasFailedRequired {
-		return true, s.completeRun(ctx, lease, currentRun.Revision, d.RunStatusFailed, "agent.node_failed")
+		return true, s.completeRun(ctx, lease, currentRun.Revision, d.RunStatusFailed, requiredNodeFailureCode(allNodes))
 	}
 	allTerminal := true
 	for _, n := range allNodes {
@@ -353,7 +376,7 @@ func (s *Scheduler) ClaimAndExecute(ctx context.Context, workerID string) (proce
 	if allTerminal {
 		state, code := d.RunStatusSucceeded, ""
 		if !allRequiredSucceeded {
-			state, code = d.RunStatusFailed, "agent.node_failed"
+			state, code = d.RunStatusFailed, requiredNodeFailureCode(allNodes)
 		}
 		return true, s.completeRun(ctx, lease, currentRun.Revision, state, code)
 	}
@@ -364,6 +387,15 @@ func (s *Scheduler) ClaimAndExecute(ctx context.Context, workerID string) (proce
 		return true, s.jobs.SuspendRunJob(ctx, lease, time.Now().UTC().Add(15*time.Minute))
 	}
 	return true, s.jobs.SuspendRunJob(ctx, lease, time.Now().UTC().Add(time.Second))
+}
+
+func requiredNodeFailureCode(nodes []d.AgentRunNode) string {
+	for _, node := range nodes {
+		if node.Required && node.Status != d.NodeStatusSucceeded && node.ErrorCode != nil && *node.ErrorCode != "" {
+			return *node.ErrorCode
+		}
+	}
+	return "agent.execution_outcome_unknown"
 }
 
 // executeNodeTAO executes the Think-Act-Observe cycle for a single node.
@@ -491,10 +523,31 @@ func (s *Scheduler) executeNodeTAO(ctx context.Context, lease *d.RunJobLease, ru
 			modelCtx, cancelModel := context.WithDeadline(ctx, run.DeadlineAt)
 			genOutput, err = s.gateway.Generate(modelCtx, genInput)
 			cancelModel()
+			if usageErr := s.recordModelUsage(ctx, tenantID, runID, genOutput); usageErr != nil {
+				// Keep the running checkpoint for read-only recovery if persistence
+				// failed after settlement; a failed node would skip that recovery.
+				return errors.Join(err, usageErr)
+			}
+			if err == nil && genOutput == nil {
+				err = errors.New("agent model gateway returned no result")
+			}
 			if err != nil {
+				if genOutput == nil || genOutput.UsageReceiptID == nil {
+					recovery, ok := s.gateway.(d.ModelUsageRecoveryPort)
+					if !ok {
+						return errors.Join(err, errors.New("agent model usage recovery is not configured"))
+					}
+					output, recoveryErr := recovery.RecoverUsage(ctx, tenantID, genInput.ExecutionKey)
+					if recoveryErr != nil {
+						return errors.Join(err, recoveryErr)
+					}
+					if usageErr := s.recordModelUsage(ctx, tenantID, runID, output); usageErr != nil {
+						return errors.Join(err, usageErr)
+					}
+				}
 				failCode := "agent.execution_outcome_unknown"
-				_ = s.repo.FinishNode(ctx, tenantID, node.ID, node.Revision, lease.LeaseEpoch, node.FencingToken, d.NodeStatusFailed, &failCode)
-				return err
+				finishErr := s.repo.FinishNode(ctx, tenantID, node.ID, node.Revision, lease.LeaseEpoch, node.FencingToken, d.NodeStatusFailed, &failCode)
+				return errors.Join(err, finishErr)
 			}
 		} else {
 			failCode := "llm_provider_not_configured"
@@ -515,31 +568,6 @@ func (s *Scheduler) executeNodeTAO(ctx context.Context, lease *d.RunJobLease, ru
 					RunID:     runID,
 					Seq:       seq,
 					EventName: "reasoning.summary",
-					Payload:   payload,
-					ExpiresAt: time.Now().UTC().Add(7 * 24 * time.Hour),
-				})
-			}
-		}
-
-		// Record usage updated
-		if genOutput.InputTokens > 0 || genOutput.OutputTokens > 0 {
-			seq, err := s.repo.AllocateNextSeq(ctx, tenantID, runID)
-			if err == nil {
-				payload, _ := json.Marshal(d.UsageUpdatedPayload{
-					InputTokens:  genOutput.InputTokens,
-					OutputTokens: genOutput.OutputTokens,
-					CostMicros:   genOutput.CostMicros,
-					Currency:     "CNY",
-					Estimated:    false,
-				})
-				_ = s.repo.AppendEvent(ctx, tenantID, &d.AgentRunEvent{
-					ID:        uuid.NewString(),
-					TenantID:  tenantID,
-					CreatedAt: time.Now().UTC(),
-					UpdatedAt: time.Now().UTC(),
-					RunID:     runID,
-					Seq:       seq,
-					EventName: "usage.updated",
 					Payload:   payload,
 					ExpiresAt: time.Now().UTC().Add(7 * 24 * time.Hour),
 				})

@@ -55,7 +55,7 @@ export function ChannelKeysModal({ open, channel, keys, onClose, onSaved }: {
   const beginEdit = (key: LlmKey) => {
     setEditing(key);
     setTitle(key.title);
-    setLocator(key.secret_ref.locator);
+    setLocator(key.secret_ref.kind === "env" && /^[A-Z_][A-Z0-9_]*$/.test(key.secret_ref.locator) ? key.secret_ref.locator : "");
     setSecretVersion(key.secret_ref.version);
     setWeight(String(key.weight));
     setRpm(String(key.rpm));
@@ -73,7 +73,7 @@ export function ChannelKeysModal({ open, channel, keys, onClose, onSaved }: {
     const parsedConcurrency = Number(concurrency);
     const trimmedLocator = locator.trim();
     const isEnvLocator = /^[A-Z_][A-Z0-9_]*$/.test(trimmedLocator);
-    if (!title.trim() || title.trim().length > 120 || !trimmedLocator || trimmedLocator.length > 1024 ||
+    if (!title.trim() || title.trim().length > 120 || !isEnvLocator || trimmedLocator.length > 256 ||
         !secretVersion.trim() || secretVersion.trim().length > 64 ||
         !Number.isInteger(parsedWeight) || parsedWeight < 1 || parsedWeight > 1000 ||
         !Number.isInteger(parsedRpm) || parsedRpm < 1 || parsedRpm > 100000 ||
@@ -87,7 +87,7 @@ export function ChannelKeysModal({ open, channel, keys, onClose, onSaved }: {
       const payload = {
         channel_id: channel.id,
         title: title.trim(),
-        secret_ref: { kind: isEnvLocator ? "env" : "plain", locator: trimmedLocator, version: secretVersion.trim() },
+        secret_ref: { kind: "env" as const, locator: trimmedLocator, version: secretVersion.trim() },
         weight: parsedWeight,
         rpm: parsedRpm,
         concurrency: parsedConcurrency,

@@ -6,12 +6,12 @@ import (
 	"errors"
 	"net/url"
 	"os"
-	"regexp"
 	"strings"
 
 	llmd "InkLore/internal/llm/domain"
 	llmi "InkLore/internal/llm/infrastructure"
 	"InkLore/internal/platform/identity"
+	"InkLore/internal/platform/logger"
 )
 
 // LLMAuthorizer keeps the LLM admin audience and role policy at the app boundary.
@@ -54,51 +54,35 @@ func NewLLMSecrets() (*llmi.Secrets, error) {
 
 	pepperBytes := []byte(os.Getenv("LLM_SECRET_PEPPER"))
 	if len(pepperBytes) < 32 {
-		h := sha256.Sum256([]byte("inklore_llm_secret_pepper:" + os.Getenv("ENCRYPTION_KEY")))
-		pepperBytes = h[:]
+		pepperBytes = nil
+		if encryptionKey := os.Getenv("ENCRYPTION_KEY"); len(encryptionKey) >= 32 {
+			h := sha256.Sum256([]byte("inklore_llm_secret_pepper:" + encryptionKey))
+			pepperBytes = h[:]
+		}
 	}
 
+	bindings, err := llmi.EnvironmentSecretBindings()
+	if err != nil {
+		// Keep catalog configuration available, but leave every credential
+		// unauthorized. Never log the malformed configuration or its contents.
+		logger.Warn("LLM credential bindings are invalid; credential access is disabled")
+		bindings = nil
+	}
 	return llmi.NewSecrets(llmi.SecretOptions{
+		Bindings:  bindings,
 		Pepper:    pepperBytes,
 		Endpoints: endpoints,
 		Resolve: func(ctx context.Context, b llmi.SecretBinding) ([]byte, error) {
 			ref := b.Ref
-			switch ref.Kind {
-			case "plain":
-				val := strings.TrimSpace(ref.Locator)
-				if val == "" {
-					return nil, llmd.ErrSecret
-				}
-				if llmi.IsEncryptedSecret(val) {
-					decrypted, err := llmi.DecryptSecret(val)
-					if err == nil && decrypted != "" {
-						return []byte(decrypted), nil
-					}
-				}
-				return []byte(val), nil
-			case "env":
+			if llmd.ValidateSecretRef(ref) != nil {
+				return nil, llmd.ErrSecret
+			}
+			if ref.Kind == "env" {
 				if val := os.Getenv(ref.Locator); strings.TrimSpace(val) != "" {
 					return []byte(strings.TrimSpace(val)), nil
 				}
-				loc := strings.TrimSpace(ref.Locator)
-				if loc != "" && !regexp.MustCompile(`^[A-Z_][A-Z0-9_]*$`).MatchString(loc) {
-					if llmi.IsEncryptedSecret(loc) {
-						decrypted, err := llmi.DecryptSecret(loc)
-						if err == nil && decrypted != "" {
-							return []byte(decrypted), nil
-						}
-					}
-					return []byte(loc), nil
-				}
-				return nil, llmd.ErrSecret
-			case "secret_store":
-				return nil, llmd.ErrSecret
-			default:
-				if strings.TrimSpace(ref.Locator) != "" {
-					return []byte(strings.TrimSpace(ref.Locator)), nil
-				}
-				return nil, llmd.ErrSecret
 			}
+			return nil, llmd.ErrSecret
 		},
 	})
 }
