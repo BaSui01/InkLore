@@ -5,3 +5,7 @@
 
 export * from "./ApprovalCard";
 export * from "./RunInspector";
+
+export * from "./QuestionCard";
+
+export * from "./RunApprovals";
