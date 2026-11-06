@@ -182,7 +182,7 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
         const selected = run.resource!.selection;
         const codepoints = Array.from(body);
         if (value.chapter.revision !== run.resource!.source_revision ||
-            value.chapter.content_hash !== digest || run.resource!.source_hash !== digest ||
+            run.resource!.source_hash !== digest ||
             (selected && (selected.source_hash !== digest || !Number.isSafeInteger(selected.start_offset) ||
               !Number.isSafeInteger(selected.end_offset) || selected.start_offset < 0 ||
               selected.end_offset <= selected.start_offset || selected.end_offset > codepoints.length))) {
