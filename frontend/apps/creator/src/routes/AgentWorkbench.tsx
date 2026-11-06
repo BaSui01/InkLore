@@ -43,6 +43,7 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
   const [policyVersionId, setPolicyVersionId] = useState("");
   const [taskKind, setTaskKind] = useState("");
   const [instruction, setInstruction] = useState("");
+  const [draftTouched, setDraftTouched] = useState(false);
   const [creating, setCreating] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [uncertain, setUncertain] = useState(false);
@@ -63,8 +64,8 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
   const createLock = useRef(false);
   const cancelLock = useRef(false);
   useEffect(() => {
-    props.onPendingChange?.(recoveringCreate || uncertain || !!createIntent.current || state.restoring || creating || (!!run && !terminalRun(status ?? run.status)));
-  }, [props.onPendingChange, recoveringCreate, uncertain, state.restoring, creating, run?.id, run?.status, status]);
+    props.onPendingChange?.(recoveringCreate || uncertain || draftTouched || !!createIntent.current || state.restoring || creating || (!!run && !terminalRun(status ?? run.status)));
+  }, [props.onPendingChange, recoveringCreate, uncertain, draftTouched, state.restoring, creating, run?.id, run?.status, status]);
   const catalogGeneration = useRef(0);
   const panel = useRef<HTMLElement>(null);
   const ime = useImeComposition();
@@ -90,7 +91,7 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
     return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
   }, []);
   useEffect(() => {
-    if (state.denied) { setCatalog(emptyCatalog); setCatalogReady(false); setInstruction(""); setSourceSnapshot(""); setSourceHash(""); setSourceSelection(null); setVerifiedRunId(null); setScopeUnknown(false); setReview(null); createIntent.current = null; cancelIntent.current = null; setHistory([]); setUncertain(false); }
+    if (state.denied) { setCatalog(emptyCatalog); setCatalogReady(false); setInstruction(""); setDraftTouched(false); setSourceSnapshot(""); setSourceHash(""); setSourceSelection(null); setVerifiedRunId(null); setScopeUnknown(false); setReview(null); createIntent.current = null; cancelIntent.current = null; setHistory([]); setUncertain(false); }
   }, [state.denied]);
   useEffect(() => {
     if (!props.open) return;
@@ -143,7 +144,7 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
       const url = new URL(window.location.href); url.searchParams.set("agentCreate", createIntent.current.key); url.searchParams.set("agentChapter", props.chapterId); window.history.replaceState(window.history.state, "", url);
       const created = await api.agent.createRun(createIntent.current.body, createIntent.current.key);
       setVerifiedRunId(created.id); setScopeUnknown(false);
-      state.adopt(created); createIntent.current = null; setUncertain(false); clearCreatePointer();
+      state.adopt(created); createIntent.current = null; setUncertain(false); setDraftTouched(false); clearCreatePointer();
     } catch (cause) {
       const unknown = isNetworkError(cause) || (isApiError(cause) && (cause.httpStatus >= 500 || cause.code === "platform.operation_in_progress"));
       setUncertain(unknown);
@@ -226,16 +227,19 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
         {catalogReady && !catalogLoading && (catalog.definitions.length === 0 || catalog.policies.length === 0) && <p>{t("agentQuestion.emptyPolicies")}</p>}
         {catalogReady && !catalogLoading && catalog.definitions.length > 0 && catalog.policies.length > 0 && <form onSubmit={submit} className="space-y-4" onKeyDown={event => { if (event.key === "Enter" && ime.shouldBlockKeyAction(event)) { event.preventDefault(); event.stopPropagation(); } }}>
           <fieldset disabled={creating || uncertain} className="space-y-4 min-w-0">
-            <label className="block space-y-1 text-sm"><span>{t("agentWorkbench.definition")}</span><select className={selectClass} value={definitionId} onChange={event => { setDefinitionId(event.target.value); setPolicyVersionId(""); setTaskKind(""); }} required>{catalog.definitions.map(item => <option value={item.id} key={item.id}>{item.title} · {item.version_id}</option>)}</select></label>
-            <label className="block space-y-1 text-sm"><span>{t("agentQuestion.policy")}</span><select className={selectClass} value={policyVersionId} onChange={event => { setPolicyVersionId(event.target.value); setTaskKind(""); }} required><option value="">{t("common.select")}</option>{policies.map(item => <option value={item.policy_version_id} key={item.policy_version_id}>{item.title} · v{item.version}</option>)}</select></label>
+            <label className="block space-y-1 text-sm"><span>{t("agentWorkbench.definition")}</span><select className={selectClass} value={definitionId} onChange={event => { setDefinitionId(event.target.value); setPolicyVersionId(""); setTaskKind(""); setDraftTouched(true); }} required>{catalog.definitions.map(item => <option value={item.id} key={item.id}>{item.title} · {item.version_id}</option>)}</select></label>
+            <label className="block space-y-1 text-sm"><span>{t("agentQuestion.policy")}</span><select className={selectClass} value={policyVersionId} onChange={event => { setPolicyVersionId(event.target.value); setTaskKind(""); setDraftTouched(true); }} required><option value="">{t("common.select")}</option>{policies.map(item => <option value={item.policy_version_id} key={item.policy_version_id}>{item.title} · v{item.version}</option>)}</select></label>
             {policy && <p className="text-xs break-words">{t("agentQuestion.policyBudget", policy.version, policy.budget.max_output_tokens, policy.budget.timeout_seconds)}</p>}
-            <label className="block space-y-1 text-sm"><span>{t("agentWorkbench.taskKind")}</span><select className={selectClass} value={taskKind} onChange={event => setTaskKind(event.target.value)} required><option value="">{t("common.select")}</option>{legalKinds.map(kind => <option key={kind} value={kind}>{kind}</option>)}</select></label>
-            <label className="block space-y-1 text-sm"><span>{t("agentWorkbench.workflow")}</span><select className={selectClass} value={workflowId} onChange={event => setWorkflowId(event.target.value)}><option value="">{t("agentWorkbench.noWorkflow")}</option>{catalog.workflows.map(item => <option value={item.id} key={item.id}>{item.title} · {item.version_id}</option>)}</select></label>
-            <label className="block space-y-1 text-sm"><span>{t("agentWorkbench.instruction")}</span><textarea className={selectClass+" min-h-28"} maxLength={16000} value={instruction} onChange={event => setInstruction(event.target.value)} onCompositionStart={ime.handleCompositionStart} onCompositionEnd={ime.handleCompositionEnd} required /></label>
+            <label className="block space-y-1 text-sm"><span>{t("agentWorkbench.taskKind")}</span><select className={selectClass} value={taskKind} onChange={event => { setTaskKind(event.target.value); setDraftTouched(true); }} required><option value="">{t("common.select")}</option>{legalKinds.map(kind => <option key={kind} value={kind}>{kind}</option>)}</select></label>
+            <label className="block space-y-1 text-sm"><span>{t("agentWorkbench.workflow")}</span><select className={selectClass} value={workflowId} onChange={event => { setWorkflowId(event.target.value); setDraftTouched(true); }}><option value="">{t("agentWorkbench.noWorkflow")}</option>{catalog.workflows.map(item => <option value={item.id} key={item.id}>{item.title} · {item.version_id}</option>)}</select></label>
+            <label className="block space-y-1 text-sm"><span>{t("agentWorkbench.instruction")}</span><textarea className={selectClass+" min-h-28"} maxLength={16000} value={instruction} onChange={event => { setInstruction(event.target.value); setDraftTouched(true); }} onCompositionStart={ime.handleCompositionStart} onCompositionEnd={ime.handleCompositionEnd} required /></label>
           </fieldset>
           {[...instruction.trim()].length > 8000 && <p role="alert">{t("agentQuestion.instructionLimit")}</p>}
           {uncertain && <p role="status">{t("agentQuestion.createUnknown")}</p>}
-          <Button type="submit" loading={creating} disabled={offline || (!uncertain && (!taskKind || !policy))}>{t(uncertain ? "agentQuestion.retryCreate" : "agentWorkbench.createRun")}</Button>
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" loading={creating} disabled={offline || (!uncertain && (!taskKind || !policy))}>{t(uncertain ? "agentQuestion.retryCreate" : "agentWorkbench.createRun")}</Button>
+            {draftTouched && <Button type="button" variant="outline" disabled={creating || uncertain} onClick={() => { createIntent.current = null; setInstruction(""); setDefinitionId(""); setWorkflowId(""); setPolicyVersionId(""); setTaskKind(""); setDraftTouched(false); }}>{t("common.cancel")}</Button>}
+          </div>
         </form>}
       </>}
       {run && <div className="space-y-4">
