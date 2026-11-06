@@ -18,6 +18,7 @@ export interface AgentWorkbenchProps {
   selectedModelId: string;
   initialSelection?: { text: string; startOffset: number; endOffset: number } | null;
   onClose: () => void;
+  onPendingChange?: (pending: boolean) => void;
   onAdopt: (artifact: ArtifactView, selection: AgentWorkbenchProps["initialSelection"], sourceSnapshot: string) => void;
 }
 
@@ -61,6 +62,9 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
   const cancelIntent = useRef<{ key: string; revision: number } | null>(null);
   const createLock = useRef(false);
   const cancelLock = useRef(false);
+  useEffect(() => {
+    props.onPendingChange?.(recoveringCreate || state.restoring || creating || (!!run && !terminalRun(status ?? run.status)));
+  }, [props.onPendingChange, recoveringCreate, state.restoring, creating, run?.id, run?.status, status]);
   const catalogGeneration = useRef(0);
   const panel = useRef<HTMLElement>(null);
   const ime = useImeComposition();

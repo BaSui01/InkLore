@@ -56,6 +56,7 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
   const [activeTab, setActiveTab] = useState<"settings" | "outline" | "catalog" | "docs">("catalog");
   const [fontSize, setFontSize] = useState(18);
   const [workbenchOpen, setWorkbenchOpen] = useState(() => new URL(window.location.href).searchParams.has("agentRun") || new URL(window.location.href).searchParams.has("agentCreate"));
+  const [agentInteractionPending, setAgentInteractionPending] = useState(false);
   const [workbenchSelection, setWorkbenchSelection] = useState<{ text: string; startOffset: number; endOffset: number } | null>(null);
   const [availableModels, setAvailableModels] = useState<LlmModel[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string>("");
@@ -249,6 +250,11 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
 
   // 切换章节前先保住当前草稿；新章节正文未读取成功时绝不展示旧章正文。
   const selectChapter = (chapter: Chapter) => {
+    if (chapter.id !== activeChapterRef.current?.id && agentInteractionPending) {
+      // Preserve the active Run and its unsent answer rather than unmounting it.
+      setWorkbenchOpen(true);
+      return;
+    }
     if (
       chapter.id !== activeChapterRef.current?.id &&
       (dirtyRef.current || saveInFlightRef.current || saveIntentRef.current)
@@ -1082,6 +1088,7 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
         selectedModelId={selectedModelId}
         initialSelection={workbenchSelection}
         onClose={() => setWorkbenchOpen(false)}
+        onPendingChange={setAgentInteractionPending}
         onAdopt={handleAgentAdopt}
       />
 

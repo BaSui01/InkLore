@@ -470,7 +470,7 @@ export function AgentGovernanceRoute() {
       </div>
 
       {activeTab === "audit" && <AgentRunAudit />}
-      {activeTab === "policies" && <AgentTaskPolicies />}
+      <div className={activeTab === "policies" ? "flex-1 min-h-0 flex flex-col" : "hidden"} aria-hidden={activeTab !== "policies"}><AgentTaskPolicies /></div>
 
       {/* Tab 1: Agent Definitions */}
       {activeTab === "definitions" && (
