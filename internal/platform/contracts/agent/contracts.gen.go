@@ -1815,7 +1815,7 @@ type Resource struct {
 	ResourceType           ResourceResourceType `json:"resource_type"`
 
 	// Selection Unicode码点半开选区；start<end且≤源正文长度，绑定source_revision/hash；省略表示全章。
-	Selection *struct {
+	Selection              *struct {
 		EndOffset   int    `json:"end_offset"`
 		SourceHash  string `json:"source_hash"`
 		StartOffset int    `json:"start_offset"`
