@@ -27,6 +27,8 @@ import { useTranslation } from "@inklore/i18n";
 import { useAdminSession } from "../context/AdminSessionContext";
 import { AgentInspectModal, AgentEditModal, STANDARD_TASK_KINDS } from "./AgentGovernanceModals";
 import { WorkflowCard } from "./AgentWorkflowCard";
+import { AgentTaskPolicies } from "./AgentTaskPolicies";
+import { AgentRunAudit } from "./AgentRunAudit";
 import { AgentToolAvailability } from "./AgentToolAvailability";
 import {
   AgentDefinitionView,
@@ -43,7 +45,7 @@ import {
   deleteAgentWorkflow,
 } from "../api/adminApi";
 
-type ActiveTab = "definitions" | "workflows" | "tools";
+type ActiveTab = "definitions" | "workflows" | "tools" | "audit" | "policies";
 
 export function AgentGovernanceRoute() {
   const { t } = useTranslation();
@@ -176,7 +178,7 @@ export function AgentGovernanceRoute() {
   // --- CRUD Handlers ---
 
   const handleOpenCreateModal = () => {
-    if (activeTab === "tools") return;
+    if (activeTab === "tools" || activeTab === "audit" || activeTab === "policies") return;
     setEditingItem(null);
     setModalFormError(null);
     setFormTitle("");
@@ -195,7 +197,7 @@ export function AgentGovernanceRoute() {
   };
 
   const handleOpenEditModal = (item: any) => {
-    if (activeTab === "tools") return;
+    if (activeTab === "tools" || activeTab === "audit" || activeTab === "policies") return;
     setEditingItem(item);
     setModalFormError(null);
     setFormTitle(item.title);
@@ -393,7 +395,7 @@ export function AgentGovernanceRoute() {
             >
               {t("common.refresh")}
             </Button>
-            {activeTab !== "tools" && <Button
+            {(activeTab === "definitions" || activeTab === "workflows") && <Button
               size="sm"
               variant="primary"
               icon={<Plus className="w-3.5 h-3.5" />}
@@ -410,7 +412,7 @@ export function AgentGovernanceRoute() {
       {/* Tabs navigation & Search Toolbar */}
       <div className="shrink-0 px-6 py-2.5 border-b border-[var(--border-decorative)] bg-[var(--bg-subtle)]/40 flex flex-col min-[900px]:flex-row items-start min-[900px]:items-center justify-between gap-3">
         {/* Tab Buttons */}
-        <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-decorative)]">
+        <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-decorative)]">
           <button
             onClick={() => { setActiveTab("definitions"); setSearchQuery(""); }}
             className={`flex shrink-0 items-center gap-2.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
@@ -452,18 +454,23 @@ export function AgentGovernanceRoute() {
             <Wrench className="w-4 h-4" />
             <span>{t("admin.agents.tab_tools")}</span>
           </button>
+          <button onClick={() => { setActiveTab("policies"); setSearchQuery(""); }} className={`px-4 py-2 rounded-lg text-sm font-semibold ${activeTab === "policies" ? "bg-[var(--bg-surface)] text-[var(--action-primary)]" : "text-[var(--text-secondary)]"}`}>{t("agentPolicy.title")}</button>
+          <button onClick={() => { setActiveTab("audit"); setSearchQuery(""); }} className={`px-4 py-2 rounded-lg text-sm font-semibold ${activeTab === "audit" ? "bg-[var(--bg-surface)] text-[var(--action-primary)]" : "text-[var(--text-secondary)]"}`}>{t("agentAudit.title")}</button>
         </div>
 
         {/* Search Input */}
-        <div className="w-full min-[900px]:w-80">
+        {activeTab !== "audit" && activeTab !== "policies" && <div className="w-full min-[900px]:w-80">
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("admin.agents.search_placeholder")}
             prefixIcon={<Search className="w-4 h-4" />}
           />
-        </div>
+        </div>}
       </div>
+
+      {activeTab === "audit" && <AgentRunAudit />}
+      <div className={activeTab === "policies" ? "flex-1 min-h-0 flex flex-col" : "hidden"} aria-hidden={activeTab !== "policies"}><AgentTaskPolicies /></div>
 
       {/* Tab 1: Agent Definitions */}
       {activeTab === "definitions" && (
@@ -726,7 +733,7 @@ export function AgentGovernanceRoute() {
       />
 
       {/* Create / Edit Definition or Workflow Modal */}
-      {activeTab !== "tools" && <AgentEditModal
+      {(activeTab === "definitions" || activeTab === "workflows") && <AgentEditModal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         activeTab={activeTab}
