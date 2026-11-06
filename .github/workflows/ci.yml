@@ -26,6 +26,11 @@ jobs:
           node-version: '22'
       - name: 校验技能元数据与文档链接
         run: node scripts/check-project-skills.mjs
+      - name: 校验真实机器契约与幂等边界
+        run: |
+          make contracts-check
+          node --test docs/system-design/tools/check-idempotency.test.cjs
+          node --test scripts/codegen.test.mjs
       - name: 校验工程笔记与历史归档封印
         env:
           NOTES_BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}

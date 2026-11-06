@@ -11,6 +11,7 @@
 | GET /v1/agents/artifacts/{artifact_id} | agent_get_artifact | FR-12 agent.get_artifact | [agent-runs.json](../agent-runs.json) |
 | GET /v1/agents/audit/runs/{run_id} | agent_get_audit_run | FR-24 agent.get_audit_run | [agent-admin.json](../agent-admin.json) |
 | GET /v1/agents/audit/runs | agent_list_audit_runs | FR-24 agent.list_audit_runs | [agent-admin.json](../agent-admin.json) |
+| GET /v1/agents/builtin-tools | agent_list_builtin_tools | FR-23 agent.list_builtin_tools | [agent-admin.json](../agent-admin.json) |
 | GET /v1/agents/catalog/definitions | agent_catalog_definitions | FR-16 agent.catalog_definitions | [agent-runs.json](../agent-runs.json) |
 | GET /v1/agents/catalog/task-policies | agent_catalog_task_policies | FR-16 agent.catalog_task_policies | [agent-runs.json](../agent-runs.json) |
 | GET /v1/agents/catalog/workflows | agent_catalog_workflows | FR-16 agent.catalog_workflows | [agent-runs.json](../agent-runs.json) |
@@ -37,11 +38,8 @@
 | GET /v1/agents/runs/{run_id} | agent_get_run | FR-16 agent.get_run | [agent-runs.json](../agent-runs.json) |
 | GET /v1/agents/runs | agent_list_runs | FR-16 agent.list_runs | [agent-runs.json](../agent-runs.json) |
 | POST /v1/agents/runs | agent_create_run | FR-12 FR-13 FR-15 FR-16 agent.create_run | [agent-runs.json](../agent-runs.json) |
-| DELETE /v1/agents/tools/{tool_id} | agent_delete_tool | FR-23 agent.delete_tool | [agent-admin.json](../agent-admin.json) |
 | GET /v1/agents/tools/{tool_id} | agent_get_tool | FR-23 agent.get_tool | [agent-admin.json](../agent-admin.json) |
-| PUT /v1/agents/tools/{tool_id} | agent_update_tool | FR-23 agent.update_tool | [agent-admin.json](../agent-admin.json) |
 | GET /v1/agents/tools | agent_list_tools | FR-23 agent.list_tools | [agent-admin.json](../agent-admin.json) |
-| POST /v1/agents/tools | agent_create_tool | FR-23 agent.create_tool | [agent-admin.json](../agent-admin.json) |
 | DELETE /v1/agents/workflows/{workflow_id} | agent_delete_workflow | FR-23 agent.delete_workflow | [agent-admin.json](../agent-admin.json) |
 | GET /v1/agents/workflows/{workflow_id} | agent_get_workflow | FR-23 agent.get_workflow | [agent-admin.json](../agent-admin.json) |
 | PUT /v1/agents/workflows/{workflow_id} | agent_update_workflow | FR-23 agent.update_workflow | [agent-admin.json](../agent-admin.json) |
