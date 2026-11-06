@@ -45,42 +45,42 @@ func (r *RunRepositoryPostgres) db(ctx context.Context, write bool) (*gorm.DB, e
 // --- Runs ---
 
 type runRow struct {
-	ID                  string         `gorm:"column:id"`
-	TenantID            string         `gorm:"column:tenant_id"`
-	CreatedAt           time.Time      `gorm:"column:created_at"`
-	UpdatedAt           time.Time      `gorm:"column:updated_at"`
-	Revision            int64          `gorm:"column:revision"`
-	OwnerUserID         string         `gorm:"column:owner_user_id"`
-	PlatformJobID       string         `gorm:"column:platform_job_id"`
-	Kind                string         `gorm:"column:kind"`
-	TaskKind            string         `gorm:"column:task_kind"`
-	DiagnosticProbeKey  sql.NullString `gorm:"column:diagnostic_probe_key"`
-	TaskKey             string         `gorm:"column:task_key"`
-	ResourceType        sql.NullString `gorm:"column:resource_type"`
-	ResourceID          sql.NullString `gorm:"column:resource_id"`
-	NovelID             sql.NullString `gorm:"column:novel_id"`
-	ChapterID           sql.NullString `gorm:"column:chapter_id"`
-	SourceRevision      sql.NullInt64  `gorm:"column:source_revision"`
-	SourceHash          sql.NullString `gorm:"column:source_hash"`
+	ID                     string         `gorm:"column:id"`
+	TenantID               string         `gorm:"column:tenant_id"`
+	CreatedAt              time.Time      `gorm:"column:created_at"`
+	UpdatedAt              time.Time      `gorm:"column:updated_at"`
+	Revision               int64          `gorm:"column:revision"`
+	OwnerUserID            string         `gorm:"column:owner_user_id"`
+	PlatformJobID          string         `gorm:"column:platform_job_id"`
+	Kind                   string         `gorm:"column:kind"`
+	TaskKind               string         `gorm:"column:task_kind"`
+	DiagnosticProbeKey     sql.NullString `gorm:"column:diagnostic_probe_key"`
+	TaskKey                string         `gorm:"column:task_key"`
+	ResourceType           sql.NullString `gorm:"column:resource_type"`
+	ResourceID             sql.NullString `gorm:"column:resource_id"`
+	NovelID                sql.NullString `gorm:"column:novel_id"`
+	ChapterID              sql.NullString `gorm:"column:chapter_id"`
+	SourceRevision         sql.NullInt64  `gorm:"column:source_revision"`
+	SourceHash             sql.NullString `gorm:"column:source_hash"`
 	SelectionStart         sql.NullInt64  `gorm:"column:selection_start_offset"`
 	SelectionEnd           sql.NullInt64  `gorm:"column:selection_end_offset"`
 	SelectionHash          sql.NullString `gorm:"column:selection_source_hash"`
 	SelectionScopeVerified bool           `gorm:"column:selection_scope_verified"`
 	Instruction            string         `gorm:"column:instruction"`
-	DefinitionVersionID sql.NullString `gorm:"column:definition_version_id"`
-	WorkflowVersionID   sql.NullString `gorm:"column:workflow_version_id"`
-	PolicyVersionID     string         `gorm:"column:policy_version_id"`
-	Status              string         `gorm:"column:status"`
-	NextSeq             int64          `gorm:"column:next_seq"`
-	RetainedFromSeq     int64          `gorm:"column:retained_from_seq"`
-	DeadlineAt          time.Time      `gorm:"column:deadline_at"`
-	StartedAt           sql.NullTime   `gorm:"column:started_at"`
-	FinishedAt          sql.NullTime   `gorm:"column:finished_at"`
-	ErrorCode           sql.NullString `gorm:"column:error_code"`
-	TerminalReason      sql.NullString `gorm:"column:terminal_reason"`
-	Retryable           bool           `gorm:"column:retryable"`
-	UsageReceiptIDs     TextArray      `gorm:"column:usage_receipt_ids;type:text[]"`
-	DeletedAt           sql.NullTime   `gorm:"column:deleted_at"`
+	DefinitionVersionID    sql.NullString `gorm:"column:definition_version_id"`
+	WorkflowVersionID      sql.NullString `gorm:"column:workflow_version_id"`
+	PolicyVersionID        string         `gorm:"column:policy_version_id"`
+	Status                 string         `gorm:"column:status"`
+	NextSeq                int64          `gorm:"column:next_seq"`
+	RetainedFromSeq        int64          `gorm:"column:retained_from_seq"`
+	DeadlineAt             time.Time      `gorm:"column:deadline_at"`
+	StartedAt              sql.NullTime   `gorm:"column:started_at"`
+	FinishedAt             sql.NullTime   `gorm:"column:finished_at"`
+	ErrorCode              sql.NullString `gorm:"column:error_code"`
+	TerminalReason         sql.NullString `gorm:"column:terminal_reason"`
+	Retryable              bool           `gorm:"column:retryable"`
+	UsageReceiptIDs        TextArray      `gorm:"column:usage_receipt_ids;type:text[]"`
+	DeletedAt              sql.NullTime   `gorm:"column:deleted_at"`
 }
 
 func (row *runRow) toDomain() *d.AgentRun {
@@ -146,40 +146,40 @@ func (row *runRow) toDomain() *d.AgentRun {
 	}
 
 	return &d.AgentRun{
-		ID:                  row.ID,
-		TenantID:            row.TenantID,
-		CreatedAt:           row.CreatedAt,
-		UpdatedAt:           row.UpdatedAt,
-		Revision:            row.Revision,
-		OwnerUserID:         row.OwnerUserID,
-		PlatformJobID:       row.PlatformJobID,
-		Kind:                row.Kind,
-		TaskKind:            row.TaskKind,
-		DiagnosticProbeKey:  probeKey,
-		TaskKey:             row.TaskKey,
-		ResourceType:        resType,
-		ResourceID:          resID,
-		NovelID:             novelID,
-		ChapterID:           chapID,
-		SourceRevision:      sourceRev,
-		SourceHash:          sourceHash,
+		ID:                     row.ID,
+		TenantID:               row.TenantID,
+		CreatedAt:              row.CreatedAt,
+		UpdatedAt:              row.UpdatedAt,
+		Revision:               row.Revision,
+		OwnerUserID:            row.OwnerUserID,
+		PlatformJobID:          row.PlatformJobID,
+		Kind:                   row.Kind,
+		TaskKind:               row.TaskKind,
+		DiagnosticProbeKey:     probeKey,
+		TaskKey:                row.TaskKey,
+		ResourceType:           resType,
+		ResourceID:             resID,
+		NovelID:                novelID,
+		ChapterID:              chapID,
+		SourceRevision:         sourceRev,
+		SourceHash:             sourceHash,
 		Selection:              selection,
 		SelectionScopeVerified: row.SelectionScopeVerified,
 		Instruction:            row.Instruction,
-		DefinitionVersionID: defVerID,
-		WorkflowVersionID:   wfVerID,
-		PolicyVersionID:     row.PolicyVersionID,
-		Status:              d.RunStatus(row.Status),
-		NextSeq:             row.NextSeq,
-		RetainedFromSeq:     row.RetainedFromSeq,
-		DeadlineAt:          row.DeadlineAt,
-		StartedAt:           startedAt,
-		FinishedAt:          finishedAt,
-		ErrorCode:           errCode,
-		TerminalReason:      termReason,
-		Retryable:           row.Retryable,
-		UsageReceiptIDs:     []string(row.UsageReceiptIDs),
-		DeletedAt:           deletedAt,
+		DefinitionVersionID:    defVerID,
+		WorkflowVersionID:      wfVerID,
+		PolicyVersionID:        row.PolicyVersionID,
+		Status:                 d.RunStatus(row.Status),
+		NextSeq:                row.NextSeq,
+		RetainedFromSeq:        row.RetainedFromSeq,
+		DeadlineAt:             row.DeadlineAt,
+		StartedAt:              startedAt,
+		FinishedAt:             finishedAt,
+		ErrorCode:              errCode,
+		TerminalReason:         termReason,
+		Retryable:              row.Retryable,
+		UsageReceiptIDs:        []string(row.UsageReceiptIDs),
+		DeletedAt:              deletedAt,
 	}
 }
 
