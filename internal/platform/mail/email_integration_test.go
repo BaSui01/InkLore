@@ -157,7 +157,7 @@ func TestEmailPostgresSMTPAndResendAuthentication(t *testing.T) {
 	if err != nil || resendSettings.Provider != "resend" || resendSettings.SMTPHost != "" || resendSettings.SMTPPort != 0 {
 		t.Fatalf("Resend HTTPS settings were not accepted independently of SMTP: settings=%+v err=%v", resendSettings, err)
 	}
-	if enabled, enabledErr := service.Enabled(); enabledErr != nil || !enabled {
+	if enabled, enabledErr := service.Enabled(ctx); enabledErr != nil || !enabled {
 		t.Fatalf("Resend delivery capability was not enabled: enabled=%v err=%v", enabled, enabledErr)
 	}
 	smtpRestore := input
