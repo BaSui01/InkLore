@@ -127,11 +127,10 @@ async function disabledLogin(browser, audience) {
     await page.goto(admin.origin + "/mail-settings", { waitUntil: "domcontentloaded" });
     await page.getByLabel("邮件服务商").waitFor();
     assert.ok(await page.getByRole("button", { name: "发送测试邮件", exact: true }).isDisabled());
-    await page.getByLabel("邮件服务商").selectOption("resend");
-    await page.getByText(/通过 Resend 的 HTTPS 接口投递/).waitFor();
+    await page.getByLabel("邮件服务商").selectOption("smtp");
     await page.getByLabel("发件人名称", { exact: true }).fill("Mail UI saved through form");
     const saved = (await saveResponse(page, 200)).data;
-    assert.equal(saved.provider, "resend");
+    assert.equal(saved.provider, "smtp");
     assert.equal(saved.enabled, false);
     assert.equal(saved.sender_name, "Mail UI saved through form");
     assert.equal(saved.has_credential, false);
@@ -139,7 +138,7 @@ async function disabledLogin(browser, audience) {
     assert.equal((await request(admin, "GET", settingsPath)).revision, saved.revision);
     await page.getByText("邮件配置已保存。请发送测试邮件确认实际投递。", { exact: true }).waitFor();
     assert.equal(await page.locator('input[type="password"]').inputValue(), "");
-    verify("Super admin form saves the real Resend contract with CAS/CSRF/idempotency and exposes no credential");
+    verify("Super admin form saves the real SMTP contract with CAS/CSRF/idempotency and exposes no credential");
 
     stage = "real-cas-conflict";
     await page.getByLabel("发件人名称", { exact: true }).fill("Unsaved author-controlled configuration");
