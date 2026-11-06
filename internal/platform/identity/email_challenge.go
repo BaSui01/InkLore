@@ -245,6 +245,36 @@ func (s *Service) checkEmailChallenge(ctx context.Context, input EmailLoginInput
 	}
 	return row, true, nil
 }
+
+// verifyEmailChallenge rechecks a previously admitted proof under the final
+// transaction lock without charging a second attempt. ResetPassword performs
+// the expensive password hash between the counted preflight and this commit.
+func (s *Service) verifyEmailChallenge(ctx context.Context, input EmailLoginInput, purpose string) (challengeRow, bool, error) {
+	db, err := s.manager.Require(ctx)
+	if err != nil {
+		return challengeRow{}, false, err
+	}
+	db = db.Session(&gorm.Session{Logger: logger.Discard})
+	var row challengeRow
+	q := db.Raw("SELECT * FROM platform_email_challenges WHERE id=? FOR UPDATE", input.ChallengeID).Scan(&row)
+	if q.Error != nil {
+		return row, false, q.Error
+	}
+	if q.RowsAffected != 1 || row.Purpose != purpose || row.Audience != input.Audience ||
+		row.RecipientHash != s.emailHash("recipient", input.Email) || !equalID(row.RequestedTenantID, input.TenantID) {
+		return row, false, nil
+	}
+	var now time.Time
+	if err = db.Raw("SELECT clock_timestamp()").Scan(&now).Error; err != nil {
+		return row, false, err
+	}
+	if row.Status != "sent" || row.Attempts < 1 || row.Attempts > 5 || !row.ExpiresAt.After(now) {
+		return row, false, nil
+	}
+	valid := hmac.Equal([]byte(row.CodeHash), []byte(s.emailHash("code", row.ID+"\x00"+input.Code)))
+	return row, valid, nil
+}
+
 func (s *Service) consumeEmailChallenge(ctx context.Context, row challengeRow) error {
 	db, err := s.manager.Require(ctx)
 	if err != nil {
