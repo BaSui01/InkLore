@@ -116,13 +116,13 @@ type Selection struct {
 
 // ResourceRef represents target resource binding for an agent run.
 type ResourceRef struct {
-	ResourceID     string     `json:"resource_id"`
-	ResourceType   string     `json:"resource_type"`
-	SourceRevision int64      `json:"source_revision"`
-	NovelID        *string    `json:"novel_id,omitempty"`
-	SourceHash     *string    `json:"source_hash,omitempty"`
-	Selection      *Selection `json:"selection,omitempty"`
-	SelectionScopeVerified bool `json:"selection_scope_verified,omitempty"`
+	ResourceID             string     `json:"resource_id"`
+	ResourceType           string     `json:"resource_type"`
+	SourceRevision         int64      `json:"source_revision"`
+	NovelID                *string    `json:"novel_id,omitempty"`
+	SourceHash             *string    `json:"source_hash,omitempty"`
+	Selection              *Selection `json:"selection,omitempty"`
+	SelectionScopeVerified bool       `json:"selection_scope_verified,omitempty"`
 }
 
 // AgentRun is the aggregate root for an agent run instance.
@@ -144,9 +144,9 @@ type AgentRun struct {
 	ChapterID           *string    `json:"chapter_id,omitempty"`
 	SourceRevision      *int64     `json:"source_revision,omitempty"`
 	SourceHash          *string    `json:"source_hash,omitempty"`
-	Selection           *Selection `json:"selection,omitempty"`
-	SelectionScopeVerified bool `json:"selection_scope_verified"`
-	Instruction         string     `json:"instruction"`
+	Selection              *Selection `json:"selection,omitempty"`
+	SelectionScopeVerified bool       `json:"selection_scope_verified"`
+	Instruction            string     `json:"instruction"`
 	DefinitionVersionID *string    `json:"definition_version_id,omitempty"`
 	WorkflowVersionID   *string    `json:"workflow_version_id,omitempty"`
 	PolicyVersionID     string     `json:"policy_version_id"`
