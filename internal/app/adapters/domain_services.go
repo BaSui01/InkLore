@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"io"
 	"strings"
+	"unicode/utf8"
 )
 
 // InspirationIdentity adapts platform identity for inspiration domain.
@@ -88,6 +89,10 @@ func (a AgentTaskResources) PrepareExecution(ctx context.Context, p identity.Pri
 	if res.ResourceType == "chapter" && res.SourceHash != nil && *res.SourceHash != value.hash {
 		return 0, "", agentdomain.ErrVersionConflict(map[string]any{"reason": "chapter source hash changed"})
 	}
+	if selection := res.Selection; selection != nil && (res.ResourceType != "chapter" || selection.SourceHash != value.hash ||
+		selection.StartOffset < 0 || selection.EndOffset <= selection.StartOffset || selection.EndOffset > value.runeCount) {
+		return 0, "", agentdomain.ErrVersionConflict(map[string]any{"reason": "selection outside chapter source"})
+	}
 	return value.revision, value.hash, nil
 }
 
@@ -103,6 +108,7 @@ type resourceSnapshot struct {
 	revision   int64
 	hash       string
 	legacyHash string
+	runeCount  int
 }
 
 func (a AgentTaskResources) loadResource(ctx context.Context, p identity.Principal, taskKind string, res *agentdomain.ResourceRef) (resourceSnapshot, error) {
@@ -128,6 +134,7 @@ func (a AgentTaskResources) loadResource(ctx context.Context, p identity.Princip
 		}{body.Chapter.ID, body.Chapter.Revision, body.Chapter.ContentHash, body.Body}
 		value, err := snapshot(body.Chapter.Revision, payload)
 		value.legacyHash, value.hash = value.hash, body.Chapter.ContentHash
+		value.runeCount = utf8.RuneCountInString(body.Body)
 		return value, err
 	case "novel":
 		if a.Content == nil {

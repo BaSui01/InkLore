@@ -143,6 +143,7 @@ type AgentRun struct {
 	ChapterID           *string    `json:"chapter_id,omitempty"`
 	SourceRevision      *int64     `json:"source_revision,omitempty"`
 	SourceHash          *string    `json:"source_hash,omitempty"`
+	Selection           *Selection `json:"selection,omitempty"`
 	Instruction         string     `json:"instruction"`
 	DefinitionVersionID *string    `json:"definition_version_id,omitempty"`
 	WorkflowVersionID   *string    `json:"workflow_version_id,omitempty"`

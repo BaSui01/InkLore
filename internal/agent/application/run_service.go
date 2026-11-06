@@ -136,6 +136,13 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 		})
 	}
 
+	// Selection bounds and digest must be frozen with the chapter revision.
+	if selection := in.Resource.Selection; selection != nil {
+		if in.Resource.ResourceType != "chapter" || selection.StartOffset < 0 || selection.EndOffset <= selection.StartOffset || selection.EndOffset > 200000 ||
+			in.Resource.SourceHash == nil || selection.SourceHash != *in.Resource.SourceHash {
+			return nil, d.ErrValidationFailed(map[string]any{"reason": "invalid chapter selection binding"})
+		}
+	}
 	// Verify and prepare source snapshot
 	sourceRevision := in.Resource.SourceRevision
 	sourceHash := ""
@@ -236,6 +243,7 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 		NovelID:             in.Resource.NovelID,
 		SourceRevision:      &sourceRevision,
 		SourceHash:          &sourceHash,
+		Selection:           in.Resource.Selection,
 		Instruction:         in.Instruction,
 		DefinitionVersionID: defVerID,
 		WorkflowVersionID:   wfVerID,
@@ -628,6 +636,7 @@ func (s *RunService) buildRunView(run *d.AgentRun, nodes []d.AgentRunNode) *d.Ru
 			SourceRevision: *run.SourceRevision,
 			NovelID:        run.NovelID,
 			SourceHash:     run.SourceHash,
+			Selection:      run.Selection,
 		}
 	}
 
