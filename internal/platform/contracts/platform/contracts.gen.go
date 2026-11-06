@@ -249,6 +249,7 @@ func (e MailSettingsCredentialKind) Valid() bool {
 const (
 	MailSettingsProviderDisabled MailSettingsProvider = "disabled"
 	MailSettingsProviderSmtp     MailSettingsProvider = "smtp"
+	MailSettingsProviderResend   MailSettingsProvider = "resend"
 )
 
 // Valid indicates whether the value is a known member of the MailSettingsProvider enum.
@@ -257,6 +258,8 @@ func (e MailSettingsProvider) Valid() bool {
 	case MailSettingsProviderDisabled:
 		return true
 	case MailSettingsProviderSmtp:
+		return true
+	case MailSettingsProviderResend:
 		return true
 	default:
 		return false
@@ -387,6 +390,7 @@ func (e TestMailResultAccepted) Valid() bool {
 const (
 	UpdateMailSettingsProviderDisabled UpdateMailSettingsProvider = "disabled"
 	UpdateMailSettingsProviderSmtp     UpdateMailSettingsProvider = "smtp"
+	UpdateMailSettingsProviderResend   UpdateMailSettingsProvider = "resend"
 )
 
 // Valid indicates whether the value is a known member of the UpdateMailSettingsProvider enum.
@@ -395,6 +399,8 @@ func (e UpdateMailSettingsProvider) Valid() bool {
 	case UpdateMailSettingsProviderDisabled:
 		return true
 	case UpdateMailSettingsProviderSmtp:
+		return true
+	case UpdateMailSettingsProviderResend:
 		return true
 	default:
 		return false
