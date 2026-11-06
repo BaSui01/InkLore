@@ -1810,9 +1810,9 @@ type QuestionResponseSchema2Type string
 
 // Resource defines model for Resource.
 type Resource struct {
-	NovelId      *UUID                `json:"novel_id,omitempty"`
-	ResourceId   UUID                 `json:"resource_id"`
-	ResourceType ResourceResourceType `json:"resource_type"`
+	NovelId                *UUID                `json:"novel_id,omitempty"`
+	ResourceId             UUID                 `json:"resource_id"`
+	ResourceType           ResourceResourceType `json:"resource_type"`
 
 	// Selection Unicode码点半开选区；start<end且≤源正文长度，绑定source_revision/hash；省略表示全章。
 	Selection *struct {
@@ -1820,9 +1820,9 @@ type Resource struct {
 		SourceHash  string `json:"source_hash"`
 		StartOffset int    `json:"start_offset"`
 	} `json:"selection,omitempty"`
-	SourceHash     *string  `json:"source_hash,omitempty"`
-	SelectionScopeVerified *bool `json:"selection_scope_verified,omitempty"`
-	SourceRevision Revision `json:"source_revision"`
+	SourceHash             *string  `json:"source_hash,omitempty"`
+	SelectionScopeVerified *bool    `json:"selection_scope_verified,omitempty"`
+	SourceRevision         Revision `json:"source_revision"`
 }
 
 // ResourceResourceType defines model for Resource.ResourceType.
