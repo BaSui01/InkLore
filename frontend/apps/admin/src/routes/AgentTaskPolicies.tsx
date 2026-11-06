@@ -19,9 +19,9 @@ export function AgentTaskPolicies() {
   const [loading, setLoading] = useState(false); const [saving, setSaving] = useState(false); const [unknown, setUnknown] = useState(false);
   const [error, setError] = useState<unknown>(null); const [invalid, setInvalid] = useState(false); const [denied, setDenied] = useState(false);
   const [saved, setSaved] = useState<AgentPolicy | null>(null); const [operator, setOperator] = useState(() => adminSession.getSnapshot().principal?.roles.includes("operator") ?? false);
-  const generation = useRef(0); const locked = useRef(false);
+  const generation = useRef(0); const detailRequest = useRef(0); const locked = useRef(false);
   const intent = useRef<{ id: string | null; key: string; input: AgentPolicyInput & { expected_revision?: number } } | null>(null);
-  const clear = useCallback(() => { generation.current++; setItems([]); setModels([]); setSelected(null); setDraft(null); setSaved(null); intent.current = null; setUnknown(false); setDenied(true); setOperator(false); }, []);
+  const clear = useCallback(() => { generation.current++; detailRequest.current++; setItems([]); setModels([]); setSelected(null); setDraft(null); setSaved(null); intent.current = null; setUnknown(false); setDenied(true); setOperator(false); }, []);
   const fail = useCallback((cause: unknown) => { if (isApiError(cause) && [401, 403].includes(cause.httpStatus)) clear(); setError(cause); }, [clear]);
   const load = useCallback(async () => {
     const current = generation.current; setLoading(true);
@@ -36,8 +36,9 @@ export function AgentTaskPolicies() {
   const edit = async (id: string) => {
     if (unknown || saving) return;
     const current = generation.current;
-    try { const value = await getAgentPolicy(id); if (current === generation.current) { setSelected(value); setDraft(draftFrom(value)); setError(null); setSaved(null); setInvalid(false); } }
-    catch (cause) { if (current === generation.current) fail(cause); }
+    const request = ++detailRequest.current;
+    try { const value = await getAgentPolicy(id); if (current === generation.current && request === detailRequest.current) { setSelected(value); setDraft(draftFrom(value)); setError(null); setSaved(null); setInvalid(false); } }
+    catch (cause) { if (current === generation.current && request === detailRequest.current) fail(cause); }
   };
   const update = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft(previous => previous ? { ...previous, [key]: value } : previous);
   const submit = async (event: React.FormEvent) => {
@@ -62,7 +63,7 @@ export function AgentTaskPolicies() {
   };
   const inputClass = "w-full min-w-0 rounded border border-[var(--border-decorative)] bg-[var(--bg-canvas)] p-2";
   return <section aria-label={t("agentPolicy.title")} className="flex-1 min-h-0 overflow-auto p-4 space-y-4">
-    <header className="flex flex-wrap justify-between gap-2"><h2 className="font-semibold">{t("agentPolicy.title")}</h2><div className="flex gap-2"><Button variant="outline" disabled={loading || denied} onClick={() => void load()}>{t("common.refresh")}</Button>{operator && <Button disabled={saving || unknown} onClick={() => { setSelected(null); setDraft(emptyDraft()); setSaved(null); setInvalid(false); setError(null); }}>{t("agentPolicy.create")}</Button>}</div></header>
+    <header className="flex flex-wrap justify-between gap-2"><h2 className="font-semibold">{t("agentPolicy.title")}</h2><div className="flex gap-2"><Button variant="outline" disabled={loading || denied} onClick={() => void load()}>{t("common.refresh")}</Button>{operator && <Button disabled={saving || unknown} onClick={() => { detailRequest.current++; setSelected(null); setDraft(emptyDraft()); setSaved(null); setInvalid(false); setError(null); }}>{t("agentPolicy.create")}</Button>}</div></header>
     <p className="text-sm text-[var(--text-secondary)]">{t("agentPolicy.notice")}</p>
     {loading && <p role="status">{t("common.loading")}</p>}
     {error != null && <ErrorPresenter error={error} onRetry={denied ? undefined : () => void load()} />}
