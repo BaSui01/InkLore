@@ -4981,12 +4981,14 @@
           "target_words": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 100000000
+            "maximum": 100000000,
+            "description": "Optional total word goal: 0 means unset. Progress may exceed 100%."
           },
           "word_count": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 400000000
+            "maximum": 400000000,
+            "description": "Non-whitespace Unicode code points in the current confirmed version of non-deleted chapters. Draft saves, draft rollbacks, imports and copies do not change this total until author confirmation."
           },
           "deleted_at": {
             "anyOf": [
@@ -4997,6 +4999,12 @@
                 "type": "null"
               }
             ]
+          },
+          "target_completion_date": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Optional target completion date (YYYY-MM-DD); null means no date goal. A calendar date without time or timezone."
           }
         },
         "required": [
@@ -5013,7 +5021,8 @@
           "previous_status",
           "target_words",
           "word_count",
-          "deleted_at"
+          "deleted_at",
+          "target_completion_date"
         ],
         "additionalProperties": false
       },
@@ -5504,18 +5513,21 @@
           },
           "added_words": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "description": "Inserted confirmed-body non-whitespace Unicode code points, including restored confirmed text."
           },
           "removed_words": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "description": "Removed confirmed-body non-whitespace Unicode code points, including deleted confirmed chapters."
           },
           "net_words": {
             "type": "integer"
           },
           "save_count": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "description": "Number of committed confirmation/deletion/restoration transitions; retained field name for compatibility. Draft saves are excluded."
           },
           "timezone": {
             "type": "string",
@@ -5532,7 +5544,8 @@
           "save_count",
           "timezone"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Natural day in Asia/Shanghai (the application business timezone; user/tenant timezone preferences are not currently configurable). Confirmation/deletion/restoration events are attributed to their commit day. Net change may be negative; cumulative current_word_count cannot be negative."
       },
       "Statistics": {
         "type": "object",
@@ -5558,7 +5571,8 @@
           "current_word_count": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 400000000
+            "maximum": 400000000,
+            "description": "Non-whitespace Unicode code points in the current confirmed version of non-deleted chapters. Draft saves, draft rollbacks, imports and copies do not change this total until author confirmation."
           }
         },
         "required": [
@@ -5568,7 +5582,8 @@
           "days",
           "current_word_count"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Current confirmed text statistics. Changes are committed atomically with confirmation, deletion or restoration. Previous confirmed text remains counted while a new working draft is edited. Legacy draft events are excluded; migration backfills only current totals, without inventing historical daily activity."
       },
       "Confirmation": {
         "type": "object",
@@ -5916,7 +5931,14 @@
           "target_words": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 100000000
+            "maximum": 100000000,
+            "description": "Optional total word goal: 0 means unset. Progress may exceed 100%."
+          },
+          "target_completion_date": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Optional target completion date (YYYY-MM-DD); null means no date goal. A calendar date without time or timezone."
           }
         },
         "required": [
@@ -5951,7 +5973,14 @@
           "target_words": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 100000000
+            "maximum": 100000000,
+            "description": "Optional total word goal: 0 means unset. Progress may exceed 100%."
+          },
+          "target_completion_date": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Optional target completion date (YYYY-MM-DD); null means no date goal. A calendar date without time or timezone."
           }
         },
         "required": [

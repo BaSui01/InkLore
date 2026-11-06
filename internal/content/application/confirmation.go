@@ -56,6 +56,10 @@ func (s *Service) ConfirmChapter(ctx context.Context, c Command, id string, r Co
 		if ver.ChapterID != ch.ID || ver.ContentHash != ch.ContentHash {
 			return nil, d.Missing()
 		}
+		before, e := s.confirmedBody(tx, o, ch)
+		if e != nil {
+			return nil, e
+		}
 		result, e := s.o.Facts.CommitFacts(tx, Principal(c.Principal), o.NovelID, ConfirmationSource{ChapterID: ch.ID, VersionID: ver.ID, ContentHash: ver.ContentHash, Revision: ch.Revision}, r)
 		if e != nil {
 			return nil, e
@@ -63,6 +67,9 @@ func (s *Service) ConfirmChapter(ctx context.Context, c Command, id string, r Co
 		ch.Status = "confirmed"
 		ch.ConfirmedVersionID = &ver.ID
 		if e = s.saveChapter(tx, o, &ch); e != nil {
+			return nil, e
+		}
+		if e = s.recordConfirmedWriting(tx, o, &n, ch, ver.ID, "confirm", before, ver.Body); e != nil {
 			return nil, e
 		}
 		if e = s.bumpNovel(tx, o, &n); e != nil {

@@ -9,6 +9,10 @@ import { AuthSession } from "../http/session";
 import {
   Novel,
   CreateNovelInput,
+  UpdateNovelInput,
+  WritingStatistics,
+  NetworkError,
+  isValidRevision,
   Volume,
   CreateVolumeInput,
   Chapter,
@@ -42,6 +46,18 @@ import {
   ContentAPI,
   DownloadResult,
 } from "@inklore/contracts";
+
+function requireNovel(value: Novel, novelId: string): Novel {
+  if (!value || value.id !== novelId || !isValidRevision(value.revision) ||
+      typeof value.title !== "string" || typeof value.summary !== "string" || typeof value.category !== "string" ||
+      !["active", "archived", "deleted"].includes(value.status) ||
+      !Number.isSafeInteger(value.word_count) || value.word_count < 0 || value.word_count > 400000000 ||
+      !Number.isSafeInteger(value.target_words) || value.target_words < 0 || value.target_words > 100000000 ||
+      !(value.target_completion_date === null || (typeof value.target_completion_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.target_completion_date)))) {
+    throw new NetworkError("Incomplete novel response");
+  }
+  return value;
+}
 
 function requirePagedItems<T>(page: PagedList<T>): T[] {
   if (!Array.isArray(page?.items)) throw new Error("Invalid paged API response");
@@ -119,7 +135,33 @@ export class ApiSDK {
         path: "/v1/content/novels/:novel_id",
         pathParams: { novel_id: novelId },
       });
-      return res.data;
+      return requireNovel(res.data, novelId);
+    },
+
+    updateNovel: async (novelId: string, input: UpdateNovelInput, idempotencyKey: string): Promise<Novel> => {
+      const res = await this.client.request<UpdateNovelInput, Novel>({
+        operationId: "content_updateNovel", method: "PUT",
+        path: "/v1/content/novels/:novel_id", pathParams: { novel_id: novelId },
+        body: input, idempotencyKey,
+      });
+      return requireNovel(res.data, novelId);
+    },
+
+    writingStatistics: async (novelId: string, from: string, to: string, signal?: AbortSignal): Promise<WritingStatistics> => {
+      const res = await this.client.request<unknown, WritingStatistics>({
+        operationId: "content_statistics", method: "GET",
+        path: "/v1/content/novels/:novel_id/statistics", pathParams: { novel_id: novelId },
+        query: { from, to }, signal,
+      });
+      const value = res.data;
+      if (!value || value.novel_id !== novelId || value.from !== from || value.to !== to ||
+          !Number.isSafeInteger(value.current_word_count) || value.current_word_count < 0 || !Array.isArray(value.days) || value.days.length === 0 ||
+          !value.days.every(day => typeof day.date === "string" && day.timezone === "Asia/Shanghai" &&
+            Number.isSafeInteger(day.added_words) && day.added_words >= 0 && Number.isSafeInteger(day.removed_words) && day.removed_words >= 0 &&
+            Number.isSafeInteger(day.net_words) && day.net_words === day.added_words - day.removed_words && Number.isSafeInteger(day.save_count) && day.save_count >= 0)) {
+        throw new NetworkError("Incomplete writing statistics response");
+      }
+      return value;
     },
 
     /** 获取卷列表 (GET /v1/content/novels/:novel_id/volumes) */

@@ -1,5 +1,6 @@
 import { ArrowUpRight, BookOpen, Clock3 } from "lucide-react";
 import { type Novel } from "@inklore/contracts";
+import { NovelProgress } from "../NovelProgress";
 import { useI18n } from "@inklore/i18n";
 
 export function bookDate(value: string, locale: string) {
@@ -15,7 +16,8 @@ export function BookCard({ novel, onOpen }: { novel: Novel; onOpen: (id: string)
     <div className="home-book-cover" aria-hidden="true"><span className="home-book-spine" /><BookOpen size={24} strokeWidth={1.1} /><strong>{novel.title}</strong><span>{novel.category || t("home.uncategorized")}</span><i /></div>
     <div className="home-book-detail"><div className="home-book-meta"><span>{novel.category || t("home.uncategorized")}</span><span className="home-status">{t(`home.status.${novel.status}`)}</span></div>
       <h3>{novel.title}</h3><p>{novel.summary || t("home.noSummary")}</p>
-      <div className="home-book-bottom"><span>{t("home.words", new Intl.NumberFormat(locale).format(novel.word_count))}</span>
+      <NovelProgress novel={novel} />
+      <div className="home-book-bottom">
         <button onClick={() => onOpen(novel.id)} aria-label={t("home.openBook", novel.title)}>{t("home.continue")}<ArrowUpRight size={16} /></button></div>
       <small className="home-book-date"><Clock3 size={12} aria-hidden="true" /><time dateTime={novel.updated_at}>{bookDate(novel.updated_at, locale)}</time>{t("home.beijingTime")}</small>
     </div>

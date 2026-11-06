@@ -44,6 +44,7 @@ import { AgentWorkbench } from "./AgentWorkbench";
 import { PlainTextEditor } from "./PlainTextEditor";
 import { ConflictResolutionModal } from "./ConflictResolutionModal";
 import { ConfirmChapterModal } from "./ConfirmChapterModal";
+import { WritingProgress } from "../components/WritingProgress";
 import { ComplianceReviewModal } from "./ComplianceReviewModal";
 import { ExportNovelDialog } from "./ExportNovelDialog";
 
@@ -54,7 +55,13 @@ export interface EditorRouteProps {
 
 export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
   const { t } = useTranslation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.matchMedia("(min-width: 768px)").matches);
+  useEffect(() => {
+    const wide = window.matchMedia("(min-width: 768px)");
+    const resize = () => setSidebarOpen(wide.matches);
+    wide.addEventListener("change", resize);
+    return () => wide.removeEventListener("change", resize);
+  }, []);
   const [activeTab, setActiveTab] = useState<"settings" | "outline" | "catalog" | "docs">("catalog");
   const [fontSize, setFontSize] = useState(18);
   const [workbenchOpen, setWorkbenchOpen] = useState(false);
@@ -547,8 +554,8 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden novel-paper-bg text-stone-900 dark:text-stone-100 select-none">
       {/* 1. Top Bar */}
-      <header className="h-11 border-b border-stone-200/80 dark:border-stone-800/80 px-3 flex items-center justify-between text-xs shrink-0 bg-[#FAF7EE] dark:bg-[#181613]">
-        <div className="flex items-center gap-2">
+      <header className="h-11 border-b border-stone-200/80 dark:border-stone-800/80 px-3 flex items-center justify-between gap-3 overflow-x-auto whitespace-nowrap text-xs shrink-0 bg-[#FAF7EE] dark:bg-[#181613]">
+        <div className="flex shrink-0 items-center gap-2">
           <div className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-stone-200/60 dark:hover:bg-stone-800 cursor-pointer font-medium max-w-[200px] truncate">
             <BookOpen className="w-3.5 h-3.5 text-stone-600 dark:text-stone-400" />
             <span className="truncate">{novel?.title || "未命名作品"}</span>
@@ -608,7 +615,7 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-3 text-stone-600 dark:text-stone-300">
+        <div className="flex shrink-0 items-center gap-3 text-stone-600 dark:text-stone-300">
           <Button variant="ghost" disabled={!novel || saveStatus === "saving"} onClick={() => setExportOpen(true)} icon={<Download className="h-4 w-4" />}>{t("export.title")}</Button>
           <span className="font-mono text-stone-700 dark:text-stone-300 font-medium">
             {loadedChapterId === activeChapter?.id ? wordCount.toLocaleString() : "—"} 字
@@ -731,10 +738,10 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
       )}
 
       {/* 2. Workspace Body */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="relative flex-1 flex overflow-hidden">
         {/* Left Sidebar */}
         {sidebarOpen && (
-          <aside className="w-64 border-r border-stone-200/80 dark:border-stone-800/80 flex flex-col bg-[#FAF7EE] dark:bg-[#181613] shrink-0">
+          <aside className="w-64 max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:shadow-xl border-r border-stone-200/80 dark:border-stone-800/80 flex flex-col bg-[#FAF7EE] dark:bg-[#181613] shrink-0">
             <div className="h-9 border-b border-stone-200/80 dark:border-stone-800 flex items-center px-2 text-xs">
               <button
                 onClick={() => setActiveTab("settings")}
@@ -894,9 +901,10 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
         )}
 
         {/* Center Main Writing Area */}
-        <main className="flex-1 flex flex-col overflow-y-auto bg-[#FAF7EE] dark:bg-[#181613]">
-          <div className="w-full max-w-4xl mx-auto px-8 py-6 space-y-4">
-            <div className="flex items-center justify-between">
+        <main className="min-w-0 flex-1 flex flex-col overflow-y-auto bg-[#FAF7EE] dark:bg-[#181613]">
+          <div className="w-full max-w-4xl mx-auto px-4 sm:px-8 py-6 space-y-4">
+            {novel && !accessDenied && <WritingProgress key={novel.id} novel={novel} onChanged={setNovel} />}
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-stone-600 dark:text-stone-400" />
                 <h1 className="text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight">
@@ -904,7 +912,7 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
                 </h1>
               </div>
 
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
                 {/* 动态推理模型自选下拉器 */}
                 <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-white dark:bg-stone-800 border border-stone-300/80 dark:border-stone-700 text-stone-700 dark:text-stone-300 shadow-2xs font-medium">
                   <Bot className="w-3.5 h-3.5 text-stone-500 shrink-0" />
@@ -1060,10 +1068,13 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
           chapter={activeChapter}
           onClose={() => setConfirmModalOpen(false)}
           onSuccess={(confirmation) => {
-            const updated = { ...activeChapter, status: "confirmed" as const };
+            const updated = confirmation.chapter;
+            revisionRef.current = updated.revision;
+            setCurrentRevision(updated.revision);
             setActiveChapter(updated);
             activeChapterRef.current = updated;
             setChapters(chapters.map((c) => (c.id === updated.id ? updated : c)));
+            void loadNovelData();
           }}
         />
       )}

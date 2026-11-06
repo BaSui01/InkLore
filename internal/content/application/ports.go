@@ -61,7 +61,7 @@ type Query struct {
 }
 type WritingEvent struct {
 	ID, TenantID, NovelID, ChapterID, VersionID, ActorID, Source string
-	AddedWords, RemovedWords                                     int64
+	AddedWords, RemovedWords, ChapterRevision                    int64
 	CreatedAt, UpdatedAt                                         time.Time
 }
 
