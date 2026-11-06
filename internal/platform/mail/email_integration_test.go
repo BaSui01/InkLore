@@ -335,8 +335,13 @@ func TestEmailPostgresSMTPAuthentication(t *testing.T) {
 		requireCode(t, err, "auth.invalid_credentials")
 		// Advance only the persisted delivery timestamp to model the documented
 		// per-address cooldown elapsing; keep the OTP expiry and account state intact.
-		if err = db.Exec("UPDATE platform_email_challenges SET created_at=clock_timestamp()-interval '61 seconds' WHERE id=?", codeInfo.ChallengeID).Error; err != nil {
-			t.Fatal(err)
+		updated := db.Exec("UPDATE platform_email_challenges SET created_at=clock_timestamp()-interval '61 seconds' WHERE id=?", codeInfo.ChallengeID)
+		if updated.Error != nil || updated.RowsAffected != 1 {
+			t.Fatalf("advance email cooldown fixture: rows=%d err=%v", updated.RowsAffected, updated.Error)
+		}
+		var cooldownElapsed bool
+		if err = db.Raw("SELECT created_at < clock_timestamp()-interval '60 seconds' FROM platform_email_challenges WHERE id=?", codeInfo.ChallengeID).Scan(&cooldownElapsed).Error; err != nil || !cooldownElapsed {
+			t.Fatalf("email cooldown fixture did not advance: elapsed=%v err=%v", cooldownElapsed, err)
 		}
 		resetInfo, resetCode, _ := request(t, address, "reset", "creator", registered.Principal.TenantID)
 		err = auth.ResetPassword(ctx, identity.ResetPasswordInput{EmailLoginInput: identity.EmailLoginInput{
