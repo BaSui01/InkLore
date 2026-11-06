@@ -232,5 +232,6 @@ jobs:
       - name: Verify durable Agent clarification, answer CAS and original Run recovery
         env:
           AGENT_QUESTION_PG_TEST: '1'
-        run: go test ./internal/agent/... ./internal/app ./cmd/admin -run 'TestQuestion|TestClarification' -count=1 -race -v
+        run: |
+          go test ./internal/agent/... ./internal/app ./cmd/admin -run 'TestQuestion|TestClarification' -count=1 -race -v
           echo "Real Go API health, dependencies and unknown-route checks passed."
