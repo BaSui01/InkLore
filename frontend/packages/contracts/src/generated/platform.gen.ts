@@ -646,7 +646,7 @@ export interface components {
         };
         UpdateMailSettings: {
             /** @enum {string} */
-            provider: "disabled" | "smtp";
+            provider: "disabled" | "smtp" | "resend";
             enabled: boolean;
             smtp_host?: string;
             /** @enum {integer} */
