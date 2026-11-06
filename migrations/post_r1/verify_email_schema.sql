@@ -64,6 +64,16 @@ BEGIN
     NULL;
   END;
 
+  UPDATE platform_mail_settings SET provider='resend',enabled=true,sender_email='noreply@example.net',
+    credential_kind='env',credential_locator='MAIL_CREDENTIAL_RESEND_API_KEY' WHERE id=1;
+  IF NOT EXISTS (SELECT 1 FROM platform_mail_settings WHERE id=1 AND provider='resend'
+      AND enabled AND smtp_host IS NULL AND smtp_port IS NULL AND smtp_username IS NULL
+      AND credential_kind='env' AND credential_locator='MAIL_CREDENTIAL_RESEND_API_KEY') THEN
+    RAISE EXCEPTION 'Resend HTTPS configuration without SMTP fields was not persisted';
+  END IF;
+  UPDATE platform_mail_settings SET provider='disabled',enabled=false,sender_email=NULL,
+    credential_kind=NULL,credential_locator=NULL WHERE id=1;
+
   INSERT INTO platform_email_challenges(
     purpose,audience,recipient_hash,code_hash,status,sent_at,expires_at
   ) VALUES (
