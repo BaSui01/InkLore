@@ -864,6 +864,7 @@ export function AuthView({
                 <ShieldCheck className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
               <GraphicCaptcha
+                key={captchaRefreshKey}
                 onCaptchaChange={handleCaptchaChange}
                 refreshTitle={t("auth.refresh_captcha")}
                 unavailableTitle={t("auth.captcha_unavailable")}
@@ -1056,6 +1057,7 @@ export function AuthView({
                 <ShieldCheck className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
               <GraphicCaptcha
+                key={captchaRefreshKey}
                 onCaptchaChange={handleCaptchaChange}
                 refreshTitle={t("auth.refresh_captcha")}
                 unavailableTitle={t("auth.captcha_unavailable")}
