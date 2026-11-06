@@ -64,7 +64,8 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
   }, []);
   const [activeTab, setActiveTab] = useState<"settings" | "outline" | "catalog" | "docs">("catalog");
   const [fontSize, setFontSize] = useState(18);
-  const [workbenchOpen, setWorkbenchOpen] = useState(false);
+  const [workbenchOpen, setWorkbenchOpen] = useState(() => new URL(window.location.href).searchParams.has("agentRun") || new URL(window.location.href).searchParams.has("agentCreate"));
+  const [agentInteractionPending, setAgentInteractionPending] = useState(false);
   const [workbenchSelection, setWorkbenchSelection] = useState<{ text: string; startOffset: number; endOffset: number } | null>(null);
   const [availableModels, setAvailableModels] = useState<LlmModel[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<string>("");
@@ -256,8 +257,12 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
       });
   }, [api]);
 
-  // 切换章节前先保住当前草稿；新章节正文未读取成功时绝不展示旧章正文。
+  // 切换章节前先保住正文草稿、未提交指令和活动 Run。
   const selectChapter = (chapter: Chapter) => {
+    if (chapter.id !== activeChapterRef.current?.id && agentInteractionPending) {
+      setWorkbenchOpen(true);
+      return;
+    }
     if (
       chapter.id !== activeChapterRef.current?.id &&
       (dirtyRef.current || saveInFlightRef.current || saveIntentRef.current)
@@ -266,6 +271,12 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
       return;
     }
     if (chapter.id === loadedChapterIdRef.current && !bodyLoadError) return;
+    if (activeChapterRef.current && activeChapterRef.current.id !== chapter.id) {
+      const url = new URL(window.location.href);
+      for (const key of ["agentRun", "agentCreate", "agentChapter"]) url.searchParams.delete(key);
+      window.history.replaceState(window.history.state, "", url);
+      setWorkbenchOpen(false);
+    }
     activeChapterRef.current = chapter;
     setActiveChapter(chapter);
     setSwitchBlocked(false);
@@ -1080,6 +1091,7 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
       )}
 
       <AgentWorkbench
+        key={`${novelId}:${activeChapter?.id ?? ""}`}
         open={workbenchOpen}
         novelId={novelId}
         chapterId={activeChapter?.id || ""}
@@ -1089,6 +1101,7 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
         selectedModelId={selectedModelId}
         initialSelection={workbenchSelection}
         onClose={() => setWorkbenchOpen(false)}
+        onPendingChange={setAgentInteractionPending}
         onAdopt={handleAgentAdopt}
       />
 
