@@ -15,23 +15,22 @@ export function AgentRunAudit() {
   const [loading, setLoading] = useState(false);
   const [denied, setDenied] = useState(false);
   const version = useRef(0);
-  const lock = useRef(false);
   const detailVersion = useRef(0);
-  const clear = useCallback(() => { version.current++; detailVersion.current++; setItems([]); setSelected(null); setCursor(null); setDenied(true); }, []);
+  const clear = useCallback(() => { version.current++; detailVersion.current++; setItems([]); setSelected(null); setCursor(null); setDenied(true); setLoading(false); }, []);
   const failure = useCallback((cause: unknown) => {
     if (isApiError(cause) && [401, 403, 404].includes(cause.httpStatus)) clear();
     setError(cause);
   }, [clear]);
   const load = useCallback(async (after?: string) => {
-    if (lock.current) return;
-    const current = version.current; lock.current = true; setLoading(true); setError(null);
+    // StrictMode replays effects: the newer request supersedes the old one.
+    const current = ++version.current; setLoading(true); setError(null);
     try {
       const page = await listAgentAuditRuns(after);
       if (current !== version.current) return;
       setItems(previous => after ? [...previous, ...page.items.filter(item => !previous.some(old => old.id === item.id))] : page.items);
       setCursor(page.has_more ? page.next_cursor ?? null : null); setDenied(false);
     } catch (cause) { if (current === version.current) failure(cause); }
-    finally { lock.current = false; if (current === version.current) setLoading(false); }
+    finally { if (current === version.current) setLoading(false); }
   }, [failure]);
   useEffect(() => {
     const epoch = adminSession.getSessionEpoch();
