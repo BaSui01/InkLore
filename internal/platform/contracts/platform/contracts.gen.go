@@ -2131,7 +2131,7 @@ type ServerInterface interface {
 	// PlatformGetMailSettings 读取脱敏全局邮件配置
 	// (GET /v1/platform/mail-settings)
 	PlatformGetMailSettings(c *gin.Context)
-	// PlatformUpdateMailSettings CAS 更新全局 SMTP 邮件配置
+	// PlatformUpdateMailSettings CAS 更新全局邮件投递配置
 	// (PUT /v1/platform/mail-settings)
 	PlatformUpdateMailSettings(c *gin.Context, params PlatformUpdateMailSettingsParams)
 	// PlatformTestMailSettings 向已验证本人邮箱投递配置测试邮件
