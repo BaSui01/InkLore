@@ -189,6 +189,9 @@ func UpIn(ctx context.Context, db *gorm.DB, fsys fs.FS, dir, table string) (UpRe
 		result, err = upLocked(ctx, tx, fsys, dir, table)
 		return err
 	})
+	if err != nil {
+		return UpResult{}, err
+	}
 	return result, err
 }
 
@@ -233,9 +236,12 @@ func upLocked(ctx context.Context, db *gorm.DB, fsys fs.FS, dir, table string) (
 }
 
 func applyUp(ctx context.Context, db *gorm.DB, m Migration, table string) error {
-	body := strings.TrimSpace(m.Up)
+	body, err := migrationBody(m.Up)
+	if err != nil {
+		return fmt.Errorf("迁移 %s 事务边界无效: %w", m.Label(), err)
+	}
 	return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if body != "" {
+		if strings.TrimSpace(body) != "" {
 			if err := tx.Exec(body).Error; err != nil {
 				return fmt.Errorf("执行迁移 %s 失败: %w", m.Label(), err)
 			}
@@ -259,11 +265,29 @@ func Down(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string, steps int) (
 
 // DownIn 按版本号从新到旧回滚指定流最近 steps 条已应用迁移。
 func DownIn(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string, steps int, table string) ([]string, error) {
-	reverted := make([]string, 0, steps)
 	if steps <= 0 {
-		return reverted, fmt.Errorf("回滚步数必须大于 0")
+		return nil, fmt.Errorf("回滚步数必须大于 0")
 	}
+	if db == nil {
+		return nil, fmt.Errorf("database is required")
+	}
+	var reverted []string
+	err := db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec("SELECT pg_advisory_xact_lock(?)", int64(731160)).Error; err != nil {
+			return err
+		}
+		var err error
+		reverted, err = downLocked(ctx, tx, fsys, dir, steps, table)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return reverted, nil
+}
 
+func downLocked(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string, steps int, table string) ([]string, error) {
+	reverted := make([]string, 0, steps)
 	migrations, err := LoadMigrations(fsys, dir)
 	if err != nil {
 		return reverted, err
@@ -293,6 +317,9 @@ func DownIn(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string, steps int,
 		if !ok {
 			return reverted, fmt.Errorf("已应用的迁移 %s 在脚本目录中不存在，无法回滚", version)
 		}
+		if record := applied[version]; record.Name != m.Name || record.Checksum != m.Checksum {
+			return reverted, fmt.Errorf("migration stream mismatch at version %s", version)
+		}
 		if !m.HasDown() {
 			return reverted, fmt.Errorf("迁移 %s 未定义降级段（%s），拒绝回滚", m.Label(), downMarker)
 		}
@@ -305,8 +332,12 @@ func DownIn(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string, steps int,
 }
 
 func applyDown(ctx context.Context, db *gorm.DB, m Migration, table string) error {
+	body, err := migrationBody(m.Down)
+	if err != nil {
+		return fmt.Errorf("迁移 %s 降级事务边界无效: %w", m.Label(), err)
+	}
 	return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Exec(strings.TrimSpace(m.Down)).Error; err != nil {
+		if err := tx.Exec(body).Error; err != nil {
 			return fmt.Errorf("执行 %s 降级段失败: %w", m.Label(), err)
 		}
 		if err := tx.Exec("DELETE FROM "+table+" WHERE version = ?", m.Version).Error; err != nil {

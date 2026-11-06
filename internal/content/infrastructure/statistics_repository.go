@@ -26,6 +26,7 @@ func (r *Repository) WritingStatistics(ctx context.Context, o a.Owner, fromTime,
 		COUNT(*) as save_count
 	FROM content_writing_events
 	WHERE tenant_id = ? AND novel_id = ? AND created_at >= ? AND created_at < ?
+      AND source IN ('confirm', 'delete', 'restore')
 	  AND EXISTS (SELECT 1 FROM content_novels n WHERE n.tenant_id = content_writing_events.tenant_id AND n.id = content_writing_events.novel_id AND n.owner_id = ?)
 	GROUP BY day
 	ORDER BY day ASC`, o.TenantID, o.NovelID, fromTime, toTime, o.ActorID).Scan(&rows).Error
