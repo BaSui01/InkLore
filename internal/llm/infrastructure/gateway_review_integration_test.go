@@ -191,3 +191,18 @@ func TestGatewayRuntimePostgresAbortOwnershipAndDispatchFence(t *testing.T) {
 		t.Fatalf("settled unknown call was admitted again: %v", err)
 	}
 }
+
+func TestAnthropicCacheUsageNormalizesInclusiveInput(t *testing.T) {
+	// Provider input_tokens excludes both read and newly created cache entries.
+	usage := anthropicTokenUsage(2, 4, 8, 3)
+	if usage.PromptTokens != 14 || usage.InputTokens != 14 || usage.TotalTokens != 17 ||
+		usage.CachedTokens != 8 || usage.PromptCacheHitTokens != 8 || usage.PromptCacheMissTokens != 6 ||
+		usage.OutputTokens != 3 {
+		t.Fatalf("Anthropic cache usage must be inclusive for ledger settlement: %+v", usage)
+	}
+	// Cached reads can exceed the provider's uncached input without becoming
+	// invalid usage and falling back to charging the full reservation.
+	if usage.CachedTokens > usage.InputTokens {
+		t.Fatal("ledger would reject cache usage as invalid")
+	}
+}

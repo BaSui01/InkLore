@@ -456,6 +456,19 @@ func toAnthropicToolChoice(choice any) any {
 	return choice
 }
 
+
+// Anthropic reports uncached input separately from cache creation and reads.
+// The ledger's Input convention is inclusive, with cached reads as a subset.
+func anthropicTokenUsage(uncached, created, read, output int) *domain.TokenUsage {
+	input := uncached + created + read
+	return &domain.TokenUsage{
+		PromptTokens: input, InputTokens: input,
+		CompletionTokens: output, OutputTokens: output,
+		TotalTokens: input + output, CachedTokens: read,
+		PromptCacheHitTokens: read, PromptCacheMissTokens: uncached + created,
+	}
+}
+
 func (r *ProviderRouter) anthropicChat(ctx context.Context, target upstreamTarget, req nativeTextRequest) (domain.TextGenerationResponse, error) {
 	maxTokens := req.MaxTokens
 	if maxTokens < 1 {
@@ -519,20 +532,11 @@ func (r *ProviderRouter) anthropicChat(ctx context.Context, target upstreamTarge
 		return domain.TextGenerationResponse{}, err
 	}
 
-	cached := decoded.Usage.CacheReadInputTokens
 	result := domain.TextGenerationResponse{
 		Model:        decoded.Model,
 		FinishReason: decoded.Stop,
-		Usage: &domain.TokenUsage{
-			PromptTokens:          decoded.Usage.InputTokens,
-			CompletionTokens:      decoded.Usage.OutputTokens,
-			TotalTokens:           decoded.Usage.InputTokens + decoded.Usage.OutputTokens,
-			CachedTokens:          cached,
-			PromptCacheHitTokens:  cached,
-			PromptCacheMissTokens: decoded.Usage.InputTokens - cached,
-			InputTokens:           decoded.Usage.InputTokens,
-			OutputTokens:          decoded.Usage.OutputTokens,
-		},
+		Usage: anthropicTokenUsage(decoded.Usage.InputTokens, decoded.Usage.CacheCreationInputTokens,
+			decoded.Usage.CacheReadInputTokens, decoded.Usage.OutputTokens),
 	}
 	for _, block := range decoded.Content {
 		if block.Type == "thinking" {
