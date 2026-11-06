@@ -202,6 +202,7 @@ const (
 	StreamEventToolCall   StreamEventType = "tool_call"
 	StreamEventToolResult StreamEventType = "tool_result"
 	StreamEventDone       StreamEventType = "done"
+	StreamEventUsage      StreamEventType = "usage"
 	StreamEventError      StreamEventType = "error"
 )
 

@@ -614,6 +614,14 @@ func (r *ProviderRouter) anthropicStream(ctx context.Context, target upstreamTar
 
 	usage := domain.GenerationUsage{}
 	var uncachedInput, cacheCreation, cacheRead int
+	usageSeen := false
+	defer func() {
+		if err != nil && usageSeen {
+			// Report measured usage without treating an interrupted stream as done.
+			usage.TotalTokens = usage.InputTokens + usage.OutputTokens
+			_ = onEvent(domain.StreamEvent{Type: domain.StreamEventUsage, Usage: &usage})
+		}
+	}()
 	doneSent := false
 	toolBuilders := make(map[int]*toolCallBuilder)
 
@@ -670,6 +678,7 @@ func (r *ProviderRouter) anthropicStream(ctx context.Context, target upstreamTar
 			uncachedInput = payload.Message.Usage.InputTokens
 			cacheCreation = payload.Message.Usage.CacheCreationInputTokens
 			cacheRead = payload.Message.Usage.CacheReadInputTokens
+			usageSeen = uncachedInput > 0 || cacheCreation > 0 || cacheRead > 0
 		}
 		if event == "message_delta" {
 			if payload.Usage.InputTokens > 0 {
@@ -682,6 +691,7 @@ func (r *ProviderRouter) anthropicStream(ctx context.Context, target upstreamTar
 				cacheRead = payload.Usage.CacheReadInputTokens
 			}
 			usage.OutputTokens = payload.Usage.OutputTokens
+			usageSeen = usageSeen || uncachedInput > 0 || cacheCreation > 0 || cacheRead > 0 || usage.OutputTokens > 0
 		}
 		usage.InputTokens = uncachedInput + cacheCreation + cacheRead
 		usage.CachedTokens = cacheRead
@@ -1153,7 +1163,7 @@ func (r *ProviderRouter) generateNativeChatStream(ctx context.Context, target up
 					Arguments: event.ToolArgs,
 				},
 			})
-		case domain.StreamEventDone:
+		case domain.StreamEventUsage, domain.StreamEventDone:
 			if event.Usage != nil {
 				finalUsage = *event.Usage
 				if req.OnUsage != nil {
@@ -1173,7 +1183,7 @@ func (r *ProviderRouter) generateNativeChatStream(ctx context.Context, target up
 		return nil
 	})
 
-	if len(collectedToolCalls) > 0 && req.OnToolCalls != nil {
+	if err == nil && len(collectedToolCalls) > 0 && req.OnToolCalls != nil {
 		req.OnToolCalls(collectedToolCalls)
 	}
 	return err

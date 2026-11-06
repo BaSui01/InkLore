@@ -303,3 +303,29 @@ func TestAnthropicStreamCacheUsageUsesInclusiveLedgerTokens(t *testing.T) {
 		t.Fatalf("Anthropic streaming cache usage was lost or noninclusive: %+v", measured)
 	}
 }
+
+func TestAnthropicStreamFailureRetainsMeasuredUsageWithoutTools(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = fmt.Fprint(w, "event: message_start\ndata: {\"message\":{\"usage\":{\"input_tokens\":2,\"cache_creation_input_tokens\":4,\"cache_read_input_tokens\":8}}}\n\n")
+		_, _ = fmt.Fprint(w, "event: message_delta\ndata: {\"usage\":{\"output_tokens\":3}}\n\n")
+		_, _ = fmt.Fprint(w, "event: error\ndata: {\"error\":{\"message\":\"provider stream failed\"}}\n\n")
+	}))
+	defer server.Close()
+	router := NewProviderRouter()
+	router.client = server.Client()
+	var measured *d.TokenUsage
+	committed := false
+	req := d.TextGenerationRequest{
+		Messages: []d.ChatMessage{{Role: d.ChatMessageRoleUser, Content: "Cache usage"}},
+		MaxTokens: 64,
+		OnUsage: func(u *d.TokenUsage) { measured = d.CloneTokenUsage(u) },
+		OnToolCalls: func([]d.ToolCall) { committed = true },
+	}
+	err := router.generateNativeChatStream(context.Background(), upstreamTarget{
+		baseURL: server.URL, apiKey: "fixture", protocol: protocolAnthropic}, req, "test-model")
+	if err == nil || committed || measured == nil || measured.InputTokens != 14 ||
+		measured.CachedTokens != 8 || measured.OutputTokens != 3 || measured.TotalTokens != 17 {
+		t.Fatalf("failed stream lost measured cache usage or committed tools: err=%v committed=%t usage=%+v", err, committed, measured)
+	}
+}
