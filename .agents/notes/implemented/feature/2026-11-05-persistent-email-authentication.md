@@ -27,6 +27,8 @@ PR #126 的后续 CI 暴露两处验收环境缺陷：邮件 schema verifier 仍
 
 邮件最终传输边界再次验证邮箱、UUID、UTF-8 和邮件头 CR/LF/NUL。验证码内容只使用固定的用途标签，不把 HTTP purpose 值直接拼入邮件。真实 TLS SMTP 回归同时检查中文 MIME 主题、独立点号的 DATA 转义，以及正文中的 `Bcc:` 仍作为纯文本；两种提供商均在 DNS 前拒绝注入的邮件头。
 
+Resend 运行时已补齐固定 `https://api.resend.com/emails` HTTPS 适配：只解析固定主机、拒绝任何非公网 DNS 答案并固定已验证 IP；TLS 1.2+ 校验主机名，禁用环境代理和重定向；使用 Bearer API Key、`Idempotency-Key`（challenge UUID）及纯文本正文；仅接受 HTTP 200 且带合法邮件 UUID 的响应，错误响应体不进入日志。现有 post-R1 000001 已允许 `resend` 且 enabled CHECK 已覆盖其必需字段，无需新增迁移。
+
 ## Alternatives considered
 
 未复用开发明文重置 token，也未把日志写入当作发送成功。未采用 Redis 作为验证码权威状态，避免故障或进程重启清空消费次数。未为本地验收开放私网目标或关闭证书验证；测试专用 CA 和私有 dial seam 只在 `_test.go` 中把已校验地址接到真实 TLS socket。未知账号直接跳过网络投递会引入响应时间/状态差异，所以统一经过同一受限投递路径。SMTP 结果未知时不会自动重发同一预约。
