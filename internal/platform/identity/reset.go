@@ -19,13 +19,27 @@ func (s *Service) ResetPassword(ctx context.Context, input ResetPasswordInput) e
 	if err := s.validateEmailLogin(ctx, &input.EmailLoginInput); err != nil {
 		return err
 	}
+	// Count and verify the proof before bcrypt. Invalid random challenges must
+	// never force cost-12 password hashing, even when the caller rotates emails.
+	var proofValid bool
+	err := s.manager.Within(ctx, func(txctx context.Context) error {
+		_, valid, err := s.checkEmailChallenge(txctx, input.EmailLoginInput, "reset")
+		proofValid = valid
+		return err
+	})
+	if err != nil {
+		return err
+	}
+	if !proofValid {
+		return credentials()
+	}
 	hash, err := HashPassword(input.NewPassword)
 	if err != nil {
 		return err
 	}
 	accepted := false
 	err = s.manager.Within(ctx, func(txctx context.Context) error {
-		row, valid, err := s.checkEmailChallenge(txctx, input.EmailLoginInput, "reset")
+		row, valid, err := s.verifyEmailChallenge(txctx, input.EmailLoginInput, "reset")
 		if err != nil || !valid {
 			return err
 		}
