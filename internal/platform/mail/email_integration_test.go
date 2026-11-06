@@ -148,7 +148,15 @@ func TestEmailPostgresSMTPAuthentication(t *testing.T) {
 	}
 	_, err = service.Update(ctx, admin.Principal, input)
 	requireCode(t, err, "platform.version_conflict")
+	// The shared OTP fixture is verified by default. Explicitly model an
+	// unverified administrator here so the test-delivery boundary is exercised.
+	if err = db.Exec("UPDATE platform_users SET email_verified_at=NULL WHERE id=?", admin.Principal.UserID).Error; err != nil {
+		t.Fatal(err)
+	}
 	_, err = service.Test(ctx, admin.Principal, uuid.NewString(), TestInput{ExpectedRevision: current.Revision})
+	if restoreErr := db.Exec("UPDATE platform_users SET email_verified_at=clock_timestamp() WHERE id=?", admin.Principal.UserID).Error; restoreErr != nil {
+		t.Fatal(restoreErr)
+	}
 	requireCode(t, err, "auth.forbidden")
 	request := func(t *testing.T, email, purpose, audience, tenant string) (identity.EmailChallenge, string, identity.EmailChallengeInput) {
 		t.Helper()
