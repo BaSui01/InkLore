@@ -360,10 +360,10 @@ func TestResendHTTPSDeliveryUsesFixedEndpointAndIdempotency(t *testing.T) {
 
 func TestResendRejectsRedirectsAndInvalidAcceptance(t *testing.T) {
 	for _, test := range []struct {
-		name       string
-		status     int
-		location   string
-		body       string
+		name     string
+		status   int
+		location string
+		body     string
 	}{
 		{name: "redirect", status: http.StatusTemporaryRedirect, location: "https://attacker.invalid/collect", body: `{"id":"49a3999c-0ce1-4ea6-ab68-afcd6dc2e794"}`},
 		{name: "unauthorized", status: http.StatusUnauthorized, body: `{"id":"49a3999c-0ce1-4ea6-ab68-afcd6dc2e794"}`},
