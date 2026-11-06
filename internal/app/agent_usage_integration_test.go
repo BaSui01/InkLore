@@ -252,3 +252,49 @@ func TestAgentGatewayUsageCrashRecoveryPG(t *testing.T) {
 		})
 	}
 }
+
+func TestAgentGatewayUsageCancelledRunBackfillPG(t *testing.T) {
+	f := newAgentUsageFixture(t, 200, false)
+	run := f.create(t)
+	const trigger = "agent_usage_cancel_backfill"
+	if err := f.db.Exec(`CREATE FUNCTION ` + trigger + `() RETURNS trigger LANGUAGE plpgsql AS $$
+		BEGIN IF NEW.event_name='usage.updated' THEN RAISE EXCEPTION 'injected lost acknowledgement'; END IF;
+		RETURN NEW; END $$`).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := f.db.Exec(`CREATE TRIGGER ` + trigger + ` BEFORE INSERT ON agent_run_events
+		FOR EACH ROW EXECUTE FUNCTION ` + trigger + `()`).Error; err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		f.db.Exec("DROP TRIGGER IF EXISTS " + trigger + " ON agent_run_events")
+		f.db.Exec("DROP FUNCTION IF EXISTS " + trigger + "()")
+	})
+	if processed, err := f.scheduler.ClaimAndExecute(context.Background(), uuid.NewString()); !processed || err == nil {
+		t.Fatalf("injected post-settlement failure: processed=%t error=%v", processed, err)
+	}
+	f.assertScalar(t, 1, "SELECT count(*) FROM llm_usage_records WHERE tenant_id=?", f.principal.TenantID)
+	f.assertScalar(t, 0, "SELECT cardinality(usage_receipt_ids) FROM agent_runs WHERE id=?", run.ID)
+	if err := f.db.Exec("DROP TRIGGER " + trigger + " ON agent_run_events").Error; err != nil {
+		t.Fatal(err)
+	}
+	current, err := f.repo.GetRunOnly(context.Background(), f.principal.TenantID, run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cancelled, err := f.runs.CancelRun(context.Background(), f.principal, run.ID, d.CancelRunInput{ExpectedRevision: current.Revision}, uuid.NewString())
+	if err != nil || cancelled.Status != d.RunStatusCancelled {
+		t.Fatalf("cancel before receipt recovery: run=%+v err=%v", cancelled, err)
+	}
+	next, _, err := f.scheduler.ReconcileSettledUsage(context.Background(), "", 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err = f.scheduler.ReconcileSettledUsage(context.Background(), "", 100); err != nil {
+		t.Fatal(err)
+	}
+	_ = next
+	f.assertUsage(t, run.ID, false)
+	f.assertScalar(t, 1, "SELECT count(*) FROM agent_run_events WHERE run_id=? AND event_name='usage.updated'", run.ID)
+	f.assertScalar(t, 1, "SELECT count(*) FROM agent_runs WHERE id=? AND status='cancelled'", run.ID)
+}

@@ -479,8 +479,8 @@ func (r *ProviderRouter) anthropicChat(ctx context.Context, target upstreamTarge
 	var topPPtr *float64
 
 	if isAnthropicThinkingEnabled(req) {
-		if maxTokens < 4096 {
-			maxTokens = 4096
+		if maxTokens <= 1024 {
+			return domain.TextGenerationResponse{}, fmt.Errorf("anthropic thinking requires max_tokens above 1024")
 		}
 		budget := calculateAnthropicBudget(req.ReasoningEffort, maxTokens)
 		thinking = &anthropicThinking{Type: "enabled", BudgetTokens: budget}
@@ -559,14 +559,17 @@ func (r *ProviderRouter) anthropicChat(ctx context.Context, target upstreamTarge
 }
 
 func (r *ProviderRouter) anthropicStream(ctx context.Context, target upstreamTarget, req nativeTextRequest, onEvent domain.StreamEventHandler) error {
-	maxTokens := maxInt(req.MaxTokens, 8192)
+	maxTokens := req.MaxTokens
+	if maxTokens < 1 {
+		maxTokens = 8192
+	}
 	var thinking *anthropicThinking
 	var tempPtr *float64
 	var topPPtr *float64
 
 	if isAnthropicThinkingEnabled(req) {
-		if maxTokens < 4096 {
-			maxTokens = 4096
+		if maxTokens <= 1024 {
+			return fmt.Errorf("anthropic thinking requires max_tokens above 1024")
 		}
 		budget := calculateAnthropicBudget(req.ReasoningEffort, maxTokens)
 		thinking = &anthropicThinking{Type: "enabled", BudgetTokens: budget}

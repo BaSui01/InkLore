@@ -24,6 +24,11 @@ func (a *App) startAgentWorker() {
 			go func() { defer close(recovered); a.recoverLLMReservations(ctx) }()
 			defer func() { cancel(); <-recovered }()
 		}
+		if a.agentScheduler != nil {
+			recoveredUsage := make(chan struct{})
+			go func() { defer close(recoveredUsage); a.recoverAgentUsageReceipts(ctx) }()
+			defer func() { cancel(); <-recoveredUsage }()
+		}
 		workerID := uuid.NewString()
 		backoff := time.Second
 		for ctx.Err() == nil {
@@ -74,6 +79,31 @@ func (a *App) recoverLLMReservations(ctx context.Context) {
 		cancel()
 		if err != nil && ctx.Err() == nil {
 			log.Printf("llm reservation recovery failed: %T", err)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+	}
+}
+
+// Receipt reconciliation is independent of the job lease and terminal Run
+// status. It never repeats a model call; a duplicate receipt is idempotent.
+func (a *App) recoverAgentUsageReceipts(ctx context.Context) {
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
+	var cursor string
+	for ctx.Err() == nil {
+		cycle, cancel := context.WithTimeout(ctx, 12*time.Second)
+		next, _, err := a.agentScheduler.ReconcileSettledUsage(cycle, cursor, 100)
+		cancel()
+		if err != nil {
+			if ctx.Err() == nil {
+				log.Printf("agent receipt recovery failed: %T", err)
+			}
+		} else {
+			cursor = next
 		}
 		select {
 		case <-ctx.Done():

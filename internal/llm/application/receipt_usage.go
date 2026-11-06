@@ -55,3 +55,17 @@ func (s *Catalog) FindOperationUsage(ctx context.Context, tenantID, operationKey
 	receipt, err := reader.FindOperationUsage(ctx, tenantID, operationKey)
 	return receipt, public(err)
 }
+
+// ListSettledAgentOperations scans durable receipts regardless of Run lifecycle.
+// Only trusted worker consumers call this method; no HTTP route exposes it.
+func (s *Catalog) ListSettledAgentOperations(ctx context.Context, after string, limit int) ([]d.SettledAgentOperation, error) {
+	if s == nil || limit < 1 || limit > 100 || (after != "" && !scope.ValidID(after)) {
+		return nil, public(d.ErrInvalid)
+	}
+	reader, ok := s.opts.Repository.(d.SettledAgentUsageReader)
+	if !ok {
+		return nil, public(d.ErrBudgetState)
+	}
+	rows, err := reader.ListSettledAgentOperations(ctx, after, limit)
+	return rows, public(err)
+}

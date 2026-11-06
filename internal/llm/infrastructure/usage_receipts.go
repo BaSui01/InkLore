@@ -71,3 +71,45 @@ func (s *Store) FindOperationUsage(ctx context.Context, tenantID, operationKey s
 
 var _ d.ReceiptCostReader = (*Store)(nil)
 var _ d.OperationUsageReader = (*Store)(nil)
+
+func (s *Store) ListSettledAgentOperations(ctx context.Context, after string, limit int) ([]d.SettledAgentOperation, error) {
+	db, err := s.manager.DB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var cursor any
+	if after != "" {
+		cursor = after
+	}
+	var rows []struct {
+		Cursor       string
+		TenantID     string
+		OperationKey string
+		RawUsage     string
+	}
+	err = db.Raw(`SELECT i.id::text AS cursor, i.tenant_id::text AS tenant_id,
+		i.operation_key, row_to_json(u)::text AS raw_usage
+		FROM llm_generation_invocations i
+		JOIN llm_usage_records u ON u.tenant_id=i.tenant_id
+			AND u.invocation_id=i.id AND u.attempt=1
+		WHERE i.operation_key LIKE 'agent/%'
+			AND (?::uuid IS NULL OR i.id > ?::uuid)
+		ORDER BY i.id ASC LIMIT ?`, cursor, cursor, limit).Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	out := make([]d.SettledAgentOperation, 0, len(rows))
+	for _, row := range rows {
+		var usage d.Usage
+		if err := json.Unmarshal([]byte(row.RawUsage), &usage); err != nil {
+			return nil, err
+		}
+		out = append(out, d.SettledAgentOperation{
+			Cursor: row.Cursor, TenantID: row.TenantID,
+			OperationKey: row.OperationKey, Usage: usage,
+		})
+	}
+	return out, nil
+}
+
+var _ d.SettledAgentUsageReader = (*Store)(nil)

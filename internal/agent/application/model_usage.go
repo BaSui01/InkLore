@@ -50,3 +50,39 @@ func (s *Scheduler) recordModelUsage(ctx context.Context, tenantID, runID string
 		return s.appendWorkerEvent(tx, tenantID, runID, "usage.updated", payload)
 	})
 }
+
+// ReconcileSettledUsage backfills immutable receipts even when cancellation
+// permanently closed the original platform Job. It never touches model output
+// or repeats external side effects.
+func (s *Scheduler) ReconcileSettledUsage(ctx context.Context, after string, limit int) (string, bool, error) {
+	if limit < 1 || limit > 100 {
+		return after, false, errors.New("agent receipt scan limit is invalid")
+	}
+	reader, ok := s.gateway.(d.ModelUsageSweepPort)
+	if !ok {
+		return after, false, errors.New("agent receipt recovery reader is not configured")
+	}
+	rows, err := reader.ListSettledAgentUsage(ctx, after, limit)
+	if err != nil {
+		return after, false, err
+	}
+	next := after
+	for _, item := range rows {
+		runID, err := s.repo.FindRunIDByNode(ctx, item.TenantID, item.NodeID)
+		if errors.Is(err, d.ErrNotFound()) {
+			next = item.Cursor
+			continue
+		}
+		if err != nil {
+			return next, false, err
+		}
+		if err := s.recordModelUsage(ctx, item.TenantID, runID, item.Output); err != nil {
+			return next, false, err
+		}
+		next = item.Cursor
+	}
+	if len(rows) < limit {
+		return "", true, nil
+	}
+	return next, false, nil
+}

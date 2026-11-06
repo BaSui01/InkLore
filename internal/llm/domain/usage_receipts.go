@@ -13,3 +13,16 @@ type ReceiptCostReader interface {
 type OperationUsageReader interface {
 	FindOperationUsage(context.Context, string, string) (*Usage, error)
 }
+
+// SettledAgentOperation is a bounded, read-only reconciliation projection.
+// Cursor is the immutable invocation UUID; it does not expose prompt content.
+type SettledAgentOperation struct {
+	Cursor       string
+	TenantID     string
+	OperationKey string
+	Usage        Usage
+}
+
+type SettledAgentUsageReader interface {
+	ListSettledAgentOperations(context.Context, string, int) ([]SettledAgentOperation, error)
+}
