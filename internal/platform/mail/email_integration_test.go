@@ -41,7 +41,7 @@ func receivedCode(t *testing.T, sink *smtpSink) string {
 // This test requires the isolated PostgreSQL/Redis runner. Mail travels through
 // a real authenticated TLS SMTP socket with its test CA trusted explicitly; the
 // private dial seam maps the already-validated public destination to the sink.
-func TestEmailPostgresSMTPAuthentication(t *testing.T) {
+func TestEmailPostgresSMTPAndResendAuthentication(t *testing.T) {
 	if os.Getenv("MAIL_AUTH_PG_TEST") != "1" {
 		t.Skip("requires isolated PostgreSQL17 + Redis7")
 	}
@@ -145,6 +145,27 @@ func TestEmailPostgresSMTPAuthentication(t *testing.T) {
 	}
 	if !strings.HasPrefix(stored, "enc:v1:") || strings.Contains(stored, "test-mail-secret") {
 		t.Fatal("credential is not encrypted")
+	}
+	resendSettings, err := service.Update(ctx, admin.Principal, UpdateInput{
+		ExpectedRevision: current.Revision,
+		Provider:         "resend",
+		Enabled:          true,
+		SenderEmail:      "sender@inklore.test",
+		SenderName:       "InkLore",
+		Credential:       &CredentialChange{Kind: "encrypted", Value: "test-resend-secret"},
+	})
+	if err != nil || resendSettings.Provider != "resend" || resendSettings.SMTPHost != "" || resendSettings.SMTPPort != 0 {
+		t.Fatalf("Resend HTTPS settings were not accepted independently of SMTP: settings=%+v err=%v", resendSettings, err)
+	}
+	if enabled, enabledErr := service.Enabled(); enabledErr != nil || !enabled {
+		t.Fatalf("Resend delivery capability was not enabled: enabled=%v err=%v", enabled, enabledErr)
+	}
+	smtpRestore := input
+	smtpRestore.ExpectedRevision = resendSettings.Revision
+	smtpRestore.Credential = &CredentialChange{Kind: "encrypted", Value: "test-mail-secret"}
+	current, err = service.Update(ctx, admin.Principal, smtpRestore)
+	if err != nil || current.Provider != "smtp" {
+		t.Fatalf("SMTP configuration could not be restored after Resend check: settings=%+v err=%v", current, err)
 	}
 	_, err = service.Update(ctx, admin.Principal, input)
 	requireCode(t, err, "platform.version_conflict")
