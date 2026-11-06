@@ -415,7 +415,10 @@ export class AuthSession {
     const record: StoredEmailChallenge = {
       ...priorChallenge, email, purpose, tenant_id: tenantId,
       request_key: requestKey, pending_request_key: requestKey,
-      requested_at: now, retry_at: now + 60_000,
+      // Keep the original reservation age across uncertain retries. Otherwise
+      // repeated retries can keep an ambiguous request alive forever.
+      requested_at: bound && previous?.pending_request_key ? previous.requested_at : now,
+      retry_at: now + 60_000,
     };
     this.writeEmailChallenge(record);
     try {
