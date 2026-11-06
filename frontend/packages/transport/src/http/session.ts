@@ -34,6 +34,7 @@ export interface EmailChallenge { challenge_id: string; expires_at: string; retr
 interface StoredEmailChallenge extends Partial<EmailChallenge> {
   email: string; purpose: EmailPurpose; tenant_id: string; request_key: string;
   requested_at: number; retry_at: number; failed?: boolean;
+  pending_request_key?: string;
 }
 export type LoginCredentials = ({ email: string; password?: string; code?: string; challenge_id?: string } | {
   username: string; password: string;
@@ -404,19 +405,35 @@ export class AuthSession {
     if (bound && previous.challenge_id && previous.expires_at && previous.retry_at > Date.now()) {
       return { challenge_id: previous.challenge_id, expires_at: previous.expires_at, retry_after_seconds: this.getEmailCooldown(email) };
     }
+    const now = Date.now();
+    const priorChallenge = bound && previous?.challenge_id && previous.expires_at &&
+      Date.parse(previous.expires_at) > now ? previous : undefined;
+    // A resend must not erase the last delivered, still-valid proof. Keep the
+    // uncertain resend's operation key separately so retry cannot duplicate it.
+    const requestKey = bound && previous?.pending_request_key ? previous.pending_request_key :
+      bound && !previous?.challenge_id && !previous?.failed ? previous!.request_key : crypto.randomUUID();
     const record: StoredEmailChallenge = {
-      email, purpose, tenant_id: tenantId,
-      request_key: bound && !previous.challenge_id && !previous.failed ? previous.request_key : crypto.randomUUID(),
-      requested_at: Date.now(), retry_at: Date.now() + 60_000,
+      ...priorChallenge, email, purpose, tenant_id: tenantId,
+      request_key: requestKey, pending_request_key: requestKey,
+      requested_at: now, retry_at: now + 60_000,
     };
     this.writeEmailChallenge(record);
     try {
-      const result = await this.publicRequest<EmailChallenge>("/v1/auth/email-challenges", { email, purpose, audience: this.audience, ...(tenantId ? { tenant_id: tenantId } : {}) }, record.request_key);
+      const result = await this.publicRequest<EmailChallenge>("/v1/auth/email-challenges", {
+        email, purpose, audience: this.audience, ...(tenantId ? { tenant_id: tenantId } : {}),
+      }, requestKey);
       if (!result.challenge_id || !Number.isFinite(Date.parse(result.expires_at))) throw new Error("Invalid email challenge response");
-      this.writeEmailChallenge({ ...record, ...result, retry_at: Date.now() + result.retry_after_seconds * 1000 });
+      this.writeEmailChallenge({ ...record, ...result, pending_request_key: undefined,
+        retry_at: Date.now() + result.retry_after_seconds * 1000, failed: false });
       return result;
     } catch (error) {
-      if (error instanceof ApiError && error.httpStatus === 503) this.writeEmailChallenge({ ...record, failed: true });
+      // The provider may have accepted an ambiguous request. Preserve its key
+      // for retries, but never lose the prior valid challenge on 429/503.
+      const certainRejection = error instanceof ApiError && error.httpStatus < 500;
+      this.writeEmailChallenge({ ...record,
+        pending_request_key: certainRejection ? undefined : requestKey,
+        failed: certainRejection,
+      });
       throw error;
     }
   }
