@@ -1,9 +1,11 @@
 package mail
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -11,6 +13,7 @@ import (
 	"net"
 	stdmail "net/mail"
 	"net/netip"
+	"net/http"
 	"net/smtp"
 	"strconv"
 	"strings"
@@ -60,9 +63,9 @@ func newTransport(o Options) *transport {
 	dialer := &net.Dialer{Timeout: timeout}
 	return &transport{allowed: allowed, timeout: timeout, roots: o.RootCAs, lookup: net.DefaultResolver.LookupIPAddr, dial: dialer.DialContext}
 }
-func (t *transport) address(ctx context.Context, host string, port int) (string, error) {
-	if !t.allowed[host] || net.ParseIP(host) != nil || strings.ContainsAny(host, "/@:\\ \t\r\n") {
-		return "", errors.New("mail destination is not allowed")
+func (t *transport) pinnedAddress(ctx context.Context, host string, port int) (string, error) {
+	if host == "" || net.ParseIP(host) != nil || strings.ContainsAny(host, "/@:\\ \t\r\n") {
+		return "", errors.New("mail destination is invalid")
 	}
 	answers, err := t.lookup(ctx, host)
 	if err != nil || len(answers) == 0 {
@@ -74,6 +77,13 @@ func (t *transport) address(ctx context.Context, host string, port int) (string,
 		}
 	}
 	return net.JoinHostPort(answers[0].IP.String(), strconv.Itoa(port)), nil
+}
+
+func (t *transport) address(ctx context.Context, host string, port int) (string, error) {
+	if !t.allowed[host] {
+		return "", errors.New("mail destination is not allowed")
+	}
+	return t.pinnedAddress(ctx, host, port)
 }
 func (t *transport) send(ctx context.Context, c Settings, secret string, m Message) error {
 	// Validate every envelope/header value again at the final boundary. MIME
@@ -87,6 +97,8 @@ func (t *transport) send(ctx context.Context, c Settings, secret string, m Messa
 	switch c.Provider {
 	case "smtp":
 		return t.sendSMTP(bounded, c, secret, m)
+	case "resend":
+		return t.sendResend(bounded, c, secret, m)
 	default:
 		return errors.New("mail provider unavailable")
 	}
@@ -155,6 +167,81 @@ func (t *transport) sendSMTP(ctx context.Context, c Settings, secret string, m M
 		return errors.New("SMTP message outcome unknown")
 	}
 	// DATA acknowledgement is the delivery handoff; a failed QUIT cannot undo it.
+
 	_ = client.Quit()
+	return nil
+}
+
+// Resend is a fixed HTTPS integration. The endpoint, TLS server name and
+// destination port are constants; environment proxies and redirects are disabled.
+// A single approved public IP is pinned for the request to prevent DNS rebinding.
+func (t *transport) sendResend(ctx context.Context, c Settings, secret string, m Message) error {
+	const host = "api.resend.com"
+	if secret == "" || len(secret) > 8192 || strings.ContainsAny(secret, "\\r\\n\\x00") {
+		return errors.New("Resend credential is invalid")
+	}
+	pinned, err := t.pinnedAddress(ctx, host, 443)
+	if err != nil {
+		return err
+	}
+	from := (&stdmail.Address{Name: c.SenderName, Address: c.SenderEmail}).String()
+	payload, err := json.Marshal(struct {
+		From    string   `json:"from"`
+		To      []string `json:"to"`
+		Subject string   `json:"subject"`
+		Text    string   `json:"text"`
+	}{From: from, To: []string{m.To}, Subject: m.Subject, Text: m.Text})
+	if err != nil {
+		return errors.New("Resend request could not be encoded")
+	}
+	dialPinned := func(dialCtx context.Context, network, address string) (net.Conn, error) {
+		requestedHost, port, splitErr := net.SplitHostPort(address)
+		if splitErr != nil || !strings.EqualFold(requestedHost, host) || port != "443" {
+			return nil, errors.New("Resend destination is fixed")
+		}
+		return t.dial(dialCtx, network, pinned)
+	}
+	transport := &http.Transport{
+		Proxy:                 nil,
+		DialContext:           dialPinned,
+		TLSClientConfig:       &tls.Config{MinVersion: tls.VersionTLS12, ServerName: host, RootCAs: t.roots},
+		ForceAttemptHTTP2:     true,
+		DisableKeepAlives:     true,
+		ResponseHeaderTimeout: t.timeout,
+	}
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   t.timeout,
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	defer transport.CloseIdleConnections()
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://api.resend.com/emails", bytes.NewReader(payload))
+	if err != nil {
+		return errors.New("Resend request could not be created")
+	}
+	request.Header.Set("Authorization", "Bearer "+secret)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Idempotency-Key", m.ID)
+	response, err := client.Do(request)
+	if err != nil {
+		return errors.New("Resend request failed")
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("Resend rejected email with HTTP %d", response.StatusCode)
+	}
+	var accepted struct {
+		ID string `json:"id"`
+	}
+	decoder := json.NewDecoder(io.LimitReader(response.Body, 16*1024))
+	if err = decoder.Decode(&accepted); err != nil || !scope.ValidID(accepted.ID) {
+		return errors.New("Resend acceptance response is invalid")
+	}
+	var trailing any
+	if err = decoder.Decode(&trailing); err != io.EOF {
+		return errors.New("Resend acceptance response contains trailing data")
+	}
 	return nil
 }
