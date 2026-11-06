@@ -9,14 +9,11 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/base64"
-	"encoding/json"
 	"encoding/pem"
 	"io"
 	"math/big"
 	"mime"
 	"net"
-	"net/http"
-	"net/http/httptest"
 	stdmail "net/mail"
 	"strings"
 	"sync"
@@ -226,12 +223,12 @@ func TestSMTPHeaderInjectionRejected(t *testing.T) {
 		{"message-id", func(_ *Settings, m *Message) { m.ID += ">\r\nBcc: other@inklore.test" }},
 		{"nul", func(_ *Settings, m *Message) { m.Subject = "Code\x00" }},
 	} {
-		for _, provider := range []string{"smtp", "resend"} {
+		for _, provider := range []string{"smtp"} {
 			t.Run(provider+"/"+test.name, func(t *testing.T) {
 				c, m := config, message
 				c.Provider = provider
 				test.change(&c, &m)
-				tr := newTransport(Options{AllowedHosts: []string{"smtp.inklore.test", "api.resend.com"}})
+				tr := newTransport(Options{AllowedHosts: []string{"smtp.inklore.test"}})
 				tr.lookup = func(context.Context, string) ([]net.IPAddr, error) {
 					t.Fatal("invalid mail headers reached provider DNS")
 					return nil, nil
@@ -289,47 +286,12 @@ func TestMailSSRFRejectsEveryPrivateAnswer(t *testing.T) {
 		t.Fatal("missing allowlist accepted")
 	}
 }
-func TestHTTPSResendProtocolAndTLS(t *testing.T) {
-	certificate, roots := testCertificate(t, "api.resend.com")
-	status := 200
-	receipt := `{"id":"local-provider-receipt"}`
-	calls := 0
-	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		calls++
-		if r.Method != "POST" || r.URL.Path != "/emails" || r.Header.Get("Authorization") != "Bearer test-key" || r.Header.Get("Idempotency-Key") != "6138ae42-4980-414a-a22f-ea293851f8db" {
-			t.Error("HTTPS protocol mismatch")
-		}
-		var body map[string]any
-		if json.NewDecoder(r.Body).Decode(&body) != nil || body["subject"] != "Code" || body["text"] != "actual test message" {
-			t.Error("HTTPS body mismatch")
-		}
-		w.Header().Set("Location", "https://api.resend.com/redirected")
-		w.WriteHeader(status)
-		_, _ = io.WriteString(w, receipt)
-	}))
-	server.TLS = &tls.Config{Certificates: []tls.Certificate{certificate}, MinVersion: tls.VersionTLS12}
-	server.StartTLS()
-	defer server.Close()
-	tr := pinnedTransport(t, Options{AllowedHosts: []string{"api.resend.com"}, RootCAs: roots}, server.Listener)
-	message := Message{ID: "6138ae42-4980-414a-a22f-ea293851f8db", To: "recipient@inklore.test", Subject: "Code", Text: "actual test message"}
-	config := Settings{Provider: "resend", SenderEmail: "sender@inklore.test"}
-	if err := tr.send(context.Background(), config, "test-key", message); err != nil {
-		t.Fatal(err)
-	}
-	status = 302
-	if err := tr.send(context.Background(), config, "test-key", message); err == nil {
-		t.Fatal("redirect accepted")
-	}
-	if calls != 2 {
-		t.Fatal("redirect followed")
-	}
-	status = 200
-	receipt = `{}`
-	if err := tr.send(context.Background(), config, "test-key", message); err == nil {
-		t.Fatal("missing receipt accepted")
-	}
-	tr.roots = nil
-	if err := tr.send(context.Background(), config, "test-key", message); err == nil {
-		t.Fatal("untrusted HTTPS certificate accepted")
+
+func TestUnsupportedMailProviderFailsClosed(t *testing.T) {
+	tr := newTransport(Options{AllowedHosts: []string{"smtp.inklore.test"}})
+	err := tr.send(context.Background(), Settings{Provider: "resend", SenderEmail: "sender@inklore.test"}, "test-secret",
+		Message{ID: "6138ae42-4980-414a-a22f-ea293851f8db", To: "recipient@inklore.test", Subject: "Code", Text: "code"})
+	if err == nil {
+		t.Fatal("unsupported provider was permitted")
 	}
 }

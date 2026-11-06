@@ -1,17 +1,14 @@
 package mail
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"mime"
 	"net"
-	"net/http"
 	stdmail "net/mail"
 	"net/netip"
 	"net/smtp"
@@ -90,8 +87,6 @@ func (t *transport) send(ctx context.Context, c Settings, secret string, m Messa
 	switch c.Provider {
 	case "smtp":
 		return t.sendSMTP(bounded, c, secret, m)
-	case "resend":
-		return t.sendHTTPS(bounded, c, secret, m)
 	default:
 		return errors.New("mail provider unavailable")
 	}
@@ -161,47 +156,5 @@ func (t *transport) sendSMTP(ctx context.Context, c Settings, secret string, m M
 	}
 	// DATA acknowledgement is the delivery handoff; a failed QUIT cannot undo it.
 	_ = client.Quit()
-	return nil
-}
-func (t *transport) sendHTTPS(ctx context.Context, c Settings, secret string, m Message) error {
-	const host = "api.resend.com"
-	address, err := t.address(ctx, host, 443)
-	if err != nil {
-		return err
-	}
-	body, err := json.Marshal(map[string]any{"from": (&stdmail.Address{Name: c.SenderName, Address: c.SenderEmail}).String(), "to": []string{m.To}, "subject": m.Subject, "text": m.Text})
-	if err != nil {
-		return err
-	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://"+host+"/emails", bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	request.Header.Set("Authorization", "Bearer "+secret)
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Idempotency-Key", m.ID)
-	tr := &http.Transport{TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12, ServerName: host, RootCAs: t.roots}, DialContext: func(ctx context.Context, network, dest string) (net.Conn, error) {
-		if dest != host+":443" {
-			return nil, errors.New("unexpected mail destination")
-		}
-		return t.dial(ctx, network, address)
-	}}
-	defer tr.CloseIdleConnections()
-	client := &http.Client{Transport: tr, Timeout: t.timeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
-	response, err := client.Do(request)
-	if err != nil {
-		return errors.New("HTTPS email delivery failed")
-	}
-	defer response.Body.Close()
-	raw, err := io.ReadAll(io.LimitReader(response.Body, 4097))
-	if err != nil || len(raw) > 4096 || response.StatusCode < 200 || response.StatusCode >= 300 {
-		return errors.New("HTTPS email provider rejected delivery")
-	}
-	var receipt struct {
-		ID string `json:"id"`
-	}
-	if json.Unmarshal(raw, &receipt) != nil || len(receipt.ID) == 0 || len(receipt.ID) > 200 {
-		return errors.New("HTTPS email receipt is invalid")
-	}
 	return nil
 }

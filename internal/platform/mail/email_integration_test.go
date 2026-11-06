@@ -78,7 +78,7 @@ func TestEmailPostgresSMTPAuthentication(t *testing.T) {
 		t.Fatal(err)
 	}
 	sink, roots := newSMTPSink(t, false)
-	service, err := New(manager, Options{Identity: auth, Keys: map[int][]byte{1: bytes.Repeat([]byte("m"), 32)}, ActiveKeyVersion: 1, AllowedHosts: []string{"smtp.inklore.test", "api.resend.com"}, RootCAs: roots})
+	service, err := New(manager, Options{Identity: auth, Keys: map[int][]byte{1: bytes.Repeat([]byte("m"), 32)}, ActiveKeyVersion: 1, AllowedHosts: []string{"smtp.inklore.test"}, RootCAs: roots})
 	if err != nil {
 		t.Fatal(err)
 	}

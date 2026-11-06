@@ -87,10 +87,9 @@ export function MailSettingsRoute() {
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.enabled} onChange={(e) => edit({ enabled: e.target.checked })} />{t("mail.enabled")}</label>
             <label className="block space-y-1 text-sm">{t("mail.provider")}
               <select className={selectStyle} value={form.provider} onChange={(e) => { edit({ provider: e.target.value as MailSettingsInput["provider"] }); setCredentialMode("encrypted"); setCredential(""); }}>
-                <option value="disabled" disabled>{t("mail.unconfigured")}</option><option value="smtp">SMTP</option><option value="resend">Resend HTTPS</option>
+                <option value="disabled" disabled>{t("mail.unconfigured")}</option><option value="smtp">SMTP</option>
               </select>
             </label>
-            {form.provider === "resend" && <p className="text-sm text-[var(--text-secondary)]">{t("mail.https_hint")}</p>}
             {form.provider === "smtp" && <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-1 text-sm">{t("mail.smtp_host")}<Input value={form.smtp_host} maxLength={253} required={form.enabled} onChange={(e) => edit({ smtp_host: e.target.value })} /></label>
               <label className="space-y-1 text-sm">{t("mail.security")}<select className={selectStyle} value={form.smtp_security} onChange={(e) => edit({ smtp_security: e.target.value as "implicit_tls" | "starttls", smtp_port: e.target.value === "implicit_tls" ? 465 : 587 })}><option value="implicit_tls">{t("mail.implicit_tls")}</option><option value="starttls">{t("mail.starttls")}</option></select></label>

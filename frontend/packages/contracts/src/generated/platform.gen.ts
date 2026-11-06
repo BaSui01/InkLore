@@ -64,7 +64,7 @@ export interface paths {
         };
         /** 读取脱敏全局邮件配置 */
         get: operations["platformGetMailSettings"];
-        /** CAS 更新全局 SMTP/HTTPS 邮件配置 */
+        /** CAS 更新全局 SMTP 邮件配置 */
         put: operations["platformUpdateMailSettings"];
         post?: never;
         delete?: never;
@@ -618,7 +618,7 @@ export interface components {
         };
         MailSettings: {
             /** @enum {string} */
-            provider: "disabled" | "smtp" | "resend";
+            provider: "disabled" | "smtp";
             enabled: boolean;
             smtp_host: string;
             /** @enum {integer} */
@@ -646,7 +646,7 @@ export interface components {
         };
         UpdateMailSettings: {
             /** @enum {string} */
-            provider: "disabled" | "smtp" | "resend";
+            provider: "disabled" | "smtp";
             enabled: boolean;
             smtp_host?: string;
             /** @enum {integer} */

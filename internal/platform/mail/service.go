@@ -90,13 +90,10 @@ func (s *Service) Enabled(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 	host := row.summary().SMTPHost
-	if row.Provider == "resend" {
-		host = "api.resend.com"
-	}
 	return s.transport.allowed[host], nil
 }
 func (s *Service) Update(ctx context.Context, p identity.Principal, in UpdateInput) (Settings, error) {
-	if in.ExpectedRevision < 1 || in.ExpectedRevision > scope.MaxRevision || in.Provider != "disabled" && in.Provider != "smtp" && in.Provider != "resend" {
+	if in.ExpectedRevision < 1 || in.ExpectedRevision > scope.MaxRevision || in.Provider != "disabled" && in.Provider != "smtp" {
 		return Settings{}, invalid()
 	}
 	in.SMTPHost = strings.ToLower(strings.TrimSpace(in.SMTPHost))
@@ -117,7 +114,7 @@ func (s *Service) Update(ctx context.Context, p identity.Principal, in UpdateInp
 	if in.SMTPPort != 0 && (in.SMTPPort != 465 || in.SMTPSecurity != "implicit_tls") && (in.SMTPPort != 587 || in.SMTPSecurity != "starttls") {
 		return Settings{}, invalid()
 	}
-	if in.Enabled && (in.Provider == "disabled" || in.SenderEmail == "" || in.Provider == "smtp" && (in.SMTPHost == "" || in.SMTPPort == 0 || in.SMTPUsername == "") || in.Provider == "resend" && !s.transport.allowed["api.resend.com"]) {
+	if in.Enabled && (in.Provider == "disabled" || in.SenderEmail == "" || in.Provider == "smtp" && (in.SMTPHost == "" || in.SMTPPort == 0 || in.SMTPUsername == "")) {
 		return Settings{}, invalid()
 	}
 	var out Settings
