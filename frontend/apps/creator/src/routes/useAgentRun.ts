@@ -76,9 +76,13 @@ export function useAgentRun(open: boolean, novelId: string, chapterId: string) {
     if (!open || !chapterId || active.current || denied) return;
     const id = new URL(window.location.href).searchParams.get("agentRun");
     if (!id) return;
-    let mounted = true; setRestoring(true);
-    void refresh(id).catch(() => {}).finally(() => { if (mounted) setRestoring(false); });
-    return () => { mounted = false; };
+    const currentGeneration = generation.current;
+    setRestoring(true);
+    void refresh(id).catch(() => {}).finally(() => {
+      // Hiding the still-mounted panel must not strand restoration state.
+      // A true clear/unmount increments the generation and fences stale work.
+      if (currentGeneration === generation.current) setRestoring(false);
+    });
   }, [open, chapterId, denied, refresh]);
 
   useEffect(() => {
