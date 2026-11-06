@@ -613,6 +613,7 @@ func (r *ProviderRouter) anthropicStream(ctx context.Context, target upstreamTar
 	}
 
 	usage := domain.GenerationUsage{}
+	var uncachedInput, cacheCreation, cacheRead int
 	doneSent := false
 	toolBuilders := make(map[int]*toolCallBuilder)
 
@@ -643,7 +644,9 @@ func (r *ProviderRouter) anthropicStream(ctx context.Context, target upstreamTar
 			} `json:"content_block"`
 			Message struct {
 				Usage struct {
-					InputTokens int `json:"input_tokens"`
+					InputTokens              int `json:"input_tokens"`
+					CacheCreationInputTokens int `json:"cache_creation_input_tokens"`
+					CacheReadInputTokens     int `json:"cache_read_input_tokens"`
 				} `json:"usage"`
 			} `json:"message"`
 			Delta struct {
@@ -653,23 +656,35 @@ func (r *ProviderRouter) anthropicStream(ctx context.Context, target upstreamTar
 				PartialJSON string `json:"partial_json"`
 			} `json:"delta"`
 			Usage struct {
-				InputTokens  int `json:"input_tokens"`
-				OutputTokens int `json:"output_tokens"`
+				InputTokens              int `json:"input_tokens"`
+				CacheCreationInputTokens int `json:"cache_creation_input_tokens"`
+				CacheReadInputTokens     int `json:"cache_read_input_tokens"`
+				OutputTokens             int `json:"output_tokens"`
 			} `json:"usage"`
 		}
 		if json.Unmarshal(data, &payload) != nil {
 			return nil
 		}
 
-		if payload.Message.Usage.InputTokens > 0 {
-			usage.InputTokens = payload.Message.Usage.InputTokens
+		if event == "message_start" {
+			uncachedInput = payload.Message.Usage.InputTokens
+			cacheCreation = payload.Message.Usage.CacheCreationInputTokens
+			cacheRead = payload.Message.Usage.CacheReadInputTokens
 		}
-		if payload.Usage.InputTokens > 0 {
-			usage.InputTokens = payload.Usage.InputTokens
-		}
-		if payload.Usage.OutputTokens > 0 {
+		if event == "message_delta" {
+			if payload.Usage.InputTokens > 0 {
+				uncachedInput = payload.Usage.InputTokens
+			}
+			if payload.Usage.CacheCreationInputTokens > 0 {
+				cacheCreation = payload.Usage.CacheCreationInputTokens
+			}
+			if payload.Usage.CacheReadInputTokens > 0 {
+				cacheRead = payload.Usage.CacheReadInputTokens
+			}
 			usage.OutputTokens = payload.Usage.OutputTokens
 		}
+		usage.InputTokens = uncachedInput + cacheCreation + cacheRead
+		usage.CachedTokens = cacheRead
 
 		if event == "content_block_start" && payload.ContentBlock.Type == "tool_use" {
 			toolBuilders[payload.Index] = &toolCallBuilder{
@@ -1148,6 +1163,9 @@ func (r *ProviderRouter) generateNativeChatStream(ctx context.Context, target up
 						TotalTokens:      event.Usage.TotalTokens,
 						InputTokens:      event.Usage.InputTokens,
 						OutputTokens:     event.Usage.OutputTokens,
+						CachedTokens:     event.Usage.CachedTokens,
+						PromptCacheHitTokens: event.Usage.CachedTokens,
+						PromptCacheMissTokens: event.Usage.InputTokens - event.Usage.CachedTokens,
 					})
 				}
 			}
