@@ -9,11 +9,14 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"io"
 	"math/big"
 	"mime"
 	"net"
+	"net/http"
+	"net/http/httptest"
 	stdmail "net/mail"
 	"strings"
 	"sync"
@@ -223,7 +226,7 @@ func TestSMTPHeaderInjectionRejected(t *testing.T) {
 		{"message-id", func(_ *Settings, m *Message) { m.ID += ">\r\nBcc: other@inklore.test" }},
 		{"nul", func(_ *Settings, m *Message) { m.Subject = "Code\x00" }},
 	} {
-		for _, provider := range []string{"smtp"} {
+		for _, provider := range []string{"smtp", "resend"} {
 			t.Run(provider+"/"+test.name, func(t *testing.T) {
 				c, m := config, message
 				c.Provider = provider
@@ -287,11 +290,157 @@ func TestMailSSRFRejectsEveryPrivateAnswer(t *testing.T) {
 	}
 }
 
-func TestUnsupportedMailProviderFailsClosed(t *testing.T) {
+func newResendSink(t *testing.T, handler http.Handler) (*httptest.Server, *x509.CertPool) {
+	t.Helper()
+	certificate, roots := testCertificate(t, "api.resend.com")
+	server := httptest.NewUnstartedServer(handler)
+	server.TLS = &tls.Config{Certificates: []tls.Certificate{certificate}, MinVersion: tls.VersionTLS12}
+	server.StartTLS()
+	t.Cleanup(server.Close)
+	return server, roots
+}
+
+func pinnedResendTransport(t *testing.T, server *httptest.Server, roots *x509.CertPool) *transport {
+	t.Helper()
+	tr := newTransport(Options{RootCAs: roots, Timeout: 3 * time.Second})
+	tr.lookup = func(context.Context, string) ([]net.IPAddr, error) {
+		return []net.IPAddr{{IP: net.ParseIP("8.8.8.8")}}, nil
+	}
+	tr.dial = func(ctx context.Context, network, address string) (net.Conn, error) {
+		if address != "8.8.8.8:443" {
+			t.Errorf("Resend did not use the pinned public address: %s", address)
+		}
+		return (&net.Dialer{}).DialContext(ctx, network, server.Listener.Addr().String())
+	}
+	return tr
+}
+
+func TestResendHTTPSDeliveryUsesFixedEndpointAndIdempotency(t *testing.T) {
+	const messageID = "6138ae42-4980-414a-a22f-ea293851f8db"
+	requests := 0
+	server, roots := newResendSink(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		if r.Method != http.MethodPost || r.URL.Path != "/emails" || r.Host != "api.resend.com" {
+			t.Errorf("unexpected Resend request: %s %s host=%s", r.Method, r.URL.Path, r.Host)
+		}
+		if r.Header.Get("Authorization") != "Bearer test-resend-secret" ||
+			r.Header.Get("Idempotency-Key") != messageID ||
+			r.Header.Get("Content-Type") != "application/json" {
+			t.Error("Resend authentication or idempotency headers were not preserved")
+		}
+		var payload struct {
+			From    string   `json:"from"`
+			To      []string `json:"to"`
+			Subject string   `json:"subject"`
+			Text    string   `json:"text"`
+			HTML    string   `json:"html"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Errorf("decode Resend payload: %v", err)
+		}
+		if payload.From != "InkLore <sender@inklore.test>" ||
+			len(payload.To) != 1 || payload.To[0] != "recipient@inklore.test" ||
+			payload.Subject != "InkLore verification code" ||
+			!strings.Contains(payload.Text, "123456") || payload.HTML != "" {
+			t.Errorf("unexpected Resend payload: %+v", payload)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"id":"49a3999c-0ce1-4ea6-ab68-afcd6dc2e794"}`)
+	}))
+	tr := pinnedResendTransport(t, server, roots)
+	config := Settings{Provider: "resend", SenderEmail: "sender@inklore.test", SenderName: "InkLore"}
+	message := Message{ID: messageID, To: "recipient@inklore.test", Subject: "InkLore verification code", Text: "Your code is 123456"}
+	if err := tr.send(context.Background(), config, "test-resend-secret", message); err != nil {
+		t.Fatal(err)
+	}
+	if requests != 1 {
+		t.Fatalf("expected exactly one provider request, got %d", requests)
+	}
+}
+
+func TestResendRejectsRedirectsAndInvalidAcceptance(t *testing.T) {
+	for _, test := range []struct {
+		name       string
+		status     int
+		location   string
+		body       string
+	}{
+		{name: "redirect", status: http.StatusTemporaryRedirect, location: "https://attacker.invalid/collect", body: `{"id":"49a3999c-0ce1-4ea6-ab68-afcd6dc2e794"}`},
+		{name: "unauthorized", status: http.StatusUnauthorized, body: `{"id":"49a3999c-0ce1-4ea6-ab68-afcd6dc2e794"}`},
+		{name: "invalid-json", status: http.StatusOK, body: "not-json"},
+		{name: "invalid-id", status: http.StatusOK, body: `{"id":"not-a-uuid"}`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			requests := 0
+			server, roots := newResendSink(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requests++
+				if test.location != "" {
+					w.Header().Set("Location", test.location)
+				}
+				w.WriteHeader(test.status)
+				_, _ = io.WriteString(w, test.body)
+			}))
+			tr := pinnedResendTransport(t, server, roots)
+			err := tr.send(context.Background(), Settings{Provider: "resend", SenderEmail: "sender@inklore.test"}, "test-resend-secret",
+				Message{ID: "6138ae42-4980-414a-a22f-ea293851f8db", To: "recipient@inklore.test", Subject: "Code", Text: "code"})
+			if err == nil {
+				t.Fatal("invalid Resend response was accepted")
+			}
+			if requests != 1 {
+				t.Fatalf("redirect or response retry reached provider %d times", requests)
+			}
+		})
+	}
+}
+
+func TestResendRejectsPrivateDNSAndUntrustedTLS(t *testing.T) {
+	t.Run("private DNS", func(t *testing.T) {
+		tr := newTransport(Options{})
+		dialed := false
+		tr.lookup = func(context.Context, string) ([]net.IPAddr, error) {
+			return []net.IPAddr{{IP: net.ParseIP("127.0.0.1")}}, nil
+		}
+		tr.dial = func(context.Context, string, string) (net.Conn, error) {
+			dialed = true
+			return nil, nil
+		}
+		err := tr.send(context.Background(), Settings{Provider: "resend", SenderEmail: "sender@inklore.test"}, "test-resend-secret",
+			Message{ID: "6138ae42-4980-414a-a22f-ea293851f8db", To: "recipient@inklore.test", Subject: "Code", Text: "code"})
+		if err == nil || dialed {
+			t.Fatal("private DNS answer was dialed")
+		}
+	})
+	t.Run("untrusted certificate", func(t *testing.T) {
+		server, _ := newResendSink(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = io.WriteString(w, `{"id":"49a3999c-0ce1-4ea6-ab68-afcd6dc2e794"}`)
+		}))
+		tr := pinnedResendTransport(t, server, nil)
+		err := tr.send(context.Background(), Settings{Provider: "resend", SenderEmail: "sender@inklore.test"}, "test-resend-secret",
+			Message{ID: "6138ae42-4980-414a-a22f-ea293851f8db", To: "recipient@inklore.test", Subject: "Code", Text: "code"})
+		if err == nil {
+			t.Fatal("untrusted Resend TLS certificate was accepted")
+		}
+	})
+	t.Run("credential header injection", func(t *testing.T) {
+		tr := newTransport(Options{})
+		tr.lookup = func(context.Context, string) ([]net.IPAddr, error) {
+			t.Fatal("invalid credential reached DNS")
+			return nil, nil
+		}
+		err := tr.send(context.Background(), Settings{Provider: "resend", SenderEmail: "sender@inklore.test"}, "key\\r\\nX-Injected: true",
+			Message{ID: "6138ae42-4980-414a-a22f-ea293851f8db", To: "recipient@inklore.test", Subject: "Code", Text: "code"})
+		if err == nil {
+			t.Fatal("credential header injection was accepted")
+		}
+	})
+}
+
+func TestUnknownMailProviderFailsClosed(t *testing.T) {
 	tr := newTransport(Options{AllowedHosts: []string{"smtp.inklore.test"}})
-	err := tr.send(context.Background(), Settings{Provider: "resend", SenderEmail: "sender@inklore.test"}, "test-secret",
+	err := tr.send(context.Background(), Settings{Provider: "unknown", SenderEmail: "sender@inklore.test"}, "test-secret",
 		Message{ID: "6138ae42-4980-414a-a22f-ea293851f8db", To: "recipient@inklore.test", Subject: "Code", Text: "code"})
 	if err == nil {
-		t.Fatal("unsupported provider was permitted")
+		t.Fatal("unknown provider was permitted")
 	}
 }
