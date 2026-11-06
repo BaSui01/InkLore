@@ -142,6 +142,7 @@ jobs:
         run: |
           go build ./...
           go vet ./...
+          go test ./internal/app/adapters ./internal/content/application
           go run ./cmd/archguard -reachability
       - name: Start actual API and check health, readiness and public access boundaries
         shell: bash
@@ -232,3 +233,4 @@ jobs:
           psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_memberships" | grep -qx 1
           psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_sessions" | grep -qx 1
           echo "Real Go API health, dependencies and unknown-route checks passed."
+          python3 scripts/ci/content_delivery_acceptance.py

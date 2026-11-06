@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   CloudUpload,
   Plus,
+  Download,
 } from "lucide-react";
 import { Button, Badge, Modal, Input, ErrorPresenter } from "@inklore/ui";
 import { getApiSDK, reportSafeDiagnostic, safeErrorText } from "@inklore/transport";
@@ -44,6 +45,7 @@ import { PlainTextEditor } from "./PlainTextEditor";
 import { ConflictResolutionModal } from "./ConflictResolutionModal";
 import { ConfirmChapterModal } from "./ConfirmChapterModal";
 import { ComplianceReviewModal } from "./ComplianceReviewModal";
+import { ExportNovelDialog } from "./ExportNovelDialog";
 
 export interface EditorRouteProps {
   novelId: string;
@@ -89,6 +91,7 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
   // 章节确认入账弹窗状态
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [complianceModalOpen, setComplianceModalOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const [createChapterModalOpen, setCreateChapterModalOpen] = useState(false);
   const [newChapterTitle, setNewChapterTitle] = useState("");
@@ -606,6 +609,7 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
 
         {/* Right Section */}
         <div className="flex items-center gap-3 text-stone-600 dark:text-stone-300">
+          <Button variant="ghost" disabled={!novel || saveStatus === "saving"} onClick={() => setExportOpen(true)} icon={<Download className="h-4 w-4" />}>{t("export.title")}</Button>
           <span className="font-mono text-stone-700 dark:text-stone-300 font-medium">
             {loadedChapterId === activeChapter?.id ? wordCount.toLocaleString() : "—"} 字
           </span>
@@ -1078,6 +1082,7 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
       />
 
       {/* Compliance review suggestions require the author to apply them. */}
+      <ExportNovelDialog key={novelId} open={exportOpen} novelId={novelId} onClose={() => setExportOpen(false)} />
       <ComplianceReviewModal
         open={complianceModalOpen}
         onClose={() => setComplianceModalOpen(false)}

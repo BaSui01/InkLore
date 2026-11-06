@@ -1,5 +1,17 @@
 /** 编辑器读取、草稿与受理提示；不包含用户正文。 */
 export const editorZhCN: Record<string, string> = {
+  "export.title": "导出作品",
+  "export.savedOnly": "导出服务器上已保存的正文，默认仅包含已定稿章节。未保存的编辑不会进入文件。",
+  "export.format": "文件格式",
+  "export.includeDrafts": "同时包含已保存的草稿章节",
+  "export.create": "生成并下载",
+  "export.retrySame": "重试本次导出",
+  "export.unknown": "导出结果暂未确认。重试会沿用本次请求，不会重复创建文件。",
+  "export.missingFile": "导出尚未产生可下载的文件，请检查任务状态。",
+  "export.history": "最近导出（文件保留 7 天）",
+  "export.empty": "尚无导出记录。",
+  "export.chapters": "{0} 章",
+  "export.download": "下载",
   "editor.loadFailed": "读取作品数据失败，已加载内容保持不变。请重试。",
   "editor.bodyLoading": "正在读取章节正文，暂不显示其他章节的内容。",
   "editor.bodyUnavailable": "章节正文尚未成功读取，当前不能编辑或保存。",
@@ -80,6 +92,18 @@ export const editorZhCN: Record<string, string> = {
 };
 
 export const editorEnUS: Record<string, string> = {
+  "export.title": "Export novel",
+  "export.savedOnly": "Export text saved on the server. Only confirmed chapters are included by default. Unsaved edits are excluded.",
+  "export.format": "File format",
+  "export.includeDrafts": "Include saved draft chapters",
+  "export.create": "Generate and download",
+  "export.retrySame": "Retry this export",
+  "export.unknown": "The export result is uncertain. Retrying reuses this request without creating a duplicate file.",
+  "export.missingFile": "The export has no downloadable file. Check the task status.",
+  "export.history": "Recent exports (files kept for 7 days)",
+  "export.empty": "No exports yet.",
+  "export.chapters": "{0} chapters",
+  "export.download": "Download",
   "editor.loadFailed": "Could not load the novel data. Previously loaded content is unchanged. Retry when ready.",
   "editor.bodyLoading": "Loading chapter content. Another chapter's text will not be shown here.",
   "editor.bodyUnavailable": "The chapter body has not loaded. Editing and saving are unavailable.",
