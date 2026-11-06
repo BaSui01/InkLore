@@ -263,6 +263,23 @@ func (r *RunRepositoryPostgres) CreateRun(ctx context.Context, tenantID string, 
 	return nil
 }
 
+func (r *RunRepositoryPostgres) FindRunIDByNode(ctx context.Context, tenantID, nodeID string) (string, error) {
+	db, err := r.db(ctx, false)
+	if err != nil {
+		return "", err
+	}
+	var runID string
+	q := db.Raw("SELECT run_id::text FROM agent_run_nodes WHERE tenant_id=? AND id=?", tenantID, nodeID).Scan(&runID)
+	if q.Error != nil {
+		return "", q.Error
+	}
+	if q.RowsAffected != 1 {
+		return "", d.ErrNotFound()
+	}
+	return runID, nil
+}
+
+
 func (r *RunRepositoryPostgres) GetRun(ctx context.Context, tenantID, runID string) (*d.AgentRun, []d.AgentRunNode, error) {
 	db, err := r.db(ctx, false)
 	if err != nil {
