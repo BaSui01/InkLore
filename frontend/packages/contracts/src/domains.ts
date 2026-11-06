@@ -293,7 +293,8 @@ export interface CancelRunInput {
 
 export interface CreateRunInput {
   task_kind: string;
-  task_key: string;
+  task_key?: string;
+  task_policy_version_id?: string;
   resource: AgentResourceRef;
   instruction: string;
   definition_id: string;
