@@ -177,7 +177,7 @@ func (t *transport) sendSMTP(ctx context.Context, c Settings, secret string, m M
 // A single approved public IP is pinned for the request to prevent DNS rebinding.
 func (t *transport) sendResend(ctx context.Context, c Settings, secret string, m Message) error {
 	const host = "api.resend.com"
-	if secret == "" || len(secret) > 8192 || strings.ContainsAny(secret, "\\r\\n\\x00") {
+	if secret == "" || len(secret) > 8192 || strings.ContainsAny(secret, "\r\n\x00") {
 		return errors.New("Resend credential is invalid")
 	}
 	pinned, err := t.pinnedAddress(ctx, host, 443)
