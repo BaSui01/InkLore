@@ -1365,7 +1365,8 @@ type ArtifactPage struct {
 
 // AuditRun defines model for AuditRun.
 type AuditRun struct {
-	CostMicros int          `json:"cost_micros"`
+	// CostMicros Actual persisted receipt total; null when billing evidence is unavailable. Missing receipts do not prove zero cost.
+	CostMicros *int         `json:"cost_micros"`
 	CreatedAt  Timestamp    `json:"created_at"`
 	DurationMs int          `json:"duration_ms"`
 	ErrorCode  string       `json:"error_code"`
@@ -1809,18 +1810,19 @@ type QuestionResponseSchema2Type string
 
 // Resource defines model for Resource.
 type Resource struct {
-	NovelId      *UUID                `json:"novel_id,omitempty"`
-	ResourceId   UUID                 `json:"resource_id"`
-	ResourceType ResourceResourceType `json:"resource_type"`
+	NovelId                *UUID                `json:"novel_id,omitempty"`
+	ResourceId             UUID                 `json:"resource_id"`
+	ResourceType           ResourceResourceType `json:"resource_type"`
 
 	// Selection Unicode码点半开选区；start<end且≤源正文长度，绑定source_revision/hash；省略表示全章。
-	Selection *struct {
+	Selection              *struct {
 		EndOffset   int    `json:"end_offset"`
 		SourceHash  string `json:"source_hash"`
 		StartOffset int    `json:"start_offset"`
 	} `json:"selection,omitempty"`
-	SourceHash     *string  `json:"source_hash,omitempty"`
-	SourceRevision Revision `json:"source_revision"`
+	SourceHash             *string  `json:"source_hash,omitempty"`
+	SelectionScopeVerified *bool    `json:"selection_scope_verified,omitempty"`
+	SourceRevision         Revision `json:"source_revision"`
 }
 
 // ResourceResourceType defines model for Resource.ResourceType.

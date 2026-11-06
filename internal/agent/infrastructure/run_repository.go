@@ -45,38 +45,42 @@ func (r *RunRepositoryPostgres) db(ctx context.Context, write bool) (*gorm.DB, e
 // --- Runs ---
 
 type runRow struct {
-	ID                  string         `gorm:"column:id"`
-	TenantID            string         `gorm:"column:tenant_id"`
-	CreatedAt           time.Time      `gorm:"column:created_at"`
-	UpdatedAt           time.Time      `gorm:"column:updated_at"`
-	Revision            int64          `gorm:"column:revision"`
-	OwnerUserID         string         `gorm:"column:owner_user_id"`
-	PlatformJobID       string         `gorm:"column:platform_job_id"`
-	Kind                string         `gorm:"column:kind"`
-	TaskKind            string         `gorm:"column:task_kind"`
-	DiagnosticProbeKey  sql.NullString `gorm:"column:diagnostic_probe_key"`
-	TaskKey             string         `gorm:"column:task_key"`
-	ResourceType        sql.NullString `gorm:"column:resource_type"`
-	ResourceID          sql.NullString `gorm:"column:resource_id"`
-	NovelID             sql.NullString `gorm:"column:novel_id"`
-	ChapterID           sql.NullString `gorm:"column:chapter_id"`
-	SourceRevision      sql.NullInt64  `gorm:"column:source_revision"`
-	SourceHash          sql.NullString `gorm:"column:source_hash"`
-	Instruction         string         `gorm:"column:instruction"`
-	DefinitionVersionID sql.NullString `gorm:"column:definition_version_id"`
-	WorkflowVersionID   sql.NullString `gorm:"column:workflow_version_id"`
-	PolicyVersionID     string         `gorm:"column:policy_version_id"`
-	Status              string         `gorm:"column:status"`
-	NextSeq             int64          `gorm:"column:next_seq"`
-	RetainedFromSeq     int64          `gorm:"column:retained_from_seq"`
-	DeadlineAt          time.Time      `gorm:"column:deadline_at"`
-	StartedAt           sql.NullTime   `gorm:"column:started_at"`
-	FinishedAt          sql.NullTime   `gorm:"column:finished_at"`
-	ErrorCode           sql.NullString `gorm:"column:error_code"`
-	TerminalReason      sql.NullString `gorm:"column:terminal_reason"`
-	Retryable           bool           `gorm:"column:retryable"`
-	UsageReceiptIDs     TextArray      `gorm:"column:usage_receipt_ids;type:text[]"`
-	DeletedAt           sql.NullTime   `gorm:"column:deleted_at"`
+	ID                     string         `gorm:"column:id"`
+	TenantID               string         `gorm:"column:tenant_id"`
+	CreatedAt              time.Time      `gorm:"column:created_at"`
+	UpdatedAt              time.Time      `gorm:"column:updated_at"`
+	Revision               int64          `gorm:"column:revision"`
+	OwnerUserID            string         `gorm:"column:owner_user_id"`
+	PlatformJobID          string         `gorm:"column:platform_job_id"`
+	Kind                   string         `gorm:"column:kind"`
+	TaskKind               string         `gorm:"column:task_kind"`
+	DiagnosticProbeKey     sql.NullString `gorm:"column:diagnostic_probe_key"`
+	TaskKey                string         `gorm:"column:task_key"`
+	ResourceType           sql.NullString `gorm:"column:resource_type"`
+	ResourceID             sql.NullString `gorm:"column:resource_id"`
+	NovelID                sql.NullString `gorm:"column:novel_id"`
+	ChapterID              sql.NullString `gorm:"column:chapter_id"`
+	SourceRevision         sql.NullInt64  `gorm:"column:source_revision"`
+	SourceHash             sql.NullString `gorm:"column:source_hash"`
+	SelectionStart         sql.NullInt64  `gorm:"column:selection_start_offset"`
+	SelectionEnd           sql.NullInt64  `gorm:"column:selection_end_offset"`
+	SelectionHash          sql.NullString `gorm:"column:selection_source_hash"`
+	SelectionScopeVerified bool           `gorm:"column:selection_scope_verified"`
+	Instruction            string         `gorm:"column:instruction"`
+	DefinitionVersionID    sql.NullString `gorm:"column:definition_version_id"`
+	WorkflowVersionID      sql.NullString `gorm:"column:workflow_version_id"`
+	PolicyVersionID        string         `gorm:"column:policy_version_id"`
+	Status                 string         `gorm:"column:status"`
+	NextSeq                int64          `gorm:"column:next_seq"`
+	RetainedFromSeq        int64          `gorm:"column:retained_from_seq"`
+	DeadlineAt             time.Time      `gorm:"column:deadline_at"`
+	StartedAt              sql.NullTime   `gorm:"column:started_at"`
+	FinishedAt             sql.NullTime   `gorm:"column:finished_at"`
+	ErrorCode              sql.NullString `gorm:"column:error_code"`
+	TerminalReason         sql.NullString `gorm:"column:terminal_reason"`
+	Retryable              bool           `gorm:"column:retryable"`
+	UsageReceiptIDs        TextArray      `gorm:"column:usage_receipt_ids;type:text[]"`
+	DeletedAt              sql.NullTime   `gorm:"column:deleted_at"`
 }
 
 func (row *runRow) toDomain() *d.AgentRun {
@@ -108,6 +112,10 @@ func (row *runRow) toDomain() *d.AgentRun {
 	if row.SourceHash.Valid {
 		sourceHash = &row.SourceHash.String
 	}
+	var selection *d.Selection
+	if row.SelectionStart.Valid && row.SelectionEnd.Valid && row.SelectionHash.Valid {
+		selection = &d.Selection{StartOffset: int(row.SelectionStart.Int64), EndOffset: int(row.SelectionEnd.Int64), SourceHash: row.SelectionHash.String}
+	}
 	var defVerID *string
 	if row.DefinitionVersionID.Valid {
 		defVerID = &row.DefinitionVersionID.String
@@ -138,38 +146,40 @@ func (row *runRow) toDomain() *d.AgentRun {
 	}
 
 	return &d.AgentRun{
-		ID:                  row.ID,
-		TenantID:            row.TenantID,
-		CreatedAt:           row.CreatedAt,
-		UpdatedAt:           row.UpdatedAt,
-		Revision:            row.Revision,
-		OwnerUserID:         row.OwnerUserID,
-		PlatformJobID:       row.PlatformJobID,
-		Kind:                row.Kind,
-		TaskKind:            row.TaskKind,
-		DiagnosticProbeKey:  probeKey,
-		TaskKey:             row.TaskKey,
-		ResourceType:        resType,
-		ResourceID:          resID,
-		NovelID:             novelID,
-		ChapterID:           chapID,
-		SourceRevision:      sourceRev,
-		SourceHash:          sourceHash,
-		Instruction:         row.Instruction,
-		DefinitionVersionID: defVerID,
-		WorkflowVersionID:   wfVerID,
-		PolicyVersionID:     row.PolicyVersionID,
-		Status:              d.RunStatus(row.Status),
-		NextSeq:             row.NextSeq,
-		RetainedFromSeq:     row.RetainedFromSeq,
-		DeadlineAt:          row.DeadlineAt,
-		StartedAt:           startedAt,
-		FinishedAt:          finishedAt,
-		ErrorCode:           errCode,
-		TerminalReason:      termReason,
-		Retryable:           row.Retryable,
-		UsageReceiptIDs:     []string(row.UsageReceiptIDs),
-		DeletedAt:           deletedAt,
+		ID:                     row.ID,
+		TenantID:               row.TenantID,
+		CreatedAt:              row.CreatedAt,
+		UpdatedAt:              row.UpdatedAt,
+		Revision:               row.Revision,
+		OwnerUserID:            row.OwnerUserID,
+		PlatformJobID:          row.PlatformJobID,
+		Kind:                   row.Kind,
+		TaskKind:               row.TaskKind,
+		DiagnosticProbeKey:     probeKey,
+		TaskKey:                row.TaskKey,
+		ResourceType:           resType,
+		ResourceID:             resID,
+		NovelID:                novelID,
+		ChapterID:              chapID,
+		SourceRevision:         sourceRev,
+		SourceHash:             sourceHash,
+		Selection:              selection,
+		SelectionScopeVerified: row.SelectionScopeVerified,
+		Instruction:            row.Instruction,
+		DefinitionVersionID:    defVerID,
+		WorkflowVersionID:      wfVerID,
+		PolicyVersionID:        row.PolicyVersionID,
+		Status:                 d.RunStatus(row.Status),
+		NextSeq:                row.NextSeq,
+		RetainedFromSeq:        row.RetainedFromSeq,
+		DeadlineAt:             row.DeadlineAt,
+		StartedAt:              startedAt,
+		FinishedAt:             finishedAt,
+		ErrorCode:              errCode,
+		TerminalReason:         termReason,
+		Retryable:              row.Retryable,
+		UsageReceiptIDs:        []string(row.UsageReceiptIDs),
+		DeletedAt:              deletedAt,
 	}
 }
 
@@ -179,6 +189,10 @@ func (r *RunRepositoryPostgres) CreateRun(ctx context.Context, tenantID string, 
 		return err
 	}
 
+	var selectionStart, selectionEnd, selectionHash any
+	if run.Selection != nil {
+		selectionStart, selectionEnd, selectionHash = run.Selection.StartOffset, run.Selection.EndOffset, run.Selection.SourceHash
+	}
 	receipts := TextArray(run.UsageReceiptIDs)
 	if receipts == nil {
 		receipts = TextArray{}
@@ -189,6 +203,7 @@ func (r *RunRepositoryPostgres) CreateRun(ctx context.Context, tenantID string, 
 			id, tenant_id, created_at, updated_at, revision, owner_user_id, platform_job_id,
 			kind, task_kind, diagnostic_probe_key, task_key, resource_type, resource_id,
 			novel_id, chapter_id, source_revision, source_hash, instruction,
+			selection_start_offset, selection_end_offset, selection_source_hash, selection_scope_verified,
 			definition_version_id, workflow_version_id, policy_version_id, status,
 			next_seq, retained_from_seq, deadline_at, started_at, finished_at,
 			error_code, terminal_reason, retryable, usage_receipt_ids
@@ -197,6 +212,7 @@ func (r *RunRepositoryPostgres) CreateRun(ctx context.Context, tenantID string, 
 			?, ?, ?, ?, ?, ?,
 			?, ?, ?, ?, ?,
 			?, ?, ?, ?,
+			?, ?, ?, ?,
 			?, ?, ?, ?, ?,
 			?, ?, ?, ?
 		)
@@ -204,6 +220,7 @@ func (r *RunRepositoryPostgres) CreateRun(ctx context.Context, tenantID string, 
 		run.ID, tenantID, run.CreatedAt, run.UpdatedAt, run.Revision, run.OwnerUserID, run.PlatformJobID,
 		run.Kind, run.TaskKind, run.DiagnosticProbeKey, run.TaskKey, run.ResourceType, run.ResourceID,
 		run.NovelID, run.ChapterID, run.SourceRevision, run.SourceHash, run.Instruction,
+		selectionStart, selectionEnd, selectionHash, run.SelectionScopeVerified,
 		run.DefinitionVersionID, run.WorkflowVersionID, run.PolicyVersionID, string(run.Status),
 		run.NextSeq, run.RetainedFromSeq, run.DeadlineAt, run.StartedAt, run.FinishedAt,
 		run.ErrorCode, run.TerminalReason, run.Retryable, receipts,
@@ -244,6 +261,23 @@ func (r *RunRepositoryPostgres) CreateRun(ctx context.Context, tenantID string, 
 	}
 
 	return nil
+}
+
+func (r *RunRepositoryPostgres) FindRunIDByNode(ctx context.Context, tenantID, nodeID string) (string, error) {
+	db, err := r.db(ctx, false)
+	if err != nil {
+		return "", err
+	}
+	var runID string
+	q := db.Raw("SELECT run_id::text FROM agent_run_nodes WHERE tenant_id=? AND id=?", tenantID, nodeID).Scan(&runID)
+	if q.Error != nil {
+		return "", q.Error
+	}
+	if q.RowsAffected != 1 {
+		return "", d.ErrNotFound()
+	}
+	return runID, nil
+
 }
 
 func (r *RunRepositoryPostgres) GetRun(ctx context.Context, tenantID, runID string) (*d.AgentRun, []d.AgentRunNode, error) {
@@ -327,11 +361,13 @@ func (r *RunRepositoryPostgres) ListRunsByOwner(ctx context.Context, tenantID, o
 		var res *d.ResourceRef
 		if dom.ResourceID != nil && dom.ResourceType != nil && dom.SourceRevision != nil {
 			res = &d.ResourceRef{
-				ResourceID:     *dom.ResourceID,
-				ResourceType:   *dom.ResourceType,
-				SourceRevision: *dom.SourceRevision,
-				NovelID:        dom.NovelID,
-				SourceHash:     dom.SourceHash,
+				ResourceID:             *dom.ResourceID,
+				ResourceType:           *dom.ResourceType,
+				SourceRevision:         *dom.SourceRevision,
+				NovelID:                dom.NovelID,
+				SourceHash:             dom.SourceHash,
+				Selection:              dom.Selection,
+				SelectionScopeVerified: dom.SelectionScopeVerified,
 			}
 		}
 		views = append(views, d.RunSummaryView{
@@ -418,8 +454,7 @@ func (r *RunRepositoryPostgres) TerminateRun(
 		UPDATE agent_runs
 		SET status = ?, finished_at = now(), revision = revision + 1,
 		    error_code = NULLIF(?, ''), terminal_reason = NULLIF(?, ''),
-		    retryable = ?, usage_receipt_ids = ARRAY(SELECT DISTINCT receipt_id
-		      FROM unnest(usage_receipt_ids || ?::uuid[]) AS receipt_id ORDER BY receipt_id), updated_at = now()
+		    retryable = ?, usage_receipt_ids = ?, updated_at = now()
 		WHERE tenant_id = ? AND id = ? AND revision = ?
 		  AND status NOT IN ('succeeded', 'failed', 'cancelled')
 		  AND deleted_at IS NULL
@@ -1450,20 +1485,3 @@ func (r *RunRepositoryPostgres) CheckEventCursorExpired(ctx context.Context, ten
 }
 
 var _ d.RunRepository = (*RunRepositoryPostgres)(nil)
-
-// FindRunIDByNode resolves an immutable node owner without consulting LLM tables.
-func (r *RunRepositoryPostgres) FindRunIDByNode(ctx context.Context, tenantID, nodeID string) (string, error) {
-	db, err := r.db(ctx, false)
-	if err != nil {
-		return "", err
-	}
-	var runID string
-	q := db.Raw("SELECT run_id::text FROM agent_run_nodes WHERE tenant_id=? AND id=?", tenantID, nodeID).Scan(&runID)
-	if q.Error != nil {
-		return "", q.Error
-	}
-	if q.RowsAffected != 1 {
-		return "", d.ErrNotFound()
-	}
-	return runID, nil
-}

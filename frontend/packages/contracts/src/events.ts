@@ -15,6 +15,8 @@ export type RunEventType =
   | "tool.started"
   | "tool.completed"
   | "approval.required"
+  | "question.required"
+  | "question.answered"
   | "node.updated"
   | "usage.updated"
   | "run.succeeded"
@@ -41,43 +43,37 @@ export interface ReasoningSummaryPayload {
 
 /** 工具调用开始载荷 */
 export interface ToolStartedPayload {
-  tool_call_id: string;
-  tool_name: string;
-  arguments_summary?: Record<string, unknown>;
+  node_id: string;
+  tool_id: string;
+  invocation_id: string;
 }
 
-/** 工具调用完成载荷 */
 export interface ToolCompletedPayload {
-  tool_call_id: string;
-  tool_name: string;
-  outcome: "success" | "error";
-  summary?: string;
+  node_id: string;
+  invocation_id: string;
+  success: boolean;
+  result_ref: string | null;
+  error_code: string | null;
 }
 
-/** 人工安全审批请求载荷 */
+/** SSE only carries identifiers; fetch the owner-authorized approval to decide. */
 export interface ApprovalRequiredPayload {
   approval_id: string;
   node_id: string;
-  tool_name: string;
-  risk_level: "low" | "medium" | "high" | "critical";
   expires_at: string;
-  arguments_summary?: Record<string, unknown>;
 }
 
-/** DAG 节点状态更新载荷 */
 export interface NodeUpdatedPayload {
   node_id: string;
-  status: "pending" | "running" | "completed" | "failed" | "skipped";
-  node_type: string;
-  duration_ms?: number;
+  status: "pending" | "ready" | "running" | "waiting_approval" | "waiting_clarification" | "retry_wait" | "succeeded" | "failed" | "cancelled" | "skipped";
 }
 
-/** Token 用量与成本更新载荷 */
 export interface UsageUpdatedPayload {
-  prompt_tokens: number;
-  completion_tokens: number;
-  total_tokens: number;
-  cost_micros?: number;
+  input_tokens: number;
+  output_tokens: number;
+  cost_micros: number;
+  currency: string;
+  estimated: boolean;
 }
 
 /** 智能体运行成功终态载荷 */
@@ -108,6 +104,8 @@ export interface RunEventPayloadMap {
   "tool.started": ToolStartedPayload;
   "tool.completed": ToolCompletedPayload;
   "approval.required": ApprovalRequiredPayload;
+  "question.required": { question_id: string; question_version: 1; node_id: string };
+  "question.answered": { question_id: string; question_version: 1; answer_hash: string; actor_id: string; answered_at: string };
   "node.updated": NodeUpdatedPayload;
   "usage.updated": UsageUpdatedPayload;
   "run.succeeded": RunSucceededPayload;

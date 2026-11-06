@@ -33,6 +33,12 @@ import {
   WorldviewGraph,
   WorldRevisionResponse,
   AgentRun,
+  AgentQuestion,
+  AgentApproval,
+  ApprovalDecisionInput,
+  AnswerQuestionInput,
+  CatalogTaskPolicy,
+  AgentRunSummary,
   CancelRunInput,
   CreateRunInput,
   CatalogDefinition,
@@ -56,6 +62,39 @@ function requireNovel(value: Novel, novelId: string): Novel {
       !(value.target_completion_date === null || (typeof value.target_completion_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.target_completion_date)))) {
     throw new NetworkError("Incomplete novel response");
   }
+  return value;
+}
+
+function requireQuestion(value: AgentQuestion, runId: string, questionId: string): AgentQuestion {
+  if (!value || value.id !== questionId || value.run_id !== runId || !isValidRevision(value.revision) || value.question_version !== 1 ||
+      !["open", "answered", "expired", "cancelled"].includes(value.status) || !value.response_schema ||
+      !["string", "array"].includes(value.response_schema.type) || !Array.isArray(value.options) ||
+      typeof value.title_key !== "string" || typeof value.help_key !== "string" || typeof value.context_summary !== "string" ||
+      !isValidRevision(value.source_revision) || !/^[a-f0-9]{64}$/.test(value.source_hash) || !Number.isFinite(Date.parse(value.expires_at)) ||
+      !value.options.every(option => option && typeof option.value === "string" && typeof option.label_key === "string")) {
+    throw new NetworkError("Incomplete question response");
+  }
+  const schema = value.response_schema;
+  const choices = schema.type === "array" ? schema.items?.enum : "enum" in schema ? schema.enum : null;
+  if (schema.type === "array" && (schema.uniqueItems !== true || !Number.isInteger(schema.maxItems) || schema.maxItems < 1 || schema.maxItems > 20 || !choices)) throw new NetworkError("Invalid multiple choice schema");
+  if (choices && (!Array.isArray(choices) || choices.length < 2 || choices.length > 20 || choices.some(choice => typeof choice !== "string") || new Set(choices).size !== choices.length)) throw new NetworkError("Invalid question choices");
+  if (schema.type === "string" && !("enum" in schema) && (!Number.isInteger(schema.maxLength) || schema.maxLength < 1 || schema.maxLength > 4000)) throw new NetworkError("Invalid text question schema");
+  return value;
+}
+
+function requireApproval(value: AgentApproval, id?: string): AgentApproval {
+  if (!value || typeof value.id !== "string" || (id && value.id !== id) || !isValidRevision(value.revision) || !isValidRevision(value.source_revision) ||
+      typeof value.run_id !== "string" || typeof value.owner_user_id !== "string" || typeof value.arguments_json !== "string" ||
+      !/^[a-f0-9]{64}$/.test(value.arguments_hash) || !Number.isFinite(Date.parse(value.expires_at)) ||
+      !["pending", "consumed", "rejected", "expired", "cancelled"].includes(value.status)) throw new NetworkError("Incomplete approval response");
+  return value;
+}
+
+function requireRun(value: AgentRun, runId?: string): AgentRun {
+  if (!value || typeof value.id !== "string" || (runId && value.id !== runId) || !isValidRevision(value.revision) ||
+      !["queued", "pending", "running", "waiting_approval", "waiting_clarification", "cancelling", "succeeded", "completed", "failed", "cancelled"].includes(value.status) ||
+      !Array.isArray(value.pending_questions) || value.pending_questions.length > 1 || typeof value.policy_version_id !== "string" || !value.resource || typeof value.resource.resource_id !== "string") throw new NetworkError("Incomplete run response");
+  for (const question of value.pending_questions) requireQuestion(question, value.id, question?.id);
   return value;
 }
 
@@ -378,6 +417,7 @@ export class ApiSDK {
     /** Creator-safe published workflow catalog. */
     listCatalogWorkflows: async (): Promise<CatalogWorkflow[]> => {
       const items: CatalogWorkflow[] = [];
+      const seen = new Set<string>();
       let cursor: string | undefined;
       do {
         const res = await this.client.request<unknown, PagedList<CatalogWorkflow>>({
@@ -392,6 +432,8 @@ export class ApiSDK {
         }
         items.push(...page.items);
         cursor = page.has_more ? page.next_cursor || undefined : undefined;
+        if (cursor && seen.has(cursor)) throw new NetworkError("Catalog cursor repeated");
+        if (cursor) seen.add(cursor);
       } while (cursor);
       return items;
     },
@@ -399,6 +441,7 @@ export class ApiSDK {
     /** Creator-safe published definition catalog. */
     listCatalogDefinitions: async (): Promise<CatalogDefinition[]> => {
       const items: CatalogDefinition[] = [];
+      const seen = new Set<string>();
       let cursor: string | undefined;
       do {
         const res = await this.client.request<unknown, PagedList<CatalogDefinition>>({
@@ -413,30 +456,93 @@ export class ApiSDK {
         }
         items.push(...page.items);
         cursor = page.has_more ? page.next_cursor || undefined : undefined;
+        if (cursor && seen.has(cursor)) throw new NetworkError("Catalog cursor repeated");
+        if (cursor) seen.add(cursor);
       } while (cursor);
       return items;
     },
 
+    listCatalogTaskPolicies: async (): Promise<CatalogTaskPolicy[]> => {
+      const items: CatalogTaskPolicy[] = [];
+      const seen = new Set<string>();
+      let cursor: string | undefined;
+      do {
+        const { data } = await this.client.request<unknown, PagedList<CatalogTaskPolicy>>({ operationId: "agent_catalog_task_policies", method: "GET", path: "/v1/agents/catalog/task-policies", query: { limit: 100, cursor } });
+        if (!data || !Array.isArray(data.items) || typeof data.has_more !== "boolean" ||
+            !data.items.every(item => item && typeof item.policy_version_id === "string" && typeof item.task_key === "string" && Array.isArray(item.task_kinds) && item.budget)) throw new NetworkError("Incomplete task policy catalog");
+        items.push(...data.items);
+        cursor = data.has_more ? data.next_cursor || undefined : undefined;
+        if (data.has_more && (!cursor || seen.has(cursor))) throw new NetworkError("Invalid task policy cursor");
+        if (cursor) seen.add(cursor);
+      } while (cursor);
+      return items;
+    },
+
+    listRuns: async (cursor?: string): Promise<PagedList<AgentRunSummary>> => {
+      const { data } = await this.client.request<unknown, PagedList<AgentRunSummary>>({ operationId: "agent_list_runs", method: "GET", path: "/v1/agents/runs", query: { limit: 100, cursor } });
+      if (!data || !Array.isArray(data.items) || typeof data.has_more !== "boolean") throw new NetworkError("Incomplete run history");
+      return data;
+    },
+
+    getQuestion: async (runId: string, questionId: string): Promise<AgentQuestion> => {
+      const { data } = await this.client.request<unknown, AgentQuestion>({ operationId: "agent_get_run_question", method: "GET", path: "/v1/agents/runs/:run_id/questions/:question_id", pathParams: { run_id: runId, question_id: questionId } });
+      return requireQuestion(data, runId, questionId);
+    },
+
+    answerQuestion: async (runId: string, questionId: string, input: AnswerQuestionInput, idempotencyKey: string): Promise<AgentQuestion> => {
+      const { data } = await this.client.request<AnswerQuestionInput, AgentQuestion>({ operationId: "agent_answer_run_question", method: "POST", path: "/v1/agents/runs/:run_id/questions/:question_id/answer", pathParams: { run_id: runId, question_id: questionId }, body: input, idempotencyKey });
+      const question = requireQuestion(data, runId, questionId);
+      if (question.status !== "answered") throw new NetworkError("Incomplete answer acknowledgement");
+      return question;
+    },
+
+    listApprovals: async (): Promise<AgentApproval[]> => {
+      const items: AgentApproval[] = [];
+      const seen = new Set<string>();
+      let cursor: string | undefined;
+      do {
+        const { data } = await this.client.request<unknown, PagedList<AgentApproval>>({ operationId: "agent_list_approvals", method: "GET", path: "/v1/agents/approvals", query: { limit: 100, cursor } });
+        if (!data || !Array.isArray(data.items) || typeof data.has_more !== "boolean") throw new NetworkError("Incomplete approvals page");
+        items.push(...data.items.map(item => requireApproval(item)));
+        cursor = data.has_more ? data.next_cursor ?? undefined : undefined;
+        if (data.has_more && (!cursor || seen.has(cursor))) throw new NetworkError("Invalid approvals cursor");
+        if (cursor) seen.add(cursor);
+      } while (cursor);
+      return items;
+    },
+    getApproval: async (id: string): Promise<AgentApproval> => {
+      const { data } = await this.client.request<unknown, AgentApproval>({ operationId: "agent_get_approval", method: "GET", path: "/v1/agents/approvals/:approval_id", pathParams: { approval_id: id } });
+      return requireApproval(data, id);
+    },
+    decideApproval: async (id: string, decision: "approve" | "reject", input: ApprovalDecisionInput, idempotencyKey: string): Promise<AgentApproval> => {
+      const { data } = await this.client.request<ApprovalDecisionInput, AgentApproval>({ operationId: `agent_${decision}_approval`, method: "POST", path: `/v1/agents/approvals/:approval_id/${decision}`, pathParams: { approval_id: id }, body: input, idempotencyKey });
+      const approval = requireApproval(data, id);
+      if (approval.status !== (decision === "approve" ? "consumed" : "rejected")) throw new NetworkError("Incomplete approval acknowledgement");
+      return approval;
+    },
+
     /** 启动智能体运行任务 (POST /v1/agents/runs) */
-    createRun: async (input: CreateRunInput): Promise<AgentRun> => {
+    createRun: async (input: CreateRunInput, idempotencyKey?: string): Promise<AgentRun> => {
       const res = await this.client.request<CreateRunInput, AgentRun>({
         operationId: "agent_createRun",
         method: "POST",
         path: "/v1/agents/runs",
         body: input,
+        idempotencyKey,
       });
-      return res.data;
+      return requireRun(res.data);
     },
 
-    cancelRun: async (runId: string, input: CancelRunInput): Promise<AgentRun> => {
+    cancelRun: async (runId: string, input: CancelRunInput, idempotencyKey?: string): Promise<AgentRun> => {
       const res = await this.client.request<CancelRunInput, AgentRun>({
         operationId: "agent_cancel_run",
         method: "POST",
         path: "/v1/agents/runs/:run_id/cancel",
         pathParams: { run_id: runId },
         body: input,
+        idempotencyKey,
       });
-      return res.data;
+      return requireRun(res.data, runId);
     },
 
     /** 获取指定运行详情 (GET /v1/agents/runs/:run_id) */
@@ -447,7 +553,7 @@ export class ApiSDK {
         path: "/v1/agents/runs/:run_id",
         pathParams: { run_id: runId },
       });
-      return res.data;
+      return requireRun(res.data, runId);
     },
 
     /** 获取运行生成的产物列表 (GET /v1/agents/runs/:run_id/artifacts) */
