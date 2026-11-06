@@ -317,9 +317,9 @@ func TestAnthropicStreamFailureRetainsMeasuredUsageWithoutTools(t *testing.T) {
 	var measured *d.TokenUsage
 	committed := false
 	req := d.TextGenerationRequest{
-		Messages: []d.ChatMessage{{Role: d.ChatMessageRoleUser, Content: "Cache usage"}},
-		MaxTokens: 64,
-		OnUsage: func(u *d.TokenUsage) { measured = d.CloneTokenUsage(u) },
+		Messages:    []d.ChatMessage{{Role: d.ChatMessageRoleUser, Content: "Cache usage"}},
+		MaxTokens:   64,
+		OnUsage:     func(u *d.TokenUsage) { measured = d.CloneTokenUsage(u) },
 		OnToolCalls: func([]d.ToolCall) { committed = true },
 	}
 	err := router.generateNativeChatStream(context.Background(), upstreamTarget{
