@@ -333,6 +333,11 @@ func TestEmailPostgresSMTPAuthentication(t *testing.T) {
 			Code: code, Audience: "creator", TenantID: registered.Principal.TenantID, ClientIP: uuid.NewString()}
 		_, err = auth.LoginEmail(ctx, proof)
 		requireCode(t, err, "auth.invalid_credentials")
+		// Advance only the persisted delivery timestamp to model the documented
+		// per-address cooldown elapsing; keep the OTP expiry and account state intact.
+		if err = db.Exec("UPDATE platform_email_challenges SET created_at=clock_timestamp()-interval '61 seconds' WHERE id=?", codeInfo.ChallengeID).Error; err != nil {
+			t.Fatal(err)
+		}
 		resetInfo, resetCode, _ := request(t, address, "reset", "creator", registered.Principal.TenantID)
 		err = auth.ResetPassword(ctx, identity.ResetPasswordInput{EmailLoginInput: identity.EmailLoginInput{
 			Email: address, ChallengeID: resetInfo.ChallengeID, Code: resetCode,
