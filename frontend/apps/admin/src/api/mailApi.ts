@@ -1,7 +1,7 @@
 import { adminClient } from "./adminApi";
 
 export interface MailSettings {
-  provider: "disabled" | "smtp";
+  provider: "disabled" | "smtp" | "resend";
   enabled: boolean;
   smtp_host: string;
   smtp_port: number;
