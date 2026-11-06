@@ -456,7 +456,6 @@ func toAnthropicToolChoice(choice any) any {
 	return choice
 }
 
-
 // Anthropic reports uncached input separately from cache creation and reads.
 // The ledger's Input convention is inclusive, with cached reads as a subset.
 func anthropicTokenUsage(uncached, created, read, output int) *domain.TokenUsage {
