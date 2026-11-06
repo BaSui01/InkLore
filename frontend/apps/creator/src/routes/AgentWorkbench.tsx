@@ -51,6 +51,8 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
   const [review, setReview] = useState<ArtifactView | null>(null);
   const [sourceSnapshot, setSourceSnapshot] = useState("");
   const [sourceHash, setSourceHash] = useState("");
+  const [verifiedRunId, setVerifiedRunId] = useState<string | null>(null);
+  const [scopeUnknown, setScopeUnknown] = useState(false);
   const [sourceUnavailable, setSourceUnavailable] = useState(false);
   const [sourceRefresh, setSourceRefresh] = useState(0);
   const [sourceSelection, setSourceSelection] = useState<AgentWorkbenchProps["initialSelection"]>(null);
@@ -84,7 +86,7 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
     return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
   }, []);
   useEffect(() => {
-    if (state.denied) { setCatalog(emptyCatalog); setCatalogReady(false); setInstruction(""); setSourceSnapshot(""); setSourceHash(""); setSourceSelection(null); setReview(null); createIntent.current = null; cancelIntent.current = null; setHistory([]); setUncertain(false); }
+    if (state.denied) { setCatalog(emptyCatalog); setCatalogReady(false); setInstruction(""); setSourceSnapshot(""); setSourceHash(""); setSourceSelection(null); setVerifiedRunId(null); setScopeUnknown(false); setReview(null); createIntent.current = null; cancelIntent.current = null; setHistory([]); setUncertain(false); }
   }, [state.denied]);
   useEffect(() => {
     if (!props.open) return;
@@ -136,6 +138,7 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
       }
       const url = new URL(window.location.href); url.searchParams.set("agentCreate", createIntent.current.key); url.searchParams.set("agentChapter", props.chapterId); window.history.replaceState(window.history.state, "", url);
       const created = await api.agent.createRun(createIntent.current.body, createIntent.current.key);
+      setVerifiedRunId(created.id); setScopeUnknown(false);
       state.adopt(created); createIntent.current = null; setUncertain(false); clearCreatePointer();
     } catch (cause) {
       const unknown = isNetworkError(cause) || (isApiError(cause) && (cause.httpStatus >= 500 || cause.code === "platform.operation_in_progress"));
@@ -160,19 +163,40 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
     } finally { cancelLock.current = false; setCancelling(false); }
   };
   useEffect(() => {
-    if (!run?.resource || sourceHash || props.chapterRevision === null) return;
-    if (run.resource.source_revision !== props.chapterRevision) { setSourceUnavailable(true); return; }
+    if (!run?.resource || (verifiedRunId === run.id && sourceHash) || props.chapterRevision === null) return;
+    if (run.resource.source_revision !== props.chapterRevision) {
+      setSourceHash(""); setVerifiedRunId(null); setSourceUnavailable(true); return;
+    }
     let alive = true;
-    void api.content.getChapterBody(props.chapterId).then(value => {
-      if (!alive) return;
-      if (value.chapter.revision !== run.resource!.source_revision || value.chapter.content_hash !== run.resource!.source_hash) { setSourceUnavailable(true); return; }
-      setSourceUnavailable(false);
-      setSourceSnapshot(value.body); setSourceHash(value.chapter.content_hash ?? "");
-      const selected = run.resource!.selection;
-      if (selected) setSourceSelection({ ...selected, startOffset: selected.start_offset, endOffset: selected.end_offset, text: [...value.body].slice(selected.start_offset, selected.end_offset).join("") });
-    }).catch(state.handleError);
+    void (async () => {
+      try {
+        const value = await api.content.getChapterBody(props.chapterId);
+        const body = value.body.replace(/\r\n?/g, "\n");
+        const digest = await hashText(body);
+        if (!alive) return;
+        const selected = run.resource!.selection;
+        const codepoints = Array.from(body);
+        if (value.chapter.revision !== run.resource!.source_revision ||
+            value.chapter.content_hash !== digest || run.resource!.source_hash !== digest ||
+            (selected && (selected.source_hash !== digest || !Number.isSafeInteger(selected.start_offset) ||
+              !Number.isSafeInteger(selected.end_offset) || selected.start_offset < 0 ||
+              selected.end_offset <= selected.start_offset || selected.end_offset > codepoints.length))) {
+          setSourceHash(""); setVerifiedRunId(null); setSourceUnavailable(true); return;
+        }
+        // Historical runs without a persisted selection may have been partial
+        // rewrites. Never treat missing scope as whole-chapter consent.
+        setScopeUnknown(!selected);
+        setSourceUnavailable(false); setSourceSnapshot(body); setSourceHash(digest); setVerifiedRunId(run.id);
+        setSourceSelection(selected ? {
+          startOffset: selected.start_offset, endOffset: selected.end_offset,
+          text: codepoints.slice(selected.start_offset, selected.end_offset).join(""),
+        } : null);
+      } catch (cause) {
+        if (alive) { setSourceHash(""); setVerifiedRunId(null); setSourceUnavailable(true); state.handleError(cause); }
+      }
+    })();
     return () => { alive = false; };
-  }, [run?.id, props.chapterId, props.chapterRevision, api, sourceHash, sourceRefresh, state.handleError]);
+  }, [run?.id, props.chapterId, props.chapterRevision, api, sourceHash, sourceRefresh, verifiedRunId, state.handleError]);
 
   const selectClass = "w-full min-w-0 rounded border bg-[var(--bg-canvas)] p-2";
   // Keep the owner question subtree mounted while consulting the chapter so
@@ -211,6 +235,7 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
         </form>}
       </>}
       {run && <div className="space-y-4">
+        {scopeUnknown && <p role="alert">{t("agentQuestion.sourceUnavailable")}</p>}
         {sourceUnavailable && !sourceHash && <div role="alert" className="rounded border p-3 text-sm"><p>{t("agentQuestion.sourceUnavailable")}</p><Button variant="ghost" disabled={offline} onClick={() => setSourceRefresh(value => value + 1)}>{t("common.refresh")}</Button></div>}
         {state.stale && <p role="status">{t("agentWorkbench.stale")}</p>}
         {state.connection === "reconnecting" && <p role="status">{t("agentWorkbench.reconnecting")}</p>}
@@ -223,10 +248,10 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
         {snapshot?.isTruncated && <p>{t("agentWorkbench.partialStream")}</p>}
         {!terminalRun(status ?? run.status) && <Button variant="outline" loading={cancelling} disabled={offline} onClick={() => void cancel()}>{t("agentWorkbench.cancelRun")}</Button>}
         {status === "succeeded" && artifacts.length === 0 && <p>{t("agentWorkbench.emptyArtifacts")}</p>}
-        {artifacts.map(artifact => <article key={artifact.id} className="rounded border p-3 space-y-2 break-words"><strong>{artifact.kind}</strong><p className="text-xs">{t("agentWorkbench.sourceRevision", artifact.source_revision)}</p><pre className="max-h-40 overflow-auto whitespace-pre-wrap text-sm">{artifact.text_content ?? ""}</pre><Button variant="outline" disabled={artifact.is_partial || !artifact.text_content || artifact.target_resource_id !== props.chapterId || artifact.source_revision !== props.chapterRevision || !sourceHash} onClick={() => setReview(artifact)}>{t("agentWorkbench.reviewAdopt")}</Button></article>)}
-        {terminalRun(status ?? run.status) && <Button variant="outline" icon={<RefreshCw size={16} />} onClick={() => { state.clear(); state.setError(null); setSourceHash(""); setSourceSnapshot(""); setSourceSelection(null); cancelIntent.current = null; }}>{t("agentWorkbench.newRun")}</Button>}
+        {artifacts.map(artifact => <article key={artifact.id} className="rounded border p-3 space-y-2 break-words"><strong>{artifact.kind}</strong><p className="text-xs">{t("agentWorkbench.sourceRevision", artifact.source_revision)}</p><pre className="max-h-40 overflow-auto whitespace-pre-wrap text-sm">{artifact.text_content ?? ""}</pre><Button variant="outline" disabled={artifact.is_partial || !artifact.text_content || artifact.target_resource_id !== props.chapterId || artifact.source_revision !== props.chapterRevision || !sourceHash || verifiedRunId !== run.id || scopeUnknown} onClick={() => setReview(artifact)}>{t("agentWorkbench.reviewAdopt")}</Button></article>)}
+        {terminalRun(status ?? run.status) && <Button variant="outline" icon={<RefreshCw size={16} />} onClick={() => { state.clear(); state.setError(null); setSourceHash(""); setSourceSnapshot(""); setSourceSelection(null); setVerifiedRunId(null); setScopeUnknown(false); cancelIntent.current = null; }}>{t("agentWorkbench.newRun")}</Button>}
       </div>}
-      {review && <ArtifactReviewModal open={props.open} originalText={sourceSelection?.text ?? sourceSnapshot} suggestedText={review.text_content ?? ""} actionTitle={t("agentWorkbench.artifactReview")} sourceRevision={review.source_revision} sourceHash={sourceHash} artifactHash={review.content_hash} partial={review.is_partial} onClose={() => setReview(null)} onAdopt={() => { props.onAdopt(review, sourceSelection, sourceSnapshot); setReview(null); }} />}
+      {review && !scopeUnknown && verifiedRunId === run?.id && <ArtifactReviewModal open={props.open} originalText={sourceSelection?.text ?? sourceSnapshot} suggestedText={review.text_content ?? ""} actionTitle={t("agentWorkbench.artifactReview")} sourceRevision={review.source_revision} sourceHash={sourceHash} artifactHash={review.content_hash} partial={review.is_partial} onClose={() => setReview(null)} onAdopt={() => { props.onAdopt(review, sourceSelection, sourceSnapshot); setReview(null); }} />}
     </section>
   </div>;
 }
