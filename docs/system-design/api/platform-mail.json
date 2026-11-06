@@ -368,7 +368,7 @@
    },
    "put": {
     "operationId": "platformUpdateMailSettings",
-    "summary": "CAS 更新全局 SMTP 邮件配置",
+    "summary": "CAS 更新全局邮件投递配置",
     "tags": [
      "platform"
     ],
@@ -733,7 +733,8 @@
       "type": "string",
       "enum": [
        "disabled",
-       "smtp"
+       "smtp",
+       "resend"
       ]
      },
      "enabled": {
@@ -854,7 +855,8 @@
       "type": "string",
       "enum": [
        "disabled",
-       "smtp"
+       "smtp",
+       "resend"
       ]
      },
      "enabled": {
