@@ -93,6 +93,10 @@ func TestEmailPostgresSMTPAuthentication(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		// Existing OTP fixtures represent previously verified accounts.
+		if err := db.Exec("UPDATE platform_users SET email_verified_at=clock_timestamp() WHERE id=?", session.Principal.UserID).Error; err != nil {
+			t.Fatal(err)
+		}
 		return session
 	}
 	emailFor := func(t *testing.T, p identity.Principal) string {
