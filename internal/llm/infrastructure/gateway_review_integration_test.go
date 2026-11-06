@@ -233,3 +233,45 @@ func TestGatewayRuntimeAnthropicLocalRejectionDoesNotCharge(t *testing.T) {
 		t.Fatal("local rejects must retain one explicit zero-cost audit receipt each")
 	}
 }
+
+func TestGatewayAmbiguousAcquisitionReconcilesOnlyOwnLease(t *testing.T) {
+	f := newRuntimeFixture(t, 1000000, 1, nil)
+	ctx := context.Background()
+	plan, err := f.repository.Plan(ctx, f.request("ambiguous-redis-acquire"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	in := d.AdmissionRequest{TenantID: f.tenant, InvocationID: uuid.NewString(),
+		ModelID: f.model, Attempt: 1, Candidates: plan.Candidates, KeyVersions: plan.KeyVersions}
+	first, err := f.admission.Acquire(ctx, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keys, _, err := gatewayCandidates(in, first.Token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.admission.reconcileAmbiguousAcquire(ctx, in, keys, uuid.NewString()); err == nil {
+		t.Fatal("unknown owner removed the active lease")
+	}
+	attemptKey := gatewayPrefix(f.tenant) + "attempt:" + in.InvocationID + ":1"
+	if owner, err := f.redis.Get(ctx, attemptKey).Result(); err != nil || owner != first.Token {
+		t.Fatalf("owner was not fenced: %q %v", owner, err)
+	}
+	if err := f.admission.reconcileAmbiguousAcquire(ctx, in, keys, first.Token); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.admission.reconcileAmbiguousAcquire(ctx, in, keys, first.Token); err != nil {
+		t.Fatal("same owned cleanup was not idempotent:", err)
+	}
+	if _, err := f.redis.Get(ctx, attemptKey).Result(); !errors.Is(err, redis.Nil) {
+		t.Fatalf("stale attempt marker remains after safe cleanup: %v", err)
+	}
+	second, err := f.admission.Acquire(ctx, in)
+	if err != nil || second.Token == first.Token {
+		t.Fatalf("same attempt cannot retry after reconciliation: %+v %v", second, err)
+	}
+	if err := f.admission.Release(ctx, second); err != nil {
+		t.Fatal(err)
+	}
+}
