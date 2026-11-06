@@ -699,11 +699,14 @@
    "post": {
     "operationId": "llm_fetch_upstream_models",
     "x-use-case": "FR-21 llm.fetch_upstream_models",
+    "x-idempotency": {
+     "mode": "read_only",
+     "reason": "Reads provider model catalogs with outbound GET requests and does not persist credentials or mutate catalog state; POST keeps the supplied API key out of URLs."
+    },
     "x-permission": {
      "audience": "admin",
      "roles": [
-      "operator",
-      "auditor"
+      "operator"
      ],
      "scope": "tenant"
     },

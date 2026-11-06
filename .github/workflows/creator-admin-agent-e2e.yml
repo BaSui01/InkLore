@@ -146,3 +146,14 @@ jobs:
           path: /tmp/inklore-writing-evidence
           if-no-files-found: ignore
           retention-days: 7
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_e2e PGDATABASE=inklore_e2e PGPASSWORD=disposable-ci-only
+          export E2E_BROWSER=true E2E_EVIDENCE_DIR=/tmp/inklore-content-evidence
+          python3 scripts/ci/content_delivery_acceptance.py
+      - name: Upload content acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: content-delivery-evidence
+          path: /tmp/inklore-content-evidence
+          if-no-files-found: ignore
+          retention-days: 7

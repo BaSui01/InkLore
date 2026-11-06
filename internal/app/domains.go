@@ -68,14 +68,15 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 	if err = world.ValidateOptions(); err != nil {
 		return err
 	}
-	content, err := contentapp.New(contentapp.Options{Repo: contentinfra.NewRepository(p.UoW), UOW: p.UoW, Scope: p.Scope, Identity: p.Identity, Idempotency: p.Idempotency, Cursor: p.Cursor, Events: contentEventAdapter{a}, World: world, Facts: adapters.WorldFactAdapter{World: world}})
+	if err = a.ensureFileService(); err != nil {
+		return err
+	}
+	contentReviews := &adapters.ContentExportReviews{}
+	content, err := contentapp.New(contentapp.Options{Repo: contentinfra.NewRepository(p.UoW), UOW: p.UoW, Scope: p.Scope, Identity: p.Identity, Idempotency: p.Idempotency, Cursor: p.Cursor, Events: contentEventAdapter{a}, World: world, Facts: adapters.WorldFactAdapter{World: world}, Files: adapters.ContentFiles{Service: p.Files}, Reviews: contentReviews})
 	if err != nil {
 		return err
 	}
 	a.domains.Content = content
-	if err = a.ensureFileService(); err != nil {
-		return err
-	}
 	outline, err := outlineapp.NewService(outlineapp.Options{Repository: outlineinfra.NewRepository(p.UoW), UoW: p.UoW, Scope: p.Scope, ChapterContext: adapters.ChapterContextAdapter{Content: content}, OnMutation: func(ctx context.Context, e outlineapp.Mutation) error {
 		action, ok := outlineActions[e.Action]
 		if !ok {
@@ -190,6 +191,7 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 		return err
 	}
 	a.domains.Compliance = compService
+	contentReviews.Compliance = compService
 	compHandler, err := comphttp.NewHandler(comphttp.Options{
 		Service:     compService,
 		Identity:    p.Identity,
