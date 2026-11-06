@@ -159,6 +159,20 @@ def main():
     run = request("/v1/agents/runs", 202, "POST", body, creator, create_key)
     check(run["resource"]["source_hash"] == chapter["content_hash"] == hashlib.sha256(original.encode()).hexdigest(), "Run source cannot be verified against the authoritative chapter body")
     verified("Run source uses canonical body digest; stale source hash rejects before creating a Run")
+    check(run["resource"].get("selection_scope_verified") is True, "Full chapter Run did not persist explicit original scope")
+    selection = {"start_offset": 0, "end_offset": 3, "source_hash": chapter["content_hash"]}
+    partial_request = {**body, "resource": {**body["resource"], "selection": selection}}
+    partial_run = request("/v1/agents/runs", 202, "POST", partial_request, creator, uid())
+    partial_restored = request("/v1/agents/runs/" + partial_run["id"], session=creator)
+    check(partial_restored["resource"].get("selection") == selection and
+          partial_restored["resource"].get("selection_scope_verified") is True,
+          "Selected Run lost its Unicode selection binding after persisted GET")
+    stale_selection = {**partial_request, "resource": {**partial_request["resource"],
+        "selection": {**selection, "end_offset": len(original) + 1}}}
+    request("/v1/agents/runs", 409, "POST", stale_selection, creator, uid())
+    request("/v1/agents/runs/" + partial_run["id"] + "/cancel", method="POST",
+            body={"expected_revision": partial_restored["revision"]}, session=creator, key=uid())
+    verified("Persisted Run scope distinguishes a complete chapter from selected text and rejects out-of-range slices")
     next_policy = request(f"/v1/llm/task-policies/{policy['id']}", method="PUT", body={**policy_body, "expected_revision": policy["revision"], "max_output_tokens": 768}, session=admin, key=uid())
     check(next_policy["version"] == policy["version"] + 1 and next_policy["current_version_id"] != policy["current_version_id"], "Policy publish did not create immutable version")
     replay = request("/v1/agents/runs", 202, "POST", body, creator, create_key)
