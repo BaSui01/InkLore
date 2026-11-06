@@ -255,6 +255,7 @@ func (a *RedisAdmission) Acquire(ctx context.Context, in d.AdmissionRequest) (d.
 	}
 	return d.AdmissionLease{TenantID: in.TenantID, InvocationID: in.InvocationID, ModelID: in.ModelID, ChannelID: values[1], KeyID: values[2], KeyVersion: values[3], Token: token, Attempt: in.Attempt, ExpiresAt: time.UnixMilli(millis).UTC()}, nil
 }
+
 // The caller has never received this lease, so provider dispatch is impossible.
 // Verify the attempt token and associated lease inside one Redis operation before
 // retracting RPM/concurrency occupancy. Any missing proof remains fail-closed.
