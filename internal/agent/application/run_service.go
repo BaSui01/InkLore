@@ -244,6 +244,7 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 		SourceRevision:      &sourceRevision,
 		SourceHash:          &sourceHash,
 		Selection:           in.Resource.Selection,
+		SelectionScopeVerified: true,
 		Instruction:         in.Instruction,
 		DefinitionVersionID: defVerID,
 		WorkflowVersionID:   wfVerID,
@@ -637,6 +638,7 @@ func (s *RunService) buildRunView(run *d.AgentRun, nodes []d.AgentRunNode) *d.Ru
 			NovelID:        run.NovelID,
 			SourceHash:     run.SourceHash,
 			Selection:      run.Selection,
+			SelectionScopeVerified: run.SelectionScopeVerified,
 		}
 	}
 

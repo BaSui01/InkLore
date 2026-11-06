@@ -185,7 +185,7 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
         }
         // Historical runs without a persisted selection may have been partial
         // rewrites. Never treat missing scope as whole-chapter consent.
-        setScopeUnknown(!selected);
+        setScopeUnknown(!selected && !run.resource!.selection_scope_verified);
         setSourceUnavailable(false); setSourceSnapshot(body); setSourceHash(digest); setVerifiedRunId(run.id);
         setSourceSelection(selected ? {
           startOffset: selected.start_offset, endOffset: selected.end_offset,

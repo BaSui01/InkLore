@@ -653,6 +653,8 @@ export interface components {
             resource_type: "chapter" | "novel" | "analysis" | "report" | "rewrite";
             source_revision: components["schemas"]["Revision"];
             source_hash?: string;
+            /** @description True only when a Run's full or selected scope was durably persisted. */
+            selection_scope_verified?: boolean;
             /** @description Unicode码点半开选区；start<end且≤源正文长度，绑定source_revision/hash；省略表示全章。 */
             selection?: {
                 start_offset: number;

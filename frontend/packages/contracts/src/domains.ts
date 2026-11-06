@@ -259,6 +259,7 @@ export interface AgentResourceRef {
   novel_id?: string;
   source_hash?: string;
   selection?: AgentResourceSelection;
+  selection_scope_verified?: boolean;
 }
 
 export interface CancelRunInput {

@@ -3819,6 +3819,10 @@
             "type": "string",
             "pattern": "^[0-9a-f]{64}$"
           },
+          "selection_scope_verified": {
+            "type": "boolean",
+            "description": "True only when original Run scope was persisted, including explicit whole-chapter scope."
+          },
           "selection": {
             "type": "object",
             "properties": {

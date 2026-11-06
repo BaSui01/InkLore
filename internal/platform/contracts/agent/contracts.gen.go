@@ -1821,6 +1821,7 @@ type Resource struct {
 		StartOffset int    `json:"start_offset"`
 	} `json:"selection,omitempty"`
 	SourceHash     *string  `json:"source_hash,omitempty"`
+	SelectionScopeVerified *bool `json:"selection_scope_verified,omitempty"`
 	SourceRevision Revision `json:"source_revision"`
 }
 

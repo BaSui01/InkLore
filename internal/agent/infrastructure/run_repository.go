@@ -65,6 +65,7 @@ type runRow struct {
 	SelectionStart      sql.NullInt64  `gorm:"column:selection_start_offset"`
 	SelectionEnd        sql.NullInt64  `gorm:"column:selection_end_offset"`
 	SelectionHash       sql.NullString `gorm:"column:selection_source_hash"`
+	SelectionScopeVerified bool `gorm:"column:selection_scope_verified"`
 	Instruction         string         `gorm:"column:instruction"`
 	DefinitionVersionID sql.NullString `gorm:"column:definition_version_id"`
 	WorkflowVersionID   sql.NullString `gorm:"column:workflow_version_id"`
@@ -163,6 +164,7 @@ func (row *runRow) toDomain() *d.AgentRun {
 		SourceRevision:      sourceRev,
 		SourceHash:          sourceHash,
 		Selection:           selection,
+		SelectionScopeVerified: row.SelectionScopeVerified,
 		Instruction:         row.Instruction,
 		DefinitionVersionID: defVerID,
 		WorkflowVersionID:   wfVerID,
@@ -201,7 +203,7 @@ func (r *RunRepositoryPostgres) CreateRun(ctx context.Context, tenantID string, 
 			id, tenant_id, created_at, updated_at, revision, owner_user_id, platform_job_id,
 			kind, task_kind, diagnostic_probe_key, task_key, resource_type, resource_id,
 			novel_id, chapter_id, source_revision, source_hash, instruction,
-			selection_start_offset, selection_end_offset, selection_source_hash,
+			selection_start_offset, selection_end_offset, selection_source_hash, selection_scope_verified,
 			definition_version_id, workflow_version_id, policy_version_id, status,
 			next_seq, retained_from_seq, deadline_at, started_at, finished_at,
 			error_code, terminal_reason, retryable, usage_receipt_ids
@@ -209,7 +211,7 @@ func (r *RunRepositoryPostgres) CreateRun(ctx context.Context, tenantID string, 
 			?, ?, ?, ?, ?, ?, ?,
 			?, ?, ?, ?, ?, ?,
 			?, ?, ?, ?, ?,
-			?, ?, ?,
+			?, ?, ?, ?,
 			?, ?, ?, ?,
 			?, ?, ?, ?, ?,
 			?, ?, ?, ?
@@ -218,7 +220,7 @@ func (r *RunRepositoryPostgres) CreateRun(ctx context.Context, tenantID string, 
 		run.ID, tenantID, run.CreatedAt, run.UpdatedAt, run.Revision, run.OwnerUserID, run.PlatformJobID,
 		run.Kind, run.TaskKind, run.DiagnosticProbeKey, run.TaskKey, run.ResourceType, run.ResourceID,
 		run.NovelID, run.ChapterID, run.SourceRevision, run.SourceHash, run.Instruction,
-		selectionStart, selectionEnd, selectionHash,
+		selectionStart, selectionEnd, selectionHash, run.SelectionScopeVerified,
 		run.DefinitionVersionID, run.WorkflowVersionID, run.PolicyVersionID, string(run.Status),
 		run.NextSeq, run.RetainedFromSeq, run.DeadlineAt, run.StartedAt, run.FinishedAt,
 		run.ErrorCode, run.TerminalReason, run.Retryable, receipts,
@@ -348,6 +350,7 @@ func (r *RunRepositoryPostgres) ListRunsByOwner(ctx context.Context, tenantID, o
 				NovelID:        dom.NovelID,
 				SourceHash:     dom.SourceHash,
 				Selection:      dom.Selection,
+				SelectionScopeVerified: dom.SelectionScopeVerified,
 			}
 		}
 		views = append(views, d.RunSummaryView{
