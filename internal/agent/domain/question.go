@@ -115,6 +115,9 @@ func DecodeQuestion(raw []byte) (AskQuestionInput, error) {
 		return in, errors.New("unsupported question schema")
 	}
 	if values != nil {
+		if s.Type == "array" && s.MinItems != nil && *s.MinItems > len(values) {
+			return in, errors.New("multiselect minimum exceeds available options")
+		}
 		if len(values) < 2 || len(values) > 20 || len(in.Options) != len(values) {
 			return in, errors.New("invalid question options")
 		}
