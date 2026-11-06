@@ -63,8 +63,8 @@ export function AgentWorkbench(props: AgentWorkbenchProps) {
   const createLock = useRef(false);
   const cancelLock = useRef(false);
   useEffect(() => {
-    props.onPendingChange?.(recoveringCreate || state.restoring || creating || (!!run && !terminalRun(status ?? run.status)));
-  }, [props.onPendingChange, recoveringCreate, state.restoring, creating, run?.id, run?.status, status]);
+    props.onPendingChange?.(recoveringCreate || uncertain || !!createIntent.current || state.restoring || creating || (!!run && !terminalRun(status ?? run.status)));
+  }, [props.onPendingChange, recoveringCreate, uncertain, state.restoring, creating, run?.id, run?.status, status]);
   const catalogGeneration = useRef(0);
   const panel = useRef<HTMLElement>(null);
   const ime = useImeComposition();
