@@ -87,6 +87,8 @@ jobs:
         run: |
           go run ./cmd/migrate -cmd up -timeout 180s
           go run ./cmd/migrate -cmd status -timeout 60s
+      - name: Verify migration atomicity and concurrent replay
+        run: INKLORE_MIGRATION_TEST_DSN="$DATABASE_DSN" go test ./internal/platform/database -count=1 -race -v
       - name: Verify Supabase staging permissions against unrelated public objects
         shell: bash
         run: |
@@ -140,6 +142,7 @@ jobs:
         run: |
           go build ./...
           go vet ./...
+          go test ./internal/app/adapters ./internal/content/application
           go run ./cmd/archguard -reachability
       - name: Start actual API and check health, readiness and public access boundaries
         shell: bash
@@ -230,6 +233,13 @@ jobs:
           psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_memberships" | grep -qx 1
           psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_sessions" | grep -qx 1
           echo "Real Go API health, dependencies and unknown-route checks passed."
+          E2E_ALLOW_DISPOSABLE_DB=1 python3 scripts/ci/content_writing_acceptance.py
+          python3 scripts/ci/content_delivery_acceptance.py
+      - name: Verify durable Agent clarification, answer CAS and original Run recovery
+        env:
+          AGENT_QUESTION_PG_TEST: '1'
+        run: |
+          go test ./internal/agent/... ./internal/app ./cmd/admin -run 'TestQuestion|TestClarification' -count=1 -race -v
       - name: Verify Gateway budgets, admission, accounting and crash recovery
         env:
           INKLORE_GATEWAY_INTEGRATION: '1'

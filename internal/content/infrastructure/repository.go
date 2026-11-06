@@ -66,7 +66,7 @@ func (r *Repository) Novel(ctx context.Context, o a.Owner, id string, exclusive 
 	if e != nil {
 		return d.Novel{}, e
 	}
-	return one[d.Novel](lock(owned(db, o, "content_novels").Where("id = ?", id), exclusive))
+	return one[d.Novel](lock(owned(db, o, "content_novels").Select(novelColumns).Where("id = ?", id), exclusive))
 }
 func (r *Repository) Volume(ctx context.Context, o a.Owner, id string, exclusive bool) (d.Volume, error) {
 	db, e := r.db(ctx, exclusive)
@@ -82,6 +82,9 @@ func (r *Repository) Chapter(ctx context.Context, o a.Owner, id string, exclusiv
 	}
 	return one[d.ChapterRecord](lock(owned(db, o, "content_chapters").Where("id = ?", id), exclusive))
 }
+
+// Cast DATE explicitly so the API exposes a calendar date, never a timezone-dependent timestamp.
+const novelColumns = "id,tenant_id,created_at,updated_at,revision,owner_id,title,summary,category,status,previous_status,target_words,target_completion_date::text AS target_completion_date,word_count,deleted_at"
 
 const chapterColumns = "id,tenant_id,created_at,updated_at,revision,novel_id,volume_id,title,position,status,current_version_id,confirmed_version_id,content_hash,word_count,deleted_at"
 const versionColumns = "id,tenant_id,created_at,updated_at,chapter_id,novel_id,chapter_revision,title,content_hash,word_count,source,actor_id,restored_from_version_id"
@@ -129,7 +132,7 @@ func (r *Repository) ListNovels(ctx context.Context, o a.Owner, p a.Query) ([]d.
 	if p.Status == "deleted" {
 		q = trash(q, true)
 	}
-	return many[d.Novel](page(q, p, "updated_at"))
+	return many[d.Novel](page(q.Select(novelColumns), p, "updated_at"))
 }
 func (r *Repository) ListVolumes(ctx context.Context, o a.Owner, p a.Query) ([]d.Volume, error) {
 	db, e := r.db(ctx, false)
@@ -215,7 +218,7 @@ func (r *Repository) put(ctx context.Context, o a.Owner, table, id string, revis
 	return nil
 }
 func (r *Repository) PutNovel(ctx context.Context, o a.Owner, n d.Novel, expected int64) error {
-	return r.put(ctx, o, "content_novels", n.ID, expected, map[string]any{"title": n.Title, "summary": n.Summary, "category": n.Category, "target_words": n.TargetWords, "word_count": n.WordCount, "status": n.Status, "previous_status": n.PreviousStatus, "deleted_at": n.DeletedAt, "revision": n.Revision, "updated_at": n.UpdatedAt})
+	return r.put(ctx, o, "content_novels", n.ID, expected, map[string]any{"title": n.Title, "summary": n.Summary, "category": n.Category, "target_words": n.TargetWords, "target_completion_date": n.TargetCompletionDate, "word_count": n.WordCount, "status": n.Status, "previous_status": n.PreviousStatus, "deleted_at": n.DeletedAt, "revision": n.Revision, "updated_at": n.UpdatedAt})
 }
 func (r *Repository) PutVolume(ctx context.Context, o a.Owner, v d.Volume, expected int64) error {
 	return r.put(ctx, o, "content_volumes", v.ID, expected, map[string]any{"title": v.Title, "summary": v.Summary, "position": v.Position, "deleted_at": v.DeletedAt, "revision": v.Revision, "updated_at": v.UpdatedAt})

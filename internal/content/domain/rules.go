@@ -106,3 +106,15 @@ func ValidateOrder(volumes []Volume, chapters []Chapter, req Reorder) error {
 	}
 	return nil
 }
+
+// CompletionDate is an optional calendar date, independent of server timezone.
+func CompletionDate(value *string) error {
+	if value == nil {
+		return nil
+	}
+	parsed, err := time.Parse("2006-01-02", *value)
+	if err != nil || parsed.Year() < 1 || parsed.Format("2006-01-02") != *value {
+		return Invalid()
+	}
+	return nil
+}
