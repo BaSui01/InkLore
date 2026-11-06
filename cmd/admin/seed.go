@@ -169,15 +169,22 @@ func (m seedManifest) validate() error {
 		}
 		modelCapabilities[capability] = true
 	}
-	if len(m.Tools) > 1 {
-		return fmt.Errorf("seed manifest supports only the registered platform UTC tool")
+	if len(m.Tools) > 2 {
+		return fmt.Errorf("seed manifest supports only installed builtin capabilities")
 	}
 	toolKeys := map[string]bool{}
 	for _, tool := range m.Tools {
-		if tool.Key != "platform_utc_now" || tool.SideEffect != string(agentdomain.SideEffectReadOnly) || tool.ApprovalRequired ||
-			!seedSchemaMatches(tool.InputSchema, agentinfra.PlatformUTCNowInputSchema) ||
-			!seedSchemaMatches(tool.OutputSchema, agentinfra.PlatformUTCNowOutputSchema) {
-			return fmt.Errorf("seed tool %q is not the registered read-only UTC capability", tool.Key)
+		inputSchema, outputSchema := "", ""
+		switch tool.Key {
+		case "platform_utc_now":
+			inputSchema, outputSchema = agentinfra.PlatformUTCNowInputSchema, agentinfra.PlatformUTCNowOutputSchema
+		case agentdomain.ClarificationToolKey:
+			inputSchema, outputSchema = agentdomain.ClarificationInputSchema, agentdomain.ClarificationOutputSchema
+		default:
+			return fmt.Errorf("seed tool %q has no registered builtin capability", tool.Key)
+		}
+		if toolKeys[tool.Key] || tool.SideEffect != string(agentdomain.SideEffectReadOnly) || tool.ApprovalRequired || !seedSchemaMatches(tool.InputSchema, inputSchema) || !seedSchemaMatches(tool.OutputSchema, outputSchema) {
+			return fmt.Errorf("seed tool %q does not match its installed builtin contract", tool.Key)
 		}
 		if err := agentdomain.ValidateTool(tool.Key, tool.Title, tool.InputSchema, tool.OutputSchema, tool.SideEffect,
 			tool.ApprovalRequired, tool.TimeoutSeconds, nil, nil); err != nil {
@@ -313,8 +320,8 @@ func seedTenantTool(ctx context.Context, db *gorm.DB, tenantID string, manifest 
 	if err := manifest.validate(); err != nil {
 		return nil, err
 	}
-	if len(manifest.Tools) != 1 || manifest.Tools[0].Key != "platform_utc_now" {
-		return nil, fmt.Errorf("seed-tool requires the registered platform UTC tool")
+	if len(manifest.Tools) != 1 {
+		return nil, fmt.Errorf("seed-tool requires exactly one registered builtin capability")
 	}
 	result := &SeedToolResult{SkippedKeys: []string{}}
 	err := db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -490,7 +497,7 @@ func ensureSeedTool(tx *gorm.DB, tenantID string, tool seedTool, now time.Time) 
 			AND input_schema=?::jsonb AND output_schema=?::jsonb AND side_effect='read_only'
 			AND approval_required=false AND timeout_seconds BETWEEN 1 AND 120
 			AND mcp_server_id IS NULL AND remote_tool_name IS NULL)`,
-			tenantID, current.String, id, agentinfra.PlatformUTCNowInputSchema, agentinfra.PlatformUTCNowOutputSchema).Scan(&compatible).Error
+			tenantID, current.String, id, string(tool.InputSchema), string(tool.OutputSchema)).Scan(&compatible).Error
 		if err != nil || !compatible {
 			return "", "", err
 		}

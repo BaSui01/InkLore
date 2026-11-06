@@ -235,3 +235,8 @@ jobs:
           echo "Real Go API health, dependencies and unknown-route checks passed."
           E2E_ALLOW_DISPOSABLE_DB=1 python3 scripts/ci/content_writing_acceptance.py
           python3 scripts/ci/content_delivery_acceptance.py
+      - name: Verify durable Agent clarification, answer CAS and original Run recovery
+        env:
+          AGENT_QUESTION_PG_TEST: '1'
+        run: |
+          go test ./internal/agent/... ./internal/app ./cmd/admin -run 'TestQuestion|TestClarification' -count=1 -race -v
