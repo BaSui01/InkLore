@@ -289,9 +289,9 @@ func TestAnthropicStreamCacheUsageUsesInclusiveLedgerTokens(t *testing.T) {
 	router.client = server.Client()
 	var measured *d.TokenUsage
 	req := d.TextGenerationRequest{
-		Messages: []d.ChatMessage{{Role: d.ChatMessageRoleUser, Content: "Cache usage"}},
+		Messages:  []d.ChatMessage{{Role: d.ChatMessageRoleUser, Content: "Cache usage"}},
 		MaxTokens: 64,
-		OnUsage: func(u *d.TokenUsage) { measured = d.CloneTokenUsage(u) },
+		OnUsage:   func(u *d.TokenUsage) { measured = d.CloneTokenUsage(u) },
 	}
 	if err := router.generateNativeChatStream(context.Background(), upstreamTarget{baseURL: server.URL,
 		apiKey: "fixture", protocol: protocolAnthropic}, req, "test-model"); err != nil {
