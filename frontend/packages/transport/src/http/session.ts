@@ -429,7 +429,11 @@ export class AuthSession {
     } catch (error) {
       // The provider may have accepted an ambiguous request. Preserve its key
       // for retries, but never lose the prior valid challenge on 429/503.
-      const certainRejection = error instanceof ApiError && error.httpStatus < 500;
+      // A definitive provider-side 503 is persisted as failed and cannot be
+      // replayed with the same request key. Network failures remain uncertain.
+      const certainRejection = error instanceof ApiError &&
+        ((error.httpStatus < 500 && error.code !== "platform.operation_in_progress") ||
+          (error.httpStatus === 503 && error.code === "platform.dependency_unavailable"));
       this.writeEmailChallenge({ ...record,
         pending_request_key: certainRejection ? undefined : requestKey,
         failed: certainRejection,
