@@ -480,7 +480,7 @@ func (r *ProviderRouter) anthropicChat(ctx context.Context, target upstreamTarge
 
 	if isAnthropicThinkingEnabled(req) {
 		if maxTokens <= 1024 {
-			return domain.TextGenerationResponse{}, fmt.Errorf("anthropic thinking requires max_tokens above 1024")
+			return domain.TextGenerationResponse{}, fmt.Errorf("%w: Anthropic thinking needs max_tokens above 1024", domain.ErrCapability)
 		}
 		budget := calculateAnthropicBudget(req.ReasoningEffort, maxTokens)
 		thinking = &anthropicThinking{Type: "enabled", BudgetTokens: budget}
@@ -569,7 +569,7 @@ func (r *ProviderRouter) anthropicStream(ctx context.Context, target upstreamTar
 
 	if isAnthropicThinkingEnabled(req) {
 		if maxTokens <= 1024 {
-			return fmt.Errorf("anthropic thinking requires max_tokens above 1024")
+			return fmt.Errorf("%w: Anthropic thinking needs max_tokens above 1024", domain.ErrCapability)
 		}
 		budget := calculateAnthropicBudget(req.ReasoningEffort, maxTokens)
 		thinking = &anthropicThinking{Type: "enabled", BudgetTokens: budget}

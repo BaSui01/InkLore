@@ -206,3 +206,30 @@ func TestAnthropicCacheUsageNormalizesInclusiveInput(t *testing.T) {
 		t.Fatal("ledger would reject cache usage as invalid")
 	}
 }
+
+func TestGatewayRuntimeAnthropicLocalRejectionDoesNotCharge(t *testing.T) {
+	f := newRuntimeFixture(t, 1000000, 5, nil)
+	if err := f.db.Exec("UPDATE llm_providers SET protocol='anthropic' WHERE tenant_id=?", f.tenant).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := f.db.Exec("UPDATE llm_channel_models SET upstream_model='claude-4' WHERE tenant_id=?", f.tenant).Error; err != nil {
+		t.Fatal(err)
+	}
+	req := f.request("anthropic-small-thinking-output")
+	reply, err := f.gateway.GenerateChat(context.Background(), req)
+	assertRuntimeCode(t, err, "llm.capability_mismatch")
+	if reply.Receipt == nil || reply.Receipt.CostMicros != 0 || reply.Receipt.Status != "failed" || reply.Receipt.Estimated || f.calls.Load() != 0 {
+		t.Fatalf("locally rejected non-stream call was charged or dispatched: %+v calls=%d", reply.Receipt, f.calls.Load())
+	}
+	stream := f.request("anthropic-small-thinking-stream")
+	var receipt *d.Usage
+	stream.OnReceipt = func(value *d.Usage) { receipt = value }
+	err = f.gateway.GenerateChatStream(context.Background(), stream)
+	assertRuntimeCode(t, err, "llm.capability_mismatch")
+	if receipt == nil || receipt.CostMicros != 0 || receipt.Status != "failed" || receipt.Estimated || f.calls.Load() != 0 {
+		t.Fatalf("locally rejected stream was charged or dispatched: %+v calls=%d", receipt, f.calls.Load())
+	}
+	if f.count(t, "llm_usage_records") != 2 {
+		t.Fatal("local rejects must retain one explicit zero-cost audit receipt each")
+	}
+}
