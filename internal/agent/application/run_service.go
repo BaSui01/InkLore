@@ -229,32 +229,32 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 	deadLine := now.Add(DefaultRunDeadline)
 
 	run := &d.AgentRun{
-		ID:                  runID,
-		TenantID:            p.TenantID,
-		CreatedAt:           now,
-		UpdatedAt:           now,
-		Revision:            1,
-		OwnerUserID:         p.UserID,
-		Kind:                "creator",
-		TaskKind:            in.TaskKind,
-		TaskKey:             in.TaskKey,
-		ResourceType:        &in.Resource.ResourceType,
-		ResourceID:          &in.Resource.ResourceID,
-		NovelID:             in.Resource.NovelID,
-		SourceRevision:      &sourceRevision,
-		SourceHash:          &sourceHash,
-		Selection:           in.Resource.Selection,
+		ID:                     runID,
+		TenantID:               p.TenantID,
+		CreatedAt:              now,
+		UpdatedAt:              now,
+		Revision:               1,
+		OwnerUserID:            p.UserID,
+		Kind:                   "creator",
+		TaskKind:               in.TaskKind,
+		TaskKey:                in.TaskKey,
+		ResourceType:           &in.Resource.ResourceType,
+		ResourceID:             &in.Resource.ResourceID,
+		NovelID:                in.Resource.NovelID,
+		SourceRevision:         &sourceRevision,
+		SourceHash:             &sourceHash,
+		Selection:              in.Resource.Selection,
 		SelectionScopeVerified: true,
-		Instruction:         in.Instruction,
-		DefinitionVersionID: defVerID,
-		WorkflowVersionID:   wfVerID,
-		PolicyVersionID:     "",
-		Status:              d.RunStatusQueued,
-		NextSeq:             2, // Seq 1 is run.started
-		RetainedFromSeq:     1,
-		DeadlineAt:          deadLine,
-		Retryable:           false,
-		UsageReceiptIDs:     []string{},
+		Instruction:            in.Instruction,
+		DefinitionVersionID:    defVerID,
+		WorkflowVersionID:      wfVerID,
+		PolicyVersionID:        "",
+		Status:                 d.RunStatusQueued,
+		NextSeq:                2, // Seq 1 is run.started
+		RetainedFromSeq:        1,
+		DeadlineAt:             deadLine,
+		Retryable:              false,
+		UsageReceiptIDs:        []string{},
 	}
 
 	// Build nodes
@@ -632,12 +632,12 @@ func (s *RunService) buildRunView(run *d.AgentRun, nodes []d.AgentRunNode) *d.Ru
 	var resRef *d.ResourceRef
 	if run.ResourceID != nil && run.ResourceType != nil && run.SourceRevision != nil {
 		resRef = &d.ResourceRef{
-			ResourceID:     *run.ResourceID,
-			ResourceType:   *run.ResourceType,
-			SourceRevision: *run.SourceRevision,
-			NovelID:        run.NovelID,
-			SourceHash:     run.SourceHash,
-			Selection:      run.Selection,
+			ResourceID:             *run.ResourceID,
+			ResourceType:           *run.ResourceType,
+			SourceRevision:         *run.SourceRevision,
+			NovelID:                run.NovelID,
+			SourceHash:             run.SourceHash,
+			Selection:              run.Selection,
 			SelectionScopeVerified: run.SelectionScopeVerified,
 		}
 	}
