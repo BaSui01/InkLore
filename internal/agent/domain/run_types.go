@@ -122,6 +122,7 @@ type ResourceRef struct {
 	NovelID        *string    `json:"novel_id,omitempty"`
 	SourceHash     *string    `json:"source_hash,omitempty"`
 	Selection      *Selection `json:"selection,omitempty"`
+	SelectionScopeVerified bool `json:"selection_scope_verified,omitempty"`
 }
 
 // AgentRun is the aggregate root for an agent run instance.
@@ -143,6 +144,8 @@ type AgentRun struct {
 	ChapterID           *string    `json:"chapter_id,omitempty"`
 	SourceRevision      *int64     `json:"source_revision,omitempty"`
 	SourceHash          *string    `json:"source_hash,omitempty"`
+	Selection           *Selection `json:"selection,omitempty"`
+	SelectionScopeVerified bool `json:"selection_scope_verified"`
 	Instruction         string     `json:"instruction"`
 	DefinitionVersionID *string    `json:"definition_version_id,omitempty"`
 	WorkflowVersionID   *string    `json:"workflow_version_id,omitempty"`
@@ -473,14 +476,15 @@ type ArtifactPage struct {
 // Input DTOs
 
 type CreateRunInput struct {
-	TaskKind     string       `json:"task_kind"`
-	TaskKey      string       `json:"task_key"`
-	Resource     *ResourceRef `json:"resource"`
-	Instruction  string       `json:"instruction"`
-	DefinitionID string       `json:"definition_id"`
-	WorkflowID   *string      `json:"workflow_id,omitempty"`
-	ModelID      *string      `json:"model_id,omitempty"`
-	ModelKey     *string      `json:"model_key,omitempty"`
+	TaskPolicyVersionID string       `json:"task_policy_version_id"`
+	TaskKind            string       `json:"task_kind"`
+	TaskKey             string       `json:"-"`
+	Resource            *ResourceRef `json:"resource"`
+	Instruction         string       `json:"instruction"`
+	DefinitionID        string       `json:"definition_id"`
+	WorkflowID          *string      `json:"workflow_id,omitempty"`
+	ModelID             *string      `json:"-"`
+	ModelKey            *string      `json:"-"`
 }
 
 type CancelRunInput struct {
