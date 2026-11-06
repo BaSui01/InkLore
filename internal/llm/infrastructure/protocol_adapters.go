@@ -1158,13 +1158,13 @@ func (r *ProviderRouter) generateNativeChatStream(ctx context.Context, target up
 				finalUsage = *event.Usage
 				if req.OnUsage != nil {
 					req.OnUsage(&domain.TokenUsage{
-						PromptTokens:     event.Usage.InputTokens,
-						CompletionTokens: event.Usage.OutputTokens,
-						TotalTokens:      event.Usage.TotalTokens,
-						InputTokens:      event.Usage.InputTokens,
-						OutputTokens:     event.Usage.OutputTokens,
-						CachedTokens:     event.Usage.CachedTokens,
-						PromptCacheHitTokens: event.Usage.CachedTokens,
+						PromptTokens:          event.Usage.InputTokens,
+						CompletionTokens:      event.Usage.OutputTokens,
+						TotalTokens:           event.Usage.TotalTokens,
+						InputTokens:           event.Usage.InputTokens,
+						OutputTokens:          event.Usage.OutputTokens,
+						CachedTokens:          event.Usage.CachedTokens,
+						PromptCacheHitTokens:  event.Usage.CachedTokens,
 						PromptCacheMissTokens: event.Usage.InputTokens - event.Usage.CachedTokens,
 					})
 				}
