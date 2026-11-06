@@ -277,8 +277,8 @@ func (r *RunRepositoryPostgres) FindRunIDByNode(ctx context.Context, tenantID, n
 		return "", d.ErrNotFound()
 	}
 	return runID, nil
-}
 
+}
 
 func (r *RunRepositoryPostgres) GetRun(ctx context.Context, tenantID, runID string) (*d.AgentRun, []d.AgentRunNode, error) {
 	db, err := r.db(ctx, false)
@@ -361,12 +361,12 @@ func (r *RunRepositoryPostgres) ListRunsByOwner(ctx context.Context, tenantID, o
 		var res *d.ResourceRef
 		if dom.ResourceID != nil && dom.ResourceType != nil && dom.SourceRevision != nil {
 			res = &d.ResourceRef{
-				ResourceID:     *dom.ResourceID,
-				ResourceType:   *dom.ResourceType,
-				SourceRevision: *dom.SourceRevision,
-				NovelID:        dom.NovelID,
-				SourceHash:     dom.SourceHash,
-				Selection:      dom.Selection,
+				ResourceID:             *dom.ResourceID,
+				ResourceType:           *dom.ResourceType,
+				SourceRevision:         *dom.SourceRevision,
+				NovelID:                dom.NovelID,
+				SourceHash:             dom.SourceHash,
+				Selection:              dom.Selection,
 				SelectionScopeVerified: dom.SelectionScopeVerified,
 			}
 		}
