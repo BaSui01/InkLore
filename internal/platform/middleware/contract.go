@@ -54,7 +54,7 @@ func ContractCORS(origins []string) gin.HandlerFunc {
 			c.Header("Access-Control-Allow-Credentials", "true")
 			c.Header("Access-Control-Allow-Headers", "Authorization, Content-Type, Idempotency-Key, X-CSRF-Token, Last-Event-ID, X-Request-ID, traceparent")
 			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-			c.Header("Access-Control-Expose-Headers", "X-Request-ID, X-Trace-ID, Traceparent, Idempotent-Replay, Retry-After")
+			c.Header("Access-Control-Expose-Headers", "X-Request-ID, X-Trace-ID, Traceparent, Idempotent-Replay, Retry-After, Content-Disposition, ETag")
 		}
 		if c.Request.Method == http.MethodOptions && c.Writer.Header().Get("Allow") != "" {
 			CompleteAllow(c)

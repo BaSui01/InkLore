@@ -35,7 +35,7 @@ type RewriteLLMResult struct {
 
 type GenerationPort interface {
 	GenerateAudit(ctx context.Context, tenantID, reportID, novelID, chapterID, text string, budget d.Budget) (AuditLLMResult, error)
-	GenerateRewrite(ctx context.Context, tenantID, novelID, chapterID, text string, issues []d.Issue, round int, budget d.Budget) (RewriteLLMResult, error)
+	GenerateRewrite(ctx context.Context, tenantID, rewriteID, novelID, chapterID, text string, issues []d.Issue, round int, budget d.Budget) (RewriteLLMResult, error)
 }
 
 type RuleSnapshotCache interface {

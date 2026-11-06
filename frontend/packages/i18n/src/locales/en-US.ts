@@ -1,4 +1,5 @@
 import { mailEnUS } from "./mail";
+import { writingEnUS } from "./writing";
 import { foundationEnUS } from "./foundation-en-US";
 /**
  * @inklore/i18n - English Dictionary (en-US)
@@ -13,7 +14,6 @@ import { editorEnUS } from "./editor";
 import { complianceEnUS } from "./compliance";
 
 const localeDict: Record<string, string> = {
-  ...mailEnUS,
   ...foundationEnUS,
 
   "common.create": "Create",
@@ -940,9 +940,11 @@ const localeDict: Record<string, string> = {
 
 export const enUS: Record<string, string> = {
   ...localeDict,
+  ...writingEnUS,
   ...homeEnUS,
   ...editorEnUS,
   ...complianceEnUS,
   ...adminEnUS,
   ...authEnUS,
+  ...mailEnUS,
 };

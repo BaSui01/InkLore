@@ -29,8 +29,11 @@ func (s *Service) CreateNovel(ctx context.Context, c Command, r d.CreateNovel) (
 		if e := d.Metadata(r.Title, r.Summary, r.Category, r.TargetWords); e != nil {
 			return nil, e
 		}
+		if e := d.CompletionDate(r.TargetCompletionDate); e != nil {
+			return nil, e
+		}
 		now := s.now()
-		n := d.Novel{ID: uuid.NewString(), TenantID: o.TenantID, OwnerID: o.ActorID, CreatedAt: now, UpdatedAt: now, Revision: 1, Title: r.Title, Summary: r.Summary, Category: r.Category, TargetWords: r.TargetWords, Status: "active"}
+		n := d.Novel{ID: uuid.NewString(), TenantID: o.TenantID, OwnerID: o.ActorID, CreatedAt: now, UpdatedAt: now, Revision: 1, Title: r.Title, Summary: r.Summary, Category: r.Category, TargetWords: r.TargetWords, TargetCompletionDate: r.TargetCompletionDate, Status: "active"}
 		o.NovelID = n.ID
 		if e := s.o.Repo.InsertNovel(tx, o, n); e != nil {
 			return nil, e
@@ -50,6 +53,9 @@ func (s *Service) UpdateNovel(ctx context.Context, c Command, id string, r d.Upd
 		if e := d.Metadata(r.Title, r.Summary, r.Category, r.TargetWords); e != nil {
 			return nil, e
 		}
+		if e := d.CompletionDate(r.TargetCompletionDate); e != nil {
+			return nil, e
+		}
 		n, e := s.active(tx, o)
 		if e != nil {
 			return nil, e
@@ -58,6 +64,7 @@ func (s *Service) UpdateNovel(ctx context.Context, c Command, id string, r d.Upd
 			return nil, e
 		}
 		n.Title, n.Summary, n.Category, n.TargetWords = r.Title, r.Summary, r.Category, r.TargetWords
+		n.TargetCompletionDate = r.TargetCompletionDate
 		if e = s.bumpNovel(tx, o, &n); e != nil {
 			return nil, e
 		}

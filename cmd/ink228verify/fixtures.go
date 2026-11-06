@@ -2,9 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
+
+	llmdomain "InkLore/internal/llm/domain"
+	llminfra "InkLore/internal/llm/infrastructure"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -39,6 +43,16 @@ func seedFixtures(ctx context.Context, db *gorm.DB) (fixture, fixture, error) {
 		b, err = seedFixture(tx, "b")
 		return err
 	})
+	if err == nil {
+		bindings, marshalErr := json.Marshal([]llminfra.SecretBinding{
+			{ProviderID: a.provider, Ref: llmdomain.SecretRef{Kind: "env", Locator: a.keyEnv, Version: "ci-v1"}},
+			{ProviderID: b.provider, Ref: llmdomain.SecretRef{Kind: "env", Locator: b.keyEnv, Version: "ci-v1"}},
+		})
+		if marshalErr != nil {
+			return a, b, marshalErr
+		}
+		err = os.Setenv("LLM_SECRET_BINDINGS", string(bindings))
+	}
 	return a, b, err
 }
 

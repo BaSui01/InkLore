@@ -462,6 +462,7 @@ export interface components {
             capacity_observed_at: components["schemas"]["Timestamp"] | null;
             capacity_available: boolean;
         };
+        /** @description Read-only credential metadata. Legacy sensitive locators are returned as a fixed mask. */
         SecretRef: {
             /** @enum {string} */
             kind: "env" | "secret_store" | "plain";
@@ -471,7 +472,7 @@ export interface components {
         KeyInput: {
             channel_id: components["schemas"]["UUID"];
             title: string;
-            secret_ref: components["schemas"]["SecretRef"];
+            secret_ref: components["schemas"]["KeySecretRef"];
             weight: number;
             rpm: number;
             concurrency: number;
@@ -651,7 +652,7 @@ export interface components {
         KeyUpdate: {
             channel_id: components["schemas"]["UUID"];
             title: string;
-            secret_ref: components["schemas"]["SecretRef"];
+            secret_ref: components["schemas"]["KeySecretRef"];
             weight: number;
             rpm: number;
             concurrency: number;
@@ -721,6 +722,13 @@ export interface components {
         };
         UpstreamModelListPage: {
             items: components["schemas"]["UpstreamModelItem"][];
+        };
+        /** @description A deployment-managed credential reference. Plaintext keys and legacy encrypted locators cannot be written. */
+        KeySecretRef: {
+            /** @enum {string} */
+            kind: "env" | "secret_store";
+            locator: string;
+            version: string;
         };
     };
     responses: {

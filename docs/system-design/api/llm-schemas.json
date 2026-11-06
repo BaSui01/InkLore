@@ -491,6 +491,7 @@
     "additionalProperties": false
    },
     "SecretRef": {
+     "description": "Read-only credential metadata. Legacy sensitive locators are returned as a fixed mask.",
      "type": "object",
      "properties": {
       "kind": {
@@ -519,6 +520,35 @@
      ],
     "additionalProperties": false
    },
+   "KeySecretRef": {
+    "type": "object",
+    "properties": {
+     "kind": {
+      "type": "string",
+      "enum": [
+       "env",
+       "secret_store"
+      ]
+     },
+     "locator": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+     },
+     "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+     }
+    },
+    "required": [
+     "kind",
+     "locator",
+     "version"
+    ],
+    "additionalProperties": false,
+    "description": "A deployment-managed credential reference. Plaintext keys and legacy encrypted locators cannot be written."
+   },
    "KeyInput": {
     "type": "object",
     "properties": {
@@ -531,7 +561,7 @@
       "maxLength": 120
      },
      "secret_ref": {
-      "$ref": "#/components/schemas/SecretRef"
+      "$ref": "#/components/schemas/KeySecretRef"
      },
      "weight": {
       "type": "integer",
@@ -1434,7 +1464,7 @@
       "maxLength": 120
      },
      "secret_ref": {
-      "$ref": "#/components/schemas/SecretRef"
+      "$ref": "#/components/schemas/KeySecretRef"
      },
      "weight": {
       "type": "integer",

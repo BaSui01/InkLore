@@ -455,6 +455,9 @@ func (s *Catalog) validate(ctx context.Context, tenant string, kind d.Kind, old 
 		if json.Unmarshal(b, &ref) != nil {
 			return d.ErrInvalid
 		}
+		if err := d.ValidateSecretRef(ref); err != nil {
+			return err
+		}
 		fingerprint, err := s.opts.Secrets.Fingerprint(ctx, strFrom(channel, "provider_id"), ref)
 		if err != nil {
 			return d.ErrSecret

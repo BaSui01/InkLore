@@ -171,7 +171,7 @@ type budgetReservation struct {
 }
 
 func (v budgetReservation) public() d.Reservation {
-	return d.Reservation{ID: v.ID, TenantID: v.TenantID, InvocationID: v.InvocationID, PolicyVersionID: v.PolicyVersionID, ModelID: v.ModelID, PricingRevisionID: v.PricingRevisionID, BusinessDate: v.BusinessDate, Status: v.Status, ChannelID: v.ChannelID, KeyID: v.KeyID, Attempt: v.Attempt, ReservedMicros: v.ReservedMicros, LeaseUntil: v.LeaseUntil.UTC()}
+	return d.Reservation{Revision: v.Revision, ID: v.ID, TenantID: v.TenantID, InvocationID: v.InvocationID, PolicyVersionID: v.PolicyVersionID, ModelID: v.ModelID, PricingRevisionID: v.PricingRevisionID, BusinessDate: v.BusinessDate, Status: v.Status, ChannelID: v.ChannelID, KeyID: v.KeyID, Attempt: v.Attempt, ReservedMicros: v.ReservedMicros, LeaseUntil: v.LeaseUntil.UTC()}
 }
 
 const budgetReservationSelect = "SELECT id,tenant_id,invocation_id,policy_version_id,model_id,pricing_revision_id,business_date::text, status,channel_id,key_id,attempt,reserved_micros,revision,created_at,lease_until,dispatched_at FROM llm_reservations"
@@ -226,7 +226,9 @@ func (r *BudgetRepository) Reserve(ctx context.Context, in d.ReserveInput, now t
 		if err != nil || cost != v.ReservedMicros || (in.MaxCostMicros != nil && cost > *in.MaxCostMicros) {
 			return d.Reservation{}, false, d.ErrConflict
 		}
-		return v.public(), false, nil
+		if v.Status != "released" {
+			return v.public(), false, nil
+		}
 	}
 	var policy struct {
 		MaxOutputTokens, ContextWindow, ModelMax int64
@@ -275,7 +277,13 @@ func (r *BudgetRepository) Reserve(ctx context.Context, in d.ReserveInput, now t
 		return d.Reservation{}, false, err
 	}
 	var id string
-	q = db.Raw("INSERT INTO llm_reservations(tenant_id,invocation_id,attempt,business_date,policy_version_id,model_id,pricing_revision_id,reserved_micros,status,lease_until,created_at,updated_at) VALUES(?,?,?,?::date,?,?,?,?, 'reserved',?,?,?) RETURNING id", in.TenantID, in.InvocationID, in.Attempt, date, in.PolicyVersionID, in.ModelID, price.ID, cost, now.Add(30*time.Second), now, now).Scan(&id)
+	if existing.ID != "" {
+		// Only an undispatched, released attempt can be reserved again. Its
+		// caller identity/request hash is unchanged; no usage was ever charged.
+		q = db.Raw("UPDATE llm_reservations SET business_date=?::date,pricing_revision_id=?,reserved_micros=?,status='reserved',lease_until=?,finished_at=NULL,revision=revision+1,updated_at=? WHERE tenant_id=? AND id=? AND status='released' RETURNING id", date, price.ID, cost, now.Add(30*time.Second), now, in.TenantID, existing.ID).Scan(&id)
+	} else {
+		q = db.Raw("INSERT INTO llm_reservations(tenant_id,invocation_id,attempt,business_date,policy_version_id,model_id,pricing_revision_id,reserved_micros,status,lease_until,created_at,updated_at) VALUES(?,?,?,?::date,?,?,?,?, 'reserved',?,?,?) RETURNING id", in.TenantID, in.InvocationID, in.Attempt, date, in.PolicyVersionID, in.ModelID, price.ID, cost, now.Add(30*time.Second), now, now).Scan(&id)
+	}
 	if q.Error != nil {
 		return d.Reservation{}, false, q.Error
 	}
@@ -302,7 +310,21 @@ func (r *BudgetRepository) MarkDispatch(ctx context.Context, in d.DispatchInput,
 		return v.public(), false, d.ErrBudgetState
 	}
 	var timeout int
-	q := db.Raw("SELECT pv.timeout_seconds FROM llm_channels c JOIN llm_keys k ON k.tenant_id=c.tenant_id AND k.channel_id=c.id JOIN llm_models m ON m.tenant_id=c.tenant_id AND m.id=c.model_id JOIN llm_providers pr ON pr.tenant_id=m.tenant_id AND pr.id=m.provider_id JOIN llm_task_policy_versions pv ON pv.tenant_id=c.tenant_id AND pv.id=? JOIN llm_task_policies p ON p.tenant_id=pv.tenant_id AND p.id=pv.policy_id WHERE c.tenant_id=? AND c.id=? AND k.id=? AND c.model_id=? AND c.enabled AND k.enabled AND m.enabled AND pr.enabled AND p.enabled AND c.deleted_at IS NULL AND k.deleted_at IS NULL AND m.deleted_at IS NULL AND pr.deleted_at IS NULL AND p.deleted_at IS NULL AND k.health<>'invalid' AND k.fingerprint IS NOT NULL FOR SHARE OF c,k,m,pr,p", v.PolicyVersionID, in.TenantID, in.ChannelID, in.KeyID, v.ModelID).Scan(&timeout)
+	q := db.Raw(`SELECT pv.timeout_seconds FROM llm_channel_models cm
+        JOIN llm_channels c ON c.tenant_id=cm.tenant_id AND c.id=cm.channel_id
+        JOIN llm_keys k ON k.tenant_id=c.tenant_id AND k.channel_id=c.id
+        JOIN llm_models m ON m.tenant_id=cm.tenant_id AND m.id=cm.model_id
+        JOIN llm_providers pr ON pr.tenant_id=c.tenant_id AND pr.id=c.provider_id
+        JOIN llm_task_policy_versions pv ON pv.tenant_id=cm.tenant_id AND pv.id=?
+        JOIN llm_task_policies p ON p.tenant_id=pv.tenant_id AND p.id=pv.policy_id
+        WHERE cm.tenant_id=? AND cm.channel_id=? AND k.id=? AND cm.model_id=?
+        AND (pv.primary_model_id=m.id OR m.id=ANY(pv.fallback_model_ids))
+        AND (m.provider_id=c.provider_id OR btrim(cm.upstream_model)<>'')
+        AND pv.required_capabilities <@ m.capabilities
+        AND cm.enabled AND cm.deleted_at IS NULL AND c.enabled AND k.enabled AND m.enabled AND pr.enabled AND p.enabled
+        AND c.deleted_at IS NULL AND k.deleted_at IS NULL AND m.deleted_at IS NULL AND pr.deleted_at IS NULL AND p.deleted_at IS NULL
+        AND k.health<>'invalid' AND k.fingerprint IS NOT NULL AND (?='' OR k.secret_version=?)
+        FOR SHARE OF cm,c,k,m,pr,p`, v.PolicyVersionID, in.TenantID, in.ChannelID, in.KeyID, v.ModelID, in.SecretVersion, in.SecretVersion).Scan(&timeout)
 	if q.Error != nil {
 		return v.public(), false, q.Error
 	}
@@ -314,6 +336,7 @@ func (r *BudgetRepository) MarkDispatch(ctx context.Context, in d.DispatchInput,
 	}
 	lease := in.Deadline.Add(30 * time.Second)
 	err = budgetOne(db.Exec("UPDATE llm_reservations SET status='dispatched',channel_id=?,key_id=?,dispatched_at=?,lease_until=?,revision=revision+1,updated_at=? WHERE tenant_id=? AND id=? AND revision=?", in.ChannelID, in.KeyID, now, lease, now, in.TenantID, v.ID, v.Revision))
+	v.Revision++
 	v.Status = "dispatched"
 	v.ChannelID = &in.ChannelID
 	v.KeyID = &in.KeyID
@@ -341,31 +364,52 @@ func (r *BudgetRepository) Renew(ctx context.Context, t, id string, deadline, no
 	}
 	return budgetOne(db.Exec("UPDATE llm_reservations SET lease_until=GREATEST(lease_until,?),updated_at=? WHERE tenant_id=? AND id=? AND status='dispatched'", deadline.Add(30*time.Second), now, t, id))
 }
-func (r *BudgetRepository) Release(ctx context.Context, t, id string, now time.Time, onlyExpired bool) (bool, error) {
+func (r *BudgetRepository) Release(ctx context.Context, t, id string, now time.Time, onlyExpired bool) (int64, error) {
+	return r.release(ctx, t, id, now, onlyExpired, nil)
+}
+
+func (r *BudgetRepository) ReleasePrepared(ctx context.Context, expected d.Reservation, now time.Time) (int64, error) {
+	return r.release(ctx, expected.TenantID, expected.ID, now, false, &expected)
+}
+
+func (r *BudgetRepository) release(ctx context.Context, t, id string, now time.Time, onlyExpired bool, expected *d.Reservation) (int64, error) {
 	db, err := r.budgetDB(ctx, true)
 	if err != nil {
-		return false, err
+		return 0, err
 	}
 	day, v, err := budgetLockedReservation(db, t, id)
 	if err != nil {
-		return false, err
+		return 0, err
+	}
+	if expected != nil {
+		if v.InvocationID != expected.InvocationID || v.PolicyVersionID != expected.PolicyVersionID || v.ModelID != expected.ModelID || v.Attempt != expected.Attempt || v.PricingRevisionID != expected.PricingRevisionID || v.ReservedMicros != expected.ReservedMicros || v.DispatchedAt != nil || v.ChannelID != nil || v.KeyID != nil {
+			return 0, d.ErrBudgetState
+		}
+		// Repeating the same completed abort is harmless, but a re-reserved row
+		// has a newer revision and belongs to another admission owner.
+		if v.Status == "released" && v.Revision == expected.Revision+1 {
+			return 0, nil
+		}
+		if v.Status != "reserved" || v.Revision != expected.Revision {
+			return 0, d.ErrBudgetState
+		}
 	}
 	if v.Status == "released" || v.Status == "settled" {
-		return false, nil
+		return 0, nil
 	}
 	if onlyExpired && v.LeaseUntil.After(now) {
-		return false, nil
+		return 0, nil
 	}
 	if v.Status != "reserved" {
-		return false, d.ErrBudgetState
+		return 0, d.ErrBudgetState
 	}
 	if day.ReservedMicros < v.ReservedMicros || day.Revision >= d.MaxRevision || v.Revision >= d.MaxRevision {
-		return false, d.ErrBudgetState
+		return 0, d.ErrBudgetState
 	}
 	if err = budgetOne(db.Exec("UPDATE llm_budget_days SET reserved_micros=reserved_micros-?,revision=revision+1,updated_at=? WHERE tenant_id=? AND business_date=?::date AND revision=?", v.ReservedMicros, now, t, v.BusinessDate, day.Revision)); err != nil {
-		return false, err
+		return 0, err
 	}
-	return true, budgetOne(db.Exec("UPDATE llm_reservations SET status='released',finished_at=?,updated_at=?,revision=revision+1 WHERE tenant_id=? AND id=? AND revision=?", now, now, t, id, v.Revision))
+	return v.Revision + 1, budgetOne(db.Exec("UPDATE llm_reservations SET status='released',finished_at=?,updated_at=?,revision=revision+1 WHERE tenant_id=? AND id=? AND revision=?", now, now, t, id, v.Revision))
 }
 func (r *BudgetRepository) Expired(ctx context.Context, now time.Time, limit int) ([]d.Reservation, error) {
 	if limit < 1 || limit > 100 {
@@ -524,6 +568,9 @@ func (r *BudgetRepository) Settle(ctx context.Context, in d.SettlementInput, now
 		return nil, false, err
 	}
 	receipt, err = budgetUsage(db, in.TenantID, v.ID)
+	if receipt != nil {
+		receipt.ReservationRevision = v.Revision + 1
+	}
 	return receipt, true, err
 }
 

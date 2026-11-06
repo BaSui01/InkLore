@@ -5,13 +5,13 @@
 | 分组 | 操作数 | 明细 |
 | --- | ---: | --- |
 | agents | 41 | [agents](catalog/agents.md) |
-| auth | 16 | [auth](catalog/auth.md) |
+| auth | 13 | [auth](catalog/auth.md) |
 | compliance | 21 | [compliance](catalog/compliance.md) |
 | content | 38 | [content](catalog/content.md) |
 | inspiration | 29 | [inspiration](catalog/inspiration.md) |
 | llm | 33 | [llm](catalog/llm.md) |
 | outline | 29 | [outline](catalog/outline.md) |
-| platform | 20 | [platform](catalog/platform.md) |
+| platform | 17 | [platform](catalog/platform.md) |
 | worldview | 25 | [worldview](catalog/worldview.md) |
 
 错误登记：[error-catalog.json](error-catalog.json)；实时Schema：[events.json](events.json)。

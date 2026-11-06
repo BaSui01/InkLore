@@ -135,8 +135,30 @@ jobs:
           python3 scripts/ci/creator_admin_agent_acceptance.py
           export PLAYWRIGHT_PACKAGE_PATH=/tmp/inklore-ci-browser/node_modules/playwright
           node scripts/ci/creator_admin_agent_browser.cjs
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_e2e PGDATABASE=inklore_e2e PGPASSWORD=disposable-ci-only
+          export E2E_ALLOW_DISPOSABLE_DB=1 E2E_EVIDENCE_DIR=/tmp/inklore-writing-evidence E2E_WRITING_BROWSER=1
+          python3 scripts/ci/content_writing_acceptance.py
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_e2e PGDATABASE=inklore_e2e PGPASSWORD=disposable-ci-only
+          export E2E_BROWSER=true E2E_EVIDENCE_DIR=/tmp/inklore-content-evidence
+          python3 scripts/ci/content_delivery_acceptance.py
           export E2E_MAIL_UI_PG_TEST=1 E2E_RUN_BROWSER=1 E2E_EVIDENCE_DIR=/tmp/inklore-mail-ui-evidence
           python3 scripts/ci/mail_ui_acceptance.py
+      - name: Upload writing progress evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: writing-progress-evidence
+          path: /tmp/inklore-writing-evidence
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Upload content acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: content-delivery-evidence
+          path: /tmp/inklore-content-evidence
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Upload redacted mail settings browser evidence
         if: always()
         uses: actions/upload-artifact@v4

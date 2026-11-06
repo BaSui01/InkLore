@@ -30,6 +30,7 @@ jobs:
         run: |
           make contracts-check
           node --test docs/system-design/tools/check-idempotency.test.cjs
+          node --test scripts/codegen.test.mjs
       - name: 校验工程笔记与历史归档封印
         env:
           NOTES_BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}

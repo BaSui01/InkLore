@@ -1,4 +1,5 @@
 import { mailZhCN } from "./mail";
+import { writingZhCN } from "./writing";
 import { foundationZhCN } from "./foundation-zh-CN";
 /**
  * @inklore/i18n - 简体中文词库 (zh-CN)
@@ -13,7 +14,6 @@ import { editorZhCN } from "./editor";
 import { complianceZhCN } from "./compliance";
 
 const localeDict: Record<string, string> = {
-  ...mailZhCN,
   ...foundationZhCN,
 
   "common.create": "新建",
@@ -940,9 +940,11 @@ const localeDict: Record<string, string> = {
 
 export const zhCN: Record<string, string> = {
   ...localeDict,
+  ...writingZhCN,
   ...homeZhCN,
   ...editorZhCN,
   ...complianceZhCN,
   ...adminZhCN,
   ...authZhCN,
+  ...mailZhCN,
 };

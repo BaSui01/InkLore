@@ -69,10 +69,24 @@ func (a *RedisAdmission) markFailed(tenant string) {
 func (a *RedisAdmission) begin(ctx context.Context, tenant string) error {
 	a.mu.Lock()
 	needs := !a.known[tenant] || a.dirty[tenant]
-	a.known[tenant] = true
+	dirty := a.dirty[tenant]
 	a.mu.Unlock()
 	if !needs {
 		return nil
+	}
+	if !dirty {
+		ready, err := a.client.HGet(ctx, gatewayPrefix(tenant)+"guard", "ready").Result()
+		if err != nil && !errors.Is(err, redis.Nil) {
+			a.markFailed(tenant)
+			return gatewayFailure(d.ErrCapacityUnavailable, 60)
+		}
+		if ready == "1" {
+			a.mu.Lock()
+			a.known[tenant] = true
+			a.mu.Unlock()
+			return nil
+		}
+		return a.ReconcileRecovery(ctx, tenant)
 	}
 	_, e := a.client.Eval(ctx, gatewayRecoveryLua, []string{gatewayPrefix(tenant) + "guard"}, "begin", "0", "0").Result()
 	if e != nil {
@@ -82,7 +96,7 @@ func (a *RedisAdmission) begin(ctx context.Context, tenant string) error {
 	a.mu.Lock()
 	delete(a.dirty, tenant)
 	a.mu.Unlock()
-	return nil
+	return a.ReconcileRecovery(ctx, tenant)
 }
 
 // ReconcileRecovery requires a fresh PG reservation query on every attempted
@@ -212,6 +226,16 @@ func (a *RedisAdmission) Acquire(ctx context.Context, in d.AdmissionRequest) (d.
 		return d.AdmissionLease{}, gatewayFailure(d.ErrCapacity, gatewayRetry(values))
 	}
 	if values[0] != "ok" {
+		if values[0] == "unavailable" {
+			if len(values) > 2 && values[2] == "missing" {
+				if _, err := a.eval(ctx, in.TenantID, gatewayRecoveryLua, []string{gatewayPrefix(in.TenantID) + "guard"}, "begin", "0", "0"); err != nil {
+					return d.AdmissionLease{}, err
+				}
+			}
+			if recoveryErr := a.ReconcileRecovery(ctx, in.TenantID); recoveryErr != nil {
+				return d.AdmissionLease{}, recoveryErr
+			}
+		}
 		return d.AdmissionLease{}, gatewayFailure(d.ErrCapacityUnavailable, gatewayRetry(values))
 	}
 	if len(values) != 5 {
@@ -224,7 +248,7 @@ func (a *RedisAdmission) Acquire(ctx context.Context, in d.AdmissionRequest) (d.
 	return d.AdmissionLease{TenantID: in.TenantID, InvocationID: in.InvocationID, ModelID: in.ModelID, ChannelID: values[1], KeyID: values[2], KeyVersion: values[3], Token: token, Attempt: in.Attempt, ExpiresAt: time.UnixMilli(millis).UTC()}, nil
 }
 func gatewayLeaseKeys(l d.AdmissionLease) ([]string, error) {
-	if !gatewayID(l.TenantID) || !gatewayID(l.InvocationID) || !gatewayID(l.ChannelID) || !gatewayID(l.KeyID) || !gatewayID(l.Token) || l.KeyVersion == "" {
+	if !gatewayID(l.TenantID) || !gatewayID(l.InvocationID) || !gatewayID(l.ModelID) || !gatewayID(l.ChannelID) || !gatewayID(l.KeyID) || !gatewayID(l.Token) || l.KeyVersion == "" || l.Attempt < 1 || l.Attempt > 4 {
 		return nil, d.ErrInvalid
 	}
 	p := gatewayPrefix(l.TenantID)
@@ -259,6 +283,24 @@ func (a *RedisAdmission) Renew(ctx context.Context, l d.AdmissionLease) error {
 func (a *RedisAdmission) Release(ctx context.Context, l d.AdmissionLease) error {
 	return a.lease(ctx, l, "release", d.ProviderOutcome{})
 }
+
+func (a *RedisAdmission) AbortUndispatched(ctx context.Context, l d.AdmissionLease) error {
+	keys, err := gatewayLeaseKeys(l)
+	if err != nil {
+		return err
+	}
+	prefix := gatewayPrefix(l.TenantID)
+	keys = append(keys, prefix+"attempt:"+l.InvocationID+":"+strconv.Itoa(l.Attempt), prefix+"channel:"+l.ChannelID+":rpm", prefix+"key:"+l.KeyID+":rpm")
+	values, err := a.eval(ctx, l.TenantID, gatewayAbortLua, keys, l.Token, l.ChannelID, l.KeyID, l.KeyVersion, l.InvocationID+"/"+strconv.Itoa(l.Attempt))
+	if err != nil {
+		return err
+	}
+	if values[0] != "ok" {
+		return gatewayFailure(d.ErrCapacityUnavailable, 30)
+	}
+	return nil
+}
+
 func (a *RedisAdmission) Report(ctx context.Context, l d.AdmissionLease, outcome d.ProviderOutcome) error {
 	switch outcome.Kind {
 	case d.OutcomeSuccess, d.OutcomeServiceFailure, d.OutcomeNeutral:
@@ -322,6 +364,7 @@ const gatewayAcquireLua = `
 local clock=redis.call('TIME')
 local now=tonumber(clock[1])*1000+math.floor(tonumber(clock[2])/1000)
 local guard=KEYS[1]
+if redis.call('EXISTS',guard)==0 then return {'unavailable','30','missing'} end
 if redis.call('HGET',guard,'ready')~='1' then return {'unavailable','30'} end
 if redis.call('EXISTS',KEYS[2])==1 then return {'duplicate','30'} end
 local groups=cjson.decode(ARGV[1])
@@ -437,13 +480,31 @@ end
 return {'ok'}
 `
 
+// Only the owner of the attempt marker may retract an undispatched admission.
+// This action follows durable PG ReleasePrepared proof; normal Release never
+// removes RPM or dedup. The token guard also fences a delayed abort after retry.
+const gatewayAbortLua = `
+local token=ARGV[1]
+local owner=redis.call('GET',KEYS[7])
+if owner==false then return {'ok'} end
+if owner~=token then return {'lost'} end
+if redis.call('EXISTS',KEYS[2])==1 then
+ if redis.call('HGET',KEYS[2],'token')~=token or redis.call('HGET',KEYS[2],'channel')~=ARGV[2] or redis.call('HGET',KEYS[2],'key')~=ARGV[3] or redis.call('HGET',KEYS[2],'version')~=ARGV[4] then return {'lost'} end
+end
+redis.call('ZREM',KEYS[3],token);redis.call('ZREM',KEYS[4],token)
+redis.call('ZREM',KEYS[8],ARGV[5]);redis.call('ZREM',KEYS[9],ARGV[5])
+for _,state in ipairs({KEYS[5],KEYS[6]}) do if redis.call('HGET',state,'probe')==token then redis.call('HDEL',state,'probe','probe_until') end end
+redis.call('DEL',KEYS[2],KEYS[7])
+return {'ok'}
+`
+
 const gatewayRecoveryLua = `
 local t=redis.call('TIME');local now=tonumber(t[1])*1000+math.floor(tonumber(t[2])/1000)
 local mode=ARGV[1]
 local exists=redis.call('EXISTS',KEYS[1])
 local untilTime=tonumber(redis.call('HGET',KEYS[1],'until') or '0')
 if mode=='begin' then
- untilTime=math.max(untilTime,now+30000)
+ untilTime=math.max(untilTime,now+60000)
  redis.call('HSET',KEYS[1],'ready',0,'until',untilTime)
 elseif mode=='check' and exists==0 then
  untilTime=0

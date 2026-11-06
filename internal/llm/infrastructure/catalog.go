@@ -3,6 +3,7 @@ package infrastructure
 
 import (
 	d "InkLore/internal/llm/domain"
+	"InkLore/internal/platform/scope"
 	"InkLore/internal/platform/uow"
 	"context"
 	"crypto/hmac"
@@ -12,7 +13,6 @@ import (
 	"errors"
 	"net"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 
@@ -59,7 +59,7 @@ func projection(kind d.Kind) string {
 	case d.Channels:
 		return "(to_jsonb(t)-'tenant_id'-'deleted_at') || jsonb_build_object('model_ids', coalesce((SELECT jsonb_agg(m.model_id) FROM llm_channel_models m WHERE m.tenant_id=t.tenant_id AND m.channel_id=t.id AND m.deleted_at IS NULL), '[]'::jsonb), 'models', coalesce((SELECT jsonb_agg(jsonb_build_object('id', m.id, 'channel_id', m.channel_id, 'model_id', m.model_id, 'upstream_model', m.upstream_model, 'priority', m.priority, 'weight', m.weight, 'enabled', m.enabled)) FROM llm_channel_models m WHERE m.tenant_id=t.tenant_id AND m.channel_id=t.id AND m.deleted_at IS NULL), '[]'::jsonb))"
 	case d.Keys:
-		return "(to_jsonb(t)-'tenant_id'-'deleted_at'-'secret_kind'-'secret_locator'-'secret_version') || jsonb_build_object('secret_ref',jsonb_build_object('kind',t.secret_kind,'locator',t.secret_locator,'version',t.secret_version))"
+		return "(to_jsonb(t)-'tenant_id'-'deleted_at'-'secret_kind'-'secret_locator'-'secret_version') || jsonb_build_object('secret_ref',jsonb_build_object('kind',t.secret_kind,'locator',CASE WHEN t.secret_kind='env' AND t.secret_locator ~ '^[A-Z_][A-Z0-9_]*$' THEN t.secret_locator ELSE '****' END,'version',t.secret_version))"
 	case d.Policies:
 		return "(to_jsonb(t)-'tenant_id'-'deleted_at') || (to_jsonb(v)-'id'-'tenant_id'-'policy_id'-'created_at'-'updated_at')"
 	case d.Usages:
@@ -98,7 +98,9 @@ func normalize(kind d.Kind, raw []byte) (json.RawMessage, error) {
 	if kind == d.Keys {
 		if ref, ok := obj["secret_ref"].(map[string]any); ok {
 			if loc, ok := ref["locator"].(string); ok {
-				ref["locator"] = MaskSecret(loc)
+				if ref["kind"] != "env" || !envNameRegex.MatchString(loc) {
+					ref["locator"] = MaskSecret(loc)
+				}
 			}
 		}
 	}
@@ -214,23 +216,15 @@ func (s *Store) Put(ctx context.Context, tenant string, kind d.Kind, id string, 
 		if !ok {
 			return nil, d.ErrInvalid
 		}
+		kind, _ := ref["kind"].(string)
 		loc, _ := ref["locator"].(string)
-		loc = strings.TrimSpace(loc)
-		if id != "" && IsMaskedSecret(loc) {
-			var existingLoc string
-			if err := db.Raw("SELECT secret_locator FROM llm_keys WHERE tenant_id=? AND id=?", tenant, id).Row().Scan(&existingLoc); err == nil && existingLoc != "" {
-				loc = existingLoc
-			}
-		} else if loc != "" && !envNameRegex.MatchString(loc) && !IsEncryptedSecret(loc) {
-			encrypted, encErr := EncryptSecret(loc)
-			if encErr == nil {
-				loc = encrypted
-				ref["kind"] = "plain"
-			}
+		version, _ := ref["version"].(string)
+		if err := d.ValidateSecretRef(d.SecretRef{Kind: kind, Locator: loc, Version: version}); err != nil {
+			return nil, err
 		}
-		obj["secret_kind"] = ref["kind"]
+		obj["secret_kind"] = kind
 		obj["secret_locator"] = loc
-		obj["secret_version"] = ref["version"]
+		obj["secret_version"] = version
 		delete(obj, "secret_ref")
 		raw, _ = json.Marshal(obj)
 	}
@@ -582,8 +576,8 @@ func (s *Store) Price(ctx context.Context, tenant string, input d.PricingInput) 
 
 // SecretBinding is deployment metadata, never a credential value.
 type SecretBinding struct {
-	ProviderID string
-	Ref        d.SecretRef
+	ProviderID string      `json:"provider_id"`
+	Ref        d.SecretRef `json:"ref"`
 }
 
 // Resolve returns an owned byte slice that this adapter clears after use.
@@ -601,20 +595,13 @@ type Secrets struct {
 }
 
 func NewSecrets(o SecretOptions) (*Secrets, error) {
-	if len(o.Pepper) < 32 || o.Resolve == nil {
+	if o.Resolve == nil {
 		return nil, d.ErrSecret
 	}
 	s := &Secrets{bindings: map[SecretBinding]bool{}, endpoints: map[string]map[string]bool{}, pepper: append([]byte{}, o.Pepper...), resolve: o.Resolve}
-	env := regexp.MustCompile("^[A-Z_][A-Z0-9_]*$")
 	for _, binding := range o.Bindings {
 		ref := binding.Ref
-		if binding.ProviderID == "" || len(ref.Locator) < 1 || len(ref.Locator) > 1024 || len(ref.Version) < 1 || len(ref.Version) > 64 {
-			return nil, d.ErrSecret
-		}
-		if (ref.Kind != "env" && ref.Kind != "secret_store" && ref.Kind != "plain") || (ref.Kind == "env" && !env.MatchString(ref.Locator)) {
-			return nil, d.ErrSecret
-		}
-		if strings.IndexFunc(ref.Locator, func(r rune) bool { return r < 32 || r == 92 }) >= 0 || strings.Contains(ref.Locator, "..") {
+		if !scope.ValidID(binding.ProviderID) || d.ValidateSecretRef(ref) != nil {
 			return nil, d.ErrSecret
 		}
 		s.bindings[binding] = true
@@ -666,10 +653,10 @@ func (s *Secrets) ValidateEndpoint(protocol, endpoint string) error {
 }
 func (s *Secrets) Fingerprint(ctx context.Context, provider string, ref d.SecretRef) (string, error) {
 	binding := SecretBinding{provider, ref}
-	if s == nil {
+	if s == nil || len(s.pepper) < 32 || d.ValidateSecretRef(ref) != nil {
 		return "", d.ErrSecret
 	}
-	if len(s.bindings) > 0 && !s.bindings[binding] && ref.Kind != "plain" {
+	if !s.bindings[binding] {
 		return "", d.ErrSecret
 	}
 	secret, err := s.resolve(ctx, binding)
@@ -688,10 +675,10 @@ func (s *Secrets) Fingerprint(ctx context.Context, provider string, ref d.Secret
 // enforce TLS and disable redirects. Callback error text is never propagated.
 func (s *Secrets) WithSecret(ctx context.Context, provider string, ref d.SecretRef, fn func([]byte) error) error {
 	binding := SecretBinding{provider, ref}
-	if s == nil || fn == nil {
+	if s == nil || fn == nil || d.ValidateSecretRef(ref) != nil {
 		return d.ErrSecret
 	}
-	if len(s.bindings) > 0 && !s.bindings[binding] && ref.Kind != "plain" {
+	if !s.bindings[binding] {
 		return d.ErrSecret
 	}
 	secret, err := s.resolve(ctx, binding)

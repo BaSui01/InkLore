@@ -456,6 +456,18 @@ func toAnthropicToolChoice(choice any) any {
 	return choice
 }
 
+// Anthropic reports uncached input separately from cache creation and reads.
+// The ledger's Input convention is inclusive, with cached reads as a subset.
+func anthropicTokenUsage(uncached, created, read, output int) *domain.TokenUsage {
+	input := uncached + created + read
+	return &domain.TokenUsage{
+		PromptTokens: input, InputTokens: input,
+		CompletionTokens: output, OutputTokens: output,
+		TotalTokens: input + output, CachedTokens: read,
+		PromptCacheHitTokens: read, PromptCacheMissTokens: uncached + created,
+	}
+}
+
 func (r *ProviderRouter) anthropicChat(ctx context.Context, target upstreamTarget, req nativeTextRequest) (domain.TextGenerationResponse, error) {
 	maxTokens := req.MaxTokens
 	if maxTokens < 1 {
@@ -467,8 +479,8 @@ func (r *ProviderRouter) anthropicChat(ctx context.Context, target upstreamTarge
 	var topPPtr *float64
 
 	if isAnthropicThinkingEnabled(req) {
-		if maxTokens < 4096 {
-			maxTokens = 4096
+		if maxTokens <= 1024 {
+			return domain.TextGenerationResponse{}, fmt.Errorf("anthropic thinking requires max_tokens above 1024")
 		}
 		budget := calculateAnthropicBudget(req.ReasoningEffort, maxTokens)
 		thinking = &anthropicThinking{Type: "enabled", BudgetTokens: budget}
@@ -519,20 +531,11 @@ func (r *ProviderRouter) anthropicChat(ctx context.Context, target upstreamTarge
 		return domain.TextGenerationResponse{}, err
 	}
 
-	cached := decoded.Usage.CacheReadInputTokens
 	result := domain.TextGenerationResponse{
 		Model:        decoded.Model,
 		FinishReason: decoded.Stop,
-		Usage: &domain.TokenUsage{
-			PromptTokens:          decoded.Usage.InputTokens,
-			CompletionTokens:      decoded.Usage.OutputTokens,
-			TotalTokens:           decoded.Usage.InputTokens + decoded.Usage.OutputTokens,
-			CachedTokens:          cached,
-			PromptCacheHitTokens:  cached,
-			PromptCacheMissTokens: decoded.Usage.InputTokens - cached,
-			InputTokens:           decoded.Usage.InputTokens,
-			OutputTokens:          decoded.Usage.OutputTokens,
-		},
+		Usage: anthropicTokenUsage(decoded.Usage.InputTokens, decoded.Usage.CacheCreationInputTokens,
+			decoded.Usage.CacheReadInputTokens, decoded.Usage.OutputTokens),
 	}
 	for _, block := range decoded.Content {
 		if block.Type == "thinking" {
@@ -556,14 +559,17 @@ func (r *ProviderRouter) anthropicChat(ctx context.Context, target upstreamTarge
 }
 
 func (r *ProviderRouter) anthropicStream(ctx context.Context, target upstreamTarget, req nativeTextRequest, onEvent domain.StreamEventHandler) error {
-	maxTokens := maxInt(req.MaxTokens, 8192)
+	maxTokens := req.MaxTokens
+	if maxTokens < 1 {
+		maxTokens = 8192
+	}
 	var thinking *anthropicThinking
 	var tempPtr *float64
 	var topPPtr *float64
 
 	if isAnthropicThinkingEnabled(req) {
-		if maxTokens < 4096 {
-			maxTokens = 4096
+		if maxTokens <= 1024 {
+			return fmt.Errorf("anthropic thinking requires max_tokens above 1024")
 		}
 		budget := calculateAnthropicBudget(req.ReasoningEffort, maxTokens)
 		thinking = &anthropicThinking{Type: "enabled", BudgetTokens: budget}

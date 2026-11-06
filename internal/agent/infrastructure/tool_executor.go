@@ -19,7 +19,7 @@ import (
 )
 
 // PlatformUTCNowInputSchema and PlatformUTCNowOutputSchema are the exact
-// governance schemas for the only registered read-only platform capability.
+// governance schemas for the registered read-only platform clock capability.
 // A configured key with incompatible schemas is never presented as runnable.
 const (
 	PlatformUTCNowInputSchema  = `{"type":"object","additionalProperties":false,"properties":{}}`
@@ -58,7 +58,7 @@ func NewToolExecutor(repo d.GovernanceRepository) *ToolExecutor {
 	}}
 }
 
-// BuiltinTools projects only handlers installed in this executor, never tenant
+// BuiltinTools projects installed handlers and scheduler control capabilities, never tenant
 // tool heads. Entries default to not_bound until the application verifies the
 // requesting tenant's current frozen version with ToolExecutionStatus.
 func (e *ToolExecutor) BuiltinTools() []d.BuiltinTool {
@@ -74,6 +74,7 @@ func (e *ToolExecutor) BuiltinTools() []d.BuiltinTool {
 			tools = append(tools, tool)
 		}
 	}
+	tools = append(tools, d.BuiltinTool{ToolKey: d.ClarificationToolKey, Title: "向作者澄清", Description: "持久化澄清问题并等待本人回答；回答后恢复同一次运行。", ExecutionStatus: d.ToolExecutionNotBound, SideEffect: string(d.SideEffectReadOnly), InputSchema: json.RawMessage(d.ClarificationInputSchema), OutputSchema: json.RawMessage(d.ClarificationOutputSchema)})
 	sort.Slice(tools, func(i, j int) bool { return tools[i].ToolKey < tools[j].ToolKey })
 	return tools
 }
@@ -86,6 +87,12 @@ func (e *ToolExecutor) ToolExecutionStatus(ctx context.Context, tenantID string,
 		!scope.ValidID(view.CurrentVersionID) || !view.Enabled || view.ApprovalRequired || view.MCPServerID != nil ||
 		view.RemoteToolName != nil || view.SideEffect != string(d.SideEffectReadOnly) ||
 		view.TimeoutSeconds < 1 || view.TimeoutSeconds > 120 {
+		return d.ToolExecutionNotBound
+	}
+	if view.ToolKey == d.ClarificationToolKey {
+		if sameSchema(view.InputSchema, d.ClarificationInputSchema) && sameSchema(view.OutputSchema, d.ClarificationOutputSchema) {
+			return d.ToolExecutionAvailable
+		}
 		return d.ToolExecutionNotBound
 	}
 	if handler, registered := e.handlers[view.ToolKey]; !registered || handler.run == nil {
@@ -163,6 +170,9 @@ func (e *ToolExecutor) ExecuteTool(ctx context.Context, input d.ToolCallInput) (
 	}
 	if err := validateToolDocument(version.InputSchema, input.Arguments); err != nil {
 		return nil, errors.New("agent tool executor: invalid frozen-schema arguments")
+	}
+	if input.ToolKey == d.ClarificationToolKey {
+		return nil, errors.New("clarification must be persisted by the run scheduler")
 	}
 	handler := e.handlers[input.ToolKey].run
 	limited, cancel := context.WithTimeout(ctx, time.Duration(version.TimeoutSeconds)*time.Second)
