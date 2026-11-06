@@ -26,7 +26,7 @@ func TestQuestionSchemaAndAnswerBoundary(t *testing.T) {
 		strings.Replace(valid, `"response_schema":{`, `"response_schema":{"$ref":"https://attacker.invalid/schema",`, 1),
 		strings.Replace(valid, `"context_summary":`, `"tenant_id":"forged","context_summary":`, 1),
 		strings.Replace(valid, `"maxItems":2`, `"maxItems":21`, 1),
-		strings.Replace(valid, `"maxItems":2`, `"minItems":3,"maxItems":2`, 1),
+		strings.Replace(valid, `"maxItems":2`, `"minItems":3,"maxItems":3`, 1),
 		strings.Replace(valid, `"maxItems":2`, `"maxItems":2,"items":{"type":"object"}`, 1),
 	} {
 		if _, err := DecodeQuestion([]byte(invalid)); err == nil {
