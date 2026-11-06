@@ -256,8 +256,6 @@ func (e MailSettingsProvider) Valid() bool {
 	switch e {
 	case MailSettingsProviderDisabled:
 		return true
-	case MailSettingsProviderResend:
-		return true
 	case MailSettingsProviderSmtp:
 		return true
 	default:
@@ -395,8 +393,6 @@ const (
 func (e UpdateMailSettingsProvider) Valid() bool {
 	switch e {
 	case UpdateMailSettingsProviderDisabled:
-		return true
-	case UpdateMailSettingsProviderResend:
 		return true
 	case UpdateMailSettingsProviderSmtp:
 		return true
