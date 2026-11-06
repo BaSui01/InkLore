@@ -62,11 +62,11 @@ type runRow struct {
 	ChapterID           sql.NullString `gorm:"column:chapter_id"`
 	SourceRevision      sql.NullInt64  `gorm:"column:source_revision"`
 	SourceHash          sql.NullString `gorm:"column:source_hash"`
-	SelectionStart      sql.NullInt64  `gorm:"column:selection_start_offset"`
-	SelectionEnd        sql.NullInt64  `gorm:"column:selection_end_offset"`
-	SelectionHash       sql.NullString `gorm:"column:selection_source_hash"`
-	SelectionScopeVerified bool `gorm:"column:selection_scope_verified"`
-	Instruction         string         `gorm:"column:instruction"`
+	SelectionStart         sql.NullInt64  `gorm:"column:selection_start_offset"`
+	SelectionEnd           sql.NullInt64  `gorm:"column:selection_end_offset"`
+	SelectionHash          sql.NullString `gorm:"column:selection_source_hash"`
+	SelectionScopeVerified bool           `gorm:"column:selection_scope_verified"`
+	Instruction            string         `gorm:"column:instruction"`
 	DefinitionVersionID sql.NullString `gorm:"column:definition_version_id"`
 	WorkflowVersionID   sql.NullString `gorm:"column:workflow_version_id"`
 	PolicyVersionID     string         `gorm:"column:policy_version_id"`
@@ -163,9 +163,9 @@ func (row *runRow) toDomain() *d.AgentRun {
 		ChapterID:           chapID,
 		SourceRevision:      sourceRev,
 		SourceHash:          sourceHash,
-		Selection:           selection,
+		Selection:              selection,
 		SelectionScopeVerified: row.SelectionScopeVerified,
-		Instruction:         row.Instruction,
+		Instruction:            row.Instruction,
 		DefinitionVersionID: defVerID,
 		WorkflowVersionID:   wfVerID,
 		PolicyVersionID:     row.PolicyVersionID,
