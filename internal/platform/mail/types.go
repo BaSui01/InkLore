@@ -1,4 +1,4 @@
-// Package mail owns the global transport configuration and real SMTP delivery.
+// Package mail owns global delivery configuration and SMTP/Resend transports.
 package mail
 
 import (
