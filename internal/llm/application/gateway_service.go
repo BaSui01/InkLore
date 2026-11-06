@@ -209,6 +209,11 @@ func (s *GatewayAdmissionService) Prepare(ctx context.Context, budget domain.Res
 	if e == nil {
 		return PendingAdmission{reservation, lease}, nil
 	}
+	if errors.Is(e, domain.ErrOutcomeUnknown) {
+		// Without proof of cleanup a lost Redis reply may still own the
+		// attempt marker. Leave the reservation for fenced recovery.
+		return PendingAdmission{}, e
+	}
 	cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancel()
 	if releaseError := s.options.Budget.ReleasePrepared(cleanup, reservation); releaseError != nil {

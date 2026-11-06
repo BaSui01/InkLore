@@ -182,6 +182,7 @@ type GenerationUsage struct {
 	InputTokens  int `json:"input_tokens"`
 	OutputTokens int `json:"output_tokens"`
 	TotalTokens  int `json:"total_tokens"`
+	CachedTokens int `json:"cached_tokens,omitempty"`
 }
 
 type GenerateResult struct {
@@ -201,6 +202,7 @@ const (
 	StreamEventToolCall   StreamEventType = "tool_call"
 	StreamEventToolResult StreamEventType = "tool_result"
 	StreamEventDone       StreamEventType = "done"
+	StreamEventUsage      StreamEventType = "usage"
 	StreamEventError      StreamEventType = "error"
 )
 

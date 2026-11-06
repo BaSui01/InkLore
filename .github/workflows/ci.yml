@@ -65,6 +65,7 @@ jobs:
           if [ -n "$unformatted" ]; then
             echo "以下文件未格式化，请运行 gofmt -w . ："
             echo "$unformatted"
+            while IFS= read -r file; do gofmt -d "$file" </dev/null; done <<< "$unformatted"
             exit 1
           fi
           echo "gofmt 校验通过"
