@@ -312,6 +312,33 @@ func TestEmailPostgresSMTPAuthentication(t *testing.T) {
 		_, err = auth.RegisterCreator(ctx, input)
 		requireCode(t, err, "auth.invalid_credentials")
 	})
+	t.Run("unverified account requires password reset before email login", func(t *testing.T) {
+		address := "unverified-" + uuid.NewString() + "@inklore.test"
+		registered, err := auth.RegisterCreator(ctx, identity.RegisterInput{
+			Email: address, Password: "original-password-123", PenName: "Unverified fixture", ClientIP: uuid.NewString(),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		codeInfo, code, _ := request(t, address, "login", "creator", registered.Principal.TenantID)
+		proof := identity.EmailLoginInput{Email: address, ChallengeID: codeInfo.ChallengeID,
+			Code: code, Audience: "creator", TenantID: registered.Principal.TenantID, ClientIP: uuid.NewString()}
+		_, err = auth.LoginEmail(ctx, proof)
+		requireCode(t, err, "auth.invalid_credentials")
+		resetInfo, resetCode, _ := request(t, address, "reset", "creator", registered.Principal.TenantID)
+		err = auth.ResetPassword(ctx, identity.ResetPasswordInput{EmailLoginInput: identity.EmailLoginInput{
+			Email: address, ChallengeID: resetInfo.ChallengeID, Code: resetCode,
+			Audience: "creator", TenantID: registered.Principal.TenantID, ClientIP: uuid.NewString(),
+		}, NewPassword: "replaced-password-123"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = auth.Authenticate(ctx, registered.AccessToken, "creator")
+		requireCode(t, err, "auth.unauthenticated")
+		if _, err = auth.LoginEmail(ctx, proof); err != nil {
+			t.Fatal(err)
+		}
+	})
 	t.Run("reset revokes all sessions and survives process restart", func(t *testing.T) {
 		user := newUser(t, "reset")
 		email := emailFor(t, user.Principal)
