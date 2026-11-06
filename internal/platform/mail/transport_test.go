@@ -428,7 +428,7 @@ func TestResendRejectsPrivateDNSAndUntrustedTLS(t *testing.T) {
 			t.Fatal("invalid credential reached DNS")
 			return nil, nil
 		}
-		err := tr.send(context.Background(), Settings{Provider: "resend", SenderEmail: "sender@inklore.test"}, "key\\r\\nX-Injected: true",
+		err := tr.send(context.Background(), Settings{Provider: "resend", SenderEmail: "sender@inklore.test"}, "key\r\nX-Injected: true",
 			Message{ID: "6138ae42-4980-414a-a22f-ea293851f8db", To: "recipient@inklore.test", Subject: "Code", Text: "code"})
 		if err == nil {
 			t.Fatal("credential header injection was accepted")
