@@ -6,9 +6,9 @@
     {"tool_key":"platform_utc_now","title":"读取当前 UTC 时间","input_schema":{"type":"object","additionalProperties":false,"properties":{}},"output_schema":{"type":"object","additionalProperties":false,"properties":{"utc_now":{"type":"string","format":"date-time"}},"required":["utc_now"]},"side_effect":"read_only","approval_required":false,"timeout_seconds":5}
   ],
   "policies": [
-    {"task_key":"chapter_rewrite","title":"正文划词润色与扩写策略","max_output_tokens":4096,"temperature":0.7,"timeout_seconds":60,"max_retries":2,"required_capabilities":["text"],"output_mode":"text"},
-    {"task_key":"outline_suggest","title":"小说大纲架构推演策略","max_output_tokens":4096,"temperature":0.7,"timeout_seconds":60,"max_retries":2,"required_capabilities":["text"],"output_mode":"text"},
-    {"task_key":"worldview_suggest","title":"世界观事实审查策略","max_output_tokens":4096,"temperature":0.7,"timeout_seconds":60,"max_retries":2,"required_capabilities":["text"],"output_mode":"text"}
+    {"task_key":"chapter_rewrite","task_kinds":["chapter_rewrite"],"title":"正文划词润色与扩写策略","max_output_tokens":4096,"temperature":0.7,"timeout_seconds":60,"max_retries":2,"required_capabilities":["text"],"output_mode":"text"},
+    {"task_key":"outline_suggest","task_kinds":["outline_suggest"],"title":"小说大纲架构推演策略","max_output_tokens":4096,"temperature":0.7,"timeout_seconds":60,"max_retries":2,"required_capabilities":["text"],"output_mode":"text"},
+    {"task_key":"worldview_suggest","task_kinds":["worldview_suggest"],"title":"世界观事实审查策略","max_output_tokens":4096,"temperature":0.7,"timeout_seconds":60,"max_retries":2,"required_capabilities":["text"],"output_mode":"text"}
   ],
   "definitions": [
     {"definition_key":"inline_polisher","title":"正文划词润色与扩写助手","system_instruction":"你是一个专业的网文小说润色与扩写助手。请根据作者指令和上下文，对选区文本进行情节扩写、文风重塑或精简去水。严格保留作者的情节原意，杜绝说教与模板化AI味，直接输出纯净修改后段落。","task_kinds":["chapter_rewrite"]},

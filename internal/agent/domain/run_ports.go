@@ -20,6 +20,8 @@ type RunJobLease struct {
 
 // JobsPort defines the boundary to platform_jobs for agent run scheduling.
 type JobsPort interface {
+	WithRunJobLease(context.Context, *RunJobLease, func(context.Context) error) error
+	LockRunJobCommand(context.Context, string, string) error
 	EnqueueRunJob(ctx context.Context, p identity.Principal, runID string) (string, error)
 	ClaimRunJob(ctx context.Context, workerID string) (*RunJobLease, error)
 	HeartbeatRunJob(ctx context.Context, lease *RunJobLease) error
@@ -31,6 +33,7 @@ type JobsPort interface {
 
 // ModelGenerateInput is the input for Think phase model generation.
 type ModelGenerateInput struct {
+	ExecutionKey      string
 	TenantID          string
 	RunID             string
 	NodeKey           string
@@ -112,6 +115,18 @@ type TaskResourcePort interface {
 
 // RunRepository persists agent runs, nodes, executions, approvals, artifacts, and events.
 type RunRepository interface {
+	AuditRunRepository
+	// Clarification mutations require an existing UoW and serialize on the Run.
+	LockRun(context.Context, string, string) (*AgentRun, error)
+	CreateQuestion(context.Context, *Question) error
+	GetQuestion(context.Context, string, string, string) (*Question, error)
+	ListOpenQuestions(context.Context, string, string) ([]Question, error)
+	CountQuestions(context.Context, string, string) (int, error)
+	AnswerQuestion(context.Context, *Question, int64, json.RawMessage, string, string) error
+	CloseQuestions(context.Context, string, string, string) error
+	ResumeQuestionNode(context.Context, string, string, int64, json.RawMessage) error
+	DatabaseTime(context.Context) (time.Time, error)
+
 	// Runs
 	CreateRun(ctx context.Context, tenantID string, run *AgentRun, nodes []AgentRunNode) error
 	GetRun(ctx context.Context, tenantID, runID string) (*AgentRun, []AgentRunNode, error)

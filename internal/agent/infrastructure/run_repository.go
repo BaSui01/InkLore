@@ -638,7 +638,7 @@ func (r *RunRepositoryPostgres) ClaimNodeAttempt(
 	q := db.Raw(`
 		UPDATE agent_run_nodes
 		SET status = 'running',
-		    attempt = attempt + 1,
+		    attempt = CASE WHEN status='ready' AND attempt>0 THEN attempt ELSE attempt+1 END,
 		    fencing_token = fencing_token + 1,
 		    job_epoch = ?,
 		    lease_owner = ?,
@@ -647,8 +647,11 @@ func (r *RunRepositoryPostgres) ClaimNodeAttempt(
 		    started_at = COALESCE(started_at, now()),
 		    updated_at = now()
 		WHERE tenant_id = ? AND id = ? AND revision = ? AND status IN ('ready', 'retry_wait')
+  AND EXISTS (SELECT 1 FROM agent_runs ar JOIN platform_jobs j ON j.id=ar.platform_job_id AND j.tenant_id=ar.tenant_id
+    WHERE ar.tenant_id=agent_run_nodes.tenant_id AND ar.id=agent_run_nodes.run_id AND ar.status='running'
+      AND j.state='leased' AND j.lease_owner=? AND j.lease_epoch=? AND j.lease_until>clock_timestamp())
 		RETURNING *
-	`, jobEpoch, workerID, leaseUntil, tenantID, nodeID, expectedRev).Scan(&row)
+	`, jobEpoch, workerID, leaseUntil, tenantID, nodeID, expectedRev, workerID, jobEpoch).Scan(&row)
 
 	if q.Error != nil {
 		return nil, q.Error
@@ -696,6 +699,10 @@ func (r *RunRepositoryPostgres) SaveNodeCheckpoint(
 		SET phase = ?, iteration = ?, status = ?, checkpoint = ?::jsonb,
 		    error_code = ?, revision = revision + 1, updated_at = now()
 		WHERE tenant_id = ? AND id = ? AND revision = ? AND job_epoch = ? AND fencing_token = ?
+  AND status='running' AND lease_until>clock_timestamp()
+  AND EXISTS (SELECT 1 FROM agent_runs ar JOIN platform_jobs j ON j.id=ar.platform_job_id AND j.tenant_id=ar.tenant_id
+    WHERE ar.tenant_id=agent_run_nodes.tenant_id AND ar.id=agent_run_nodes.run_id AND ar.status='running'
+      AND j.state='leased' AND j.lease_epoch=agent_run_nodes.job_epoch AND j.lease_owner=agent_run_nodes.lease_owner AND j.lease_until>clock_timestamp())
 	`, string(phase), iteration, string(status), string(checkpoint), errorCode, tenantID, nodeID, expectedRev, jobEpoch, fence)
 
 	if q.Error != nil {
@@ -724,6 +731,10 @@ func (r *RunRepositoryPostgres) FinishNode(
 		UPDATE agent_run_nodes
 		SET status = ?, finished_at = now(), error_code = ?, revision = revision + 1, updated_at = now()
 		WHERE tenant_id = ? AND id = ? AND revision = ? AND job_epoch = ? AND fencing_token = ?
+  AND status='running' AND lease_until>clock_timestamp()
+  AND EXISTS (SELECT 1 FROM agent_runs ar JOIN platform_jobs j ON j.id=ar.platform_job_id AND j.tenant_id=ar.tenant_id
+    WHERE ar.tenant_id=agent_run_nodes.tenant_id AND ar.id=agent_run_nodes.run_id AND ar.status='running'
+      AND j.state='leased' AND j.lease_epoch=agent_run_nodes.job_epoch AND j.lease_owner=agent_run_nodes.lease_owner AND j.lease_until>clock_timestamp())
 	`, string(status), errorCode, tenantID, nodeID, expectedRev, jobEpoch, fence)
 
 	if q.Error != nil {

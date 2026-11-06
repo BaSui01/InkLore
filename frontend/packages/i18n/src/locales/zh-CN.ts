@@ -1,3 +1,4 @@
+import { agentZhCN } from "./agent";
 import { foundationZhCN } from "./foundation-zh-CN";
 /**
  * @inklore/i18n - 简体中文词库 (zh-CN)
@@ -12,6 +13,7 @@ import { editorZhCN } from "./editor";
 import { complianceZhCN } from "./compliance";
 
 const localeDict: Record<string, string> = {
+  ...agentZhCN,
   ...foundationZhCN,
 
   "common.create": "新建",

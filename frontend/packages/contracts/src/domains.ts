@@ -47,6 +47,7 @@ export interface CreateVolumeInput {
 }
 
 export interface Chapter {
+  content_hash: string;
   id: string;
   novel_id: string;
   volume_id: string | null;
@@ -231,7 +232,11 @@ export interface AgentRun {
   id: string;
   revision: number;
   workflow_id?: string;
-  status: "queued" | "pending" | "running" | "waiting_approval" | "cancelling" | "succeeded" | "completed" | "failed" | "cancelled";
+  resource: AgentResourceRef | null;
+  policy_version_id: string;
+  pending_questions: AgentQuestion[];
+  nodes?: Array<{id: string; role: string; status: string}>;
+  status: "queued" | "pending" | "running" | "waiting_approval" | "waiting_clarification" | "cancelling" | "succeeded" | "completed" | "failed" | "cancelled";
   prompt?: string;
   context_assembly?: Record<string, unknown>;
   output?: string;
@@ -262,13 +267,75 @@ export interface CancelRunInput {
 
 export interface CreateRunInput {
   task_kind: string;
-  task_key: string;
+  task_policy_version_id: string;
   resource: AgentResourceRef;
   instruction: string;
   definition_id: string;
   workflow_id?: string;
-  model_id?: string;
-  model_key?: string;
+}
+
+export type QuestionResponseSchema =
+  | { type: "string"; enum: string[] }
+  | { type: "string"; minLength?: number; maxLength: number }
+  | { type: "array"; uniqueItems: true; items: { type: "string"; enum: string[] }; minItems?: number; maxItems: number };
+
+export interface AgentQuestion {
+  id: string;
+  revision: number;
+  question_version: 1;
+  run_id: string;
+  node_id: string;
+  status: "open" | "answered" | "expired" | "cancelled";
+  title_key: string;
+  help_key: string;
+  response_schema: QuestionResponseSchema;
+  options: Array<{ value: string; label_key: string }>;
+  context_summary: string;
+  source_revision: number;
+  source_hash: string;
+  expires_at: string;
+  answer_hash: string | null;
+  answered_at: string | null;
+}
+
+export interface AnswerQuestionInput {
+  expected_revision: number;
+  question_version: 1;
+  answer: string | string[];
+}
+
+export interface CatalogTaskPolicy {
+  policy_id: string;
+  policy_version_id: string;
+  task_key: string;
+  title: string;
+  version: number;
+  task_kinds: string[];
+  input_schema: Record<string, unknown>;
+  budget: { max_output_tokens: number; timeout_seconds: number };
+}
+
+export interface AgentRunSummary {
+  id: string;
+  revision: number;
+  task_kind: string;
+  status: AgentRun["status"];
+  resource: AgentResourceRef | null;
+  created_at: string;
+}
+
+export interface AgentAuditRun {
+  created_at: string;
+  updated_at: string;
+  kind: "creator" | "diagnostic";
+  id: string;
+  revision: number;
+  task_kind: string;
+  status: AgentRun["status"];
+  node_count: number;
+  duration_ms: number;
+  cost_micros: number | null;
+  error_code: string | null;
 }
 
 export interface CatalogDefinition {
@@ -372,4 +439,28 @@ export interface CreateScanInput {
   chapter_revision: number;
   content_hash: string;
   text: string;
+}
+
+export interface AgentApproval {
+  id: string;
+  revision: number;
+  created_at: string;
+  updated_at: string;
+  run_id: string;
+  node_id: string;
+  owner_user_id: string;
+  tool_version_id: string;
+  arguments_hash: string;
+  arguments_json: string;
+  source_revision: number;
+  status: "pending" | "consumed" | "rejected" | "expired" | "cancelled";
+  expires_at: string;
+  decided_at: string | null;
+  decision_reason: string | null;
+}
+export interface ApprovalDecisionInput {
+  expected_revision: number;
+  arguments_hash: string;
+  source_revision: number;
+  reason?: string;
 }

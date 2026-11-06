@@ -210,6 +210,7 @@ type FrozenPolicy struct {
 
 type PolicyInput struct {
 	TaskKey              string   `json:"task_key"`
+	TaskKinds            []string `json:"task_kinds"`
 	Title                string   `json:"title"`
 	Enabled              bool     `json:"enabled"`
 	PrimaryModelID       string   `json:"primary_model_id"`
@@ -228,6 +229,7 @@ type Policy struct {
 	CreatedAt            string   `json:"created_at"`
 	UpdatedAt            string   `json:"updated_at"`
 	TaskKey              string   `json:"task_key"`
+	TaskKinds            []string `json:"task_kinds"`
 	Title                string   `json:"title"`
 	Enabled              bool     `json:"enabled"`
 	PrimaryModelID       string   `json:"primary_model_id"`

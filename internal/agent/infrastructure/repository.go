@@ -6,6 +6,7 @@ import (
 	"InkLore/internal/platform/uow"
 	"context"
 	"errors"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -46,6 +47,13 @@ func handleNotFound(err error) error {
 }
 
 func parseListCursor(query d.ListQuery) (timeStr string, idStr string, hasCursor bool, err error) {
+	if query.BeforeTime == "" && query.BeforeID != "" {
+		at, id, err := decodeCursor(query.BeforeID)
+		if err != nil {
+			return "", "", false, pe.Contract(400, "platform.cursor_invalid", nil)
+		}
+		return at.UTC().Format(time.RFC3339Nano), id, true, nil
+	}
 	if query.BeforeTime != "" || query.BeforeID != "" {
 		if query.BeforeTime == "" || query.BeforeID == "" {
 			return "", "", false, pe.Contract(400, "platform.cursor_invalid", nil)

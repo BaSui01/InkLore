@@ -133,10 +133,16 @@ func (s *Catalog) Get(ctx context.Context, p identity.Principal, kind d.Kind, id
 	if err != nil {
 		return nil, err
 	}
+	if p.Audience == "creator" && kind != d.Models {
+		return nil, pe.Contract(403, "auth.forbidden", nil)
+	}
 	if !scope.ValidID(id) {
 		return nil, pe.Contract(400, "platform.validation_failed", nil)
 	}
 	raw, err := s.opts.Repository.Get(ctx, p.TenantID, kind, id)
+	if err == nil && p.Audience == "creator" {
+		raw, err = creatorModelProjection(raw)
+	}
 	return raw, public(err)
 }
 
@@ -147,10 +153,21 @@ func (s *Catalog) List(ctx context.Context, p identity.Principal, kind d.Kind, q
 	if err != nil {
 		return nil, err
 	}
+	if p.Audience == "creator" && kind != d.Models {
+		return nil, pe.Contract(403, "auth.forbidden", nil)
+	}
 	if q.Limit < 1 || q.Limit > 101 {
 		return nil, invalid()
 	}
 	rows, err := s.opts.Repository.List(ctx, p.TenantID, kind, q)
+	if err == nil && p.Audience == "creator" {
+		for i, raw := range rows {
+			rows[i], err = creatorModelProjection(raw)
+			if err != nil {
+				return nil, public(err)
+			}
+		}
+	}
 	return rows, public(err)
 }
 
@@ -479,6 +496,9 @@ func (s *Catalog) validate(ctx context.Context, tenant string, kind d.Kind, old 
 		var in d.PolicyInput
 		b, _ := json.Marshal(data)
 		if json.Unmarshal(b, &in) != nil {
+			return d.ErrInvalid
+		}
+		if !d.ValidPolicyTaskKinds(in.TaskKinds) {
 			return d.ErrInvalid
 		}
 		seen := map[string]bool{}

@@ -87,6 +87,7 @@ type seedModel struct {
 }
 type seedPolicy struct {
 	TaskKey              string   `json:"task_key"`
+	TaskKinds            []string `json:"task_kinds"`
 	Title                string   `json:"title"`
 	MaxOutputTokens      int      `json:"max_output_tokens"`
 	Temperature          float64  `json:"temperature"`
@@ -169,15 +170,22 @@ func (m seedManifest) validate() error {
 		}
 		modelCapabilities[capability] = true
 	}
-	if len(m.Tools) > 1 {
-		return fmt.Errorf("seed manifest supports only the registered platform UTC tool")
+	if len(m.Tools) > 2 {
+		return fmt.Errorf("seed manifest supports only installed builtin capabilities")
 	}
 	toolKeys := map[string]bool{}
 	for _, tool := range m.Tools {
-		if tool.Key != "platform_utc_now" || tool.SideEffect != string(agentdomain.SideEffectReadOnly) || tool.ApprovalRequired ||
-			!seedSchemaMatches(tool.InputSchema, agentinfra.PlatformUTCNowInputSchema) ||
-			!seedSchemaMatches(tool.OutputSchema, agentinfra.PlatformUTCNowOutputSchema) {
-			return fmt.Errorf("seed tool %q is not the registered read-only UTC capability", tool.Key)
+		inputSchema, outputSchema := "", ""
+		switch tool.Key {
+		case "platform_utc_now":
+			inputSchema, outputSchema = agentinfra.PlatformUTCNowInputSchema, agentinfra.PlatformUTCNowOutputSchema
+		case agentdomain.ClarificationToolKey:
+			inputSchema, outputSchema = agentdomain.ClarificationInputSchema, agentdomain.ClarificationOutputSchema
+		default:
+			return fmt.Errorf("seed tool %q has no registered builtin capability", tool.Key)
+		}
+		if toolKeys[tool.Key] || tool.SideEffect != string(agentdomain.SideEffectReadOnly) || tool.ApprovalRequired || !seedSchemaMatches(tool.InputSchema, inputSchema) || !seedSchemaMatches(tool.OutputSchema, outputSchema) {
+			return fmt.Errorf("seed tool %q does not match its installed builtin contract", tool.Key)
 		}
 		if err := agentdomain.ValidateTool(tool.Key, tool.Title, tool.InputSchema, tool.OutputSchema, tool.SideEffect,
 			tool.ApprovalRequired, tool.TimeoutSeconds, nil, nil); err != nil {
@@ -199,6 +207,17 @@ func (m seedManifest) validate() error {
 	seen := map[string]bool{}
 	policyKeys := map[string]bool{}
 	for _, p := range m.Policies {
+		if len(p.TaskKinds) < 1 || len(p.TaskKinds) > 16 {
+			return fmt.Errorf("policy %q requires task_kinds", p.TaskKey)
+		}
+		kinds := map[string]bool{}
+		for _, kind := range p.TaskKinds {
+			if !safeTaskKinds[kind] || kinds[kind] {
+				return fmt.Errorf("invalid or duplicate policy task_kind %q", kind)
+			}
+			kinds[kind] = true
+			policyKeys[kind] = true
+		}
 		if !seedKeyPattern.MatchString(p.TaskKey) || p.Title == "" || len([]rune(p.Title)) > 120 || p.MaxOutputTokens < 1 || p.MaxOutputTokens > 16384 || p.MaxOutputTokens > m.Model.MaxOutputTokens || p.Temperature < 0 || p.Temperature > 2 || p.TimeoutSeconds < 1 || p.TimeoutSeconds > 180 || p.MaxRetries < 0 || p.MaxRetries > 3 || p.OutputMode != "text" || len(p.RequiredCapabilities) == 0 || seen["p:"+p.TaskKey] {
 			return fmt.Errorf("invalid or duplicate policy %q", p.TaskKey)
 		}
@@ -210,7 +229,6 @@ func (m seedManifest) validate() error {
 			policyCapabilities[capability] = true
 		}
 		seen["p:"+p.TaskKey] = true
-		policyKeys[p.TaskKey] = true
 	}
 	defs := map[string]bool{}
 	for _, d := range m.Definitions {
@@ -313,8 +331,8 @@ func seedTenantTool(ctx context.Context, db *gorm.DB, tenantID string, manifest 
 	if err := manifest.validate(); err != nil {
 		return nil, err
 	}
-	if len(manifest.Tools) != 1 || manifest.Tools[0].Key != "platform_utc_now" {
-		return nil, fmt.Errorf("seed-tool requires the registered platform UTC tool")
+	if len(manifest.Tools) != 1 {
+		return nil, fmt.Errorf("seed-tool requires exactly one registered builtin capability")
 	}
 	result := &SeedToolResult{SkippedKeys: []string{}}
 	err := db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -490,7 +508,7 @@ func ensureSeedTool(tx *gorm.DB, tenantID string, tool seedTool, now time.Time) 
 			AND input_schema=?::jsonb AND output_schema=?::jsonb AND side_effect='read_only'
 			AND approval_required=false AND timeout_seconds BETWEEN 1 AND 120
 			AND mcp_server_id IS NULL AND remote_tool_name IS NULL)`,
-			tenantID, current.String, id, agentinfra.PlatformUTCNowInputSchema, agentinfra.PlatformUTCNowOutputSchema).Scan(&compatible).Error
+			tenantID, current.String, id, string(tool.InputSchema), string(tool.OutputSchema)).Scan(&compatible).Error
 		if err != nil || !compatible {
 			return "", "", err
 		}
@@ -562,7 +580,7 @@ func ensureSeedPolicy(tx *gorm.DB, t string, p seedPolicy, model string, now tim
 	if err := tx.Exec("INSERT INTO llm_task_policies(id,tenant_id,created_at,updated_at,revision,task_key,title,enabled) VALUES(?,?,?,?,1,?,?,true)", id, t, now, now, p.TaskKey, p.Title).Error; err != nil {
 		return "", err
 	}
-	if err := tx.Exec("INSERT INTO llm_task_policy_versions(id,tenant_id,created_at,updated_at,policy_id,version,primary_model_id,fallback_model_ids,max_output_tokens,temperature,timeout_seconds,max_retries,required_capabilities,output_mode) VALUES(?,?,?,?,?,1,?,'{}',?,?,?,?,?,?)", ver, t, now, now, id, model, p.MaxOutputTokens, p.Temperature, p.TimeoutSeconds, p.MaxRetries, caps, p.OutputMode).Error; err != nil {
+	if err := tx.Exec("INSERT INTO llm_task_policy_versions(id,tenant_id,created_at,updated_at,policy_id,version,primary_model_id,fallback_model_ids,max_output_tokens,temperature,timeout_seconds,max_retries,required_capabilities,output_mode,task_kinds) VALUES(?,?,?,?,?,1,?,'{}',?,?,?,?,?,?,?::text[])", ver, t, now, now, id, model, p.MaxOutputTokens, p.Temperature, p.TimeoutSeconds, p.MaxRetries, caps, p.OutputMode, "{"+strings.Join(p.TaskKinds, ",")+"}").Error; err != nil {
 		return "", err
 	}
 	if err := tx.Exec("UPDATE llm_task_policies SET current_version_id=? WHERE id=? AND tenant_id=?", ver, id, t).Error; err != nil {
@@ -708,7 +726,7 @@ func validateSeedRequiredFields(value any) error {
 		if !ok {
 			return fmt.Errorf("policy must be an object")
 		}
-		if err := requireSeedFields("policy", object, "task_key", "title", "max_output_tokens", "temperature", "timeout_seconds", "max_retries", "required_capabilities", "output_mode"); err != nil {
+		if err := requireSeedFields("policy", object, "task_key", "task_kinds", "title", "max_output_tokens", "temperature", "timeout_seconds", "max_retries", "required_capabilities", "output_mode"); err != nil {
 			return err
 		}
 	}

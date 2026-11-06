@@ -838,6 +838,7 @@ export interface components {
             terminal_reason: string | null;
             /** @description 仅提示人工新请求的可能性；未知模型/工具结果固定false，绝不表示可自动重发原run。 */
             retryable: boolean;
+            pending_questions: components["schemas"]["Question"][];
         };
         RunSummary: {
             id: components["schemas"]["UUID"];
@@ -860,7 +861,8 @@ export interface components {
             status: components["schemas"]["RunStatus"];
             node_count: number;
             duration_ms: number;
-            cost_micros: number;
+            /** @description Actual persisted receipt total; null when billing evidence is unavailable. Missing receipts do not prove zero cost. */
+            cost_micros: number | null;
             error_code: string | null;
         };
         CancelRun: {
