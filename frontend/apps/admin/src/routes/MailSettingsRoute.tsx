@@ -87,7 +87,7 @@ export function MailSettingsRoute() {
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.enabled} onChange={(e) => edit({ enabled: e.target.checked })} />{t("mail.enabled")}</label>
             <label className="block space-y-1 text-sm">{t("mail.provider")}
               <select className={selectStyle} value={form.provider} onChange={(e) => { edit({ provider: e.target.value as MailSettingsInput["provider"] }); setCredentialMode("encrypted"); setCredential(""); }}>
-                <option value="disabled" disabled>{t("mail.unconfigured")}</option><option value="smtp">SMTP</option>
+                <option value="disabled" disabled>{t("mail.unconfigured")}</option><option value="smtp">SMTP</option><option value="resend">{t("mail.resend_provider")}</option>
               </select>
             </label>
             {form.provider === "smtp" && <div className="grid gap-4 sm:grid-cols-2">
@@ -108,7 +108,7 @@ export function MailSettingsRoute() {
             <label className="block space-y-1 text-sm">{t("mail.credential_action")}<select className={selectStyle} value={credentialMode} onChange={(e) => { setCredentialMode(e.target.value as typeof credentialMode); setCredential(""); saveKey.current = null; }}>
               {settings.has_credential && form.provider === settings.provider && <option value="keep">{t("mail.keep_credential")}</option>}<option value="encrypted">{t("mail.encrypted_credential")}</option><option value="env">{t("mail.env_credential")}</option>
             </select></label>
-            {credentialMode !== "keep" && <label className="block space-y-1 text-sm">{credentialMode === "env" ? t("mail.env_locator") : t("mail.new_secret")}<Input type={credentialMode === "env" ? "text" : "password"} value={credential} autoComplete="new-password" required={form.enabled} maxLength={credentialMode === "env" ? 96 : 8192} onChange={(e) => { setCredential(e.target.value); saveKey.current = null; }} /></label>}
+            {credentialMode !== "keep" && <label className="block space-y-1 text-sm">{credentialMode === "env" ? t("mail.env_locator") : t(form.provider === "resend" ? "mail.resend_api_key" : "mail.new_secret")}<Input type={credentialMode === "env" ? "text" : "password"} value={credential} autoComplete="new-password" required={form.enabled} maxLength={credentialMode === "env" ? 96 : 8192} onChange={(e) => { setCredential(e.target.value); saveKey.current = null; }} /></label>}
             <p className="text-xs text-[var(--text-muted)]">{t("mail.secret_hint")}</p>
           </fieldset>
           <div className="flex flex-wrap items-center gap-3"><Button type="submit" disabled={busy || loading}>{busy ? t("auth.submitting") : t("common.save")}</Button><span className="text-xs text-[var(--text-muted)]">{t("mail.revision", settings.revision)}</span></div>
