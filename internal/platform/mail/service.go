@@ -89,12 +89,26 @@ func (s *Service) Enabled(ctx context.Context) (bool, error) {
 	if _, err = s.credential(row); err != nil {
 		return false, nil
 	}
-	host := row.summary().SMTPHost
-	return s.transport.allowed[host], nil
+	settings := row.summary()
+	if !validAddress(settings.SenderEmail) {
+		return false, nil
+	}
+	switch settings.Provider {
+	case "smtp":
+		return s.transport.allowed[settings.SMTPHost], nil
+	case "resend":
+		return true, nil
+	default:
+		return false, nil
+	}
 }
 func (s *Service) Update(ctx context.Context, p identity.Principal, in UpdateInput) (Settings, error) {
-	if in.ExpectedRevision < 1 || in.ExpectedRevision > scope.MaxRevision || in.Provider != "disabled" && in.Provider != "smtp" {
+	if in.ExpectedRevision < 1 || in.ExpectedRevision > scope.MaxRevision || in.Provider != "disabled" && in.Provider != "smtp" && in.Provider != "resend" {
 		return Settings{}, invalid()
+	}
+	if in.Provider == "resend" {
+		// Resend uses the fixed HTTPS endpoint; SMTP connection fields are irrelevant.
+		in.SMTPHost, in.SMTPUsername, in.SMTPSecurity, in.SMTPPort = "", "", "", 0
 	}
 	in.SMTPHost = strings.ToLower(strings.TrimSpace(in.SMTPHost))
 	in.SenderEmail = strings.ToLower(strings.TrimSpace(in.SenderEmail))
@@ -105,7 +119,7 @@ func (s *Service) Update(ctx context.Context, p identity.Principal, in UpdateInp
 	if in.SenderEmail != "" && !validAddress(in.SenderEmail) {
 		return Settings{}, invalid()
 	}
-	if in.SMTPHost != "" && !s.transport.allowed[in.SMTPHost] {
+	if in.Provider == "smtp" && in.SMTPHost != "" && !s.transport.allowed[in.SMTPHost] {
 		return Settings{}, invalid()
 	}
 	if in.SMTPSecurity != "" && in.SMTPSecurity != "implicit_tls" && in.SMTPSecurity != "starttls" {
