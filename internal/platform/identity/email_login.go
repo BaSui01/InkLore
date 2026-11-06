@@ -25,14 +25,23 @@ func (s *Service) LoginEmail(ctx context.Context, input EmailLoginInput) (Sessio
 		if err != nil || !valid {
 			return err
 		}
-		if err = s.consumeEmailChallenge(txctx, row); err != nil {
-			return err
-		}
 		db, err := s.manager.Require(txctx)
 		if err != nil {
 			return err
 		}
-		if err = db.Exec("UPDATE platform_users SET email_verified_at=COALESCE(email_verified_at,clock_timestamp()) WHERE id=?", p.UserID).Error; err != nil {
+		// Password-only registration can leave an unverified address controlled
+		// by somebody else. OTP login must not silently transfer ownership while
+		// preserving that registrant's password or existing sessions. The real
+		// mailbox owner can instead use ResetPassword, which rotates the password
+		// and revokes all sessions atomically before marking the email verified.
+		var verified bool
+		if err = db.Raw("SELECT email_verified_at IS NOT NULL FROM platform_users WHERE id=?", p.UserID).Scan(&verified).Error; err != nil {
+			return err
+		}
+		if !verified {
+			return nil
+		}
+		if err = s.consumeEmailChallenge(txctx, row); err != nil {
 			return err
 		}
 		out, err = s.newSession(txctx, p)
