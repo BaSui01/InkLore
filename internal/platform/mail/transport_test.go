@@ -345,7 +345,7 @@ func TestResendHTTPSDeliveryUsesFixedEndpointAndIdempotency(t *testing.T) {
 			t.Errorf("unexpected Resend payload: %+v", payload)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = io.WriteString(w, `{"id":"49a3999c-0ce1-4ea6-ab68-afcd6dc2e794"}`)
+		_, _ = io.WriteString(w, `{"id":"re_1234567890abcdefghijklmnopqrstuvwxyz"}`)
 	}))
 	tr := pinnedResendTransport(t, server, roots)
 	config := Settings{Provider: "resend", SenderEmail: "sender@inklore.test", SenderName: "InkLore"}
@@ -365,10 +365,11 @@ func TestResendRejectsRedirectsAndInvalidAcceptance(t *testing.T) {
 		location string
 		body     string
 	}{
-		{name: "redirect", status: http.StatusTemporaryRedirect, location: "https://attacker.invalid/collect", body: `{"id":"49a3999c-0ce1-4ea6-ab68-afcd6dc2e794"}`},
-		{name: "unauthorized", status: http.StatusUnauthorized, body: `{"id":"49a3999c-0ce1-4ea6-ab68-afcd6dc2e794"}`},
+		{name: "redirect", status: http.StatusTemporaryRedirect, location: "https://attacker.invalid/collect", body: `{"id":"re_1234567890abcdefghijklmnopqrstuvwxyz"}`},
+		{name: "unauthorized", status: http.StatusUnauthorized, body: `{"id":"re_1234567890abcdefghijklmnopqrstuvwxyz"}`},
 		{name: "invalid-json", status: http.StatusOK, body: "not-json"},
-		{name: "invalid-id", status: http.StatusOK, body: `{"id":"not-a-uuid"}`},
+		{name: "invalid-id", status: http.StatusOK, body: `{"id":"not-a-resend-id"}`},
+		{name: "uuid-is-not-resend-id", status: http.StatusOK, body: `{"id":"6138ae42-4980-414a-a22f-ea293851f8db"}`},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			requests := 0
@@ -413,7 +414,7 @@ func TestResendRejectsPrivateDNSAndUntrustedTLS(t *testing.T) {
 	t.Run("untrusted certificate", func(t *testing.T) {
 		server, _ := newResendSink(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = io.WriteString(w, `{"id":"49a3999c-0ce1-4ea6-ab68-afcd6dc2e794"}`)
+			_, _ = io.WriteString(w, `{"id":"re_1234567890abcdefghijklmnopqrstuvwxyz"}`)
 		}))
 		tr := pinnedResendTransport(t, server, nil)
 		err := tr.send(context.Background(), Settings{Provider: "resend", SenderEmail: "sender@inklore.test"}, "test-resend-secret",
