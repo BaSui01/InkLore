@@ -19,6 +19,7 @@ import (
 	"InkLore/internal/platform/idempotency"
 	"InkLore/internal/platform/identity"
 	"InkLore/internal/platform/logger"
+	"InkLore/internal/platform/mail"
 	"InkLore/internal/platform/membership"
 	"InkLore/internal/platform/middleware"
 	"InkLore/internal/platform/notifications"
@@ -44,6 +45,7 @@ type Platform struct {
 	Scope                      *scope.Authorizer
 	Idempotency                *idempotency.Executor
 	Identity                   *identity.Service
+	Mail                       *mail.Service
 	Members                    *membership.Service
 	Audit                      *audit.Store
 	ProjectLogs                *logger.ProjectLogStore
@@ -116,6 +118,19 @@ func NewWithConfig(cfg *config.Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	mailOptions, err := mail.EnvironmentOptions()
+	if err != nil {
+		return nil, err
+	}
+	mailOptions.Identity = platform.Identity
+	mailOptions.OnEvent = mailAudit(platform.Audit)
+	platform.Mail, err = mail.New(manager, mailOptions)
+	if err != nil {
+		return nil, err
+	}
+	if err = platform.Identity.ConfigureEmail(platform.Mail, []byte(os.Getenv("MAIL_OTP_HASH_KEY"))); err != nil {
+		return nil, err
+	}
 	platform.Members = membership.New(manager, platform.Identity)
 	engine := gin.New()
 	engine.RedirectTrailingSlash = false
@@ -150,6 +165,7 @@ func NewWithConfig(cfg *config.Config) (*App, error) {
 	})
 	application := &App{config: cfg, db: db, router: engine, platform: platform}
 	application.registerIdentityRoutes(engine)
+	application.registerMailRoutes(engine)
 	application.registerPasswordRoute(engine)
 	application.registerMembershipRoutes(engine)
 	application.registerAuditRoutes(engine)

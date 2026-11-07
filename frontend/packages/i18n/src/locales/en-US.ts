@@ -1,3 +1,4 @@
+import { mailEnUS } from "./mail";
 import { writingEnUS } from "./writing";
 import { foundationEnUS } from "./foundation-en-US";
 /**
@@ -945,4 +946,5 @@ export const enUS: Record<string, string> = {
   ...complianceEnUS,
   ...adminEnUS,
   ...authEnUS,
+  ...mailEnUS,
 };

@@ -4,6 +4,92 @@
  */
 
 export interface paths {
+    "/v1/auth/email-capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 查询当前邮箱验证码能力 */
+        get: operations["authEmailCapabilities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/email-challenges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 请求实际投递的用途绑定邮箱验证码 */
+        post: operations["authRequestEmailChallenge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/email-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 单次消费验证码并创建真实身份会话 */
+        post: operations["authEmailLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/platform/mail-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 读取脱敏全局邮件配置 */
+        get: operations["platformGetMailSettings"];
+        /** CAS 更新全局邮件投递配置 */
+        put: operations["platformUpdateMailSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/platform/mail-settings/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 向已验证本人邮箱投递配置测试邮件 */
+        post: operations["platformTestMailSettings"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/platform/project-logs": {
         parameters: {
             query?: never;
@@ -101,7 +187,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** 请求密码重置令牌 */
+        /** 请求实际投递的密码重置验证码 */
         post: operations["authForgotPassword"];
         delete?: never;
         options?: never;
@@ -118,7 +204,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** 使用重置令牌修改密码并吊销全部会话 */
+        /** 单次消费重置验证码、修改密码并吊销全部会话 */
         post: operations["authResetPassword"];
         delete?: never;
         options?: never;
@@ -494,6 +580,93 @@ export interface components {
             next_cursor: string | null;
             has_more: boolean;
         };
+        EmailCapabilities: {
+            enabled: boolean;
+            /** @enum {number} */
+            code_length: 6;
+            /** @enum {number} */
+            expires_in: 300;
+            /** @enum {number} */
+            retry_after_seconds: 60;
+        };
+        EmailChallengeRequest: {
+            /** Format: email */
+            email: string;
+            /** @enum {string} */
+            purpose: "login" | "register" | "reset";
+            /** @enum {string} */
+            audience: "creator" | "admin";
+            tenant_id?: components["schemas"]["UUID"];
+        };
+        EmailChallengeResult: {
+            challenge_id: components["schemas"]["UUID"];
+            /** Format: date-time */
+            expires_at: string;
+            /** @enum {number} */
+            retry_after_seconds: 60;
+        };
+        EmailLogin: {
+            /** Format: email */
+            email: string;
+            challenge_id: components["schemas"]["UUID"];
+            code: string;
+            /** @enum {string} */
+            audience: "creator" | "admin";
+            tenant_id?: components["schemas"]["UUID"];
+            captcha_id?: components["schemas"]["UUID"];
+            captcha_code?: string;
+        };
+        MailSettings: {
+            /** @enum {string} */
+            provider: "disabled" | "smtp" | "resend";
+            enabled: boolean;
+            smtp_host: string;
+            /** @enum {integer} */
+            smtp_port: 0 | 465 | 587;
+            /** @enum {string} */
+            smtp_security: "" | "implicit_tls" | "starttls";
+            smtp_username: string;
+            sender_email: string;
+            sender_name: string;
+            has_credential: boolean;
+            /** @enum {string} */
+            credential_kind: "" | "env" | "encrypted";
+            revision: components["schemas"]["Revision"];
+            /** Format: date-time */
+            updated_at: string;
+        };
+        MailCredentialChange: {
+            /** @enum {string} */
+            kind: "env";
+            locator: string;
+        } | {
+            /** @enum {string} */
+            kind: "encrypted";
+            value: string;
+        };
+        UpdateMailSettings: {
+            /** @enum {string} */
+            provider: "disabled" | "smtp" | "resend";
+            enabled: boolean;
+            smtp_host?: string;
+            /** @enum {integer} */
+            smtp_port?: 0 | 465 | 587;
+            /** @enum {string} */
+            smtp_security?: "" | "implicit_tls" | "starttls";
+            smtp_username?: string;
+            sender_email?: string;
+            sender_name?: string;
+            expected_revision: components["schemas"]["Revision"];
+            credential?: components["schemas"]["MailCredentialChange"];
+        };
+        TestMailSettings: {
+            expected_revision: components["schemas"]["Revision"];
+        };
+        TestMailResult: {
+            delivery_id: components["schemas"]["UUID"];
+            /** @enum {boolean} */
+            accepted: true;
+        };
         Principal: {
             user_id: components["schemas"]["UUID"];
             tenant_id: components["schemas"]["UUID"];
@@ -549,23 +722,28 @@ export interface components {
             pen_name: string;
             captcha_id?: components["schemas"]["UUID"];
             captcha_code?: string;
+            challenge_id?: components["schemas"]["UUID"];
+            code?: string;
         };
         ForgotPassword: {
             /** Format: email */
             email: string;
+            /** @enum {string} */
+            audience: "creator" | "admin";
+            tenant_id?: components["schemas"]["UUID"];
+        };
+        ForgotPasswordResult: components["schemas"]["EmailChallengeResult"];
+        ResetPasswordWithToken: {
+            /** Format: email */
+            email: string;
+            challenge_id: components["schemas"]["UUID"];
+            code: string;
+            /** @enum {string} */
+            audience: "creator" | "admin";
+            tenant_id?: components["schemas"]["UUID"];
+            new_password: string;
             captcha_id?: components["schemas"]["UUID"];
             captcha_code?: string;
-        };
-        ForgotPasswordResult: {
-            /** @enum {boolean} */
-            sent: false;
-            /** @enum {number} */
-            expires_in: 900;
-            dev_token?: string;
-        };
-        ResetPasswordWithToken: {
-            token: string;
-            new_password: string;
         };
         ResetPasswordResult: {
             /** @enum {boolean} */
@@ -847,6 +1025,213 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    authEmailCapabilities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。 */
+            200: {
+                headers: {
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessMeta"] & {
+                        data: components["schemas"]["EmailCapabilities"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["Unavailable"];
+        };
+    };
+    authRequestEmailChallenge: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 每个逻辑副作用命令一个UUID，24小时同键重放 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailChallengeRequest"];
+            };
+        };
+        responses: {
+            /** @description 成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。 */
+            200: {
+                headers: {
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessMeta"] & {
+                        data: components["schemas"]["EmailChallengeResult"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["Unavailable"];
+        };
+    };
+    authEmailLogin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailLogin"];
+            };
+        };
+        responses: {
+            /** @description 成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。 */
+            200: {
+                headers: {
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessMeta"] & {
+                        data: components["schemas"]["Session"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["Unavailable"];
+        };
+    };
+    platformGetMailSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。 */
+            200: {
+                headers: {
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessMeta"] & {
+                        data: components["schemas"]["MailSettings"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["Unavailable"];
+        };
+    };
+    platformUpdateMailSettings: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 每个逻辑副作用命令一个UUID，24小时同键重放 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                "X-CSRF-Token": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMailSettings"];
+            };
+        };
+        responses: {
+            /** @description 成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。 */
+            200: {
+                headers: {
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessMeta"] & {
+                        data: components["schemas"]["MailSettings"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["Unavailable"];
+        };
+    };
+    platformTestMailSettings: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description 每个逻辑副作用命令一个UUID，24小时同键重放 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                "X-CSRF-Token": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestMailSettings"];
+            };
+        };
+        responses: {
+            /** @description 成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。 */
+            200: {
+                headers: {
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessMeta"] & {
+                        data: components["schemas"]["TestMailResult"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["Unavailable"];
+        };
+    };
     platformListProjectLogs: {
         parameters: {
             query?: {
@@ -1010,6 +1395,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             409: components["responses"]["Conflict"];
             429: components["responses"]["TooManyRequests"];
@@ -1019,7 +1405,10 @@ export interface operations {
     authForgotPassword: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description 每个逻辑副作用命令一个UUID，24小时同键重放 */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -1029,19 +1418,23 @@ export interface operations {
             };
         };
         responses: {
-            /** @description 开发环境未投递邮件，返回短期重置令牌；生产环境仅在投递器可用后返回成功。 */
+            /** @description 成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。 */
             200: {
                 headers: {
-                    "Cache-Control": "no-store";
+                    "Cache-Control"?: "no-store";
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["SuccessMeta"] & {
-                        data: components["schemas"]["ForgotPasswordResult"];
+                        data: components["schemas"]["EmailChallengeResult"];
                     };
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["Unavailable"];
         };
@@ -1071,7 +1464,12 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
+            503: components["responses"]["Unavailable"];
         };
     };
     authSessionCSRF: {

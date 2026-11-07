@@ -5,6 +5,7 @@
  */
 
 export const authZhCN: Record<string, string> = {
+  "auth.operation_unavailable": "当前操作尚未接通，请稍后重试",
   // 品牌与通用
   "auth.creator_brand_title": "InkLore · 创作者工作台",
   "auth.creator_brand_label": "创作者工作台",
@@ -66,11 +67,12 @@ export const authZhCN: Record<string, string> = {
 
   // 验证码与安全防护
   "auth.verify_code": "安全验证码",
+  "auth.verify_code_optional": "邮箱验证码（可选，填写后验证邮箱）",
   "auth.verify_code_ph": "请输入 6 位验证码",
   "auth.verify_code_required": "请输入有效的验证码",
   "auth.send_code": "获取验证码",
   "auth.resend_code_cooldown": "重新发送 ({0}s)",
-  "auth.send_code_success": "验证码已发送至您的邮箱，请注意查收",
+  "auth.send_code_success": "邮件服务已接收验证码邮件，验证码 5 分钟内有效。此提示不确认账号是否存在",
   "auth.captcha": "图形验证码",
   "auth.captcha_ph": "请输入图形验证码",
   "auth.captcha_required": "请输入图形验证码",
@@ -154,6 +156,7 @@ export const authZhCN: Record<string, string> = {
 };
 
 export const authEnUS: Record<string, string> = {
+  "auth.operation_unavailable": "This operation is unavailable. Please try again later.",
   // Brand & Common
   "auth.creator_brand_title": "InkLore · Creator Studio",
   "auth.creator_brand_label": "Creator Studio",
@@ -215,11 +218,12 @@ export const authEnUS: Record<string, string> = {
 
   // Verification & Captcha
   "auth.verify_code": "Security Code",
+  "auth.verify_code_optional": "Email code (optional, verifies your address)",
   "auth.verify_code_ph": "Enter 6-digit code",
   "auth.verify_code_required": "Valid verification code is required",
   "auth.send_code": "Get Code",
   "auth.resend_code_cooldown": "Resend in {0}s",
-  "auth.send_code_success": "Verification code has been sent to your email",
+  "auth.send_code_success": "The mail service accepted the code message. The code expires in 5 minutes. This response does not confirm that an account exists.",
   "auth.captcha": "Security Captcha",
   "auth.captcha_ph": "Enter captcha",
   "auth.captcha_required": "Please enter the captcha",

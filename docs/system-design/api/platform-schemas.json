@@ -10,7 +10,7 @@
      "display_name",
      "roles",
      "global_roles",
-      "audience",
+     "audience",
      "session_id",
      "user_revision"
     ],
@@ -41,7 +41,9 @@
       "type": "array",
       "uniqueItems": true,
       "items": {
-       "enum": ["super_admin"]
+       "enum": [
+        "super_admin"
+       ]
       }
      },
      "audience": {
@@ -61,22 +63,37 @@
    "TenantSummary": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["id", "name"],
+    "required": [
+     "id",
+     "name"
+    ],
     "properties": {
-     "id": {"$ref": "./common.json#/components/schemas/UUID"},
-     "name": {"type": "string", "minLength": 1, "maxLength": 120}
+     "id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+     }
     }
    },
    "TenantCatalog": {
     "type": "array",
-    "items": {"$ref": "#/components/schemas/TenantSummary"}
+    "items": {
+     "$ref": "#/components/schemas/TenantSummary"
+    }
    },
    "SwitchTenant": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["tenant_id"],
+    "required": [
+     "tenant_id"
+    ],
     "properties": {
-     "tenant_id": {"$ref": "./common.json#/components/schemas/UUID"}
+     "tenant_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     }
     }
    },
    "Login": {
@@ -125,12 +142,24 @@
     },
     "oneOf": [
      {
-      "required": ["email"],
-      "not": {"required": ["username"]}
+      "required": [
+       "email"
+      ],
+      "not": {
+       "required": [
+        "username"
+       ]
+      }
      },
      {
-      "required": ["username"],
-      "not": {"required": ["email"]}
+      "required": [
+       "username"
+      ],
+      "not": {
+       "required": [
+        "email"
+       ]
+      }
      }
     ],
     "dependentRequired": {
@@ -228,6 +257,16 @@
       "minLength": 4,
       "maxLength": 4,
       "pattern": "^[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz]{4}$"
+     },
+     "challenge_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "code": {
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 6,
+      "pattern": "^[0-9]{6}$",
+      "writeOnly": true
      }
     },
     "dependentRequired": {
@@ -236,76 +275,71 @@
      ],
      "captcha_code": [
       "captcha_id"
+     ],
+     "challenge_id": [
+      "code"
+     ],
+     "code": [
+      "challenge_id"
      ]
     }
    },
    "ForgotPassword": {
     "type": "object",
     "additionalProperties": false,
-    "required": [
-     "email"
-    ],
     "properties": {
      "email": {
       "type": "string",
       "format": "email",
       "maxLength": 254
      },
-     "captcha_id": {
-      "$ref": "./common.json#/components/schemas/UUID"
-     },
-     "captcha_code": {
+     "audience": {
       "type": "string",
-      "minLength": 4,
-      "maxLength": 4,
-      "pattern": "^[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz]{4}$"
+      "enum": [
+       "creator",
+       "admin"
+      ]
+     },
+     "tenant_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
      }
     },
-    "dependentRequired": {
-     "captcha_id": [
-      "captcha_code"
-     ],
-     "captcha_code": [
-      "captcha_id"
-     ]
-    }
+    "required": [
+     "email",
+     "audience"
+    ]
    },
    "ForgotPasswordResult": {
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-     "sent",
-     "expires_in"
-    ],
-    "properties": {
-     "sent": {
-      "const": false
-     },
-     "expires_in": {
-      "const": 900
-     },
-     "dev_token": {
-      "type": "string",
-      "maxLength": 128,
-      "x-development-only": true,
-      "x-sensitive": true
-     }
-    }
+    "$ref": "./platform-mail.json#/components/schemas/EmailChallengeResult"
    },
    "ResetPasswordWithToken": {
     "type": "object",
     "additionalProperties": false,
-    "required": [
-     "token",
-     "new_password"
-    ],
     "properties": {
-     "token": {
+     "email": {
       "type": "string",
-      "minLength": 43,
-      "maxLength": 43,
-      "pattern": "^[A-Za-z0-9_-]{43}$",
+      "format": "email",
+      "maxLength": 254
+     },
+     "challenge_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "code": {
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 6,
+      "pattern": "^[0-9]{6}$",
       "writeOnly": true
+     },
+     "audience": {
+      "type": "string",
+      "enum": [
+       "creator",
+       "admin"
+      ]
+     },
+     "tenant_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
      },
      "new_password": {
       "type": "string",
@@ -313,7 +347,30 @@
       "maxLength": 72,
       "writeOnly": true,
       "x-max-utf8-bytes": 72
+     },
+     "captcha_id": {
+      "$ref": "./common.json#/components/schemas/UUID"
+     },
+     "captcha_code": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 4
      }
+    },
+    "required": [
+     "email",
+     "challenge_id",
+     "code",
+     "audience",
+     "new_password"
+    ],
+    "dependentRequired": {
+     "captcha_id": [
+      "captcha_code"
+     ],
+     "captcha_code": [
+      "captcha_id"
+     ]
     }
    },
    "ResetPasswordResult": {

@@ -27,10 +27,12 @@ type LoginInput struct {
 	ClientIP string `json:"-"`
 }
 type RegisterInput struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	PenName  string `json:"pen_name"`
-	ClientIP string `json:"-"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	PenName     string `json:"pen_name"`
+	ChallengeID string `json:"challenge_id"`
+	Code        string `json:"code"`
+	ClientIP    string `json:"-"`
 }
 type Session struct {
 	AccessToken      string    `json:"access_token"`
@@ -81,5 +83,6 @@ type Service struct {
 	memory          *memoryLimiter
 	dummyHash       []byte
 	onEvent         func(context.Context, Event) error
-	resets          *resetStore
+	emailDelivery   EmailDelivery
+	emailPepper     []byte
 }

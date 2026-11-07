@@ -6,6 +6,9 @@
 | --- | --- | --- | --- |
 | POST /v1/auth/captcha/verify | authVerifyCaptcha | FR-01 auth.verify_captcha | [platform.json](../platform.json) |
 | GET /v1/auth/captcha | authCaptcha | FR-01 auth.captcha | [platform.json](../platform.json) |
+| GET /v1/auth/email-capabilities | authEmailCapabilities | FR-01 auth.email | [platform-mail.json](../platform-mail.json) |
+| POST /v1/auth/email-challenges | authRequestEmailChallenge | FR-01 auth.email | [platform-mail.json](../platform-mail.json) |
+| POST /v1/auth/email-login | authEmailLogin | FR-01 auth.email | [platform-mail.json](../platform-mail.json) |
 | POST /v1/auth/forgot-password | authForgotPassword | FR-01 auth.forgot_password | [platform.json](../platform.json) |
 | POST /v1/auth/login | authLogin | FR-01 auth.login | [platform.json](../platform.json) |
 | POST /v1/auth/logout | authLogout | FR-01 auth.logout | [platform.json](../platform.json) |

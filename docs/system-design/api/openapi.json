@@ -115,6 +115,15 @@
   "/v1/auth/captcha/verify": {
    "$ref": "./generated/paths-auth-01.json#/paths/~1v1~1auth~1captcha~1verify"
   },
+  "/v1/auth/email-capabilities": {
+   "$ref": "./generated/paths-auth-01.json#/paths/~1v1~1auth~1email-capabilities"
+  },
+  "/v1/auth/email-challenges": {
+   "$ref": "./generated/paths-auth-01.json#/paths/~1v1~1auth~1email-challenges"
+  },
+  "/v1/auth/email-login": {
+   "$ref": "./generated/paths-auth-01.json#/paths/~1v1~1auth~1email-login"
+  },
   "/v1/auth/forgot-password": {
    "$ref": "./generated/paths-auth-01.json#/paths/~1v1~1auth~1forgot-password"
   },
@@ -447,6 +456,12 @@
   },
   "/v1/platform/files/{file_id}/download": {
    "$ref": "./generated/paths-platform-01.json#/paths/~1v1~1platform~1files~1{file_id}~1download"
+  },
+  "/v1/platform/mail-settings": {
+   "$ref": "./generated/paths-platform-01.json#/paths/~1v1~1platform~1mail-settings"
+  },
+  "/v1/platform/mail-settings/test": {
+   "$ref": "./generated/paths-platform-01.json#/paths/~1v1~1platform~1mail-settings~1test"
   },
   "/v1/platform/members": {
    "$ref": "./generated/paths-platform-01.json#/paths/~1v1~1platform~1members"

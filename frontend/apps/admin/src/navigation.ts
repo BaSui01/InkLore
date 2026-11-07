@@ -3,8 +3,8 @@
  * 严格遵循无 # 号普通路径契约与平滑自动迁移
  */
 
-export type AdminView = "dashboard" | "channels" | "models" | "users" | "agents" | "audit" | "project-logs";
-export type AdminAuthView = "login";
+export type AdminView = "dashboard" | "channels" | "models" | "users" | "agents" | "audit" | "project-logs" | "mail-settings";
+export type AdminAuthView = "login" | "forgot-password";
 export type AnyAdminView = AdminView | AdminAuthView;
 
 export const VALID_ADMIN_VIEWS: AdminView[] = [
@@ -15,9 +15,10 @@ export const VALID_ADMIN_VIEWS: AdminView[] = [
   "agents",
   "audit",
   "project-logs",
+  "mail-settings",
 ];
 
-export const AUTH_ADMIN_VIEWS: AdminAuthView[] = ["login"];
+export const AUTH_ADMIN_VIEWS: AdminAuthView[] = ["login", "forgot-password"];
 
 const NAVIGATION_EVENT = "admin:navigate";
 
@@ -66,7 +67,7 @@ export function navigateAdmin(target: string | AnyAdminView, returnTo?: AdminVie
   } else {
     const viewName = target as AnyAdminView;
     targetPath = adminPath(viewName);
-    if (viewName === "login" && returnTo) {
+    if (AUTH_ADMIN_VIEWS.includes(viewName as AdminAuthView) && returnTo) {
       targetPath += `?returnTo=${encodeURIComponent(returnTo)}`;
     }
   }

@@ -25,8 +25,15 @@
    "message_key": "errors.platform.dependency_unavailable",
    "operations": [
     "global",
+    "authEmailCapabilities",
+    "authRequestEmailChallenge",
+    "authEmailLogin",
+    "platformGetMailSettings",
+    "platformUpdateMailSettings",
+    "platformTestMailSettings",
     "authCaptcha",
-    "authForgotPassword"
+    "authForgotPassword",
+    "authResetPassword"
    ]
   },
   {
@@ -244,9 +251,10 @@
   {
    "code": "platform.version_conflict",
    "http_status": 409,
-   "recovery": "refresh_then_merge",
+   "recovery": "refresh",
    "message_key": "errors.platform.version_conflict",
    "operations": [
+    "platformUpdateMailSettings",
     "platformUpdateMember"
    ]
   }

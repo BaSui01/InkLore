@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Activity,
+  Mail,
   Layers,
   Cpu,
   Bot,
@@ -24,7 +25,7 @@ import { useTranslation } from "@inklore/i18n";
 import { useTheme } from "@inklore/ui";
 import { useAdminSession } from "../context/AdminSessionContext";
 
-export type AdminView = "dashboard" | "channels" | "models" | "agents" | "audit" | "users" | "project-logs";
+export type AdminView = "dashboard" | "channels" | "models" | "agents" | "audit" | "users" | "project-logs" | "mail-settings";
 
 export interface AdminSidebarProps {
   currentView: AdminView;
@@ -75,6 +76,10 @@ export function AdminSidebar({ currentView, onSelectView }: AdminSidebarProps) {
     { id: "audit", labelKey: "admin.sidebar.nav_audit", icon: <ShieldCheck className="w-4 h-4" /> },
     { id: "project-logs", labelKey: "admin.sidebar.nav_project_logs", icon: <Terminal className="w-4 h-4" /> },
   ];
+
+  if (snapshot.principal?.global_roles?.includes("super_admin")) {
+    navItems.push({ id: "mail-settings", labelKey: "mail.title", icon: <Mail className="w-4 h-4" /> });
+  }
 
   const toggleLanguage = () => {
     setLocale(locale.startsWith("zh") ? "en-US" : "zh-CN");

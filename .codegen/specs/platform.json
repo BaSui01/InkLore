@@ -5,6 +5,614 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/v1/auth/email-capabilities": {
+      "get": {
+        "operationId": "authEmailCapabilities",
+        "summary": "查询当前邮箱验证码能力",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "public",
+          "roles": [],
+          "scope": "public"
+        },
+        "x-use-case": "FR-01 auth.email",
+        "x-errors": [
+          {
+            "code": "auth.rate_limited",
+            "http_status": 429,
+            "recovery": "retry_later"
+          },
+          {
+            "code": "platform.dependency_unavailable",
+            "http_status": 503,
+            "recovery": "retry_later"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/EmailCapabilities"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/auth/email-challenges": {
+      "post": {
+        "operationId": "authRequestEmailChallenge",
+        "summary": "请求实际投递的用途绑定邮箱验证码",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "public",
+          "roles": [],
+          "scope": "public"
+        },
+        "x-use-case": "FR-01 auth.email",
+        "x-errors": [
+          {
+            "code": "auth.rate_limited",
+            "http_status": 429,
+            "recovery": "retry_later"
+          },
+          {
+            "code": "platform.dependency_unavailable",
+            "http_status": 503,
+            "recovery": "retry_later"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/EmailChallengeResult"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChallengeRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/email-login": {
+      "post": {
+        "operationId": "authEmailLogin",
+        "summary": "单次消费验证码并创建真实身份会话",
+        "tags": [
+          "auth"
+        ],
+        "x-permission": {
+          "audience": "public",
+          "roles": [],
+          "scope": "public"
+        },
+        "x-use-case": "FR-01 auth.email",
+        "x-errors": [
+          {
+            "code": "auth.rate_limited",
+            "http_status": 429,
+            "recovery": "retry_later"
+          },
+          {
+            "code": "platform.dependency_unavailable",
+            "http_status": 503,
+            "recovery": "retry_later"
+          },
+          {
+            "code": "auth.invalid_credentials",
+            "http_status": 401,
+            "recovery": "fix_input"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Session"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailLogin"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform/mail-settings": {
+      "get": {
+        "operationId": "platformGetMailSettings",
+        "summary": "读取脱敏全局邮件配置",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [],
+          "scope": "global",
+          "global_roles": [
+            "super_admin"
+          ]
+        },
+        "x-use-case": "FR-24 platform.mail",
+        "x-errors": [
+          {
+            "code": "auth.rate_limited",
+            "http_status": 429,
+            "recovery": "retry_later"
+          },
+          {
+            "code": "platform.dependency_unavailable",
+            "http_status": 503,
+            "recovery": "retry_later"
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MailSettings"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      },
+      "put": {
+        "operationId": "platformUpdateMailSettings",
+        "summary": "CAS 更新全局邮件投递配置",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [],
+          "scope": "global",
+          "global_roles": [
+            "super_admin"
+          ]
+        },
+        "x-use-case": "FR-24 platform.mail",
+        "x-errors": [
+          {
+            "code": "auth.rate_limited",
+            "http_status": 429,
+            "recovery": "retry_later"
+          },
+          {
+            "code": "platform.dependency_unavailable",
+            "http_status": 503,
+            "recovery": "retry_later"
+          },
+          {
+            "code": "platform.version_conflict",
+            "http_status": 409,
+            "recovery": "refresh"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 43,
+              "maxLength": 43
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/MailSettings"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMailSettings"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform/mail-settings/test": {
+      "post": {
+        "operationId": "platformTestMailSettings",
+        "summary": "向已验证本人邮箱投递配置测试邮件",
+        "tags": [
+          "platform"
+        ],
+        "x-permission": {
+          "audience": "admin",
+          "roles": [],
+          "scope": "global",
+          "global_roles": [
+            "super_admin"
+          ]
+        },
+        "x-use-case": "FR-24 platform.mail",
+        "x-errors": [
+          {
+            "code": "auth.rate_limited",
+            "http_status": 429,
+            "recovery": "retry_later"
+          },
+          {
+            "code": "platform.dependency_unavailable",
+            "http_status": 503,
+            "recovery": "retry_later"
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 43,
+              "maxLength": 43
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessMeta"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "data"
+                      ],
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/TestMailResult"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestMailSettings"
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/platform/project-logs": {
       "get": {
         "operationId": "platformListProjectLogs",
@@ -477,6 +1085,9 @@
           "400": {
             "$ref": "#/components/responses/BadRequest"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
           "403": {
             "$ref": "#/components/responses/Forbidden"
           },
@@ -506,7 +1117,7 @@
     "/v1/auth/forgot-password": {
       "post": {
         "operationId": "authForgotPassword",
-        "summary": "请求密码重置令牌",
+        "summary": "请求实际投递的密码重置验证码",
         "tags": [
           "auth"
         ],
@@ -518,18 +1129,26 @@
         "x-use-case": "FR-01 auth.forgot_password",
         "x-errors": [
           {
+            "code": "auth.rate_limited",
+            "http_status": 429,
+            "recovery": "retry_later"
+          },
+          {
             "code": "platform.dependency_unavailable",
             "http_status": 503,
             "recovery": "retry_later"
           }
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "开发环境未投递邮件，返回短期重置令牌；生产环境仅在投递器可用后返回成功。",
+            "description": "成功；投递结果仅表示邮件服务已接收，不代表收件箱最终投递。",
             "headers": {
               "Cache-Control": {
-                "required": true,
                 "schema": {
                   "type": "string",
                   "enum": [
@@ -552,7 +1171,7 @@
                       ],
                       "properties": {
                         "data": {
-                          "$ref": "#/components/schemas/ForgotPasswordResult"
+                          "$ref": "#/components/schemas/EmailChallengeResult"
                         }
                       }
                     }
@@ -563,6 +1182,18 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
           },
           "500": {
             "$ref": "#/components/responses/InternalError"
@@ -587,7 +1218,7 @@
     "/v1/auth/reset-password": {
       "post": {
         "operationId": "authResetPassword",
-        "summary": "使用重置令牌修改密码并吊销全部会话",
+        "summary": "单次消费重置验证码、修改密码并吊销全部会话",
         "tags": [
           "auth"
         ],
@@ -601,6 +1232,21 @@
           {
             "code": "auth.invalid_token",
             "http_status": 400,
+            "recovery": "fix_input"
+          },
+          {
+            "code": "auth.rate_limited",
+            "http_status": 429,
+            "recovery": "retry_later"
+          },
+          {
+            "code": "platform.dependency_unavailable",
+            "http_status": 503,
+            "recovery": "retry_later"
+          },
+          {
+            "code": "auth.invalid_credentials",
+            "http_status": 401,
             "recovery": "fix_input"
           }
         ],
@@ -634,8 +1280,23 @@
           "400": {
             "$ref": "#/components/responses/BadRequest"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
           "500": {
             "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
           }
         },
         "requestBody": {
@@ -2705,6 +3366,369 @@
           }
         }
       },
+      "EmailCapabilities": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "code_length": {
+            "type": "number",
+            "enum": [
+              6
+            ]
+          },
+          "expires_in": {
+            "type": "number",
+            "enum": [
+              300
+            ]
+          },
+          "retry_after_seconds": {
+            "type": "number",
+            "enum": [
+              60
+            ]
+          }
+        },
+        "required": [
+          "enabled",
+          "code_length",
+          "expires_in",
+          "retry_after_seconds"
+        ]
+      },
+      "EmailChallengeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "login",
+              "register",
+              "reset"
+            ]
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "creator",
+              "admin"
+            ]
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/UUID"
+          }
+        },
+        "required": [
+          "email",
+          "purpose",
+          "audience"
+        ]
+      },
+      "EmailChallengeResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "challenge_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retry_after_seconds": {
+            "type": "number",
+            "enum": [
+              60
+            ]
+          }
+        },
+        "required": [
+          "challenge_id",
+          "expires_at",
+          "retry_after_seconds"
+        ]
+      },
+      "EmailLogin": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "challenge_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 6,
+            "pattern": "^[0-9]{6}$",
+            "writeOnly": true
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "creator",
+              "admin"
+            ]
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "captcha_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "captcha_code": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4
+          }
+        },
+        "required": [
+          "email",
+          "challenge_id",
+          "code",
+          "audience"
+        ],
+        "dependentRequired": {
+          "captcha_id": [
+            "captcha_code"
+          ],
+          "captcha_code": [
+            "captcha_id"
+          ]
+        }
+      },
+      "MailSettings": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "disabled",
+              "smtp",
+            "resend"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "smtp_host": {
+            "type": "string",
+            "maxLength": 253
+          },
+          "smtp_port": {
+            "type": "integer",
+            "enum": [
+              0,
+              465,
+              587
+            ]
+          },
+          "smtp_security": {
+            "type": "string",
+            "enum": [
+              "",
+              "implicit_tls",
+              "starttls"
+            ]
+          },
+          "smtp_username": {
+            "type": "string",
+            "maxLength": 254
+          },
+          "sender_email": {
+            "type": "string",
+            "maxLength": 254
+          },
+          "sender_name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "has_credential": {
+            "type": "boolean"
+          },
+          "credential_kind": {
+            "type": "string",
+            "enum": [
+              "",
+              "env",
+              "encrypted"
+            ]
+          },
+          "revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "provider",
+          "enabled",
+          "smtp_host",
+          "smtp_port",
+          "smtp_security",
+          "smtp_username",
+          "sender_email",
+          "sender_name",
+          "has_credential",
+          "credential_kind",
+          "revision",
+          "updated_at"
+        ]
+      },
+      "MailCredentialChange": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "env"
+                ]
+              },
+              "locator": {
+                "type": "string",
+                "pattern": "^MAIL_CREDENTIAL_[A-Z0-9_]{1,80}$",
+                "writeOnly": true
+              }
+            },
+            "required": [
+              "kind",
+              "locator"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "encrypted"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8192,
+                "writeOnly": true
+              }
+            },
+            "required": [
+              "kind",
+              "value"
+            ]
+          }
+        ]
+      },
+      "UpdateMailSettings": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "disabled",
+              "smtp",
+            "resend"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "smtp_host": {
+            "type": "string",
+            "maxLength": 253
+          },
+          "smtp_port": {
+            "type": "integer",
+            "enum": [
+              0,
+              465,
+              587
+            ]
+          },
+          "smtp_security": {
+            "type": "string",
+            "enum": [
+              "",
+              "implicit_tls",
+              "starttls"
+            ]
+          },
+          "smtp_username": {
+            "type": "string",
+            "maxLength": 254
+          },
+          "sender_email": {
+            "type": "string",
+            "maxLength": 254
+          },
+          "sender_name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "credential": {
+            "$ref": "#/components/schemas/MailCredentialChange"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "provider",
+          "enabled"
+        ]
+      },
+      "TestMailSettings": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "$ref": "#/components/schemas/Revision"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ]
+      },
+      "TestMailResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "delivery_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "accepted": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "delivery_id",
+          "accepted"
+        ]
+      },
       "Principal": {
         "type": "object",
         "additionalProperties": false,
@@ -2969,6 +3993,16 @@
             "minLength": 4,
             "maxLength": 4,
             "pattern": "^[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz]{4}$"
+          },
+          "challenge_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 6,
+            "pattern": "^[0-9]{6}$",
+            "writeOnly": true
           }
         },
         "dependentRequired": {
@@ -2977,82 +4011,71 @@
           ],
           "captcha_code": [
             "captcha_id"
+          ],
+          "challenge_id": [
+            "code"
+          ],
+          "code": [
+            "challenge_id"
           ]
         }
       },
       "ForgotPassword": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "email"
-        ],
         "properties": {
           "email": {
             "type": "string",
             "format": "email",
             "maxLength": 254
           },
-          "captcha_id": {
-            "$ref": "#/components/schemas/UUID"
-          },
-          "captcha_code": {
+          "audience": {
             "type": "string",
-            "minLength": 4,
-            "maxLength": 4,
-            "pattern": "^[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz]{4}$"
+            "enum": [
+              "creator",
+              "admin"
+            ]
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/UUID"
           }
         },
-        "dependentRequired": {
-          "captcha_id": [
-            "captcha_code"
-          ],
-          "captcha_code": [
-            "captcha_id"
-          ]
-        }
+        "required": [
+          "email",
+          "audience"
+        ]
       },
       "ForgotPasswordResult": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "sent",
-          "expires_in"
-        ],
-        "properties": {
-          "sent": {
-            "type": "boolean",
-            "enum": [
-              false
-            ]
-          },
-          "expires_in": {
-            "type": "number",
-            "enum": [
-              900
-            ]
-          },
-          "dev_token": {
-            "type": "string",
-            "maxLength": 128,
-            "x-development-only": true,
-            "x-sensitive": true
-          }
-        }
+        "$ref": "#/components/schemas/EmailChallengeResult"
       },
       "ResetPasswordWithToken": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "token",
-          "new_password"
-        ],
         "properties": {
-          "token": {
+          "email": {
             "type": "string",
-            "minLength": 43,
-            "maxLength": 43,
-            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "format": "email",
+            "maxLength": 254
+          },
+          "challenge_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 6,
+            "pattern": "^[0-9]{6}$",
             "writeOnly": true
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "creator",
+              "admin"
+            ]
+          },
+          "tenant_id": {
+            "$ref": "#/components/schemas/UUID"
           },
           "new_password": {
             "type": "string",
@@ -3060,7 +4083,30 @@
             "maxLength": 72,
             "writeOnly": true,
             "x-max-utf8-bytes": 72
+          },
+          "captcha_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "captcha_code": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4
           }
+        },
+        "required": [
+          "email",
+          "challenge_id",
+          "code",
+          "audience",
+          "new_password"
+        ],
+        "dependentRequired": {
+          "captcha_id": [
+            "captcha_code"
+          ],
+          "captcha_code": [
+            "captcha_id"
+          ]
         }
       },
       "ResetPasswordResult": {

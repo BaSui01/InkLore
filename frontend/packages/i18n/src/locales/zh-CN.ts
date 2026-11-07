@@ -1,3 +1,4 @@
+import { mailZhCN } from "./mail";
 import { writingZhCN } from "./writing";
 import { foundationZhCN } from "./foundation-zh-CN";
 /**
@@ -945,4 +946,5 @@ export const zhCN: Record<string, string> = {
   ...complianceZhCN,
   ...adminZhCN,
   ...authZhCN,
+  ...mailZhCN,
 };

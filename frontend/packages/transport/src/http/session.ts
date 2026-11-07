@@ -28,23 +28,25 @@ export interface AuthSessionOptions {
   onSessionInvalid?: () => void;
 }
 
-export type LoginCredentials = ({
-  email: string;
-} | {
-  username: string;
-}) & {
-  password: string;
-  tenant_id?: string;
-  captcha_id?: string;
-  captcha_code?: string;
-};
-
-export interface RegisterData {
-  email: string;
-  password: string;
-  pen_name: string;
+export type EmailPurpose = "login" | "register" | "reset";
+export interface EmailCapabilities { enabled: boolean; code_length: number; expires_in: number; retry_after_seconds: number; }
+export interface EmailChallenge { challenge_id: string; expires_at: string; retry_after_seconds: number; }
+interface StoredEmailChallenge extends Partial<EmailChallenge> {
+  email: string; purpose: EmailPurpose; tenant_id: string; request_key: string;
+  requested_at: number; retry_at: number; failed?: boolean;
+  pending_request_key?: string;
 }
-
+export type LoginCredentials = ({ email: string; password?: string; code?: string; challenge_id?: string } | {
+  username: string; password: string;
+}) & { tenant_id?: string; captcha_id?: string; captcha_code?: string };
+export interface RegisterData {
+  email: string; password: string; pen_name: string; code?: string; challenge_id?: string;
+  captcha_id?: string; captcha_code?: string;
+}
+export interface EmailResetData {
+  email: string; code: string; newPassword: string; tenant_id?: string;
+  captcha_id?: string; captcha_code?: string;
+}
 
 export type SessionListener = (snapshot: SessionSnapshot) => void;
 
@@ -203,14 +205,19 @@ export class AuthSession {
    * 用户登录
    */
   async login(credentials: LoginCredentials): Promise<UserPrincipal> {
-    const loginUrl = `${this.baseUrl}/v1/auth/login`;
+    const emailLogin = "email" in credentials && credentials.code !== undefined;
+    const loginUrl = `${this.baseUrl}/v1/auth/${emailLogin ? "email-login" : "login"}`;
     const requestBody: Record<string, string> = {
-      password: credentials.password,
+      ...(emailLogin ? {} : { password: credentials.password || "" }),
       audience: this.audience,
     };
     if ("email" in credentials) requestBody.email = credentials.email;
     else requestBody.username = credentials.username;
     if (credentials.tenant_id) requestBody.tenant_id = credentials.tenant_id;
+    if (emailLogin && "email" in credentials) {
+      requestBody.code = credentials.code || "";
+      requestBody.challenge_id = credentials.challenge_id || this.emailProof(credentials.email, "login", credentials.tenant_id).challenge_id!;
+    }
     if (credentials.captcha_id && credentials.captcha_code) {
       requestBody.captcha_id = credentials.captcha_id;
       requestBody.captcha_code = credentials.captcha_code;
@@ -308,6 +315,8 @@ export class AuthSession {
         email: data.email,
         password: data.password,
         pen_name: data.pen_name,
+        ...(data.code ? { code: data.code, challenge_id: data.challenge_id || this.emailProof(data.email, "register").challenge_id } : {}),
+        ...(data.captcha_id && data.captcha_code ? { captcha_id: data.captcha_id, captcha_code: data.captcha_code } : {}),
       }),
     });
 
@@ -335,62 +344,121 @@ export class AuthSession {
     return this.principal!;
   }
 
-  /**
-   * 忘记密码申请 (Forgot Password Request)
-   */
-  async forgotPassword(email: string): Promise<{ sent: boolean; dev_token?: string }> {
-    const url = `${this.baseUrl}/v1/auth/forgot-password`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "X-Request-ID": typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-      },
-      body: JSON.stringify({ email }),
-    });
-
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new ApiError({
-        httpStatus: res.status,
-        code: body.code || "platform.validation_failed",
-        message_key: body.message_key,
-        details: body.details,
-        request_id: body.request_id,
-        trace_id: body.trace_id,
-      });
-    }
-
-    return body.data || { sent: false };
+  private emailStorageKey(purpose: EmailPurpose): string {
+    return `inklore.email-challenge.${this.audience}.${purpose}`;
   }
 
-  /**
-   * 凭重置令牌更新密码 (Reset Password with Token)
-   */
-  async resetPassword(token: string, newPassword: string): Promise<void> {
-    const url = `${this.baseUrl}/v1/auth/reset-password`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "X-Request-ID": typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-      },
-      body: JSON.stringify({ token, new_password: newPassword }),
-    });
+  private readEmailChallenge(purpose: EmailPurpose): StoredEmailChallenge | undefined {
+    try {
+      const value = sessionStorage.getItem(this.emailStorageKey(purpose));
+      if (!value) return undefined;
+      const record = JSON.parse(value) as StoredEmailChallenge;
+      if (record.purpose !== purpose || typeof record.requested_at !== "number" || Date.now() - record.requested_at > 300_000) return undefined;
+      return record;
+    } catch { return undefined; }
+  }
 
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new ApiError({
-        httpStatus: res.status,
-        code: body.code || "auth.invalid_token",
-        message_key: body.message_key,
-        details: body.details,
-        request_id: body.request_id,
-        trace_id: body.trace_id,
-      });
+  private writeEmailChallenge(record: StoredEmailChallenge): void {
+    // Only opaque challenge metadata is persisted; never OTPs, access/CSRF tokens,
+    // passwords or mail credentials. Storage failure remains visible and actionable.
+    try { sessionStorage.setItem(this.emailStorageKey(record.purpose), JSON.stringify(record)); }
+    catch { throw new Error("Email challenge storage is unavailable"); }
+  }
+
+  private emailProof(email: string, purpose: EmailPurpose, tenantId = ""): StoredEmailChallenge {
+    const record = this.readEmailChallenge(purpose);
+    if (!record?.challenge_id || record.email !== email.trim().toLowerCase() || record.tenant_id !== tenantId || !record.expires_at || Date.parse(record.expires_at) <= Date.now()) {
+      throw new ApiError({ httpStatus: 401, code: "auth.invalid_credentials" });
     }
+    return record;
+  }
+
+  getEmailCooldown(email: string): number {
+    const normalized = email.trim().toLowerCase();
+    return Math.max(0, ...(["login", "register", "reset"] as const).map((purpose) => {
+      const record = this.readEmailChallenge(purpose);
+      return record?.email === normalized ? Math.ceil((record.retry_at - Date.now()) / 1000) : 0;
+    }));
+  }
+
+  private async publicRequest<T>(path: string, data?: unknown, idempotencyKey?: string): Promise<T> {
+    const res = await fetch(`${this.baseUrl}${path}`, {
+      method: data === undefined ? "GET" : "POST", credentials: "same-origin", signal: AbortSignal.timeout(20_000),
+      headers: { Accept: "application/json", ...(data === undefined ? {} : { "Content-Type": "application/json" }),
+        "X-Request-ID": crypto.randomUUID(), ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}) },
+      ...(data === undefined ? {} : { body: JSON.stringify(data) }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new ApiError({ httpStatus: res.status, code: body.code || "platform.dependency_unavailable", message_key: body.message_key, details: body.details, request_id: body.request_id, trace_id: body.trace_id });
+    if (!body.data) throw new Error("Invalid authentication response");
+    return body.data as T;
+  }
+
+  emailCapabilities(): Promise<EmailCapabilities> {
+    return this.publicRequest<EmailCapabilities>("/v1/auth/email-capabilities");
+  }
+
+  async sendVerificationCode(email: string, purpose: EmailPurpose, tenantId = ""): Promise<EmailChallenge> {
+    email = email.trim().toLowerCase();
+    const previous = this.readEmailChallenge(purpose);
+    const bound = previous?.email === email && previous.tenant_id === tenantId;
+    if (bound && previous.challenge_id && previous.expires_at && previous.retry_at > Date.now()) {
+      return { challenge_id: previous.challenge_id, expires_at: previous.expires_at, retry_after_seconds: this.getEmailCooldown(email) };
+    }
+    const now = Date.now();
+    const priorChallenge = bound && previous?.challenge_id && previous.expires_at &&
+      Date.parse(previous.expires_at) > now ? previous : undefined;
+    // A resend must not erase the last delivered, still-valid proof. Keep the
+    // uncertain resend's operation key separately so retry cannot duplicate it.
+    const requestKey = bound && previous?.pending_request_key ? previous.pending_request_key :
+      bound && !previous?.challenge_id && !previous?.failed ? previous!.request_key : crypto.randomUUID();
+    const record: StoredEmailChallenge = {
+      ...priorChallenge, email, purpose, tenant_id: tenantId,
+      request_key: requestKey, pending_request_key: requestKey,
+      // Keep the original reservation age across uncertain retries. Otherwise
+      // repeated retries can keep an ambiguous request alive forever.
+      requested_at: bound && previous?.pending_request_key ? previous.requested_at : now,
+      retry_at: now + 60_000,
+    };
+    this.writeEmailChallenge(record);
+    try {
+      const result = await this.publicRequest<EmailChallenge>("/v1/auth/email-challenges", {
+        email, purpose, audience: this.audience, ...(tenantId ? { tenant_id: tenantId } : {}),
+      }, requestKey);
+      if (!result.challenge_id || !Number.isFinite(Date.parse(result.expires_at))) throw new Error("Invalid email challenge response");
+      this.writeEmailChallenge({ ...record, ...result, pending_request_key: undefined,
+        retry_at: Date.now() + result.retry_after_seconds * 1000, failed: false });
+      return result;
+    } catch (error) {
+      // The provider may have accepted an ambiguous request. Preserve its key
+      // for retries, but never lose the prior valid challenge on 429/503.
+      // A definitive provider-side 503 is persisted as failed and cannot be
+      // replayed with the same request key. Network failures remain uncertain.
+      const certainRejection = error instanceof ApiError &&
+        ((error.httpStatus < 500 && error.code !== "platform.operation_in_progress") ||
+          (error.httpStatus === 503 && error.code === "platform.dependency_unavailable"));
+      this.writeEmailChallenge({ ...record,
+        pending_request_key: certainRejection ? undefined : requestKey,
+        failed: certainRejection,
+      });
+      throw error;
+    }
+  }
+
+  forgotPassword(email: string): Promise<EmailChallenge> {
+    return this.sendVerificationCode(email, "reset");
+  }
+
+  async resetPassword(data: EmailResetData): Promise<void> {
+    const record = this.emailProof(data.email, "reset", data.tenant_id);
+    const result = await this.publicRequest<{ reset: boolean }>("/v1/auth/reset-password", {
+      email: data.email, challenge_id: record.challenge_id, code: data.code, new_password: data.newPassword, audience: this.audience,
+      ...(data.tenant_id ? { tenant_id: data.tenant_id } : {}),
+      ...(data.captcha_id && data.captcha_code ? { captcha_id: data.captcha_id, captcha_code: data.captcha_code } : {}),
+    });
+    if (!result.reset) throw new Error("Password reset was not confirmed");
+    try { sessionStorage.removeItem(this.emailStorageKey("reset")); } catch { reportSafeDiagnostic("auth.challenge_cleanup_failed"); }
+    this.clearCredentials("anonymous");
   }
 
   /**

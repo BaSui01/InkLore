@@ -17,7 +17,7 @@ export function formatAuthError(
   if (err instanceof TypeError && (err.message?.includes("fetch") || err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError"))) {
     return t("errors.auth.network_error");
   }
-  if (err?.name === "AbortError") {
+  if (err?.name === "AbortError" || err?.name === "TimeoutError") {
     return t("errors.auth.network_error");
   }
 

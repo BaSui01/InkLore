@@ -44,30 +44,135 @@ func (e CaptchaVerificationValid) Valid() bool {
 	}
 }
 
-// Defines values for ForgotPasswordResultExpiresIn.
+// Defines values for EmailCapabilitiesCodeLength.
 const (
-	ForgotPasswordResultExpiresInN900 ForgotPasswordResultExpiresIn = 900
+	N6 EmailCapabilitiesCodeLength = 6
 )
 
-// Valid indicates whether the value is a known member of the ForgotPasswordResultExpiresIn enum.
-func (e ForgotPasswordResultExpiresIn) Valid() bool {
+// Valid indicates whether the value is a known member of the EmailCapabilitiesCodeLength enum.
+func (e EmailCapabilitiesCodeLength) Valid() bool {
 	switch e {
-	case ForgotPasswordResultExpiresInN900:
+	case N6:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for ForgotPasswordResultSent.
+// Defines values for EmailCapabilitiesExpiresIn.
 const (
-	False ForgotPasswordResultSent = false
+	N300 EmailCapabilitiesExpiresIn = 300
 )
 
-// Valid indicates whether the value is a known member of the ForgotPasswordResultSent enum.
-func (e ForgotPasswordResultSent) Valid() bool {
+// Valid indicates whether the value is a known member of the EmailCapabilitiesExpiresIn enum.
+func (e EmailCapabilitiesExpiresIn) Valid() bool {
 	switch e {
-	case False:
+	case N300:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for EmailCapabilitiesRetryAfterSeconds.
+const (
+	EmailCapabilitiesRetryAfterSecondsN60 EmailCapabilitiesRetryAfterSeconds = 60
+)
+
+// Valid indicates whether the value is a known member of the EmailCapabilitiesRetryAfterSeconds enum.
+func (e EmailCapabilitiesRetryAfterSeconds) Valid() bool {
+	switch e {
+	case EmailCapabilitiesRetryAfterSecondsN60:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for EmailChallengeRequestAudience.
+const (
+	EmailChallengeRequestAudienceAdmin   EmailChallengeRequestAudience = "admin"
+	EmailChallengeRequestAudienceCreator EmailChallengeRequestAudience = "creator"
+)
+
+// Valid indicates whether the value is a known member of the EmailChallengeRequestAudience enum.
+func (e EmailChallengeRequestAudience) Valid() bool {
+	switch e {
+	case EmailChallengeRequestAudienceAdmin:
+		return true
+	case EmailChallengeRequestAudienceCreator:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for EmailChallengeRequestPurpose.
+const (
+	EmailChallengeRequestPurposeLogin    EmailChallengeRequestPurpose = "login"
+	EmailChallengeRequestPurposeRegister EmailChallengeRequestPurpose = "register"
+	EmailChallengeRequestPurposeReset    EmailChallengeRequestPurpose = "reset"
+)
+
+// Valid indicates whether the value is a known member of the EmailChallengeRequestPurpose enum.
+func (e EmailChallengeRequestPurpose) Valid() bool {
+	switch e {
+	case EmailChallengeRequestPurposeLogin:
+		return true
+	case EmailChallengeRequestPurposeRegister:
+		return true
+	case EmailChallengeRequestPurposeReset:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for EmailChallengeResultRetryAfterSeconds.
+const (
+	EmailChallengeResultRetryAfterSecondsN60 EmailChallengeResultRetryAfterSeconds = 60
+)
+
+// Valid indicates whether the value is a known member of the EmailChallengeResultRetryAfterSeconds enum.
+func (e EmailChallengeResultRetryAfterSeconds) Valid() bool {
+	switch e {
+	case EmailChallengeResultRetryAfterSecondsN60:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for EmailLoginAudience.
+const (
+	EmailLoginAudienceAdmin   EmailLoginAudience = "admin"
+	EmailLoginAudienceCreator EmailLoginAudience = "creator"
+)
+
+// Valid indicates whether the value is a known member of the EmailLoginAudience enum.
+func (e EmailLoginAudience) Valid() bool {
+	switch e {
+	case EmailLoginAudienceAdmin:
+		return true
+	case EmailLoginAudienceCreator:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ForgotPasswordAudience.
+const (
+	ForgotPasswordAudienceAdmin   ForgotPasswordAudience = "admin"
+	ForgotPasswordAudienceCreator ForgotPasswordAudience = "creator"
+)
+
+// Valid indicates whether the value is a known member of the ForgotPasswordAudience enum.
+func (e ForgotPasswordAudience) Valid() bool {
+	switch e {
+	case ForgotPasswordAudienceAdmin:
+		return true
+	case ForgotPasswordAudienceCreator:
 		return true
 	default:
 		return false
@@ -89,6 +194,120 @@ func (e LoginUsername) Valid() bool {
 	}
 }
 
+// Defines values for MailCredentialChange0Kind.
+const (
+	MailCredentialChange0KindEnv MailCredentialChange0Kind = "env"
+)
+
+// Valid indicates whether the value is a known member of the MailCredentialChange0Kind enum.
+func (e MailCredentialChange0Kind) Valid() bool {
+	switch e {
+	case MailCredentialChange0KindEnv:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailCredentialChange1Kind.
+const (
+	MailCredentialChange1KindEncrypted MailCredentialChange1Kind = "encrypted"
+)
+
+// Valid indicates whether the value is a known member of the MailCredentialChange1Kind enum.
+func (e MailCredentialChange1Kind) Valid() bool {
+	switch e {
+	case MailCredentialChange1KindEncrypted:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailSettingsCredentialKind.
+const (
+	MailSettingsCredentialKindEmpty     MailSettingsCredentialKind = ""
+	MailSettingsCredentialKindEncrypted MailSettingsCredentialKind = "encrypted"
+	MailSettingsCredentialKindEnv       MailSettingsCredentialKind = "env"
+)
+
+// Valid indicates whether the value is a known member of the MailSettingsCredentialKind enum.
+func (e MailSettingsCredentialKind) Valid() bool {
+	switch e {
+	case MailSettingsCredentialKindEmpty:
+		return true
+	case MailSettingsCredentialKindEncrypted:
+		return true
+	case MailSettingsCredentialKindEnv:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailSettingsProvider.
+const (
+	MailSettingsProviderDisabled MailSettingsProvider = "disabled"
+	MailSettingsProviderSmtp     MailSettingsProvider = "smtp"
+	MailSettingsProviderResend   MailSettingsProvider = "resend"
+)
+
+// Valid indicates whether the value is a known member of the MailSettingsProvider enum.
+func (e MailSettingsProvider) Valid() bool {
+	switch e {
+	case MailSettingsProviderDisabled:
+		return true
+	case MailSettingsProviderSmtp:
+		return true
+	case MailSettingsProviderResend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailSettingsSmtpPort.
+const (
+	MailSettingsSmtpPortN0   MailSettingsSmtpPort = 0
+	MailSettingsSmtpPortN465 MailSettingsSmtpPort = 465
+	MailSettingsSmtpPortN587 MailSettingsSmtpPort = 587
+)
+
+// Valid indicates whether the value is a known member of the MailSettingsSmtpPort enum.
+func (e MailSettingsSmtpPort) Valid() bool {
+	switch e {
+	case MailSettingsSmtpPortN0:
+		return true
+	case MailSettingsSmtpPortN465:
+		return true
+	case MailSettingsSmtpPortN587:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailSettingsSmtpSecurity.
+const (
+	MailSettingsSmtpSecurityEmpty       MailSettingsSmtpSecurity = ""
+	MailSettingsSmtpSecurityImplicitTls MailSettingsSmtpSecurity = "implicit_tls"
+	MailSettingsSmtpSecurityStarttls    MailSettingsSmtpSecurity = "starttls"
+)
+
+// Valid indicates whether the value is a known member of the MailSettingsSmtpSecurity enum.
+func (e MailSettingsSmtpSecurity) Valid() bool {
+	switch e {
+	case MailSettingsSmtpSecurityEmpty:
+		return true
+	case MailSettingsSmtpSecurityImplicitTls:
+		return true
+	case MailSettingsSmtpSecurityStarttls:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ResetPasswordResultReset.
 const (
 	ResetPasswordResultResetTrue ResetPasswordResultReset = true
@@ -104,15 +323,33 @@ func (e ResetPasswordResultReset) Valid() bool {
 	}
 }
 
+// Defines values for ResetPasswordWithTokenAudience.
+const (
+	ResetPasswordWithTokenAudienceAdmin   ResetPasswordWithTokenAudience = "admin"
+	ResetPasswordWithTokenAudienceCreator ResetPasswordWithTokenAudience = "creator"
+)
+
+// Valid indicates whether the value is a known member of the ResetPasswordWithTokenAudience enum.
+func (e ResetPasswordWithTokenAudience) Valid() bool {
+	switch e {
+	case ResetPasswordWithTokenAudienceAdmin:
+		return true
+	case ResetPasswordWithTokenAudienceCreator:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SessionExpiresIn.
 const (
-	SessionExpiresInN900 SessionExpiresIn = 900
+	N900 SessionExpiresIn = 900
 )
 
 // Valid indicates whether the value is a known member of the SessionExpiresIn enum.
 func (e SessionExpiresIn) Valid() bool {
 	switch e {
-	case SessionExpiresInN900:
+	case N900:
 		return true
 	default:
 		return false
@@ -134,15 +371,93 @@ func (e SuccessMetaCode) Valid() bool {
 	}
 }
 
+// Defines values for TestMailResultAccepted.
+const (
+	TestMailResultAcceptedTrue TestMailResultAccepted = true
+)
+
+// Valid indicates whether the value is a known member of the TestMailResultAccepted enum.
+func (e TestMailResultAccepted) Valid() bool {
+	switch e {
+	case TestMailResultAcceptedTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateMailSettingsProvider.
+const (
+	UpdateMailSettingsProviderDisabled UpdateMailSettingsProvider = "disabled"
+	UpdateMailSettingsProviderSmtp     UpdateMailSettingsProvider = "smtp"
+	UpdateMailSettingsProviderResend   UpdateMailSettingsProvider = "resend"
+)
+
+// Valid indicates whether the value is a known member of the UpdateMailSettingsProvider enum.
+func (e UpdateMailSettingsProvider) Valid() bool {
+	switch e {
+	case UpdateMailSettingsProviderDisabled:
+		return true
+	case UpdateMailSettingsProviderSmtp:
+		return true
+	case UpdateMailSettingsProviderResend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateMailSettingsSmtpPort.
+const (
+	UpdateMailSettingsSmtpPortN0   UpdateMailSettingsSmtpPort = 0
+	UpdateMailSettingsSmtpPortN465 UpdateMailSettingsSmtpPort = 465
+	UpdateMailSettingsSmtpPortN587 UpdateMailSettingsSmtpPort = 587
+)
+
+// Valid indicates whether the value is a known member of the UpdateMailSettingsSmtpPort enum.
+func (e UpdateMailSettingsSmtpPort) Valid() bool {
+	switch e {
+	case UpdateMailSettingsSmtpPortN0:
+		return true
+	case UpdateMailSettingsSmtpPortN465:
+		return true
+	case UpdateMailSettingsSmtpPortN587:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateMailSettingsSmtpSecurity.
+const (
+	UpdateMailSettingsSmtpSecurityEmpty       UpdateMailSettingsSmtpSecurity = ""
+	UpdateMailSettingsSmtpSecurityImplicitTls UpdateMailSettingsSmtpSecurity = "implicit_tls"
+	UpdateMailSettingsSmtpSecurityStarttls    UpdateMailSettingsSmtpSecurity = "starttls"
+)
+
+// Valid indicates whether the value is a known member of the UpdateMailSettingsSmtpSecurity enum.
+func (e UpdateMailSettingsSmtpSecurity) Valid() bool {
+	switch e {
+	case UpdateMailSettingsSmtpSecurityEmpty:
+		return true
+	case UpdateMailSettingsSmtpSecurityImplicitTls:
+		return true
+	case UpdateMailSettingsSmtpSecurityStarttls:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for WSTicketExpiresIn.
 const (
-	N60 WSTicketExpiresIn = 60
+	WSTicketExpiresInN60 WSTicketExpiresIn = 60
 )
 
 // Valid indicates whether the value is a known member of the WSTicketExpiresIn enum.
 func (e WSTicketExpiresIn) Valid() bool {
 	switch e {
-	case N60:
+	case WSTicketExpiresInN60:
 		return true
 	default:
 		return false
@@ -173,6 +488,51 @@ const (
 func (e AuthVerifyCaptcha200JSONResponseBodyCode) Valid() bool {
 	switch e {
 	case AuthVerifyCaptcha200JSONResponseBodyCodeOk:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AuthEmailCapabilities200JSONResponseBodyCode.
+const (
+	AuthEmailCapabilities200JSONResponseBodyCodeOk AuthEmailCapabilities200JSONResponseBodyCode = "ok"
+)
+
+// Valid indicates whether the value is a known member of the AuthEmailCapabilities200JSONResponseBodyCode enum.
+func (e AuthEmailCapabilities200JSONResponseBodyCode) Valid() bool {
+	switch e {
+	case AuthEmailCapabilities200JSONResponseBodyCodeOk:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AuthRequestEmailChallenge200JSONResponseBodyCode.
+const (
+	AuthRequestEmailChallenge200JSONResponseBodyCodeOk AuthRequestEmailChallenge200JSONResponseBodyCode = "ok"
+)
+
+// Valid indicates whether the value is a known member of the AuthRequestEmailChallenge200JSONResponseBodyCode enum.
+func (e AuthRequestEmailChallenge200JSONResponseBodyCode) Valid() bool {
+	switch e {
+	case AuthRequestEmailChallenge200JSONResponseBodyCodeOk:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AuthEmailLogin200JSONResponseBodyCode.
+const (
+	AuthEmailLogin200JSONResponseBodyCodeOk AuthEmailLogin200JSONResponseBodyCode = "ok"
+)
+
+// Valid indicates whether the value is a known member of the AuthEmailLogin200JSONResponseBodyCode enum.
+func (e AuthEmailLogin200JSONResponseBodyCode) Valid() bool {
+	switch e {
+	case AuthEmailLogin200JSONResponseBodyCodeOk:
 		return true
 	default:
 		return false
@@ -398,6 +758,51 @@ const (
 func (e PlatformGetFile200JSONResponseBodyCode) Valid() bool {
 	switch e {
 	case PlatformGetFile200JSONResponseBodyCodeOk:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PlatformGetMailSettings200JSONResponseBodyCode.
+const (
+	PlatformGetMailSettings200JSONResponseBodyCodeOk PlatformGetMailSettings200JSONResponseBodyCode = "ok"
+)
+
+// Valid indicates whether the value is a known member of the PlatformGetMailSettings200JSONResponseBodyCode enum.
+func (e PlatformGetMailSettings200JSONResponseBodyCode) Valid() bool {
+	switch e {
+	case PlatformGetMailSettings200JSONResponseBodyCodeOk:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PlatformUpdateMailSettings200JSONResponseBodyCode.
+const (
+	PlatformUpdateMailSettings200JSONResponseBodyCodeOk PlatformUpdateMailSettings200JSONResponseBodyCode = "ok"
+)
+
+// Valid indicates whether the value is a known member of the PlatformUpdateMailSettings200JSONResponseBodyCode enum.
+func (e PlatformUpdateMailSettings200JSONResponseBodyCode) Valid() bool {
+	switch e {
+	case PlatformUpdateMailSettings200JSONResponseBodyCodeOk:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PlatformTestMailSettings200JSONResponseBodyCode.
+const (
+	PlatformTestMailSettings200JSONResponseBodyCodeOk PlatformTestMailSettings200JSONResponseBodyCode = "ok"
+)
+
+// Valid indicates whether the value is a known member of the PlatformTestMailSettings200JSONResponseBodyCode enum.
+func (e PlatformTestMailSettings200JSONResponseBodyCode) Valid() bool {
+	switch e {
+	case PlatformTestMailSettings200JSONResponseBodyCodeOk:
 		return true
 	default:
 		return false
@@ -658,6 +1063,61 @@ type CreateMember struct {
 	Roles       []interface{}       `json:"roles"`
 }
 
+// EmailCapabilities defines model for EmailCapabilities.
+type EmailCapabilities struct {
+	CodeLength        EmailCapabilitiesCodeLength        `json:"code_length"`
+	Enabled           bool                               `json:"enabled"`
+	ExpiresIn         EmailCapabilitiesExpiresIn         `json:"expires_in"`
+	RetryAfterSeconds EmailCapabilitiesRetryAfterSeconds `json:"retry_after_seconds"`
+}
+
+// EmailCapabilitiesCodeLength defines model for EmailCapabilities.CodeLength.
+type EmailCapabilitiesCodeLength float32
+
+// EmailCapabilitiesExpiresIn defines model for EmailCapabilities.ExpiresIn.
+type EmailCapabilitiesExpiresIn float32
+
+// EmailCapabilitiesRetryAfterSeconds defines model for EmailCapabilities.RetryAfterSeconds.
+type EmailCapabilitiesRetryAfterSeconds float32
+
+// EmailChallengeRequest defines model for EmailChallengeRequest.
+type EmailChallengeRequest struct {
+	Audience EmailChallengeRequestAudience `json:"audience"`
+	Email    openapi_types.Email           `json:"email"`
+	Purpose  EmailChallengeRequestPurpose  `json:"purpose"`
+	TenantId *UUID                         `json:"tenant_id,omitempty"`
+}
+
+// EmailChallengeRequestAudience defines model for EmailChallengeRequest.Audience.
+type EmailChallengeRequestAudience string
+
+// EmailChallengeRequestPurpose defines model for EmailChallengeRequest.Purpose.
+type EmailChallengeRequestPurpose string
+
+// EmailChallengeResult defines model for EmailChallengeResult.
+type EmailChallengeResult struct {
+	ChallengeId       UUID                                  `json:"challenge_id"`
+	ExpiresAt         time.Time                             `json:"expires_at"`
+	RetryAfterSeconds EmailChallengeResultRetryAfterSeconds `json:"retry_after_seconds"`
+}
+
+// EmailChallengeResultRetryAfterSeconds defines model for EmailChallengeResult.RetryAfterSeconds.
+type EmailChallengeResultRetryAfterSeconds float32
+
+// EmailLogin defines model for EmailLogin.
+type EmailLogin struct {
+	Audience    EmailLoginAudience  `json:"audience"`
+	CaptchaCode *string             `json:"captcha_code,omitempty"`
+	CaptchaId   *UUID               `json:"captcha_id,omitempty"`
+	ChallengeId UUID                `json:"challenge_id"`
+	Code        *string             `json:"code,omitempty"`
+	Email       openapi_types.Email `json:"email"`
+	TenantId    *UUID               `json:"tenant_id,omitempty"`
+}
+
+// EmailLoginAudience defines model for EmailLogin.Audience.
+type EmailLoginAudience string
+
 // Error defines model for Error.
 type Error struct {
 	Code       string       `json:"code"`
@@ -703,23 +1163,13 @@ type File struct {
 
 // ForgotPassword defines model for ForgotPassword.
 type ForgotPassword struct {
-	CaptchaCode *string             `json:"captcha_code,omitempty"`
-	CaptchaId   *UUID               `json:"captcha_id,omitempty"`
-	Email       openapi_types.Email `json:"email"`
+	Audience ForgotPasswordAudience `json:"audience"`
+	Email    openapi_types.Email    `json:"email"`
+	TenantId *UUID                  `json:"tenant_id,omitempty"`
 }
 
-// ForgotPasswordResult defines model for ForgotPasswordResult.
-type ForgotPasswordResult struct {
-	DevToken  *string                       `json:"dev_token,omitempty"`
-	ExpiresIn ForgotPasswordResultExpiresIn `json:"expires_in"`
-	Sent      ForgotPasswordResultSent      `json:"sent"`
-}
-
-// ForgotPasswordResultExpiresIn defines model for ForgotPasswordResult.ExpiresIn.
-type ForgotPasswordResultExpiresIn float32
-
-// ForgotPasswordResultSent defines model for ForgotPasswordResult.Sent.
-type ForgotPasswordResultSent bool
+// ForgotPasswordAudience defines model for ForgotPassword.Audience.
+type ForgotPasswordAudience string
 
 // Login defines model for Login.
 type Login struct {
@@ -748,6 +1198,57 @@ type Login1 = interface{}
 type LogoutResult struct {
 	Revoked bool `json:"revoked"`
 }
+
+// MailCredentialChange defines model for MailCredentialChange.
+type MailCredentialChange struct {
+	union json.RawMessage
+}
+
+// MailCredentialChange0 defines model for MailCredentialChange.0.
+type MailCredentialChange0 struct {
+	Kind    MailCredentialChange0Kind `json:"kind"`
+	Locator *string                   `json:"locator,omitempty"`
+}
+
+// MailCredentialChange0Kind defines model for MailCredentialChange.0.Kind.
+type MailCredentialChange0Kind string
+
+// MailCredentialChange1 defines model for MailCredentialChange.1.
+type MailCredentialChange1 struct {
+	Kind  MailCredentialChange1Kind `json:"kind"`
+	Value *string                   `json:"value,omitempty"`
+}
+
+// MailCredentialChange1Kind defines model for MailCredentialChange.1.Kind.
+type MailCredentialChange1Kind string
+
+// MailSettings defines model for MailSettings.
+type MailSettings struct {
+	CredentialKind MailSettingsCredentialKind `json:"credential_kind"`
+	Enabled        bool                       `json:"enabled"`
+	HasCredential  bool                       `json:"has_credential"`
+	Provider       MailSettingsProvider       `json:"provider"`
+	Revision       Revision                   `json:"revision"`
+	SenderEmail    string                     `json:"sender_email"`
+	SenderName     string                     `json:"sender_name"`
+	SmtpHost       string                     `json:"smtp_host"`
+	SmtpPort       MailSettingsSmtpPort       `json:"smtp_port"`
+	SmtpSecurity   MailSettingsSmtpSecurity   `json:"smtp_security"`
+	SmtpUsername   string                     `json:"smtp_username"`
+	UpdatedAt      time.Time                  `json:"updated_at"`
+}
+
+// MailSettingsCredentialKind defines model for MailSettings.CredentialKind.
+type MailSettingsCredentialKind string
+
+// MailSettingsProvider defines model for MailSettings.Provider.
+type MailSettingsProvider string
+
+// MailSettingsSmtpPort defines model for MailSettings.SmtpPort.
+type MailSettingsSmtpPort int
+
+// MailSettingsSmtpSecurity defines model for MailSettings.SmtpSecurity.
+type MailSettingsSmtpSecurity string
 
 // Member defines model for Member.
 type Member struct {
@@ -789,6 +1290,8 @@ type Refresh struct {
 type Register struct {
 	CaptchaCode *string             `json:"captcha_code,omitempty"`
 	CaptchaId   *UUID               `json:"captcha_id,omitempty"`
+	ChallengeId *UUID               `json:"challenge_id,omitempty"`
+	Code        *string             `json:"code,omitempty"`
 	Email       openapi_types.Email `json:"email"`
 	Password    *string             `json:"password,omitempty"`
 	PenName     string              `json:"pen_name"`
@@ -810,9 +1313,18 @@ type ResetPasswordResultReset bool
 
 // ResetPasswordWithToken defines model for ResetPasswordWithToken.
 type ResetPasswordWithToken struct {
-	NewPassword *string `json:"new_password,omitempty"`
-	Token       *string `json:"token,omitempty"`
+	Audience    ResetPasswordWithTokenAudience `json:"audience"`
+	CaptchaCode *string                        `json:"captcha_code,omitempty"`
+	CaptchaId   *UUID                          `json:"captcha_id,omitempty"`
+	ChallengeId UUID                           `json:"challenge_id"`
+	Code        *string                        `json:"code,omitempty"`
+	Email       openapi_types.Email            `json:"email"`
+	NewPassword *string                        `json:"new_password,omitempty"`
+	TenantId    *UUID                          `json:"tenant_id,omitempty"`
 }
+
+// ResetPasswordWithTokenAudience defines model for ResetPasswordWithToken.Audience.
+type ResetPasswordWithTokenAudience string
 
 // Revision defines model for Revision.
 type Revision = int64
@@ -894,11 +1406,48 @@ type TenantSummary struct {
 	Name string `json:"name"`
 }
 
+// TestMailResult defines model for TestMailResult.
+type TestMailResult struct {
+	Accepted   TestMailResultAccepted `json:"accepted"`
+	DeliveryId UUID                   `json:"delivery_id"`
+}
+
+// TestMailResultAccepted defines model for TestMailResult.Accepted.
+type TestMailResultAccepted bool
+
+// TestMailSettings defines model for TestMailSettings.
+type TestMailSettings struct {
+	ExpectedRevision Revision `json:"expected_revision"`
+}
+
 // Timestamp defines model for Timestamp.
 type Timestamp = time.Time
 
 // UUID defines model for UUID.
 type UUID = openapi_types.UUID
+
+// UpdateMailSettings defines model for UpdateMailSettings.
+type UpdateMailSettings struct {
+	Credential       *MailCredentialChange           `json:"credential,omitempty"`
+	Enabled          bool                            `json:"enabled"`
+	ExpectedRevision Revision                        `json:"expected_revision"`
+	Provider         UpdateMailSettingsProvider      `json:"provider"`
+	SenderEmail      *string                         `json:"sender_email,omitempty"`
+	SenderName       *string                         `json:"sender_name,omitempty"`
+	SmtpHost         *string                         `json:"smtp_host,omitempty"`
+	SmtpPort         *UpdateMailSettingsSmtpPort     `json:"smtp_port,omitempty"`
+	SmtpSecurity     *UpdateMailSettingsSmtpSecurity `json:"smtp_security,omitempty"`
+	SmtpUsername     *string                         `json:"smtp_username,omitempty"`
+}
+
+// UpdateMailSettingsProvider defines model for UpdateMailSettings.Provider.
+type UpdateMailSettingsProvider string
+
+// UpdateMailSettingsSmtpPort defines model for UpdateMailSettings.SmtpPort.
+type UpdateMailSettingsSmtpPort int
+
+// UpdateMailSettingsSmtpSecurity defines model for UpdateMailSettings.SmtpSecurity.
+type UpdateMailSettingsSmtpSecurity string
 
 // UpdateMember defines model for UpdateMember.
 type UpdateMember struct {
@@ -976,6 +1525,27 @@ type AuthCaptcha200JSONResponseBodyCode string
 
 // AuthVerifyCaptcha200JSONResponseBodyCode defines parameters for AuthVerifyCaptcha.
 type AuthVerifyCaptcha200JSONResponseBodyCode string
+
+// AuthEmailCapabilities200JSONResponseBodyCode defines parameters for AuthEmailCapabilities.
+type AuthEmailCapabilities200JSONResponseBodyCode string
+
+// AuthRequestEmailChallengeParams defines parameters for AuthRequestEmailChallenge.
+type AuthRequestEmailChallengeParams struct {
+	// IdempotencyKey 每个逻辑副作用命令一个UUID，24小时同键重放
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// AuthRequestEmailChallenge200JSONResponseBodyCode defines parameters for AuthRequestEmailChallenge.
+type AuthRequestEmailChallenge200JSONResponseBodyCode string
+
+// AuthEmailLogin200JSONResponseBodyCode defines parameters for AuthEmailLogin.
+type AuthEmailLogin200JSONResponseBodyCode string
+
+// AuthForgotPasswordParams defines parameters for AuthForgotPassword.
+type AuthForgotPasswordParams struct {
+	// IdempotencyKey 每个逻辑副作用命令一个UUID，24小时同键重放
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
 
 // AuthForgotPassword200JSONResponseBodyCode defines parameters for AuthForgotPassword.
 type AuthForgotPassword200JSONResponseBodyCode string
@@ -1088,6 +1658,29 @@ type PlatformDownloadFileParams struct {
 	Range *string `json:"Range,omitempty"`
 }
 
+// PlatformGetMailSettings200JSONResponseBodyCode defines parameters for PlatformGetMailSettings.
+type PlatformGetMailSettings200JSONResponseBodyCode string
+
+// PlatformUpdateMailSettingsParams defines parameters for PlatformUpdateMailSettings.
+type PlatformUpdateMailSettingsParams struct {
+	// IdempotencyKey 每个逻辑副作用命令一个UUID，24小时同键重放
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+	XCSRFToken     string         `json:"X-CSRF-Token"`
+}
+
+// PlatformUpdateMailSettings200JSONResponseBodyCode defines parameters for PlatformUpdateMailSettings.
+type PlatformUpdateMailSettings200JSONResponseBodyCode string
+
+// PlatformTestMailSettingsParams defines parameters for PlatformTestMailSettings.
+type PlatformTestMailSettingsParams struct {
+	// IdempotencyKey 每个逻辑副作用命令一个UUID，24小时同键重放
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+	XCSRFToken     string         `json:"X-CSRF-Token"`
+}
+
+// PlatformTestMailSettings200JSONResponseBodyCode defines parameters for PlatformTestMailSettings.
+type PlatformTestMailSettings200JSONResponseBodyCode string
+
 // PlatformListMembersParams defines parameters for PlatformListMembers.
 type PlatformListMembersParams struct {
 	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
@@ -1175,6 +1768,12 @@ type PlatformListTenants200JSONResponseBodyCode string
 // AuthVerifyCaptchaJSONRequestBody defines body for AuthVerifyCaptcha for application/json ContentType.
 type AuthVerifyCaptchaJSONRequestBody = VerifyCaptcha
 
+// AuthRequestEmailChallengeJSONRequestBody defines body for AuthRequestEmailChallenge for application/json ContentType.
+type AuthRequestEmailChallengeJSONRequestBody = EmailChallengeRequest
+
+// AuthEmailLoginJSONRequestBody defines body for AuthEmailLogin for application/json ContentType.
+type AuthEmailLoginJSONRequestBody = EmailLogin
+
 // AuthForgotPasswordJSONRequestBody defines body for AuthForgotPassword for application/json ContentType.
 type AuthForgotPasswordJSONRequestBody = ForgotPassword
 
@@ -1204,6 +1803,12 @@ type AuthWSTicketJSONRequestBody AuthWSTicketJSONBody
 
 // PlatformUploadFileMultipartRequestBody defines body for PlatformUploadFile for multipart/form-data ContentType.
 type PlatformUploadFileMultipartRequestBody = Upload
+
+// PlatformUpdateMailSettingsJSONRequestBody defines body for PlatformUpdateMailSettings for application/json ContentType.
+type PlatformUpdateMailSettingsJSONRequestBody = UpdateMailSettings
+
+// PlatformTestMailSettingsJSONRequestBody defines body for PlatformTestMailSettings for application/json ContentType.
+type PlatformTestMailSettingsJSONRequestBody = TestMailSettings
 
 // PlatformCreateMemberJSONRequestBody defines body for PlatformCreateMember for application/json ContentType.
 type PlatformCreateMemberJSONRequestBody = CreateMember
@@ -1393,6 +1998,68 @@ func (t *Login) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsMailCredentialChange0 returns the union data inside the MailCredentialChange as a MailCredentialChange0
+func (t MailCredentialChange) AsMailCredentialChange0() (MailCredentialChange0, error) {
+	var body MailCredentialChange0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMailCredentialChange0 overwrites any union data inside the MailCredentialChange as the provided MailCredentialChange0
+func (t *MailCredentialChange) FromMailCredentialChange0(v MailCredentialChange0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeMailCredentialChange0 performs a merge with any union data inside the MailCredentialChange, using the provided MailCredentialChange0
+func (t *MailCredentialChange) MergeMailCredentialChange0(v MailCredentialChange0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsMailCredentialChange1 returns the union data inside the MailCredentialChange as a MailCredentialChange1
+func (t MailCredentialChange) AsMailCredentialChange1() (MailCredentialChange1, error) {
+	var body MailCredentialChange1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMailCredentialChange1 overwrites any union data inside the MailCredentialChange as the provided MailCredentialChange1
+func (t *MailCredentialChange) FromMailCredentialChange1(v MailCredentialChange1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeMailCredentialChange1 performs a merge with any union data inside the MailCredentialChange, using the provided MailCredentialChange1
+func (t *MailCredentialChange) MergeMailCredentialChange1(v MailCredentialChange1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t MailCredentialChange) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *MailCredentialChange) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// AuthCaptcha 创建一次性验证码挑战
@@ -1401,9 +2068,18 @@ type ServerInterface interface {
 	// AuthVerifyCaptcha 验证并消费一次性验证码挑战
 	// (POST /v1/auth/captcha/verify)
 	AuthVerifyCaptcha(c *gin.Context)
-	// AuthForgotPassword 请求密码重置令牌
+	// AuthEmailCapabilities 查询当前邮箱验证码能力
+	// (GET /v1/auth/email-capabilities)
+	AuthEmailCapabilities(c *gin.Context)
+	// AuthRequestEmailChallenge 请求实际投递的用途绑定邮箱验证码
+	// (POST /v1/auth/email-challenges)
+	AuthRequestEmailChallenge(c *gin.Context, params AuthRequestEmailChallengeParams)
+	// AuthEmailLogin 单次消费验证码并创建真实身份会话
+	// (POST /v1/auth/email-login)
+	AuthEmailLogin(c *gin.Context)
+	// AuthForgotPassword 请求实际投递的密码重置验证码
 	// (POST /v1/auth/forgot-password)
-	AuthForgotPassword(c *gin.Context)
+	AuthForgotPassword(c *gin.Context, params AuthForgotPasswordParams)
 	// AuthLogin 登录到指定应用
 	// (POST /v1/auth/login)
 	AuthLogin(c *gin.Context)
@@ -1422,7 +2098,7 @@ type ServerInterface interface {
 	// AuthRegister 注册独立创作者租户并创建会话
 	// (POST /v1/auth/register)
 	AuthRegister(c *gin.Context)
-	// AuthResetPassword 使用重置令牌修改密码并吊销全部会话
+	// AuthResetPassword 单次消费重置验证码、修改密码并吊销全部会话
 	// (POST /v1/auth/reset-password)
 	AuthResetPassword(c *gin.Context)
 	// AuthSessionCSRF 同源读取恢复会话所需CSRF
@@ -1452,6 +2128,15 @@ type ServerInterface interface {
 	// PlatformDownloadFile 鉴权下载完整文件或单段Range
 	// (GET /v1/platform/files/{file_id}/download)
 	PlatformDownloadFile(c *gin.Context, fileId UUID, params PlatformDownloadFileParams)
+	// PlatformGetMailSettings 读取脱敏全局邮件配置
+	// (GET /v1/platform/mail-settings)
+	PlatformGetMailSettings(c *gin.Context)
+	// PlatformUpdateMailSettings CAS 更新全局邮件投递配置
+	// (PUT /v1/platform/mail-settings)
+	PlatformUpdateMailSettings(c *gin.Context, params PlatformUpdateMailSettingsParams)
+	// PlatformTestMailSettings 向已验证本人邮箱投递配置测试邮件
+	// (POST /v1/platform/mail-settings/test)
+	PlatformTestMailSettings(c *gin.Context, params PlatformTestMailSettingsParams)
 	// PlatformListMembers 本租户成员列表
 	// (GET /v1/platform/members)
 	PlatformListMembers(c *gin.Context, params PlatformListMembersParams)
@@ -1519,8 +2204,8 @@ func (siw *ServerInterfaceWrapper) AuthVerifyCaptcha(c *gin.Context) {
 	siw.Handler.AuthVerifyCaptcha(c)
 }
 
-// AuthForgotPassword operation middleware
-func (siw *ServerInterfaceWrapper) AuthForgotPassword(c *gin.Context) {
+// AuthEmailCapabilities operation middleware
+func (siw *ServerInterfaceWrapper) AuthEmailCapabilities(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -1529,7 +2214,106 @@ func (siw *ServerInterfaceWrapper) AuthForgotPassword(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.AuthForgotPassword(c)
+	siw.Handler.AuthEmailCapabilities(c)
+}
+
+// AuthRequestEmailChallenge operation middleware
+func (siw *ServerInterfaceWrapper) AuthRequestEmailChallenge(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AuthRequestEmailChallengeParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKey
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "uuid"})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.AuthRequestEmailChallenge(c, params)
+}
+
+// AuthEmailLogin operation middleware
+func (siw *ServerInterfaceWrapper) AuthEmailLogin(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.AuthEmailLogin(c)
+}
+
+// AuthForgotPassword operation middleware
+func (siw *ServerInterfaceWrapper) AuthForgotPassword(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AuthForgotPasswordParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKey
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "uuid"})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.AuthForgotPassword(c, params)
 }
 
 // AuthLogin operation middleware
@@ -2075,6 +2859,149 @@ func (siw *ServerInterfaceWrapper) PlatformDownloadFile(c *gin.Context) {
 	siw.Handler.PlatformDownloadFile(c, fileId, params)
 }
 
+// PlatformGetMailSettings operation middleware
+func (siw *ServerInterfaceWrapper) PlatformGetMailSettings(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PlatformGetMailSettings(c)
+}
+
+// PlatformUpdateMailSettings operation middleware
+func (siw *ServerInterfaceWrapper) PlatformUpdateMailSettings(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PlatformUpdateMailSettingsParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKey
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "uuid"})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Required header parameter "X-CSRF-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-CSRF-Token")]; found {
+		var XCSRFToken string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for X-CSRF-Token, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-CSRF-Token", valueList[0], &XCSRFToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter X-CSRF-Token: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.XCSRFToken = XCSRFToken
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter X-CSRF-Token is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PlatformUpdateMailSettings(c, params)
+}
+
+// PlatformTestMailSettings operation middleware
+func (siw *ServerInterfaceWrapper) PlatformTestMailSettings(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PlatformTestMailSettingsParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKey
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "uuid"})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Required header parameter "X-CSRF-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-CSRF-Token")]; found {
+		var XCSRFToken string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for X-CSRF-Token, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-CSRF-Token", valueList[0], &XCSRFToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter X-CSRF-Token: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.XCSRFToken = XCSRFToken
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter X-CSRF-Token is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PlatformTestMailSettings(c, params)
+}
+
 // PlatformListMembers operation middleware
 func (siw *ServerInterfaceWrapper) PlatformListMembers(c *gin.Context) {
 
@@ -2507,6 +3434,9 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 
 	router.GET(options.BaseURL+"/v1/auth/captcha", wrapper.AuthCaptcha)
 	router.POST(options.BaseURL+"/v1/auth/captcha/verify", wrapper.AuthVerifyCaptcha)
+	router.GET(options.BaseURL+"/v1/auth/email-capabilities", wrapper.AuthEmailCapabilities)
+	router.POST(options.BaseURL+"/v1/auth/email-challenges", wrapper.AuthRequestEmailChallenge)
+	router.POST(options.BaseURL+"/v1/auth/email-login", wrapper.AuthEmailLogin)
 	router.POST(options.BaseURL+"/v1/auth/forgot-password", wrapper.AuthForgotPassword)
 	router.POST(options.BaseURL+"/v1/auth/login", wrapper.AuthLogin)
 	router.POST(options.BaseURL+"/v1/auth/logout", wrapper.AuthLogout)
@@ -2524,6 +3454,9 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.DELETE(options.BaseURL+"/v1/platform/files/:file_id", wrapper.PlatformDeleteFile)
 	router.GET(options.BaseURL+"/v1/platform/files/:file_id", wrapper.PlatformGetFile)
 	router.GET(options.BaseURL+"/v1/platform/files/:file_id/download", wrapper.PlatformDownloadFile)
+	router.GET(options.BaseURL+"/v1/platform/mail-settings", wrapper.PlatformGetMailSettings)
+	router.PUT(options.BaseURL+"/v1/platform/mail-settings", wrapper.PlatformUpdateMailSettings)
+	router.POST(options.BaseURL+"/v1/platform/mail-settings/test", wrapper.PlatformTestMailSettings)
 	router.GET(options.BaseURL+"/v1/platform/members", wrapper.PlatformListMembers)
 	router.POST(options.BaseURL+"/v1/platform/members", wrapper.PlatformCreateMember)
 	router.GET(options.BaseURL+"/v1/platform/members/:member_id", wrapper.PlatformGetMember)
