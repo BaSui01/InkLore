@@ -250,7 +250,9 @@ export function EditorRoute({ novelId, onBack }: EditorRouteProps) {
 
   // 切换章节前先保住当前草稿；新章节正文未读取成功时绝不展示旧章正文。
   const selectChapter = (chapter: Chapter) => {
-    if (chapter.id !== activeChapterRef.current?.id && agentInteractionPending) {
+    // A recovery URL may be pending before the editor has selected its first chapter.
+    // Only block leaving an existing chapter; initial selection is required to restore it.
+    if (activeChapterRef.current && chapter.id !== activeChapterRef.current.id && agentInteractionPending) {
       // Preserve the active Run and its unsent answer rather than unmounting it.
       setWorkbenchOpen(true);
       return;
