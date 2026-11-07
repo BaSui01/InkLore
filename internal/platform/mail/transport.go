@@ -175,18 +175,6 @@ func (t *transport) sendSMTP(ctx context.Context, c Settings, secret string, m M
 // Resend is a fixed HTTPS integration. The endpoint, TLS server name and
 // destination port are constants; environment proxies and redirects are disabled.
 // A single approved public IP is pinned for the request to prevent DNS rebinding.
-func validResendMessageID(value string) bool {
-	if len(value) < 4 || len(value) > 128 || !strings.HasPrefix(value, "re_") {
-		return false
-	}
-	for _, r := range value[3:] {
-		if !(r >= 'a' && r <= 'z') && !(r >= 'A' && r <= 'Z') && !(r >= '0' && r <= '9') && r != '_' && r != '-' {
-			return false
-		}
-	}
-	return true
-}
-
 func (t *transport) sendResend(ctx context.Context, c Settings, secret string, m Message) error {
 	const host = "api.resend.com"
 	if secret == "" || len(secret) > 8192 || strings.ContainsAny(secret, "\r\n\x00") {
@@ -248,7 +236,7 @@ func (t *transport) sendResend(ctx context.Context, c Settings, secret string, m
 		ID string `json:"id"`
 	}
 	decoder := json.NewDecoder(io.LimitReader(response.Body, 16*1024))
-	if err = decoder.Decode(&accepted); err != nil || !validResendMessageID(accepted.ID) {
+	if err = decoder.Decode(&accepted); err != nil || !scope.ValidID(accepted.ID) {
 		return errors.New("Resend acceptance response is invalid")
 	}
 	var trailing any
