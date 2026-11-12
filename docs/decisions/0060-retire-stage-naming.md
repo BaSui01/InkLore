@@ -57,5 +57,5 @@ R1 是 2026-09 重构阶段的名称，阶段工作早已结束，但命名渗�
 
 ## 后续与关联
 
-- 任务与证据：[INK-301](../../docs/backlog.md)、[工程笔记](../../.agents/notes/implemented/architecture/2026-11-12-remove-r1-stage-naming.md)。
+- 任务与证据：[INK-301](../../docs/backlog.md)、[工程笔记](../../.agents/notes/implemented/architecture/2026-11-12-retire-stage-naming.md)。
 - 代码导读：[docs/architecture.md](../architecture.md)、[migrations/extensions/README.md](../../migrations/extensions/README.md)。
