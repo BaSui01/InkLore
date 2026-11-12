@@ -4,20 +4,21 @@ package domain
 import "time"
 
 type Novel struct {
-	ID             string     `json:"id"`
-	TenantID       string     `json:"tenant_id"`
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
-	Revision       int64      `json:"revision"`
-	OwnerID        string     `json:"owner_id"`
-	Title          string     `json:"title"`
-	Summary        string     `json:"summary"`
-	Category       string     `json:"category"`
-	Status         string     `json:"status"`
-	PreviousStatus *string    `json:"previous_status"`
-	TargetWords    int64      `json:"target_words"`
-	WordCount      int64      `json:"word_count"`
-	DeletedAt      *time.Time `json:"deleted_at"`
+	ID                   string     `json:"id"`
+	TenantID             string     `json:"tenant_id"`
+	CreatedAt            time.Time  `json:"created_at"`
+	UpdatedAt            time.Time  `json:"updated_at"`
+	Revision             int64      `json:"revision"`
+	OwnerID              string     `json:"owner_id"`
+	Title                string     `json:"title"`
+	Summary              string     `json:"summary"`
+	Category             string     `json:"category"`
+	Status               string     `json:"status"`
+	PreviousStatus       *string    `json:"previous_status"`
+	TargetWords          int64      `json:"target_words"`
+	TargetCompletionDate *string    `json:"target_completion_date"`
+	WordCount            int64      `json:"word_count"`
+	DeletedAt            *time.Time `json:"deleted_at"`
 }
 
 type Volume struct {
@@ -119,18 +120,20 @@ type Placement struct {
 }
 
 type CreateNovel struct {
-	Title       string `json:"title"`
-	Summary     string `json:"summary"`
-	Category    string `json:"category"`
-	TargetWords int64  `json:"target_words"`
+	Title                string  `json:"title"`
+	Summary              string  `json:"summary"`
+	Category             string  `json:"category"`
+	TargetWords          int64   `json:"target_words"`
+	TargetCompletionDate *string `json:"target_completion_date"`
 }
 
 type UpdateNovel struct {
-	ExpectedRevision int64  `json:"expected_revision"`
-	Title            string `json:"title"`
-	Summary          string `json:"summary"`
-	Category         string `json:"category"`
-	TargetWords      int64  `json:"target_words"`
+	ExpectedRevision     int64   `json:"expected_revision"`
+	Title                string  `json:"title"`
+	Summary              string  `json:"summary"`
+	Category             string  `json:"category"`
+	TargetWords          int64   `json:"target_words"`
+	TargetCompletionDate *string `json:"target_completion_date"`
 }
 
 type RevisionCommand struct {

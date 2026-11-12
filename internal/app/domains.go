@@ -68,14 +68,15 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 	if err = world.ValidateOptions(); err != nil {
 		return err
 	}
-	content, err := contentapp.New(contentapp.Options{Repo: contentinfra.NewRepository(p.UoW), UOW: p.UoW, Scope: p.Scope, Identity: p.Identity, Idempotency: p.Idempotency, Cursor: p.Cursor, Events: contentEventAdapter{a}, World: world, Facts: adapters.WorldFactAdapter{World: world}})
+	if err = a.ensureFileService(); err != nil {
+		return err
+	}
+	contentReviews := &adapters.ContentExportReviews{}
+	content, err := contentapp.New(contentapp.Options{Repo: contentinfra.NewRepository(p.UoW), UOW: p.UoW, Scope: p.Scope, Identity: p.Identity, Idempotency: p.Idempotency, Cursor: p.Cursor, Events: contentEventAdapter{a}, World: world, Facts: adapters.WorldFactAdapter{World: world}, Files: adapters.ContentFiles{Service: p.Files}, Reviews: contentReviews})
 	if err != nil {
 		return err
 	}
 	a.domains.Content = content
-	if err = a.ensureFileService(); err != nil {
-		return err
-	}
 	outline, err := outlineapp.NewService(outlineapp.Options{Repository: outlineinfra.NewRepository(p.UoW), UoW: p.UoW, Scope: p.Scope, ChapterContext: adapters.ChapterContextAdapter{Content: content}, OnMutation: func(ctx context.Context, e outlineapp.Mutation) error {
 		action, ok := outlineActions[e.Action]
 		if !ok {
@@ -135,12 +136,25 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 	a.domains.Budget = llmBudget
 	llmHandler.Register(engine)
 	providerRouter := llminfra.NewProviderRouter()
-	tenantResolver, err := llminfra.NewTenantChannelResolver(p.UoW)
+	runtimeRepo, err := llminfra.NewGatewayRuntimeRepository(p.UoW)
 	if err != nil {
 		return err
 	}
-	providerRouter.SetTenantResolver(tenantResolver)
+	providerRouter.SetTenantDispatchResolver(runtimeRepo.ResolveDispatch)
 	llmGateway := llmapp.NewGatewayService(providerRouter)
+	// Without Redis, tenant generation remains unavailable rather than bypassing
+	// the durable capacity and budget admission boundary.
+	if p.Redis != nil {
+		admission, err := llminfra.NewRedisAdmission(llminfra.GatewayRedisOptions{Client: p.Redis, Recovery: runtimeRepo, KeyHealth: runtimeRepo})
+		if err != nil {
+			return err
+		}
+		runtime, err := llmapp.NewGatewayRuntime(llmapp.GatewayRuntimeOptions{Budget: llmBudget, Admission: admission, Repository: runtimeRepo, UoW: p.UoW})
+		if err != nil {
+			return err
+		}
+		llmGateway.SetRuntime(runtime)
+	}
 	a.domains.Gateway = llmGateway
 	contenthttp.New(content).RegisterRoutes(engine)
 	handler, err := outlinehttp.NewHandler(outlinehttp.Options{Service: outline, Identity: p.Identity, Idempotency: p.Idempotency, Cursor: p.Cursor})
@@ -190,6 +204,7 @@ func (a *App) registerDomainRoutes(engine *gin.Engine) error {
 		return err
 	}
 	a.domains.Compliance = compService
+	contentReviews.Compliance = compService
 	compHandler, err := comphttp.NewHandler(comphttp.Options{
 		Service:     compService,
 		Identity:    p.Identity,

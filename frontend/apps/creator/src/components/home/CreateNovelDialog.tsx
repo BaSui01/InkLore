@@ -19,6 +19,7 @@ export function CreateNovelDialog({ open, summary, client, offline, onClose, onC
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState(summary);
   const [target, setTarget] = useState("");
+  const [completionDate, setCompletionDate] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [invalid, setInvalid] = useState(false);
@@ -50,6 +51,7 @@ export function CreateNovelDialog({ open, summary, client, offline, onClose, onC
     const input: CreateNovelInput = {
       title: title.trim(), summary: description.trim(), category: category.trim(),
       target_words: target === "" ? 0 : Number(target),
+      target_completion_date: completionDate || null,
     };
     if ([...input.title].length < 1 || [...input.title].length > 120 ||
         [...input.summary!].length > 2000 || [...input.category!].length > 60 ||
@@ -91,6 +93,8 @@ export function CreateNovelDialog({ open, summary, client, offline, onClose, onC
           <input id="home-category" value={category} disabled={pending} onChange={e => setCategory(e.target.value)} placeholder={t("home.create.categoryPlaceholder")} /></div>
           <div><label htmlFor="home-target">{t("home.create.target")}</label><input id="home-target" type="number" min="0" max="100000000" step="1" disabled={pending}
             value={target} onChange={e => setTarget(e.target.value)} placeholder={t("home.create.targetPlaceholder")} /></div></div>
+        <label htmlFor="home-completion-date">{t("writing.targetDate")}</label>
+        <input id="home-completion-date" type="date" min="0001-01-01" max="9999-12-31" value={completionDate} disabled={pending} onChange={e => setCompletionDate(e.target.value)} />
         <label htmlFor="home-summary">{t("home.create.summary")}<span>{t("home.create.summaryLimit")}</span></label>
         <textarea id="home-summary" rows={5} value={description} disabled={pending} onChange={e => setDescription(e.target.value)} placeholder={t("home.ideaPlaceholder")} />
         <p className="home-form-help">{t("home.create.help")}</p>

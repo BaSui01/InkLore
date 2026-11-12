@@ -1,4 +1,4 @@
--- INK-141 / R1 frozen target. PostgreSQL 16. Apply after platform.sql.
+-- 既有基线 DDL；PostgreSQL 16 方言。在 platform.sql 之后执行。
 -- All writes are tenant-scoped; mutable writes CAS revision and update updated_at.
 -- JSONB payloads are validated by api/inspiration-schemas.json before persistence.
 BEGIN;

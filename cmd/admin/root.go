@@ -11,7 +11,7 @@ import (
 	"InkLore/internal/platform/config"
 	"InkLore/internal/platform/database"
 	"InkLore/internal/platform/uow"
-	"InkLore/migrations/r1"
+	"InkLore/migrations"
 )
 
 func runSetRoot() {
@@ -26,7 +26,7 @@ func runSetRoot() {
 	}
 	cfg, err := config.Bootstrap(*configPath)
 	if err != nil {
-		fail("invalid R1 configuration")
+		fail("invalid configuration")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -35,8 +35,8 @@ func runSetRoot() {
 		fail("PostgreSQL unavailable")
 	}
 	defer func() { _ = database.Close(db) }()
-	if database.Verify(ctx, db, r1.FS(), r1.Dir) != nil {
-		fail("apply and verify R1 migrations before setting root credentials")
+	if database.Verify(ctx, db, migrations.FS(), migrations.Dir) != nil {
+		fail("apply and verify migrations before setting root credentials")
 	}
 	manager, err := uow.New(db)
 	if err != nil {

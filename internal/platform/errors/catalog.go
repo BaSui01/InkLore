@@ -1,4 +1,4 @@
-// Code generated from the frozen R1 error catalog; DO NOT EDIT.
+// Code generated from the error catalog; DO NOT EDIT.
 package errors
 
 var contractStatus = map[string]int{
@@ -14,14 +14,19 @@ var contractStatus = map[string]int{
 	"agent.invalid_configuration":          422,
 	"agent.invalid_dag":                    422,
 	"agent.loop_detected":                  422,
+	"agent.question_already_answered":      409,
+	"agent.question_binding_mismatch":      409,
+	"agent.question_expired":               409,
 	"agent.resource_in_use":                409,
 	"agent.run_capacity_exceeded":          429,
 	"agent.source_changed":                 409,
+	"agent.task_policy_version_changed":    409,
 	"agent.version_conflict":               409,
 	"auth.account_unavailable":             409,
 	"auth.cross_tenant_account":            403,
 	"auth.forbidden":                       403,
 	"auth.invalid_credentials":             401,
+	"auth.invalid_token":                   400,
 	"auth.last_operator":                   409,
 	"auth.rate_limited":                    429,
 	"auth.refresh_reused":                  401,

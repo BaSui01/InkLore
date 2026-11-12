@@ -4,6 +4,7 @@ import (
 	d "InkLore/internal/compliance/domain"
 	"InkLore/internal/platform/scope"
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -187,16 +188,28 @@ func (s *Service) ExecuteRewrite(ctx context.Context, in ExecutionInput) (d.Rewr
 		var roundPatches []d.Patch
 
 		if s.opts.Generation != nil {
-			llmRes, err := s.opts.Generation.GenerateRewrite(ctx, in.TenantID, report.NovelID, report.ChapterID, sourceText, issues, round, rewrite.Budget)
-			if err == nil {
-				roundPatches = llmRes.Patches
-				usedTokens += llmRes.UsedTokens
-				callsUsed += llmRes.CallsUsed
+			llmRes, err := s.opts.Generation.GenerateRewrite(ctx, in.TenantID, rewrite.ID, report.NovelID, report.ChapterID, sourceText, issues, round, rewrite.Budget)
+			if err != nil {
+				// Model, budget and unknown-dispatch failures must not become a
+				// successful deterministic rewrite. Persist the real failed state
+				// even when the original request context has been cancelled.
+				rewrite.State = d.ReportStateFailed
+				failureCode := "compliance.analysis_failed"
+				rewrite.FailureCode = &failureCode
+				rewrite.Revision++
+				rewrite.UpdatedAt = time.Now().UTC()
+				cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+				persistErr := s.opts.UoW.Within(cleanup, func(txctx context.Context) error {
+					return s.opts.Repositories.Rewrites.UpdateRewrite(txctx, rewrite)
+				})
+				cancel()
+				return d.Rewrite{}, errors.Join(err, persistErr)
 			}
-		}
-
-		if len(roundPatches) == 0 {
-			// Deterministic fallback: replace each selected issue with suggestion or sanitized text
+			roundPatches = llmRes.Patches
+			usedTokens += llmRes.UsedTokens
+			callsUsed += llmRes.CallsUsed
+		} else {
+			// The explicit rules-only mode uses existing scanner suggestions.
 			for _, iss := range issues {
 				if iss.State != d.IssueStateOpen {
 					continue

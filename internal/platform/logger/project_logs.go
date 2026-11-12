@@ -17,7 +17,7 @@ import (
 
 const projectLogRetention = 90 * 24 * time.Hour
 
-// EnableProjectLogs starts a bounded, best-effort worker. Call only after R1
+// EnableProjectLogs starts a bounded, best-effort worker. Call only after
 // migrations have been verified, before accepting requests. Disabled on Close.
 func EnableProjectLogs(db *gorm.DB) error {
 	if db == nil {

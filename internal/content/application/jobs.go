@@ -2,6 +2,7 @@ package application
 
 import (
 	d "InkLore/internal/content/domain"
+	pe "InkLore/internal/platform/errors"
 	"InkLore/internal/platform/idempotency"
 	"InkLore/internal/platform/identity"
 	"InkLore/internal/platform/scope"
@@ -15,6 +16,9 @@ func (s *Service) CreateImport(ctx context.Context, c Command, novel string, r d
 	bind(&c, "POST", "/v1/content/novels/"+novel+"/imports", r)
 	if err := d.ValidateCreateImport(r); err != nil {
 		return idempotency.Result{}, err
+	}
+	if s.o.Files == nil {
+		return idempotency.Result{}, pe.Contract(503, "platform.dependency_unavailable", nil)
 	}
 	return s.execute(ctx, c, "novel", novel, false, false, 202, func(tx context.Context, o Owner) (any, error) {
 		n, e := s.active(tx, o)
@@ -39,16 +43,13 @@ func (s *Service) CreateImport(ctx context.Context, c Command, novel string, r d
 			return nil, d.CapacityExceeded()
 		}
 
-		var parsed []d.ParsedChapter
-		if s.o.Files != nil {
-			_, _, payload, err := s.o.Files.GetFile(tx, o.TenantID, r.FileID)
-			if err != nil {
-				return nil, err
-			}
-			parsed, err = d.ParseImport(r.Format, payload)
-			if err != nil {
-				return nil, err
-			}
+		_, _, payload, err := s.o.Files.GetFile(tx, c.Principal, novel, r.FileID)
+		if err != nil {
+			return nil, err
+		}
+		parsed, err := d.ParseImport(r.Format, payload)
+		if err != nil {
+			return nil, err
 		}
 
 		now := s.now()
@@ -57,11 +58,6 @@ func (s *Service) CreateImport(ctx context.Context, c Command, novel string, r d
 		status := d.JobStatusPreviewReady
 		stage := d.JobStagePreview
 		progress := 60
-		if s.o.Files == nil {
-			status = d.JobStatusPreviewReady
-			stage = d.JobStagePreview
-			progress = 60
-		}
 
 		job := JobRecord{
 			Job: d.Job{
@@ -199,7 +195,6 @@ func (s *Service) CommitImport(ctx context.Context, c Command, jobID string, r d
 		}
 
 		now := s.now()
-		var addedTotalWords int64
 		for i, item := range selectedItems {
 			pos := maxPos + int64(i) + 1
 			if pos > 1999 {
@@ -233,13 +228,11 @@ func (s *Service) CommitImport(ctx context.Context, c Command, jobID string, r d
 			if err := s.projectChapter(tx, o, ch, 0); err != nil {
 				return nil, err
 			}
-			addedTotalWords += item.WordCount
 		}
 
 		if err := s.o.Repo.MarkImportItemsSelected(tx, o, jobID, r.SelectedItemIDs); err != nil {
 			return nil, err
 		}
-		n.WordCount += addedTotalWords
 		if err := s.bumpNovel(tx, o, &n); err != nil {
 			return nil, err
 		}
@@ -265,6 +258,9 @@ func (s *Service) CreateExport(ctx context.Context, c Command, novel string, r d
 	bind(&c, "POST", "/v1/content/novels/"+novel+"/exports", r)
 	if err := d.ValidateCreateExport(r); err != nil {
 		return idempotency.Result{}, err
+	}
+	if s.o.Files == nil || s.o.Reviews == nil {
+		return idempotency.Result{}, pe.Contract(503, "platform.dependency_unavailable", nil)
 	}
 	return s.execute(ctx, c, "novel", novel, false, false, 202, func(tx context.Context, o Owner) (any, error) {
 		n, e := s.active(tx, o)
@@ -350,10 +346,8 @@ func (s *Service) CreateExport(ctx context.Context, c Command, novel string, r d
 			}
 		}
 
-		if s.o.Reviews != nil {
-			if err := s.o.Reviews.ValidateReviewTicket(tx, c.Principal, novel, r.ReviewTicket, snapshots); err != nil {
-				return nil, err
-			}
+		if err := s.o.Reviews.ValidateReviewTicket(tx, c.Principal, novel, r.ReviewTicket, snapshots); err != nil {
+			return nil, err
 		}
 
 		expNovel := d.ExportNovel{ID: n.ID, Title: n.Title, Summary: n.Summary, AuthorName: o.ActorID}
@@ -373,13 +367,9 @@ func (s *Service) CreateExport(ctx context.Context, c Command, novel string, r d
 			return nil, err
 		}
 
-		var outputFileID *string
-		if s.o.Files != nil {
-			fid, err := s.o.Files.PutFile(tx, c.Principal, &novel, rend.Filename, rend.MediaType, "export", rend.Payload)
-			if err != nil {
-				return nil, err
-			}
-			outputFileID = &fid
+		fid, err := s.o.Files.PutFile(tx, c.Principal, &novel, rend.Filename, rend.MediaType, "export", rend.Payload)
+		if err != nil {
+			return nil, err
 		}
 
 		job := JobRecord{
@@ -395,7 +385,7 @@ func (s *Service) CreateExport(ctx context.Context, c Command, novel string, r d
 				Status:             d.JobStatusSucceeded,
 				Stage:              d.JobStageComplete,
 				Progress:           100,
-				OutputFileID:       outputFileID,
+				OutputFileID:       &fid,
 				Format:             r.Format,
 				SourceRevision:     r.ExpectedRevision,
 				ExpiresAt:          now.Add(7 * 24 * time.Hour),
@@ -449,18 +439,20 @@ func (s *Service) CopyNovel(ctx context.Context, c Command, novel string, r d.Co
 		now := s.now()
 		newNovelID := uuid.NewString()
 		newNovel := d.Novel{
-			ID:          newNovelID,
-			TenantID:    o.TenantID,
-			OwnerID:     o.ActorID,
-			Title:       r.Title,
-			Summary:     n.Summary,
-			Category:    n.Category,
-			TargetWords: n.TargetWords,
-			WordCount:   n.WordCount,
-			Status:      "active",
-			Revision:    1,
-			CreatedAt:   now,
-			UpdatedAt:   now,
+			ID:                   newNovelID,
+			TenantID:             o.TenantID,
+			OwnerID:              o.ActorID,
+			Title:                r.Title,
+			Summary:              n.Summary,
+			Category:             n.Category,
+			TargetWords:          n.TargetWords,
+			TargetCompletionDate: n.TargetCompletionDate,
+			// Copied chapters are drafts and must be confirmed by their author.
+			WordCount: 0,
+			Status:    "active",
+			Revision:  1,
+			CreatedAt: now,
+			UpdatedAt: now,
 		}
 		if err := s.o.Repo.InsertNovel(tx, Owner{TenantID: o.TenantID, ActorID: o.ActorID, NovelID: newNovelID}, newNovel); err != nil {
 			return nil, err

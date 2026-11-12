@@ -6,7 +6,7 @@
 
 ## 1. 本地依赖
 
-项目开发环境使用 PostgreSQL 17（pgvector / pg_trgm）与 Redis 7。可在本机安装，也可使用仓库自带的 Docker Compose：
+项目开发环境使用 PostgreSQL 18（pgvector / pg_trgm）与 Redis 7。可在本机安装，也可使用仓库自带的 Docker Compose：
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d --wait

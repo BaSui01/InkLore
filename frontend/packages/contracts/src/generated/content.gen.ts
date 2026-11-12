@@ -545,9 +545,16 @@ export interface components {
             /** @enum {string} */
             status: "active" | "archived" | "deleted";
             previous_status: ("active" | "archived") | null;
+            /** @description Optional total word goal: 0 means unset. Progress may exceed 100%. */
             target_words: number;
+            /** @description Non-whitespace Unicode code points in the current confirmed version of non-deleted chapters. Draft saves, draft rollbacks, imports and copies do not change this total until author confirmation. */
             word_count: number;
             deleted_at: components["schemas"]["Timestamp"] | null;
+            /**
+             * Format: date
+             * @description Optional target completion date (YYYY-MM-DD); null means no date goal. A calendar date without time or timezone.
+             */
+            target_completion_date: string | null;
         };
         Volume: {
             id: components["schemas"]["UUID"];
@@ -642,16 +649,21 @@ export interface components {
             next_cursor: string | null;
             has_more: boolean;
         };
+        /** @description Natural day in Asia/Shanghai (the application business timezone; user/tenant timezone preferences are not currently configurable). Confirmation/deletion/restoration events are attributed to their commit day. Net change may be negative; cumulative current_word_count cannot be negative. */
         DailyStat: {
             /** Format: date */
             date: string;
+            /** @description Inserted confirmed-body non-whitespace Unicode code points, including restored confirmed text. */
             added_words: number;
+            /** @description Removed confirmed-body non-whitespace Unicode code points, including deleted confirmed chapters. */
             removed_words: number;
             net_words: number;
+            /** @description Number of committed confirmation/deletion/restoration transitions; retained field name for compatibility. Draft saves are excluded. */
             save_count: number;
             /** @enum {string} */
             timezone: "Asia/Shanghai";
         };
+        /** @description Current confirmed text statistics. Changes are committed atomically with confirmation, deletion or restoration. Previous confirmed text remains counted while a new working draft is edited. Legacy draft events are excluded; migration backfills only current totals, without inventing historical daily activity. */
         Statistics: {
             novel_id: components["schemas"]["UUID"];
             /** Format: date */
@@ -659,6 +671,7 @@ export interface components {
             /** Format: date */
             to: string;
             days: components["schemas"]["DailyStat"][];
+            /** @description Non-whitespace Unicode code points in the current confirmed version of non-deleted chapters. Draft saves, draft rollbacks, imports and copies do not change this total until author confirmation. */
             current_word_count: number;
         };
         Confirmation: {
@@ -719,14 +732,26 @@ export interface components {
             title: string;
             summary: string;
             category: string;
+            /** @description Optional total word goal: 0 means unset. Progress may exceed 100%. */
             target_words: number;
+            /**
+             * Format: date
+             * @description Optional target completion date (YYYY-MM-DD); null means no date goal. A calendar date without time or timezone.
+             */
+            target_completion_date?: string | null;
         };
         UpdateNovel: {
             expected_revision: components["schemas"]["Revision"];
             title: string;
             summary: string;
             category: string;
+            /** @description Optional total word goal: 0 means unset. Progress may exceed 100%. */
             target_words: number;
+            /**
+             * Format: date
+             * @description Optional target completion date (YYYY-MM-DD); null means no date goal. A calendar date without time or timezone.
+             */
+            target_completion_date?: string | null;
         };
         RevisionCommand: {
             expected_revision: components["schemas"]["Revision"];

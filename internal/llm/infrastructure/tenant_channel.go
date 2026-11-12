@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"net/url"
-	"os"
 	"strings"
 
+	d "InkLore/internal/llm/domain"
 	"InkLore/internal/platform/uow"
 )
 
@@ -34,16 +34,9 @@ func NewTenantChannelResolver(manager *uow.Manager) (TenantChannelResolver, erro
 		if err != nil {
 			return TenantChannelTarget{}, err
 		}
-		var row struct {
-			BaseURL       string
-			UpstreamModel string
-			ModelName     string
-			Protocol      string
-			SecretKind    string
-			SecretLocator string
-		}
-		result := db.Raw(`SELECT c.base_url, cm.upstream_model, m.upstream_name AS model_name,
-				pr.protocol, k.secret_kind, k.secret_locator
+		var row tenantChannelRow
+		result := db.Raw(`SELECT c.base_url, c.provider_id, cm.upstream_model, m.upstream_name AS model_name,
+				pr.protocol, k.secret_kind, k.secret_locator, k.secret_version
 			FROM llm_channel_models cm
 			JOIN llm_channels c ON c.tenant_id=cm.tenant_id AND c.id=cm.channel_id
 			JOIN llm_models m ON m.tenant_id=cm.tenant_id AND m.id=cm.model_id
@@ -64,40 +57,48 @@ func NewTenantChannelResolver(manager *uow.Manager) (TenantChannelResolver, erro
 		if result.RowsAffected != 1 {
 			return TenantChannelTarget{}, errors.New("llm tenant channel: no enabled route")
 		}
-		protocol := strings.ToLower(strings.TrimSpace(row.Protocol))
-		switch protocol {
-		case "openai", "deepseek", "anthropic", "gemini", "ollama":
-		default:
-			return TenantChannelTarget{}, errors.New("llm tenant channel: unsupported provider protocol")
-		}
-		endpoint := strings.TrimRight(strings.TrimSpace(row.BaseURL), "/")
-		parsed, err := url.Parse(endpoint)
-		if err != nil || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" ||
-			(parsed.Scheme != "https" && !(protocol == "ollama" && parsed.Scheme == "http" && isLocalOrPrivateHost(parsed.Host))) {
-			return TenantChannelTarget{}, errors.New("llm tenant channel: invalid endpoint")
-		}
-		modelName := strings.TrimSpace(row.UpstreamModel)
-		if modelName == "" {
-			modelName = strings.TrimSpace(row.ModelName)
-		}
-		if modelName == "" {
-			return TenantChannelTarget{}, errors.New("llm tenant channel: missing upstream model")
-		}
-		var apiKey string
-		switch {
-		case row.SecretKind == "env" && IsEncryptedSecret(row.SecretLocator):
-			apiKey, err = DecryptSecret(row.SecretLocator)
-		case row.SecretKind == "env" && envNameRegex.MatchString(row.SecretLocator):
-			apiKey = os.Getenv(row.SecretLocator)
-		default:
-			return TenantChannelTarget{}, errors.New("llm tenant channel: secret provider unavailable")
-		}
-		if err != nil || strings.TrimSpace(apiKey) == "" {
-			return TenantChannelTarget{}, errors.New("llm tenant channel: secret unavailable")
-		}
-		return TenantChannelTarget{
-			BaseURL: endpoint, APIKey: strings.TrimSpace(apiKey),
-			UpstreamModel: modelName, Protocol: protocol,
-		}, nil
+		return resolveTenantChannelRow(row)
+	}, nil
+}
+
+type tenantChannelRow struct {
+	BaseURL       string
+	ProviderID    string
+	UpstreamModel string
+	ModelName     string
+	Protocol      string
+	SecretKind    string
+	SecretLocator string
+	SecretVersion string
+}
+
+func resolveTenantChannelRow(row tenantChannelRow) (TenantChannelTarget, error) {
+	protocol := strings.ToLower(strings.TrimSpace(row.Protocol))
+	switch protocol {
+	case "openai", "deepseek", "anthropic", "gemini", "ollama":
+	default:
+		return TenantChannelTarget{}, d.ErrPolicy
+	}
+	endpoint := strings.TrimRight(strings.TrimSpace(row.BaseURL), "/")
+	parsed, err := url.Parse(endpoint)
+	if err != nil || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" ||
+		(parsed.Scheme != "https" && !(protocol == "ollama" && parsed.Scheme == "http" && isLocalOrPrivateHost(parsed.Host))) {
+		return TenantChannelTarget{}, d.ErrPolicy
+	}
+	modelName := strings.TrimSpace(row.UpstreamModel)
+	if modelName == "" {
+		modelName = strings.TrimSpace(row.ModelName)
+	}
+	if modelName == "" {
+		return TenantChannelTarget{}, d.ErrPolicy
+	}
+	secret, err := resolveDeploymentSecret(SecretBinding{ProviderID: row.ProviderID, Ref: d.SecretRef{Kind: row.SecretKind, Locator: row.SecretLocator, Version: row.SecretVersion}})
+	if err != nil || len(secret) == 0 {
+		return TenantChannelTarget{}, d.ErrSecret
+	}
+	defer clear(secret)
+	return TenantChannelTarget{
+		BaseURL: endpoint, APIKey: string(secret),
+		UpstreamModel: modelName, Protocol: protocol,
 	}, nil
 }

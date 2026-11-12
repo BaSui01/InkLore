@@ -20,12 +20,12 @@ permissions:
 
 jobs:
   isolated-db:
-    name: Agent and LLM PostgreSQL 17 + Redis 7 (isolated)
+    name: Agent and LLM PostgreSQL 18 + Redis 7 (isolated)
     runs-on: ubuntu-latest
     timeout-minutes: 18
     services:
       postgres:
-        image: pgvector/pgvector:0.8.7-pg17
+        image: pgvector/pgvector:0.8.7-pg18
         env:
           POSTGRES_DB: inklore_ci
           POSTGRES_USER: inklore_ci
@@ -78,7 +78,7 @@ jobs:
             echo "::error::Migration CLI failed in disposable DB; diagnose SQL below"
             # The CLI deliberately redacts SQL errors. Reproduce only on the
             # throwaway PostgreSQL service, printing no secrets or table data.
-            for file in migrations/r1/[0-9]*.sql; do
+            for file in migrations/[0-9]*.sql; do
               echo "Diagnosing $(basename "$file")"
               if ! psql -X -v ON_ERROR_STOP=1 -f "$file"; then
                 echo "::error::First failing migration: $(basename "$file")"

@@ -23,7 +23,7 @@ var (
 var whitespaceRegex = regexp.MustCompile(`\s+`)
 var hexHashRegex = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
-// NormalizeText enforces the R1 contract: CRLF and CR converted to LF only.
+// NormalizeText 执行既定契约：仅把 CRLF 与 CR 归一为 LF。
 // No trimming, no Unicode form modification. Returns error if not valid UTF-8.
 func NormalizeText(raw string) (string, error) {
 	if !utf8.ValidString(raw) {

@@ -23,7 +23,7 @@ type Request struct {
 
 type Result struct {
 	Status int
-	// Body is data in successful CommandOutcome, and the full R1 envelope from Execute.
+	// Body is data in successful CommandOutcome, and the full envelope from Execute.
 	Body   json.RawMessage
 	Replay bool
 }

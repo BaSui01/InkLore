@@ -16,12 +16,12 @@ concurrency:
 
 jobs:
   postgres-redis:
-    name: PostgreSQL 17 + Redis 7 真实迁移验收
+    name: PostgreSQL 18 + Redis 7 真实迁移验收
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
       postgres:
-        image: pgvector/pgvector:pg17
+        image: pgvector/pgvector:pg18
         env:
           POSTGRES_DB: inklore_ci
           POSTGRES_USER: inklore_ci
@@ -81,12 +81,18 @@ jobs:
           psql -v ON_ERROR_STOP=1 -Atc "SELECT to_regclass('platform_tenants') IS NOT NULL" | grep -qx t
           psql -v ON_ERROR_STOP=1 -Atc "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='vector')" | grep -qx t
           psql -v ON_ERROR_STOP=1 -Atc "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='pg_trgm')" | grep -qx t
-          test "$(psql -X -Atc 'SELECT count(*) FROM schema_migrations_post_r1')" -ge 2
+          test "$(psql -X -Atc 'SELECT count(*) FROM schema_migrations_extensions')" -ge 2
           psql -v ON_ERROR_STOP=1 -Atc "SELECT to_regclass('llm_policy_version_references') IS NOT NULL" | grep -qx t
       - name: Reapply and verify migration idempotence
         run: |
           go run ./cmd/migrate -cmd up -timeout 180s
           go run ./cmd/migrate -cmd status -timeout 60s
+      - name: Verify runtime role grants on generation invocations
+        run: |
+          export PGHOST=127.0.0.1 PGPORT=5432 PGUSER=inklore_ci PGDATABASE=inklore_ci PGPASSWORD=ci-only-not-production
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT has_table_privilege('inklore_runtime','llm_generation_invocations','SELECT') AND has_table_privilege('inklore_runtime','llm_generation_invocations','INSERT') AND has_table_privilege('inklore_runtime','llm_generation_invocations','UPDATE') AND NOT has_table_privilege('inklore_runtime','llm_generation_invocations','DELETE')" | grep -qx t
+      - name: Verify migration atomicity and concurrent replay
+        run: INKLORE_MIGRATION_TEST_DSN="$DATABASE_DSN" go test ./internal/platform/database -count=1 -race -v
       - name: Verify Supabase staging permissions against unrelated public objects
         shell: bash
         run: |
@@ -140,6 +146,7 @@ jobs:
         run: |
           go build ./...
           go vet ./...
+          go test ./internal/app/adapters ./internal/content/application
           go run ./cmd/archguard -reachability
       - name: Start actual API and check health, readiness and public access boundaries
         shell: bash
@@ -230,3 +237,18 @@ jobs:
           psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_memberships" | grep -qx 1
           psql -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM platform_sessions" | grep -qx 1
           echo "Real Go API health, dependencies and unknown-route checks passed."
+          E2E_ALLOW_DISPOSABLE_DB=1 python3 scripts/ci/content_writing_acceptance.py
+          python3 scripts/ci/content_delivery_acceptance.py
+      - name: Verify durable Agent clarification, answer CAS and original Run recovery
+        env:
+          AGENT_QUESTION_PG_TEST: '1'
+        run: |
+          go test ./internal/agent/... ./internal/app ./cmd/admin -run 'TestQuestion|TestClarification' -count=1 -race -v
+      - name: Verify Gateway budgets, admission, accounting and crash recovery
+        env:
+          INKLORE_GATEWAY_INTEGRATION: '1'
+        run: go test ./internal/llm/... -count=1 -race -v
+      - name: Verify Agent usage receipts and original Run question recovery
+        env:
+          AGENT_QUESTION_PG_TEST: '1'
+        run: go test ./internal/agent/... ./internal/app ./cmd/admin -run 'TestQuestion|TestClarification|TestAgentGatewayUsage|TestLLMSecretReferencesHTTPPG|TestComplianceRewriteOperationPG' -count=1 -race -v

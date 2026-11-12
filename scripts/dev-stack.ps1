@@ -36,7 +36,49 @@ param(
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $composeFile = Join-Path $repoRoot 'docker-compose.dev.yml'
-$databaseDSN = 'postgres://ai_novel:change-me@127.0.0.1:5432/ai_novel?sslmode=disable'
+function Get-DatabaseDsn {
+    # DSN 单点定义：迁移与状态查询都跟随仓库根 .env，脚本内不再硬编码主机、用户名、库名或凭据。
+    $envFile = Join-Path $repoRoot '.env'
+    if (-not (Test-Path $envFile)) {
+        throw "未找到 $envFile：请先复制 .env.example 为 .env 并填写 DATABASE_DSN（本脚本不再内置默认连接串）。"
+    }
+    $line = Get-Content $envFile | Where-Object { $_ -match '^\s*DATABASE_DSN\s*=' } | Select-Object -First 1
+    if (-not $line) { throw "未在 $envFile 中找到 DATABASE_DSN。" }
+    $value = ($line -replace '^\s*DATABASE_DSN\s*=', '').Trim().Trim([char]'"').Trim([char]39)
+    if (-not $value) { throw 'DATABASE_DSN 为空：请填写本地 PostgreSQL 连接串。' }
+    return $value
+}
+
+function Get-DatabaseIdentity {
+    param([Parameter(Mandatory = $true)][string]$Dsn)
+    $user = 'ai_novel'
+    $name = 'ai_novel'
+    $m = [regex]::Match($Dsn, '^postgres(?:ql)?://(?:(?<u>[^:@/]+)(?::[^@]*)?@)?[^/]+/(?<d>[^?]+)')
+    if ($m.Success) {
+        if ($m.Groups['u'].Success -and $m.Groups['u'].Value) { $user = [System.Uri]::UnescapeDataString($m.Groups['u'].Value) }
+        if ($m.Groups['d'].Success -and $m.Groups['d'].Value) { $name = [System.Uri]::UnescapeDataString($m.Groups['d'].Value) }
+    }
+    return @($user, $name)
+}
+
+function Invoke-Migrate {
+    # 只有迁移需要 DSN：在这里解析，避免 .env 缺失时连 Down / Status / Up -SkipMigrate 都失败。
+    $databaseDSN = Get-DatabaseDsn
+    # 注入子进程环境；结束后恢复原有 $env:DATABASE_DSN，避免污染调用方 shell。
+    $previousDsn = $env:DATABASE_DSN
+    try {
+        $env:DATABASE_DSN = $databaseDSN
+        & go run ./cmd/migrate -cmd up
+        if ($LASTEXITCODE -ne 0) { throw '迁移失败' }
+    } finally {
+        if ($null -eq $previousDsn) {
+            Remove-Item Env:\DATABASE_DSN -ErrorAction SilentlyContinue
+        } else {
+            $env:DATABASE_DSN = $previousDsn
+        }
+    }
+}
+
 
 function Test-DockerEngine {
     docker info --format '{{.ServerVersion}}' *> $null
@@ -98,8 +140,16 @@ function Show-Status {
     if (Test-DockerEngine) {
         Write-Host (docker version --format '{{.Server.Version}}').Trim() -ForegroundColor Green
         docker compose -f $composeFile ps --format '{{.Name}}|{{.Status}}'
-        $tables = docker exec inklore-postgres-1 psql -U ai_novel -d ai_novel -t -A -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'" 2>$null
-        if ($LASTEXITCODE -eq 0) { Write-Host "[dev-stack] 库内表数量：$tables" }
+        # 表数量查询是可选的：没有 .env 或 DATABASE_DSN 时跳过，不影响容器生命周期管理。
+        $statusDsn = $null
+        try { $statusDsn = Get-DatabaseDsn } catch { }
+        if ($statusDsn) {
+            $databaseUser, $databaseName = Get-DatabaseIdentity $statusDsn
+            $tables = docker exec inklore-postgres-1 psql -U $databaseUser -d $databaseName -t -A -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'" 2>$null
+            if ($LASTEXITCODE -eq 0) { Write-Host "[dev-stack] 库内表数量：$tables" }
+        } else {
+            Write-Host '[dev-stack] 未配置 .env 的 DATABASE_DSN，跳过库内表数量检查' -ForegroundColor Yellow
+        }
     } else {
         Write-Host '未运行' -ForegroundColor Yellow
     }
@@ -122,8 +172,7 @@ switch ($Action) {
             Write-Host '[dev-stack] 执行数据库迁移...'
             Push-Location $repoRoot
             try {
-                $env:DATABASE_DSN = $databaseDSN
-                & go run ./cmd/migrate -cmd up
+                Invoke-Migrate
                 if ($LASTEXITCODE -ne 0) { throw '迁移失败' }
             } finally {
                 Pop-Location
@@ -134,7 +183,7 @@ switch ($Action) {
         Show-Status
         Write-Host ''
         Write-Host '[dev-stack] 就绪。启动服务示例：' -ForegroundColor Green
-        Write-Host ('  $env:DATABASE_DSN=' + "'" + $databaseDSN + "'") -ForegroundColor Gray
+        Write-Host '  # DATABASE_DSN 由仓库根 .env 提供（脚本不再打印连接串，也不硬编码凭据）' -ForegroundColor Gray
         Write-Host '  go run ./cmd/server' -ForegroundColor Gray
     }
 }

@@ -41,9 +41,8 @@ type WritingDayAgg struct {
 }
 
 type FileStorePort interface {
-	GetFile(ctx context.Context, tenantID, fileID string) (filename, mediaType string, payload []byte, err error)
+	GetFile(ctx context.Context, p identity.Principal, novelID, fileID string) (filename, mediaType string, payload []byte, err error)
 	PutFile(ctx context.Context, p identity.Principal, novelID *string, filename, mediaType, purpose string, payload []byte) (fileID string, err error)
-	DeleteFile(ctx context.Context, tenantID, fileID string) error
 }
 
 type ExportReviewPort interface {

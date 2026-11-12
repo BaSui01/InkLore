@@ -43,11 +43,15 @@ async function verifyCreator(browser) {
     email: creds.creator_email, password: creds.creator_password, audience: "creator",
   });
   try {
+    // The public home shell renders before session bootstrap finishes. Wait for
+    // its authenticated bookshelf request before navigating away, so a refresh
+    // response cannot be interrupted after the server rotates its cookie.
+    const bookshelfLoaded = page.waitForResponse(response =>
+      new URL(response.url()).pathname === "/v1/content/novels" &&
+      response.request().method() === "GET" && response.status() === 200,
+    { timeout: 20000 });
     await page.goto(origin + "/", { waitUntil: "domcontentloaded", timeout: 20000 });
-    await page.waitForFunction(
-      () => document.querySelector("#root")?.textContent?.trim().length > 40,
-      null, { timeout: 20000 },
-    );
+    await (await bookshelfLoaded).finished();
     await page.goto(origin + "/outline", { waitUntil: "domcontentloaded", timeout: 20000 });
     // React initially renders the session bootstrap state. URL alone does not
     // prove that the protected page has hydrated and loaded its real novel.

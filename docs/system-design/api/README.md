@@ -1,9 +1,19 @@
-# InkLore 接口契约
+# InkLore API目录
 
-[openapi.json](openapi.json) 汇总领域 API 分片；[错误目录](error-catalog.json) 与 [生成路径](generated/) 是工具消费的资产。
-修改时核对真实路由、处理器、前端 SDK 与生成代码，并保留对外兼容性。
+唯一入口：[openapi.json](openapi.json)。源分片定义操作与Schema；generated/是确定性编译视图，不手改。接口兼容、错误、权限与事务见[当前工程规则](../../../AGENTS.md)；源码接线与运行证据需单独核对。
 
-- 生成与验证命令见 [开发指南](../../development-guide.md)。
-- 历史版本字段保留原格式，不代表项目开发阶段。
-- 文档接口不等于已经注册或接线，当前差距见 [架构说明](../../architecture.md)。
-- 语义检查失败必须显式报告，不得通过删除权限、幂等、CAS 或错误映射让检查变绿。
+| 分组 | 操作数 | 明细 |
+| --- | ---: | --- |
+| agents | 41 | [agents](catalog/agents.md) |
+| auth | 13 | [auth](catalog/auth.md) |
+| compliance | 21 | [compliance](catalog/compliance.md) |
+| content | 38 | [content](catalog/content.md) |
+| inspiration | 29 | [inspiration](catalog/inspiration.md) |
+| llm | 33 | [llm](catalog/llm.md) |
+| outline | 29 | [outline](catalog/outline.md) |
+| platform | 17 | [platform](catalog/platform.md) |
+| worldview | 25 | [worldview](catalog/worldview.md) |
+
+错误登记：[error-catalog.json](error-catalog.json)；实时Schema：[events.json](events.json)。
+
+生成命令：node docs/system-design/tools/build-contracts.cjs。检查命令：node docs/system-design/tools/check-design.cjs。
