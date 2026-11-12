@@ -5,7 +5,7 @@ Status: implemented
 Task: INK-301
 Scope: `migrations/`（17 条主流 `git mv` 到根、`post_r1` → `extensions`、删除 18 个旧血统死文件）、`cmd/migrate/`（双流 runner 改名 + 删除 `r1migration/`）、`cmd/admin/`、`cmd/archguard/`（规则编号 R1–R5 → G1–G5）、`internal/app/`、`internal/platform/{database,errors,idempotency,logger,response,identity}/`、`internal/{compliance,inspiration,llm}/`、`scripts/{sql,ci}`、`.github/workflows/`、`docs/`（architecture、ci-*、system-design、decisions/0060）、`deploy/staging/`、契约 `agent-r1x-schemas.json` → `agent-policy-schemas.json`、错误目录版本 `R1` → `1.0`
 
-Related: [ADR-0060](../../../../docs/decisions/0060-remove-r1-stage-naming.md)
+Related: [ADR-0060](../../../../docs/decisions/0060-retire-stage-naming.md)
 
 ## Problem
 

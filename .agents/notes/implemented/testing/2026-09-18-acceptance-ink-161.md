@@ -29,7 +29,7 @@ Scope: 原 docs/acceptance-INK-161.md 的历史验收证据与迁移
 
 ### INK-161 · R1.1后端身份与审计验收
 
-日期：2026-09-18，北京时间，未提交工作区。用户在无冲突验收后明确批准四项最小勘误，[ADR-0018](../../reference/decisions/0018-r1-minimal-contract-errata.md)生效。本记录覆盖INK-161的15个后端操作；状态唯一来源为[backlog](../../reference/planning/backlog.md)。下载416定义已补，实际文件下载归INK-162；真实Chrome与产品前端仍有独立未验证边界。
+日期：2026-09-18，北京时间，未提交工作区。用户在无冲突验收后明确批准四项最小勘误，[ADR-0018](../../reference/decisions/0018-minimal-contract-errata.md)生效。本记录覆盖INK-161的15个后端操作；状态唯一来源为[backlog](../../reference/planning/backlog.md)。下载416定义已补，实际文件下载归INK-162；真实Chrome与产品前端仍有独立未验证边界。
 
 ### 运行路径
 
@@ -111,4 +111,4 @@ INK-161后端交付按18分册的双aud、refresh重放、最后operator、隐�
 
 成员bcrypt12在幂等外层事务内计算时仍持锁；这有吞吐代价，未以预哈希客户端字段绕过校验。角色变化会吊销本租户会话，访问授权每次重读PG；JWT角色不是权威。审计按90日窗过滤，物理清理属后续平台任务。
 
-工程理由见 [身份与成员锁序笔记](../architecture/2026-09-18-r1-identity-revocation-and-lock-order.md)。
+工程理由见 [身份与成员锁序笔记](../architecture/2026-09-18-identity-revocation-and-lock-order.md)。

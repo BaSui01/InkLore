@@ -11,7 +11,7 @@ Gin完整启动因未冻结认证路由缺失操作映射而失败。已有注�
 
 ## Decision
 
-按[ADR-0021](../../reference/decisions/0021-r1-auth-extensions.md)保留用户明确要求的扩展。注册与重置复用ValidatePassword；令牌claim排除并发，事务成功才消费，失败释放claim。找回开发响应明确sent=false，非开发在没有投递器时503。
+按[ADR-0021](../../reference/decisions/0021-auth-extensions.md)保留用户明确要求的扩展。注册与重置复用ValidatePassword；令牌claim排除并发，事务成功才消费，失败释放claim。找回开发响应明确sent=false，非开发在没有投递器时503。
 
 ## Alternatives considered
 

@@ -74,7 +74,7 @@
 | INK-206 | 创作者首页文学视觉重构与真实书架接线 | 前端体验 | review | 完成文学风格首页、真实书架与创意开书；Chrome 实测创建201、重载留存、13条游标分页、指定作品打开、500与离线恢复，320/390/1440布局和英文深色通过；go build、双端构建、notes/skills通过。旧i18n检查器误报由INK-212跟进，实际1222对1222组合词条一致。[验收与截图](../../implemented/testing/2026-09-20-acceptance-ink-206.md) | 173,174；用户授权 |
 | INK-207 | 共享业务 SDK 隐式登录与默认凭据清理 | 身份缺陷 | done | 彻底删除ApiSDK中的ensureAuthenticated及Password123!默认凭据；各业务方法内部移除隐式登录；双端构建通过，未登录行为严格由ApiClient统一处理，见[工程笔记](../../implemented/bug-fix/2026-09-20-sdk-implicit-login-cleanup.md) | 173 |
 
-| INK-208 | 补齐 Agent/Inspiration/Compliance 正式迁移链 | 部署缺陷 | done | ADR-0024；补齐000006_agent至000009_permissions迁移；隔离库与主库migrate up验证通过，74张业务表及权限全部纳入版本化迁移；database.Verify通过，见[工程笔记](../../implemented/architecture/2026-09-20-r1-complete-migration-stream.md) | 203 |
+| INK-208 | 补齐 Agent/Inspiration/Compliance 正式迁移链 | 部署缺陷 | done | ADR-0024；补齐000006_agent至000009_permissions迁移；隔离库与主库migrate up验证通过，74张业务表及权限全部纳入版本化迁移；database.Verify通过，见[工程笔记](../../implemented/architecture/2026-09-20-complete-migration-stream.md) | 203 |
 
 | INK-211 | 创作者登录初始化并发刷新修复 | 身份缺陷 | done | bootstrap 在途单飞并复用 refresh；Chrome 实测重载仅一次CSRF200与refresh200，登录主体及真实作品保留；go build、双端构建、notes/skills通过，运行路径与工程笔记已同步，不改变服务端安全契约。[证据](../../implemented/testing/2026-09-20-acceptance-ink-206.md) | 173；用户自动登录授权 |
 

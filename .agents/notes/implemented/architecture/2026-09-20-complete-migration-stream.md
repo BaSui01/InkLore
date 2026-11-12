@@ -11,7 +11,7 @@ Scope: migrations/r1, cmd/migrate, database.Verify
 
 ## Decision
 
-按照 [ADR-0024](../../reference/decisions/0024-r1-complete-migration-stream.md)，将冻结 DDL 规范化为版本化迁移链：
+按照 [ADR-0024](../../reference/decisions/0024-complete-migration-stream.md)，将冻结 DDL 规范化为版本化迁移链：
 - 000006_agent.sql
 - 000007_inspiration.sql
 - 000008_compliance.sql

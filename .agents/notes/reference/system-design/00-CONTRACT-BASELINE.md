@@ -4,7 +4,7 @@
 
 状态：冻结设计；尚未实现。任务 INK-141。日期2026-09-18。本文件锁定全部分册共享语义；详细字段由 api/*.json 的 OpenAPI 3.1 定义，实际建表由 data/*.sql 定义。此处“必须”指重构验收要求，不代表旧代码已经满足。旧实现不限制新设计，不提供旧路由兼容层。
 
-R1.1勘误：[ADR-0018](../decisions/0018-r1-minimal-contract-errata.md)补齐本人改密幂等头、下载416、审计导出422与未声明方法405错误定义；不改变业务边界、权限、TTL和DDL。
+R1.1勘误：[ADR-0018](../decisions/0018-minimal-contract-errata.md)补齐本人改密幂等头、下载416、审计导出422与未声明方法405错误定义；不改变业务边界、权限、TTL和DDL。
 
 ## 1. 边界与交付
 
@@ -75,4 +75,4 @@ DDL唯一Owner源为`data/agent.sql`（R1.x Question增量追加于该Agent域DD
 
 R1为实施基线，任何相互矛盾条款必须在本轮消除，所有核心功能的实现选择必须在本轮明确。以后新增需求或发现设计缺陷需R1.x变更记录，列影响接口/迁移/前后兼容/验收；不得声称技术设计永不可能修正。不改动业务代码以假装设计达标。删除旧文档前确保有替代位置和链接重定向；旧决策已迁至.agents/notes/reference/decisions作依据，历史冲突由有效替代关系裁决，不建立平行决策库。设计检查校验OpenAPI refs、路径参数、operationId、封包/权限、SQL表Owner、功能映射、局部引用、文件<50KB。
 
-认证扩展裁决见[ADR-0021](../decisions/0021-r1-auth-extensions.md)：验证码可选且成对；注册返回200 Session；登录tenant_id可省略；找回未接入邮件投递时非开发环境返回503，开发响应sent=false且可含短期dev_token。
+认证扩展裁决见[ADR-0021](../decisions/0021-auth-extensions.md)：验证码可选且成对；注册返回200 Session；登录tenant_id可省略；找回未接入邮件投递时非开发环境返回503，开发响应sent=false且可含短期dev_token。
