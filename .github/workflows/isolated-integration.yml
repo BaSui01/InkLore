@@ -16,12 +16,12 @@ concurrency:
 
 jobs:
   postgres-redis:
-    name: PostgreSQL 17 + Redis 7 真实迁移验收
+    name: PostgreSQL 18 + Redis 7 真实迁移验收
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
       postgres:
-        image: pgvector/pgvector:pg17
+        image: pgvector/pgvector:pg18
         env:
           POSTGRES_DB: inklore_ci
           POSTGRES_USER: inklore_ci

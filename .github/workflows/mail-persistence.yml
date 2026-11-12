@@ -12,12 +12,12 @@ permissions:
 
 jobs:
   isolated-postgres:
-    name: Mail settings and OTP PostgreSQL 17 migration
+    name: Mail settings and OTP PostgreSQL 18 migration
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
       postgres:
-        image: pgvector/pgvector:0.8.7-pg17
+        image: pgvector/pgvector:0.8.7-pg18
         env:
           POSTGRES_USER: inklore_ci
           POSTGRES_PASSWORD: ci_only_no_secret
