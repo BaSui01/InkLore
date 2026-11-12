@@ -115,7 +115,7 @@
   "domains/07-DOMAIN-AGENT-DETAIL-SPEC.md": "ad9fc46e48cb329e096ae190d09edbf4a34f767348c692c7495cda65368936ef",
   "domains/08-DOMAIN-COMPLIANCE-DETAIL-SPEC.md": "d11ef878567e16704a1509a2928360b2d432c350be7748ad2e6fd28d9ea91325",
   "domains/09-DOMAIN-LLM-GATEWAY-DETAIL-SPEC.md": "fd6076372d8a1f00dddd4928e988e77fa80779f9a1936b3bda7b72e7826cbf2a",
-  "implementation/r1-migration-report.json": "032b1d240d693043265647bdab7e047dc7d5726063a4063e0f9c7513f00506b1",
+  "implementation/migration-report.json": "032b1d240d693043265647bdab7e047dc7d5726063a4063e0f9c7513f00506b1",
   "implementation/requirements-map.md": "33d3d7939ebc81e462fb7cd7bc658bfdf0c5f0830f571bcfd8ff99e0d9629055",
   "tools/build-contracts.cjs": "ad60bb743b339384180774ab23ca4f626e9c683e9725b1fc9f670ebb8510fb3c",
   "tools/check-design.cjs": "b374cca47adb6c67f265f6556b2f629aec658685a4f7ce6927a688e6abbb9624"
