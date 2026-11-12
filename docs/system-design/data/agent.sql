@@ -1,4 +1,4 @@
--- INK-141 R1; PostgreSQL 16. Apply after platform.sql. Domain owner: agent.
+-- INK-141 既有基线 DDL；PostgreSQL 16 方言。在 platform.sql 之后执行。领域 Owner：agent。
 -- Mutable updates require application CAS; immutable versions/events/artifacts INSERT-only.
 BEGIN;
 

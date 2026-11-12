@@ -65,7 +65,7 @@ return 1
 `)
 
 func (r *redisLimiter) Allow(ctx context.Context, key string) (bool, error) {
-	value, err := loginWindow.Run(ctx, r.client, []string{"inklore:r1:login:" + key}, uuid.NewString()).Int64()
+	value, err := loginWindow.Run(ctx, r.client, []string{"inklore:login:" + key}, uuid.NewString()).Int64()
 	return value == 1, err
 }
 func (s *Service) allowLogin(ctx context.Context, key string) bool {

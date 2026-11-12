@@ -1,4 +1,4 @@
--- INK-141 / R1 frozen target; PostgreSQL 16. Apply after platform.sql.
+-- 既有基线 DDL；PostgreSQL 16 方言。在 platform.sql 之后执行。
 -- UUIDs supplied by application must be UUIDv4; no cross-domain business FK.
 BEGIN;
 CREATE TABLE worldview_revisions (

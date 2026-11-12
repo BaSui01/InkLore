@@ -44,7 +44,7 @@ func gatewayID(s string) bool {
 	v, e := uuid.Parse(s)
 	return e == nil && v.Version() == 4 && v.Variant() == uuid.RFC4122 && v.String() == s
 }
-func gatewayPrefix(tenant string) string { return "inklore:r1:llm:{" + tenant + "}:" }
+func gatewayPrefix(tenant string) string { return "inklore:llm:{" + tenant + "}:" }
 func gatewayVersion(s string) string     { h := sha256.Sum256([]byte(s)); return hex.EncodeToString(h[:]) }
 func gatewayFailure(cause error, retry int64) error {
 	if retry < 1 {

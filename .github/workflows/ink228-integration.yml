@@ -78,7 +78,7 @@ jobs:
             echo "::error::Migration CLI failed in disposable DB; diagnose SQL below"
             # The CLI deliberately redacts SQL errors. Reproduce only on the
             # throwaway PostgreSQL service, printing no secrets or table data.
-            for file in migrations/r1/[0-9]*.sql; do
+            for file in migrations/[0-9]*.sql; do
               echo "Diagnosing $(basename "$file")"
               if ! psql -X -v ON_ERROR_STOP=1 -f "$file"; then
                 echo "::error::First failing migration: $(basename "$file")"

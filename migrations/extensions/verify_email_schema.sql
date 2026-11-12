@@ -8,7 +8,7 @@ DECLARE
   updated_rows int;
 BEGIN
   IF (SELECT count(*) FROM schema_migrations) <> 17 THEN
-    RAISE EXCEPTION 'frozen R1 migration history changed';
+    RAISE EXCEPTION 'migration history changed';
   END IF;
   IF (SELECT count(*) FROM platform_mail_settings) <> 1 THEN
     RAISE EXCEPTION 'mail singleton not persisted';
