@@ -74,7 +74,7 @@ for(const {operation}of operations)for(const e of operation['x-errors']||[]) {
 }
 const errorGroups={};
 for(const e of [...byCode.values()].sort((a,b)=>a.code.localeCompare(b.code)))(errorGroups[e.code.split('.')[0]]||=[]).push(e);
-const errorIndex={version:'R1',generated_by:'tools/build-contracts.cjs',description:'HTTP applies before response headers. In SSE the same semantic error is delivered in run.failed; HTTP remains 200.',domains:{}};
+const errorIndex={version:'1.0',generated_by:'tools/build-contracts.cjs',description:'HTTP applies before response headers. In SSE the same semantic error is delivered in run.failed; HTTP remains 200.',domains:{}};
 for(const [group,errors]of Object.entries(errorGroups)){let chunk=[],i=1;errorIndex.domains[group]=[];function flush(){if(!chunk.length)return;const f=group+'-'+i+++'.json';write(path.join(api,'errors',f),json({errors:chunk}));errorIndex.domains[group].push('./errors/'+f);chunk=[];}for(const e of errors){if(Buffer.byteLength(json({errors:[...chunk,e]}))>48000)flush();chunk.push(e);}flush();}
 write(path.join(api,'error-catalog.json'),json(errorIndex));
 const lines=['# InkLore API目录','', '唯一入口：[openapi.json](openapi.json)。源分片定义操作与Schema；generated/是确定性编译视图，不手改。接口兼容、错误、权限与事务见[当前工程规则](../../../AGENTS.md)；源码接线与运行证据需单独核对。','', '| 分组 | 操作数 | 明细 |','| --- | ---: | --- |'];

@@ -8,7 +8,7 @@ import (
 	"sort"
 )
 
-// CalculateAIFlavorScore implements the frozen R1 formula:
+// CalculateAIFlavorScore 实现既定 AI 味评分公式：
 // score = min(100, round(100 * sum(each AI rule min(hits, 3) * weight) / max(100, rune_count)))
 // sensitive_literal rules are excluded; LLM issues do not alter deterministic scores.
 func CalculateAIFlavorScore(matches []RawMatch, totalRunes int) int {

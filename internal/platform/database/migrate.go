@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	// migrationTable 记录冻结 R1 流已应用的迁移版本，是幂等执行的唯一依据。
+	// migrationTable 记录主流已应用的迁移版本，是幂等执行的唯一依据。
 	migrationTable = "schema_migrations"
 	// downMarker 分隔同一个迁移文件中的升级段与降级段。
 	downMarker = "-- +migrate Down"
@@ -23,7 +23,7 @@ const (
 
 // createMigrationTableSQLFor 为指定历史表生成建表语句。
 // 表结构使用 TIMESTAMPTZ，遵循全栈北京时间契约；独立迁移流使用独立历史表，
-// 避免污染冻结 R1 流的既定历史。
+// 避免污染主流的既定历史。
 func createMigrationTableSQLFor(table string) string {
 	return "CREATE TABLE IF NOT EXISTS " + table + " (" +
 		"version TEXT PRIMARY KEY, " +
@@ -126,7 +126,7 @@ func LoadMigrations(fsys fs.FS, dir string) ([]Migration, error) {
 	return result, nil
 }
 
-// EnsureVersionTable 创建默认（冻结 R1 流）迁移版本表（幂等）。
+// EnsureVersionTable 创建主流迁移版本表（幂等）。
 func EnsureVersionTable(ctx context.Context, db *gorm.DB) error {
 	return EnsureVersionTableIn(ctx, db, migrationTable)
 }
@@ -142,7 +142,7 @@ func EnsureVersionTableIn(ctx context.Context, db *gorm.DB, table string) error 
 	return nil
 }
 
-// AppliedRecords 返回冻结 R1 流已应用的迁移版本 → 记录。
+// AppliedRecords 返回主流已应用的迁移版本 → 记录。
 func AppliedRecords(ctx context.Context, db *gorm.DB) (map[string]AppliedRecord, error) {
 	return AppliedRecordsIn(ctx, db, migrationTable)
 }
@@ -174,7 +174,7 @@ func Up(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string) (UpResult, err
 	return UpIn(ctx, db, fsys, dir, migrationTable)
 }
 
-// UpIn 把迁移应用到指定流的历史表，供冻结 R1 之外的扩展流复用同一套
+// UpIn 把迁移应用到指定流的历史表，供扩展流复用同一套
 // 幂等、校验和与并发锁语义。
 func UpIn(ctx context.Context, db *gorm.DB, fsys fs.FS, dir, table string) (UpResult, error) {
 	var result UpResult
@@ -214,7 +214,7 @@ func upLocked(ctx context.Context, db *gorm.DB, fsys fs.FS, dir, table string) (
 	for version, existing := range applied {
 		m, ok := known[version]
 		if !ok || existing.Name != m.Name || existing.Checksum != m.Checksum {
-			return result, fmt.Errorf("migration stream mismatch at version %s; use a separate R1 database", version)
+			return result, fmt.Errorf("migration stream mismatch at version %s; use a separate database", version)
 		}
 	}
 	for _, m := range migrations {
@@ -347,7 +347,7 @@ func applyDown(ctx context.Context, db *gorm.DB, m Migration, table string) erro
 	})
 }
 
-// Status 返回冻结 R1 流全部迁移脚本的应用状态。
+// Status 返回主流全部迁移脚本的应用状态。
 func Status(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string) ([]StatusRow, error) {
 	return StatusIn(ctx, db, fsys, dir, migrationTable)
 }

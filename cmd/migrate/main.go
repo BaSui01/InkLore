@@ -5,7 +5,7 @@
 //	go run ./cmd/migrate -cmd up
 //	go run ./cmd/migrate -cmd status
 //	go run ./cmd/migrate -cmd down -n 1
-//	DATABASE_DSN is injected through the process environment; target an isolated R1 database.
+//	DATABASE_DSN is injected through the process environment; target an isolated database.
 //
 // 迁移脚本通过 embed 打包进二进制，无需依赖运行目录下的 SQL 文件。
 //
@@ -21,13 +21,13 @@ import (
 
 	"InkLore/internal/platform/config"
 	"InkLore/internal/platform/database"
-	"InkLore/migrations/post_r1"
-	"InkLore/migrations/r1"
+	"InkLore/migrations"
+	"InkLore/migrations/extensions"
 )
 
-// postR1Table 是 post-R1 扩展流的独立历史表；冻结 R1 流的
-// schema_migrations 保持恰好 17 条既定记录。
-const postR1Table = "schema_migrations_post_r1"
+// extensionTable 是扩展流的独立历史表；主流
+// schema_migrations 保持恰好 17 条既定记录，不被扩展流改写。
+const extensionTable = "schema_migrations_extensions"
 
 func main() {
 	configPath := flag.String("config", config.DefaultPath, "配置文件路径")
@@ -65,9 +65,9 @@ func main() {
 
 	switch *command {
 	case "up":
-		result, upErr := database.Up(ctx, db, r1.FS(), r1.Dir)
+		result, upErr := database.Up(ctx, db, migrations.FS(), migrations.Dir)
 		if upErr != nil {
-			fail(1, "R1 migration refused; verify database identity, migration checksums and PostgreSQL prerequisites")
+			fail(1, "migration refused; verify database identity, migration checksums and PostgreSQL prerequisites")
 			return
 		}
 		for _, label := range result.Skipped {
@@ -76,11 +76,11 @@ func main() {
 		for _, label := range result.Applied {
 			fmt.Printf("  已应用 %s\n", label)
 		}
-		fmt.Printf("up 完成（R1 流）：新应用 %d 条，跳过 %d 条\n", len(result.Applied), len(result.Skipped))
+		fmt.Printf("up 完成（主流）：新应用 %d 条，跳过 %d 条\n", len(result.Applied), len(result.Skipped))
 
-		postResult, postErr := database.UpIn(ctx, db, post_r1.FS(), post_r1.Dir, postR1Table)
+		postResult, postErr := database.UpIn(ctx, db, extensions.FS(), extensions.Dir, extensionTable)
 		if postErr != nil {
-			fail(1, "post-R1 migration refused; verify database identity, migration checksums and PostgreSQL prerequisites")
+			fail(1, "extension migration refused; verify database identity, migration checksums and PostgreSQL prerequisites")
 			return
 		}
 		for _, label := range postResult.Skipped {
@@ -89,10 +89,10 @@ func main() {
 		for _, label := range postResult.Applied {
 			fmt.Printf("  已应用 %s\n", label)
 		}
-		fmt.Printf("up 完成（post-R1 流）：新应用 %d 条，跳过 %d 条\n", len(postResult.Applied), len(postResult.Skipped))
+		fmt.Printf("up 完成（扩展流）：新应用 %d 条，跳过 %d 条\n", len(postResult.Applied), len(postResult.Skipped))
 
 	case "down":
-		reverted, downErr := database.Down(ctx, db, r1.FS(), r1.Dir, *steps)
+		reverted, downErr := database.Down(ctx, db, migrations.FS(), migrations.Dir, *steps)
 		if downErr != nil {
 			fail(1, "回滚失败: %v", downErr)
 		}
@@ -102,11 +102,11 @@ func main() {
 		fmt.Printf("down 完成：回滚 %d 条\n", len(reverted))
 
 	case "status":
-		rows, statusErr := database.Status(ctx, db, r1.FS(), r1.Dir)
+		rows, statusErr := database.Status(ctx, db, migrations.FS(), migrations.Dir)
 		if statusErr != nil {
 			fail(1, "读取迁移状态失败: %v", statusErr)
 		}
-		fmt.Println("[r1]")
+		fmt.Println("[main]")
 		for _, row := range rows {
 			state := "未应用"
 			if row.Applied {
@@ -114,11 +114,11 @@ func main() {
 			}
 			fmt.Printf("  %s_%s  %s\n", row.Version, row.Name, state)
 		}
-		postRows, postStatusErr := database.StatusIn(ctx, db, post_r1.FS(), post_r1.Dir, postR1Table)
+		postRows, postStatusErr := database.StatusIn(ctx, db, extensions.FS(), extensions.Dir, extensionTable)
 		if postStatusErr != nil {
-			fail(1, "读取 post-R1 迁移状态失败: %v", postStatusErr)
+			fail(1, "读取扩展迁移状态失败: %v", postStatusErr)
 		}
-		fmt.Println("[post_r1]")
+		fmt.Println("[extensions]")
 		for _, row := range postRows {
 			state := "未应用"
 			if row.Applied {

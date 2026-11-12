@@ -7,7 +7,7 @@
 // deep inspection, non-invasive rewrite suggestions (which never write back directly
 // to content chapters or novel bodies), and immutable review receipts required for export.
 //
-// The domain is structured into four layers under r1:
+// The domain is structured into four layers:
 //   - domain: Entities, values, matching automaton, scoring, patches, and repository interfaces.
 //   - application: Use case orchestration, ports, execution lifecycle, and review validation.
 //   - infrastructure: PostgreSQL persistence with tenant isolation, UoW, and snapshot caching.

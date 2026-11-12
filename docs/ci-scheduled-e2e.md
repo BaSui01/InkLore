@@ -8,7 +8,7 @@
 
 ## 实际验收链路
 
-E2E 在 GitHub-hosted Runner 中启动独立的一次性 PostgreSQL 17（pgvector）与 Redis 7，应用冻结 17 组 R1 迁移，在同一个一次性库中构建真实 Go Admin CLI 和 API，生成随机管理员与 Creator 身份：
+E2E 在 GitHub-hosted Runner 中启动独立的一次性 PostgreSQL 18（pgvector）与 Redis 7，应用既有的 17 组迁移，在同一个一次性库中构建真实 Go Admin CLI 和 API，生成随机管理员与 Creator 身份：
 
 1. **Creator**：真实 `/v1/auth/register` 生成独立租户及会话，校验重复注册 409、作品创建 201、GET 回读、另一租户不能读取或列出作品。
 2. **Admin**：通过部署专用 `admin bootstrap` 建立独立 root 后台账号，真实管理员登录及目标租户投影，验证 Agent 定义目录、内置工具目录可读，Creator Token 不可进入 Admin 操作。

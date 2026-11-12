@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 35
     services:
       postgres:
-        image: pgvector/pgvector:pg17
+        image: pgvector/pgvector:pg18
         env:
           POSTGRES_DB: inklore_e2e
           POSTGRES_USER: inklore_e2e

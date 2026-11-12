@@ -302,7 +302,7 @@ func (m seedManifest) validate() error {
 			domainNodes = append(domainNodes, agentdomain.ManifestNode{NodeKey: n.Key, Role: n.Role, DependsOn: n.DependsOn, Required: n.Required, DefinitionVersionID: &definitionVersionID, InputBindings: bindings})
 		}
 		if err := agentdomain.ValidateDAG(agentdomain.WorkflowManifest{Nodes: domainNodes}); err != nil {
-			return fmt.Errorf("workflow %q failed R1 DAG validation: %w", w.Key, err)
+			return fmt.Errorf("workflow %q failed DAG validation: %w", w.Key, err)
 		}
 	}
 	return nil

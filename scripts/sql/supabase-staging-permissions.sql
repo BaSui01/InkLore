@@ -1,24 +1,24 @@
 -- INK-255 / ADR-0038: Supabase 专属测试 schema 的权限补充。
--- 不改变冻结 R1 迁移和校验和；只在独立的 inklore_ci schema 上重复 R1 原权限。
+-- 不改变冻结迁移和校验和；只在独立的 inklore_ci schema 上重复原权限。
 -- 专用于 Supabase 测试环境，不适用于生产或默认 public schema。
 BEGIN;
 SET LOCAL search_path TO inklore_ci,extensions,public;
 DO $scope_guard$
 BEGIN
   IF to_regclass('inklore_ci.schema_migrations') IS NULL THEN
-    RAISE EXCEPTION 'expected R1 migration metadata in private schema';
+    RAISE EXCEPTION 'expected migration metadata in private schema';
   END IF;
   IF (SELECT count(*) FROM inklore_ci.schema_migrations) <> 17 THEN
-    RAISE EXCEPTION 'expected 17 R1 migrations before staging grants';
+    RAISE EXCEPTION 'expected 17 migrations before staging grants';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='inklore_runtime' AND NOT rolcanlogin) OR
      NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='inklore_retention' AND NOT rolcanlogin) THEN
-    RAISE EXCEPTION 'expected R1 NOLOGIN roles';
+    RAISE EXCEPTION 'expected NOLOGIN roles';
   END IF;
 END;
 $scope_guard$;
 
--- R1 的原权限迁移在 public 上声明角色；这里只针对私有测试 schema 补授权。
+-- 原权限迁移在 public 上声明角色；这里只针对私有测试 schema 补授权。
 -- 撤销 000009 对 public 现存表与序列的显式授权，避免继承 public 默认 USAGE 后仍可访问无关业务。
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM inklore_runtime, inklore_retention;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM inklore_runtime, inklore_retention;

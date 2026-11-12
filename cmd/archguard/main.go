@@ -2,10 +2,10 @@
 //
 // 校验项：
 //
-//	R1 跨域 infrastructure 直接导入（业务域 A 的文件导入业务域 B 的 infrastructure）
-//	R2 platform 基座反向依赖业务域
-//	R3 手写代码文件超过 500KiB 上限
-//	R5 Go 源文件无法解析
+//	G1 跨域 infrastructure 直接导入（业务域 A 的文件导入业务域 B 的 infrastructure）
+//	G2 platform 基座反向依赖业务域
+//	G3 手写代码文件超过 500KiB 上限
+//	G5 Go 源文件无法解析
 //
 // 附加项（不判定失败）：运行路径可达性报告，列出不在 cmd/server 依赖图中的包。
 //
@@ -67,10 +67,10 @@ type ruleMeta struct {
 }
 
 var allRules = []ruleMeta{
-	{"R1", "跨域 infrastructure 直接导入"},
-	{"R2", "platform 反向依赖业务域"},
-	{"R3", "单文件体积不超过 500KiB"},
-	{"R5", "Go 源文件可解析"},
+	{"G1", "跨域 infrastructure 直接导入"},
+	{"G2", "platform 反向依赖业务域"},
+	{"G3", "单文件体积不超过 500KiB"},
+	{"G5", "Go 源文件可解析"},
 }
 
 func main() {
@@ -154,7 +154,7 @@ func checkFileSizes(root string, files []string) []violation {
 		}
 		if info.Size() > maxFileBytes {
 			vs = append(vs, violation{
-				Rule:   "R3",
+				Rule:   "G3",
 				File:   f,
 				Detail: fmt.Sprintf("体积 %.1fKiB 超过 500KiB 上限，需垂直或水平拆分", float64(info.Size())/1024),
 			})
@@ -173,7 +173,7 @@ func checkImports(root string, files []string) []violation {
 		abs := filepath.Join(root, filepath.FromSlash(f))
 		astFile, err := parser.ParseFile(fset, abs, nil, parser.ImportsOnly)
 		if err != nil {
-			vs = append(vs, violation{Rule: "R5", File: f, Detail: "Go 语法解析失败: " + err.Error()})
+			vs = append(vs, violation{Rule: "G5", File: f, Detail: "Go 语法解析失败: " + err.Error()})
 			continue
 		}
 		owner := ownerDomain(f)
@@ -193,12 +193,12 @@ func checkImports(root string, files []string) []violation {
 			targetDomain := parts[0]
 			targetIsInfrastructure := parts[1] == "infrastructure"
 
-			// R1：业务域文件不得直接导入其它业务域的 infrastructure。
+			// G1：业务域文件不得直接导入其它业务域的 infrastructure。
 			// 组合根 internal/app 与入口 cmd 承担依赖注入职责，予以豁免。
 			if businessDomains[owner] && targetIsInfrastructure &&
 				owner != targetDomain && businessDomains[targetDomain] {
 				vs = append(vs, violation{
-					Rule: "R1",
+					Rule: "G1",
 					File: f,
 					Detail: fmt.Sprintf(
 						"域 %q 直接导入了域 %q 的 infrastructure（%s）；应定义 Port 并在 internal/app/adapters 装配",
@@ -206,10 +206,10 @@ func checkImports(root string, files []string) []violation {
 				})
 			}
 
-			// R2：platform 基座不得反向依赖任何业务域。
+			// G2：platform 基座不得反向依赖任何业务域。
 			if owner == "platform" && businessDomains[targetDomain] {
 				vs = append(vs, violation{
-					Rule: "R2",
+					Rule: "G2",
 					File: f,
 					Detail: fmt.Sprintf(
 						"platform 基座反向依赖业务域 %q（%s）；基座必须保持无业务依赖",

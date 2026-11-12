@@ -9,7 +9,7 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[2]
 expected = []
-for file in (root / "migrations" / "r1").iterdir():
+for file in (root / "migrations").iterdir():
     match = re.fullmatch(r"([0-9]+)_(.+)\.sql", file.name)
     if not file.is_file() or not match:
         continue
