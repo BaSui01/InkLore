@@ -19,9 +19,10 @@ R1 是 2026-09 重构阶段的名称，阶段工作早已结束，但命名渗�
 1. **主流统一**：`migrations/r1/*.sql` 17 条**字节不变**移动到 `migrations/` 根（`git mv`，R100 相似度）；删除 18 个旧血统死文件与 `migrations/r1/migrations.go`。包收敛为唯一的 `InkLore/migrations`。因为文件名与字节不变，`LoadMigrations` 解析出的 version/name/checksum 与已应用库 `schema_migrations` 记录**逐条相同**，既有库（含本地与 staging）零影响。
 2. **扩展流去阶段化并保留独立性**：`migrations/post_r1/` → `migrations/extensions/`（包名 `extensions`），历史表 `schema_migrations_post_r1` → `schema_migrations_extensions`（常量 `extensionTable`）。选择保留独立历史表而非合并进主流，是因为主流 17 条受校验和保护，合并需重编号并改写存量库记录，收益为零、风险为实。存量库只需一次幂等 `ALTER TABLE ... RENAME TO schema_migrations_extensions`（本地已执行；其它环境由维护者执行）。
 3. **删除 `cmd/migrate/r1migration/`**。旧库数据迁移如未来需要，以中性命名、按当前 UUID 方言重新立项。
-4. **去阶段化措辞**：错误文案与注释按机制描述；archguard 规则编号 `R1–R5` → `G1–G5`（保留既有编号序列与语义，本仓历史无 R4）；契约 `agent-r1x-schemas.json` → `agent-policy-schemas.json`（`agent-schemas.json` 的 4 处 `$ref` 同步，按目录枚举生成，重生成通过）；内部 context key → `request_id`/`error_code`；Redis 前缀 → `inklore:llm:` / `inklore:login:`（纯缓存命名空间，改名仅一次冷启动）；错误目录 `version` → `1.0`；`docs/system-design/data/*.sql` 设计资料头注释中性化。
+4. **去阶段化措辞**：错误文案与注释按机制描述；archguard 规则编号 `R1–R5` → `G1–G5`（保留既有编号序列与语义，本仓历史无 R4）；契约 `agent-r1x-schemas.json` → `agent-policy-schemas.json`（`agent-schemas.json` 的 4 处 `$ref` 同步，按目录枚举生成，重生成通过）；内部 context key → `request_id`/`error_code`；错误目录 `version` → `1.0`；`docs/system-design/data/*.sql` 设计资料头注释中性化。**Redis 键前缀不改**（见保留项：它们是跨版本协调状态）。
 5. **保留（不可改）**：
    - **已应用迁移 SQL 的字节内容**（含 `-- INK-141 / R1 frozen target` 头注释）：受校验和保护，任何改动都会让既有库 `Up/Verify` fail-closed；
+   - **准入与限流的 Redis 键前缀 `inklore:r1:llm:` / `inklore:r1:login:`**：这些键是跨版本**协调状态**（RPM 计数、并发租约、尝试标记、熔断状态），滚动升级期间新旧进程必须共享同一命名空间，否则会各自计数而突破供应商限流；改名需配套 drain-and-cutover 机制，故保留（AGENTS.md 要求持久化值与缓存键在有真实消费者时保持兼容）；
    - `FormulaVersion = "r1"` 与 `compliance-schemas.json` 的 `"const": "r1"`：冻结 DDL CHECK 约束下的数据版本值，属协议非阶段命名；
    - `DeepSeek-R1`：外部模型名；
    - `CHANGELOG.md`、`.agents/notes/`（含 archived manifest）、已接受 ADR：按 AGENTS.md 记录「当初为什么」，改写即伪造历史。

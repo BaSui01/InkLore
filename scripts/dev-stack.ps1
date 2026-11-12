@@ -62,7 +62,9 @@ function Get-DatabaseIdentity {
 }
 
 function Invoke-Migrate {
-    # 迁移需要把 DSN 注入子进程环境；结束后恢复原有 $env:DATABASE_DSN，避免污染调用方 shell。
+    # 只有迁移需要 DSN：在这里解析，避免 .env 缺失时连 Down / Status / Up -SkipMigrate 都失败。
+    $databaseDSN = Get-DatabaseDsn
+    # 注入子进程环境；结束后恢复原有 $env:DATABASE_DSN，避免污染调用方 shell。
     $previousDsn = $env:DATABASE_DSN
     try {
         $env:DATABASE_DSN = $databaseDSN
@@ -77,9 +79,6 @@ function Invoke-Migrate {
     }
 }
 
-# DSN 与库身份取自仓库根 .env：脚本内不再硬编码主机、用户名、库名或凭据。
-$databaseDSN = Get-DatabaseDsn
-$databaseUser, $databaseName = Get-DatabaseIdentity $databaseDSN
 
 function Test-DockerEngine {
     docker info --format '{{.ServerVersion}}' *> $null
@@ -141,8 +140,16 @@ function Show-Status {
     if (Test-DockerEngine) {
         Write-Host (docker version --format '{{.Server.Version}}').Trim() -ForegroundColor Green
         docker compose -f $composeFile ps --format '{{.Name}}|{{.Status}}'
-        $tables = docker exec inklore-postgres-1 psql -U $databaseUser -d $databaseName -t -A -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'" 2>$null
-        if ($LASTEXITCODE -eq 0) { Write-Host "[dev-stack] 库内表数量：$tables" }
+        # 表数量查询是可选的：没有 .env 或 DATABASE_DSN 时跳过，不影响容器生命周期管理。
+        $statusDsn = $null
+        try { $statusDsn = Get-DatabaseDsn } catch { }
+        if ($statusDsn) {
+            $databaseUser, $databaseName = Get-DatabaseIdentity $statusDsn
+            $tables = docker exec inklore-postgres-1 psql -U $databaseUser -d $databaseName -t -A -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'" 2>$null
+            if ($LASTEXITCODE -eq 0) { Write-Host "[dev-stack] 库内表数量：$tables" }
+        } else {
+            Write-Host '[dev-stack] 未配置 .env 的 DATABASE_DSN，跳过库内表数量检查' -ForegroundColor Yellow
+        }
     } else {
         Write-Host '未运行' -ForegroundColor Yellow
     }

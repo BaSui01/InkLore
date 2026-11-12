@@ -44,7 +44,11 @@ func gatewayID(s string) bool {
 	v, e := uuid.Parse(s)
 	return e == nil && v.Version() == 4 && v.Variant() == uuid.RFC4122 && v.String() == s
 }
-func gatewayPrefix(tenant string) string { return "inklore:llm:{" + tenant + "}:" }
+
+// gatewayPrefix 是跨版本共享的准入协调命名空间：RPM 计数、并发租约、尝试标记与熔断状态
+// 都按它隔离。前缀在滚动升级期间必须保持兼容——旧进程仍写旧键，改名会让新旧进程各持一套
+// 计数器而突破供应商限流；改名需要配套的 drain-and-cutover 机制，见 ADR-0060 保留项。
+func gatewayPrefix(tenant string) string { return "inklore:r1:llm:{" + tenant + "}:" }
 func gatewayVersion(s string) string     { h := sha256.Sum256([]byte(s)); return hex.EncodeToString(h[:]) }
 func gatewayFailure(cause error, retry int64) error {
 	if retry < 1 {

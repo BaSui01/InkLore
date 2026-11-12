@@ -20,8 +20,8 @@ Related: [ADR-0060](../../../../docs/decisions/0060-remove-r1-stage-naming.md)
 - **主流统一且零影响**：17 条 `migrations/r1/*.sql` **字节不变** `git mv` 到 `migrations/` 根（git 记录为 R100 重命名），删除 18 个旧血统死文件与 `migrations/r1/migrations.go`；包收敛为唯一的 `InkLore/migrations`。因文件名与字节不变，`LoadMigrations` 的 version/name/checksum 与既有库 `schema_migrations` 记录逐条相同——**已应用库零影响**（本地实测 17 条全部跳过）。
 - **扩展流去阶段化但保留独立表**：`post_r1/` → `extensions/`（`package extensions`），历史表 `schema_migrations_post_r1` → `schema_migrations_extensions`（常量 `extensionTable`）。不合并进主流：合并需重编号并改写存量库记录，收益为零、风险为实。存量库只需一次幂等 `ALTER TABLE ... RENAME TO schema_migrations_extensions`（本地已执行，生产由维护者执行）。
 - **删除 `cmd/migrate/r1migration/`**，未来旧数据迁移以中性命名重新立项。
-- **措辞与命名**：错误文案/注释按机制描述；archguard `R1–R5` → `G1–G5`（保留原编号序列，本仓历史无 R4）；`agent-r1x-schemas.json` → `agent-policy-schemas.json`（`agent-schemas.json` 4 处 `$ref` 同步）；内部 context key → `request_id`/`error_code`；Redis 前缀 → `inklore:llm:` / `inklore:login:`（改名只带来一次缓存冷启动）；错误目录 `version` → `1.0`；`docs/system-design/data/*.sql` 设计资料头注释中性化；`deploy/staging/README.md` 措辞中性化。
-- **保留（不可改）**：已应用迁移 SQL 的字节内容（含 `-- INK-141 / R1 frozen target` 头注释，受校验和保护，改则既有库 fail-closed）；`FormulaVersion = "r1"` 与 `compliance-schemas.json` 的 `"const": "r1"`（冻结 DDL CHECK 约束下的数据版本值，属协议）；`DeepSeek-R1`（外部模型名）；`CHANGELOG.md`、`.agents/notes/`、已接受 ADR（封印历史）。
+- **措辞与命名**：错误文案/注释按机制描述；archguard `R1–R5` → `G1–G5`（保留原编号序列，本仓历史无 R4）；`agent-r1x-schemas.json` → `agent-policy-schemas.json`（`agent-schemas.json` 4 处 `$ref` 同步）；内部 context key → `request_id`/`error_code`；错误目录 `version` → `1.0`；`docs/system-design/data/*.sql` 设计资料头注释中性化；`deploy/staging/README.md` 措辞中性化。
+- **保留（不可改）**：**准入与限流的 Redis 键前缀 `inklore:r1:llm:` / `inklore:r1:login:`**（跨版本协调状态：RPM 计数、并发租约、熔断状态；滚动升级期间新旧进程必须共享同一命名空间，改名需配套 drain-and-cutover，且 AGENTS.md 要求缓存键在有真实消费者时保持兼容）；已应用迁移 SQL 的字节内容（含 `-- INK-141 / R1 frozen target` 头注释，受校验和保护，改则既有库 fail-closed）；`FormulaVersion = "r1"` 与 `compliance-schemas.json` 的 `"const": "r1"`（冻结 DDL CHECK 约束下的数据版本值，属协议）；`DeepSeek-R1`（外部模型名）；`CHANGELOG.md`、`.agents/notes/`、已接受 ADR（封印历史）。
 
 ## Alternatives considered
 
