@@ -53,3 +53,4 @@ ADR-0022（2026-09-20）依据当时系统实例 PostgreSQL 17.11，把运行基
 - 编排：[docker-compose.dev.yml](../../docker-compose.dev.yml)、[docker-compose.prod.yml](../../docker-compose.prod.yml)。
 - 本地环境说明：[docs/local-environment.md](../local-environment.md)。
 - 工程笔记：[2026-11-13-postgresql-18-baseline.md](../../.agents/notes/implemented/architecture/2026-11-13-postgresql-18-baseline.md)。
+- 交付：[PR #147](https://github.com/BaSui01/InkLore/pull/147)。
