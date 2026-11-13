@@ -203,7 +203,15 @@ for (const domain of domains) {
   const tsOutPath = path.join(outputDir, `${domain}.gen.ts`);
   try {
     const npxArgs = ['--yes', 'openapi-typescript', specPath, '-o', tsOutPath];
-    execFileSync(process.execPath, [resolveNpxCli(), ...npxArgs], { cwd: path.join(root, 'frontend'), stdio: 'pipe' });
+    // Windows：Node 不能 spawn .cmd（EINVAL），经 cmd.exe 又会被路径中的特殊字符重解析，
+    // 因此用 Node 直调 npm 的 npx-cli.js，全程不经 shell。
+    // 其它平台：PATH 上的 npx 可直接执行——发行版包布局与 Node 前缀并不相同
+    // （如 Debian/Ubuntu 的 /usr/share/nodejs/npm），不能假设 npm CLI 与 node 同级。
+    if (process.platform === 'win32') {
+      execFileSync(process.execPath, [resolveNpxCli(), ...npxArgs], { cwd: path.join(root, 'frontend'), stdio: 'pipe' });
+    } else {
+      execFileSync('npx', npxArgs, { cwd: path.join(root, 'frontend'), stdio: 'pipe' });
+    }
     if (fs.statSync(tsOutPath).size === 0) throw new Error('empty TypeScript output');
     console.log(`  ✓ TS generated: [${domain}] -> frontend/packages/contracts/src/generated/${domain}.gen.ts`);
     tsExports.push(`export * as ${domain.charAt(0).toUpperCase() + domain.slice(1)}API from './${domain}.gen';`);
