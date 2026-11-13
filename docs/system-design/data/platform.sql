@@ -1,4 +1,4 @@
--- R1设计DDL：先执行本文件，再执行各业务域；本轮仅设计，不在工作库执行。
+-- 基线设计 DDL：先执行本文件，再执行各业务域；本目录仅为设计资料，不在工作库执行。
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS vector;

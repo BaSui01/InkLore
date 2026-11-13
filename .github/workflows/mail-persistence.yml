@@ -3,7 +3,7 @@ name: INK-273 Email Persistence Contract
 on:
   pull_request:
     paths:
-      - 'migrations/post_r1/**'
+      - 'migrations/extensions/**'
       - '.github/workflows/mail-persistence.yml'
   workflow_dispatch:
 
@@ -12,12 +12,12 @@ permissions:
 
 jobs:
   isolated-postgres:
-    name: Mail settings and OTP PostgreSQL 17 migration
+    name: Mail settings and OTP PostgreSQL 18 migration
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
       postgres:
-        image: pgvector/pgvector:0.8.7-pg17
+        image: pgvector/pgvector:0.8.7-pg18
         env:
           POSTGRES_USER: inklore_ci
           POSTGRES_PASSWORD: ci_only_no_secret
@@ -41,15 +41,15 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - name: Apply frozen R1 and post-R1 migrations to disposable PostgreSQL
+      - name: Apply migrations to disposable PostgreSQL
         run: go run ./cmd/migrate -cmd up -dsn "$DATABASE_DSN" -timeout 150s
-      - name: Confirm original R1 17 migrations unchanged
+      - name: Confirm original 17 migrations unchanged
         run: |
           test "$(psql -X -Atc 'SELECT count(*) FROM schema_migrations')" = '17'
           test "$(psql -X -Atc "SELECT count(*) FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'platform_%'")" -ge 5
-      - name: Confirm post-R1 stream registered by the migration runner
+      - name: Confirm extension stream registered by the migration runner
         run: |
-          test "$(psql -X -Atc 'SELECT count(*) FROM schema_migrations_post_r1')" -ge 2
+          test "$(psql -X -Atc 'SELECT count(*) FROM schema_migrations_extensions')" -ge 2
           psql -X -Atc "SELECT to_regclass('llm_policy_version_references') IS NOT NULL" | grep -qx t
       - name: Assert mail secret and OTP persistence invariants
-        run: psql -X -v ON_ERROR_STOP=1 -f migrations/post_r1/verify_email_schema.sql
+        run: psql -X -v ON_ERROR_STOP=1 -f migrations/extensions/verify_email_schema.sql

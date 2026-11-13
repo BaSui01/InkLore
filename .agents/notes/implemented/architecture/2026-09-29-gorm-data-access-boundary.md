@@ -19,7 +19,7 @@ Scope: cmd/migrate/r1migration/executor.go 与 internal/platform/database、uow 
 
 ## Consequences
 
-少了一条单独的 `sql.Open` 路径；迁移工具在创建连接时经统一封装执行数据库探活。后续 INK-244 已将提取样本和空写入占位替换为真实旧表只读抽取及受约束的目标写入；旧库不存在且身份/历史映射不足，LIVE 仍被安全门禁阻断，不得宣称完成真实数据迁移。详细权衡见 [迁移安全笔记](../bug-fix/2026-09-29-r1-migration-live-fail-closed.md)。
+少了一条单独的 `sql.Open` 路径；迁移工具在创建连接时经统一封装执行数据库探活。后续 INK-244 已将提取样本和空写入占位替换为真实旧表只读抽取及受约束的目标写入；旧库不存在且身份/历史映射不足，LIVE 仍被安全门禁阻断，不得宣称完成真实数据迁移。详细权衡见 [迁移安全笔记](../bug-fix/2026-09-29-migration-live-fail-closed.md)。
 
 ## Verification
 

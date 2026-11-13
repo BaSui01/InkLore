@@ -2,7 +2,7 @@
 
 # 12 · 设计冻结与工程治理
 
-当前系统设计是唯一施工基线，入口[00](00-INDEX.md)，全局契约[baseline](00-CONTRACT-BASELINE.md)，初始决策见[ADR-0016](../decisions/0016-r1-reconstruction-design-freeze.md)，后续有效ADR按其明确替代范围适用。现有代码与目标不同是实施工作，不通过改设计把缺陷变合理。
+当前系统设计是唯一施工基线，入口[00](00-INDEX.md)，全局契约[baseline](00-CONTRACT-BASELINE.md)，初始决策见[ADR-0016](../decisions/0016-reconstruction-design-freeze.md)，后续有效ADR按其明确替代范围适用。现有代码与目标不同是实施工作，不通过改设计把缺陷变合理。
 
 ## 1. 不变量
 

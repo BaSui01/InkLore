@@ -183,7 +183,7 @@ def main():
     # Old installation backfill: a draft save left the wrong count. Replay the
     # actual migration twice, preserving current totals and all daily events.
     sql(f"UPDATE content_novels SET word_count=12345 WHERE id='{novel['id']}'")
-    migration = Path("migrations/post_r1/000004_content_writing_goals.sql")
+    migration = Path("migrations/extensions/000004_content_writing_goals.sql")
     for _ in range(2):
         subprocess.run(["psql", "-X", "-v", "ON_ERROR_STOP=1", "-q", "-f", str(migration)], check=True, capture_output=True)
         counts(8, 22, 14, 9)

@@ -1171,16 +1171,23 @@ export interface components {
             next_cursor: string | null;
             has_more: boolean;
         };
-        /** @description 仅白名单标量/有界enum字段；服务端投影去除内部字段，不含远程引用/default/条件/组合schema。 */
-        SafeInputSchema: {
-            /** @enum {string} */
-            type: "object";
-            properties: {
-                [key: string]: components["schemas"]["SafeInputField"];
+        CatalogTaskPolicy: {
+            policy_id: components["schemas"]["UUID"];
+            policy_version_id: components["schemas"]["UUID"];
+            task_key: string;
+            title: string;
+            version: number;
+            task_kinds: string[];
+            input_schema: components["schemas"]["SafeInputSchema"];
+            budget: {
+                max_output_tokens: number;
+                timeout_seconds: number;
             };
-            required?: string[];
-            /** @enum {boolean} */
-            additionalProperties: false;
+        };
+        CatalogTaskPolicyPage: {
+            items: components["schemas"]["CatalogTaskPolicy"][];
+            next_cursor: string | null;
+            has_more: boolean;
         };
         Question: {
             id: components["schemas"]["UUID"];
@@ -1208,6 +1215,17 @@ export interface components {
             /** @enum {number} */
             question_version: 1;
             answer: string | string[];
+        };
+        /** @description 仅白名单标量/有界enum字段；服务端投影去除内部字段，不含远程引用/default/条件/组合schema。 */
+        SafeInputSchema: {
+            /** @enum {string} */
+            type: "object";
+            properties: {
+                [key: string]: components["schemas"]["SafeInputField"];
+            };
+            required?: string[];
+            /** @enum {boolean} */
+            additionalProperties: false;
         };
         SafeInputField: {
             /** @enum {string} */
@@ -1244,24 +1262,6 @@ export interface components {
         QuestionOption: {
             value: string;
             label_key: string;
-        };
-        CatalogTaskPolicy: {
-            policy_id: components["schemas"]["UUID"];
-            policy_version_id: components["schemas"]["UUID"];
-            task_key: string;
-            title: string;
-            version: number;
-            task_kinds: string[];
-            input_schema: components["schemas"]["SafeInputSchema"];
-            budget: {
-                max_output_tokens: number;
-                timeout_seconds: number;
-            };
-        };
-        CatalogTaskPolicyPage: {
-            items: components["schemas"]["CatalogTaskPolicy"][];
-            next_cursor: string | null;
-            has_more: boolean;
         };
         RunStarted: {
             run_id: components["schemas"]["UUID"];
