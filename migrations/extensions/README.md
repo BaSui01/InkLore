@@ -4,6 +4,10 @@
 再用 `InkLore/migrations/extensions` 与独立历史表 `schema_migrations_extensions` 应用本目录的扩展迁移。
 主流迁移的版本、文件名与校验和必须保持不变。
 
+既有环境若仍在使用旧表名 `schema_migrations_post_r1`，必须先按
+[切换指引](../../docs/maintenance/stage-naming-cutover.md) 完成一次幂等改名再运行迁移：目标版本表的创建是
+`CREATE TABLE IF NOT EXISTS`，顺序错误会让本目录的扩展迁移被当作未应用。
+
 ## 邮件与 OTP（INK-273 第一阶段）
 
 `000001_platform_mail_settings.sql` 是扩展流的迁移，负责两个由数据库持有的对象：
