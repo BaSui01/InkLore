@@ -184,20 +184,26 @@ const outputDir = fs.mkdtempSync(path.join(codegenDir, 'output-'));
 process.on('exit', () => fs.rmSync(outputDir, { recursive: true, force: true }));
 console.log('🎨 2/3 Generating Frontend TypeScript contracts...');
 const tsExports = [];
-const npxCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+// 本脚本用 Node 直接执行 npx 的 CLI（不经 shell）：cmd.exe /c 会按 cmd 规则重新解析命令行，
+// 仓库路径中的 & ^ | 等字符会被误解析，也会触发 CodeQL 的 shell-from-env 告警。
+function resolveNpxCli() {
+  const nodeDir = path.dirname(process.execPath);
+  const candidates = [
+    path.join(nodeDir, 'node_modules', 'npm', 'bin', 'npx-cli.js'),
+    path.join(nodeDir, '..', 'lib', 'node_modules', 'npm', 'bin', 'npx-cli.js'),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  throw new Error('cannot locate npm npx-cli.js next to ' + process.execPath);
+}
 
 for (const domain of domains) {
   const specPath = path.join(specsDir, `${domain}.json`);
   const tsOutPath = path.join(outputDir, `${domain}.gen.ts`);
   try {
     const npxArgs = ['--yes', 'openapi-typescript', specPath, '-o', tsOutPath];
-    // Windows 上 Node 不允许未启用 shell 时直接 spawn .cmd/.bat（EINVAL），而 shell:true 又会触发 DEP0190。
-    // 这里经 cmd.exe 显式调用，参数仍以数组传递且全部来自本仓库路径。
-    if (process.platform === 'win32') {
-      execFileSync('cmd.exe', ['/d', '/s', '/c', npxCommand, ...npxArgs], { cwd: path.join(root, 'frontend'), stdio: 'pipe' });
-    } else {
-      execFileSync(npxCommand, npxArgs, { cwd: path.join(root, 'frontend'), stdio: 'pipe' });
-    }
+    execFileSync(process.execPath, [resolveNpxCli(), ...npxArgs], { cwd: path.join(root, 'frontend'), stdio: 'pipe' });
     if (fs.statSync(tsOutPath).size === 0) throw new Error('empty TypeScript output');
     console.log(`  ✓ TS generated: [${domain}] -> frontend/packages/contracts/src/generated/${domain}.gen.ts`);
     tsExports.push(`export * as ${domain.charAt(0).toUpperCase() + domain.slice(1)}API from './${domain}.gen';`);
