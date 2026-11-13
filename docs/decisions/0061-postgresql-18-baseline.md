@@ -16,7 +16,7 @@ ADR-0022（2026-09-20）依据当时系统实例 PostgreSQL 17.11，把运行基
 
 1. **运行基线更新为 PostgreSQL 18**（本机验收精确版本 18.6，`select version()` = `PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu`）。本地开发、CI 一次性实例、部署模板统一使用 `pgvector/pgvector:pg18`。
 2. **迁移策略沿用「禁止原卷直接更换主版本启动」**：跨主版本必须先 `pg_dump` 逻辑备份，再恢复到新数据卷。PG18+ 镜像的 `PGDATA` 是 `/var/lib/postgresql/18/docker`，因此宿主挂载点必须是 `/var/lib/postgresql`（沿用 `/var/lib/postgresql/data` 会被镜像判为未使用挂载并拒绝启动）。
-3. **卷命名区分环境**：本地开发 `ai-novel-postgres18`；生产编排 `ai-novel-postgres18-prod`。两个 compose 文件位于同一检出目录、Compose 项目名同为 `inklore`，同名卷会让两个编排共用同一个 Docker 卷（Redis 卷 `ai-novel-redis` 已是此情形），生产必须区分，避免本地把生产库指向开发库。
+3. **卷命名区分环境**：每个编排的数据卷都带环境后缀——本地开发 `ai-novel-postgres18` / `ai-novel-redis`，生产编排 `ai-novel-postgres18-prod` / `ai-novel-redis-prod`。两个 compose 文件位于同一检出目录、Compose 项目名同为 `inklore`，同名卷会让两个编排共用同一个 Docker 卷（本地执行生产编排会挂到开发库，限流计数与并发租约等协调状态也会混用），因此生产必须区分。（本条于 2026-11-13 同日修订：修订前只覆盖 PostgreSQL 卷，Redis 卷的隔离与本 ADR 一并落地。）
 4. **不改变迁移身份**：已应用迁移 SQL 的字节、`schema_migrations` 17 条与 `schema_migrations_extensions` 7 条的 version/name/checksum 全部不变；主版本升级只影响服务端二进制与数据目录布局，不触及迁移校验和保护。
 5. **仅替换 ADR-0022 的主版本裁决**：其余内容（PG 单一权威、Redis 仅缓存与协调、扩展流独立历史表）继续有效。
 
@@ -34,6 +34,7 @@ ADR-0022（2026-09-20）依据当时系统实例 PostgreSQL 17.11，把运行基
 - **成本**：任何仍在 PG17 的环境必须在维护窗口执行 `pg_dump` → 恢复到新卷 → 切换；旧卷在切换完成并核对业务数据前不删除。
 - **兼容性**：应用侧无协议变化（DSN 形状、pgvector 维度、扩展集合不变）；已应用迁移与校验和不变，本地实测迁移零新应用。
 - **失败恢复**：升级异常时回退到旧卷 + 旧镜像（PG17）即可恢复；新卷在新集群初始化后未承载业务数据，可直接丢弃重建。
+- **仍有暴露面**：容器名与网络仍由 Compose 项目名决定（`inklore-postgres-1`、`inklore_default` 等），因此在同一检出目录同时运行两个编排仍会撞容器名与端口。彻底隔离需为 prod 设独立项目名，但那会让既有部署重新指向新卷新容器（见备选），故保留现状并在此记录。
 - **未验证边界**：`docker-compose.prod.yml` 没有真实生产部署实例可用，其变更属模板一致性修订，生产侧标注 `NOT_VERIFIED`。
 
 ## 验证与实施边界
