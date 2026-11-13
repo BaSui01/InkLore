@@ -65,6 +65,7 @@ return 1
 `)
 
 func (r *redisLimiter) Allow(ctx context.Context, key string) (bool, error) {
+	// 登录限流键与准入键一样是跨版本协调状态，前缀保持兼容（见 ADR-0060 保留项）。
 	value, err := loginWindow.Run(ctx, r.client, []string{"inklore:r1:login:" + key}, uuid.NewString()).Int64()
 	return value == 1, err
 }

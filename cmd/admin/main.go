@@ -1,4 +1,4 @@
-// Command admin performs explicit deployment-only R1 administration.
+// Command admin performs explicit deployment-only administration.
 package main
 
 import (
@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"InkLore/internal/app"
-	llmr1infra "InkLore/internal/llm/infrastructure"
+	llminfra "InkLore/internal/llm/infrastructure"
 	"InkLore/internal/platform/config"
 	"InkLore/internal/platform/database"
 	"InkLore/internal/platform/scope"
 	"InkLore/internal/platform/timeutil"
 	"InkLore/internal/platform/uow"
-	"InkLore/migrations/r1"
+	"InkLore/migrations"
 )
 
 func main() {
@@ -54,7 +54,7 @@ func runSeed() {
 	}
 	cfg, err := config.Bootstrap(*configPath)
 	if err != nil {
-		fail("invalid R1 configuration")
+		fail("invalid configuration")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -100,7 +100,7 @@ func runSeedTool() {
 	}
 	cfg, err := config.Bootstrap(*configPath)
 	if err != nil {
-		fail("invalid R1 configuration")
+		fail("invalid configuration")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -136,7 +136,7 @@ func runBootstrap() {
 	}
 	cfg, err := config.Bootstrap(*configPath)
 	if err != nil {
-		fail("invalid R1 configuration")
+		fail("invalid configuration")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -145,14 +145,14 @@ func runBootstrap() {
 		fail("PostgreSQL unavailable")
 	}
 	defer func() { _ = database.Close(db) }()
-	if database.Verify(ctx, db, r1.FS(), r1.Dir) != nil {
-		fail("apply and verify R1 migrations before bootstrap")
+	if database.Verify(ctx, db, migrations.FS(), migrations.Dir) != nil {
+		fail("apply and verify migrations before bootstrap")
 	}
 	manager, err := uow.New(db)
 	if err != nil {
 		fail("cannot initialize transaction manager")
 	}
-	budgetRepo := llmr1infra.NewBudgetRepository(manager)
+	budgetRepo := llminfra.NewBudgetRepository(manager)
 	result, err := app.BootstrapIdentityWithUserProvision(ctx, manager, *tenant, *email, *username, *display, password, func(tx context.Context, tenantID string) error {
 		return budgetRepo.Provision(tx, tenantID, timeutil.Now())
 	})

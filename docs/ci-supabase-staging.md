@@ -2,9 +2,9 @@
 
 ## 自动验收范围
 
-[隔离集成工作流](../.github/workflows/isolated-integration.yml)在临时 PostgreSQL 17（含 pgvector）与 Redis 7 上应用仓库迁移，检查重复执行、回滚、角色权限及 API 的健康、就绪和身份请求。PR、dev/private push 与手动触发使用各自提交的代码；临时数据库随作业销毁，不使用共享数据库密钥。
+[隔离集成工作流](../.github/workflows/isolated-integration.yml)在临时 PostgreSQL 18（含 pgvector）与 Redis 7 上应用仓库迁移，检查重复执行、回滚、角色权限及 API 的健康、就绪和身份请求。PR、dev/private push 与手动触发使用各自提交的代码；临时数据库随作业销毁，不使用共享数据库密钥。
 
-[并发策略验收](../.github/workflows/ink228-integration.yml)核对迁移记录、租户组合外键及任务策略并发行为。迁移历史仍位于 [migrations/r1](../migrations/r1/)，保留版本、文件名与校验和。当前文件数量不是永久架构约束。
+[并发策略验收](../.github/workflows/ink228-integration.yml)核对迁移记录、租户组合外键及任务策略并发行为。迁移历史位于 [migrations/](../migrations/)，保留版本、文件名与校验和。当前文件数量不是永久架构约束。
 
 [常规 CI](../.github/workflows/ci.yml)执行 Go build/vet/gofmt、架构检查、i18n、工程记录与双端构建。具体覆盖以工作流和脚本为准；构建成功不证明 Agent、模型、编辑器或完整作品导出已经验收。
 

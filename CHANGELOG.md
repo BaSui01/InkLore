@@ -349,7 +349,7 @@
 
 - 建立独立R1迁移流与组合根，旧路由不挂载；迁移名称/checksum门禁、事务级迁移互斥、独立配置装载和PG必需启动。
 - 实施UoW/Recoverable、scope历史证明与CAS、事务幂等及安全HTTP基座；26组真实PG/HTTP正反例、全仓构建、架构/冻结/技能/notes护栏通过。[验收证据](.agents/notes/implemented/testing/2026-09-18-acceptance-ink-160.md)。
-- 冻结设计保持不变；后续操作的契约差异记录于[INK-178](.agents/notes/implemented/architecture/2026-09-18-r1-contract-differences-ink-178.md)。
+- 冻结设计保持不变；后续操作的契约差异记录于[INK-178](.agents/notes/implemented/architecture/2026-09-18-contract-differences-ink-178.md)。
 
 **INK-144：DSH并行开发子代理配置**
 

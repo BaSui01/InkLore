@@ -135,16 +135,16 @@
     "$ref": "./agent-governance-schemas.json#/components/schemas/ToolPage"
    },
    "CatalogTaskPolicy": {
-    "$ref": "./agent-r1x-schemas.json#/components/schemas/CatalogTaskPolicy"
+    "$ref": "./agent-policy-schemas.json#/components/schemas/CatalogTaskPolicy"
    },
    "CatalogTaskPolicyPage": {
-    "$ref": "./agent-r1x-schemas.json#/components/schemas/CatalogTaskPolicyPage"
+    "$ref": "./agent-policy-schemas.json#/components/schemas/CatalogTaskPolicyPage"
    },
    "Question": {
-    "$ref": "./agent-r1x-schemas.json#/components/schemas/Question"
+    "$ref": "./agent-policy-schemas.json#/components/schemas/Question"
    },
    "QuestionAnswer": {
-    "$ref": "./agent-r1x-schemas.json#/components/schemas/QuestionAnswer"
+    "$ref": "./agent-policy-schemas.json#/components/schemas/QuestionAnswer"
    }
   }
  }

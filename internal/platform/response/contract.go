@@ -11,9 +11,9 @@ import (
 	"github.com/google/uuid"
 )
 
-const ContextKeyRequestID = "r1_request_id"
+const ContextKeyRequestID = "request_id"
 const ContextKeyTraceID = "x_trace_id"
-const ContextKeyErrorCode = "r1_error_code"
+const ContextKeyErrorCode = "error_code"
 
 type SuccessEnvelope struct {
 	Code      string `json:"code"`

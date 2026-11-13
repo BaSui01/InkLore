@@ -95,7 +95,7 @@ def main():
     novel = require(
         "/v1/content/novels", 201, method="POST", token=creator_token,
         key=str(uuid.uuid4()), origin=CREATOR_ORIGIN,
-        body={"title": "CI Isolation Novel", "summary": "Ephemeral R1 acceptance",
+        body={"title": "CI Isolation Novel", "summary": "Ephemeral acceptance",
               "category": "fantasy", "target_words": 40000},
     )
     novel_id = novel["id"]

@@ -127,11 +127,6 @@ func (a *App) Runtime() (*Platform, *DomainRuntime) {
 	return a.platform, a.domains
 }
 
-// R1Runtime is a compatibility alias for Runtime for tools and acceptance harness.
-func (a *App) R1Runtime() (*Platform, *DomainRuntime) {
-	return a.Runtime()
-}
-
 // Close 释放应用持有的外部资源。
 func (a *App) Close() error {
 	if a.deactivateAgentTools != nil {

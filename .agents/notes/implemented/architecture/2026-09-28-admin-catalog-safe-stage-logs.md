@@ -7,7 +7,7 @@ Scope: platform HTTP middleware、response 与 LLM Catalog 写删除
 
 ## Problem
 
-管理端已有 request_id/trace_id 和最终 HTTP 日志，但失败时不能区分鉴权、输入、CAS、仓储还是审计阶段；平台审计仅保存持久业务变更，不包含失败的处理阶段。检索 [Gin 安全入口笔记](../simplification/2026-09-20-gin-transport-security.md) 和 [LLM 目录边界笔记](../architecture/2026-09-18-llm-r1-catalog-boundary.md)：前者要求日志只含受限元数据，后者禁止密钥内容进入日志。
+管理端已有 request_id/trace_id 和最终 HTTP 日志，但失败时不能区分鉴权、输入、CAS、仓储还是审计阶段；平台审计仅保存持久业务变更，不包含失败的处理阶段。检索 [Gin 安全入口笔记](../simplification/2026-09-20-gin-transport-security.md) 和 [LLM 目录边界笔记](../architecture/2026-09-18-llm-catalog-boundary.md)：前者要求日志只含受限元数据，后者禁止密钥内容进入日志。
 
 ## Decision
 

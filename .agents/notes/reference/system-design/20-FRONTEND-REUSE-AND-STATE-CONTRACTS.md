@@ -2,7 +2,7 @@
 
 # 前端复用、状态与接口适配合同 R1
 
-状态：INK-141 冻结目标，尚未实现。遵循 [00唯一基线](00-CONTRACT-BASELINE.md)；页面组合见 [15](15-CREATOR-FUNCTION-UX-SPEC.md)、[16](16-ADMIN-FUNCTION-UX-SPEC.md)，tokens/无障碍见 [17](17-DESIGN-SYSTEM-AND-ACCESSIBILITY.md)。冻结决策依据[ADR-0016](../decisions/0016-r1-reconstruction-design-freeze.md)。本册冻结React19、ReactRouter7、TanStackQuery5、Ajv8+formats3、antd6下的模块边界，不引入第二个状态框架、表单框架或富文本框架。
+状态：INK-141 冻结目标，尚未实现。遵循 [00唯一基线](00-CONTRACT-BASELINE.md)；页面组合见 [15](15-CREATOR-FUNCTION-UX-SPEC.md)、[16](16-ADMIN-FUNCTION-UX-SPEC.md)，tokens/无障碍见 [17](17-DESIGN-SYSTEM-AND-ACCESSIBILITY.md)。冻结决策依据[ADR-0016](../decisions/0016-reconstruction-design-freeze.md)。本册冻结React19、ReactRouter7、TanStackQuery5、Ajv8+formats3、antd6下的模块边界，不引入第二个状态框架、表单框架或富文本框架。
 
 ## 1. 目录、依赖与事实Owner
 

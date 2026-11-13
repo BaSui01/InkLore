@@ -1,5 +1,6 @@
-// Package migrations 以 embed 方式提供数据库迁移脚本。
+// Package migrations 以 embed 方式提供唯一主流的数据库迁移脚本。
 //
+// 扩展流位于 migrations/extensions，使用独立历史表 schema_migrations_extensions；见该目录 README。
 // 迁移文件命名：NNNNNN_描述.sql（数字前缀决定执行顺序）。
 // 文件可包含可选的降级段，以上述标记行分隔；没有降级段的迁移不支持回滚。
 package migrations
