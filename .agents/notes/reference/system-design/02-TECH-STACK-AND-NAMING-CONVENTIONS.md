@@ -2,7 +2,7 @@
 
 # 02T · 技术栈与命名冻结
 
-R1版本基线，依赖锁定在实施阶段写入go.mod/go.sum与前端lockfile；文档列主版本/最低patch，不绕过仓库安全更新。架构选择依据[ADR-0016](../decisions/0016-r1-reconstruction-design-freeze.md)。
+R1版本基线，依赖锁定在实施阶段写入go.mod/go.sum与前端lockfile；文档列主版本/最低patch，不绕过仓库安全更新。架构选择依据[ADR-0016](../decisions/0016-reconstruction-design-freeze.md)。
 
 | 层 | 固定选择 | 用途与边界 |
 | --- | --- | --- |

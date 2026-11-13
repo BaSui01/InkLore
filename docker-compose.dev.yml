@@ -1,5 +1,5 @@
-# 禁止原卷直接更换主版本启动：PG17 既有卷（inklore_ai-novel-postgres）须先 pg_dump 逻辑备份，
-# 再恢复到 PG18 新数据卷（inklore_ai-novel-postgres18）；旧 PG17 卷保留在磁盘，不再由本文件管理。
+# 禁止原卷直接更换主版本启动：PG17 数据须先 pg_dump 逻辑备份，再恢复到 PG18 新数据卷
+# （inklore_ai-novel-postgres18）；本机旧 PG17 卷（inklore_ai-novel-postgres）已随清理删除，不再存在。
 # 本地开发基础设施：PostgreSQL 18（含 pgvector / pg_trgm）与 Redis 7。
 #
 # 由 scripts/dev-stack.ps1 管理生命周期；手工执行亦可：

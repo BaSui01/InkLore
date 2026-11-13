@@ -4,7 +4,7 @@
 
 **状态：持续维护的设计基线。初始设计任务为 INK-141。** 这是唯一目标设计入口。具体实现与验收状态以[任务看板](../planning/backlog.md)和[实施事实](../implementation/architecture-history.md)为准，不把旧实现限制、历史done或设计文档存在当作当前契约验收。分册之间无“临时兼容版”关系；字段、状态和权限必须统一。
 
-先读[契约基线](00-CONTRACT-BASELINE.md)，再按角色读以下资产。全局选择及取舍记录在[ADR-0016](../decisions/0016-r1-reconstruction-design-freeze.md)，以前ADR仅按其未替代范围适用，不另建决策库。现行入口不以发行代号命名；历史ADR文件名、迁移标识和验收编号保留追溯用途。
+先读[契约基线](00-CONTRACT-BASELINE.md)，再按角色读以下资产。全局选择及取舍记录在[ADR-0016](../decisions/0016-reconstruction-design-freeze.md)，以前ADR仅按其未替代范围适用，不另建决策库。现行入口不以发行代号命名；历史ADR文件名、迁移标识和验收编号保留追溯用途。
 
 ## 1. 开发阅读路径
 

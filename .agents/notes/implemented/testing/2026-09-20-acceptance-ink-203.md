@@ -100,7 +100,7 @@ SSE控制器必须作用于Gin Writer的Unwrap结果：Gin本身实现无错误F
 
 #### INK-209增量契约验证
 
-执行`node docs/system-design/tools/build-contracts.cjs`及`node scripts/build-request-schemas.cjs`：238操作、107 JSON请求、28嵌入资源、98错误，生成无问题。`check-design.cjs --freeze`及再次无参数检查通过，旧manifest保存于decisions/assets/0021-before-freeze-manifest.json；DDL SQL字节没有变化。当前manifest同时登记既有HEAD的implementation/r1-migration-report.json摘要（此前manifest摘要与该既有文件不同），未修改该报告、未重跑其数据迁移，不作为新增迁移证据。
+执行`node docs/system-design/tools/build-contracts.cjs`及`node scripts/build-request-schemas.cjs`：238操作、107 JSON请求、28嵌入资源、98错误，生成无问题。`check-design.cjs --freeze`及再次无参数检查通过，旧manifest保存于decisions/assets/0021-before-freeze-manifest.json；DDL SQL字节没有变化。当前manifest同时登记既有HEAD的implementation/migration-report.json摘要（此前manifest摘要与该既有文件不同），未修改该报告、未重跑其数据迁移，不作为新增迁移证据。
 
 临时普通Go探针：11个输入场景、五个新增路由映射、五个实际Gin请求通过。覆盖合法注册、短密码、角色注入、省略登录tenant、孤立验证码字段、email null、令牌重置与管理员CAS Schema分离，以及重复键、大小写错误、尾随JSON、非法UTF-8。源码保存于/tmp/inklore-209-evidence/auth-schema-probe.go；复现时复制到仓库.tmp目录main.go后go run，完成删除，禁止创建_test.go。
 

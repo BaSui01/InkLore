@@ -1,5 +1,9 @@
-# PG16既有卷须先备份并迁移至新PG17数据目录，禁止原卷直接更换主版本启动。
-# InkLore 生产编排：PostgreSQL 17 (pgvector) + Redis 7 + 应用
+# 禁止原卷直接更换主版本启动：既有 PG17 卷（inklore_ai-novel-postgres）须先 pg_dump 逻辑备份，
+# 再恢复到 PG18 新数据卷（inklore_ai-novel-postgres18-prod）；旧卷保留在磁盘，不再由本文件管理。
+# 数据卷一律带 -prod 后缀（inklore_ai-novel-postgres18-prod / inklore_ai-novel-redis-prod）：
+# 与同目录的 docker-compose.dev.yml 共用 Compose 项目名 inklore，同名卷会让两个编排挂到同一个卷。
+# Redis 旧卷同样保留在磁盘；切换到新卷后限流窗口与并发租约等协调状态重置（Redis 不承载业务数据）。
+# InkLore 生产编排：PostgreSQL 18 (pgvector) + Redis 7 + 应用
 #
 # 使用：
 #   export POSTGRES_PASSWORD='强密码'
@@ -10,14 +14,18 @@
 
 services:
   postgres:
-    image: pgvector/pgvector:pg17
+    image: pgvector/pgvector:pg18
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-ai_novel}
       POSTGRES_USER: ${POSTGRES_USER:-ai_novel}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?必须设置 POSTGRES_PASSWORD}
     volumes:
-      - ai-novel-postgres:/var/lib/postgresql/data
+      # PG18+ 镜像的默认数据目录是 /var/lib/postgresql/18/docker，宿主机挂载点必须是
+      # /var/lib/postgresql（沿用旧版的 /var/lib/postgresql/data 会被镜像判为未使用挂载并拒绝启动）。
+      # 卷名带 -prod 后缀：与 docker-compose.dev.yml 同在一个检出目录时 Compose 项目名相同，
+      # 同名卷会让两个编排共用同一个 Docker 卷。
+      - ai-novel-postgres18-prod:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ai_novel} -d ${POSTGRES_DB:-ai_novel}"]
       interval: 10s
@@ -29,7 +37,8 @@ services:
     restart: unless-stopped
     command: redis-server --appendonly yes
     volumes:
-      - ai-novel-redis:/data
+      # 卷名带 -prod 后缀：与 dev 编排同名会共用同一卷（限流计数、并发租约等协调状态混用）。
+      - ai-novel-redis-prod:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -89,5 +98,5 @@ services:
       - "${HTTP_PORT:-8080}:8080"
 
 volumes:
-  ai-novel-postgres:
-  ai-novel-redis:
+  ai-novel-postgres18-prod:
+  ai-novel-redis-prod:

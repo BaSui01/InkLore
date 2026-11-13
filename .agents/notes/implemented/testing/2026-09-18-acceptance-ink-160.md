@@ -93,6 +93,6 @@ UoW context同步使用、不逃逸、不并发。Authorize必须绑定实际请
 
 ### 未覆盖与后续
 
-未做真实模型调用、账号登录/refresh/CSRF/审计业务、文件和作业运行、七域业务、双端浏览器、生产部署、旧库导入或容量恢复验收；这些属于后续任务。R1源契约未改，改密幂等头与缺失错误响应差异记录于 [INK-178](../architecture/2026-09-18-r1-contract-differences-ink-178.md)，进入受影响任务前需裁决。
+未做真实模型调用、账号登录/refresh/CSRF/审计业务、文件和作业运行、七域业务、双端浏览器、生产部署、旧库导入或容量恢复验收；这些属于后续任务。R1源契约未改，改密幂等头与缺失错误响应差异记录于 [INK-178](../architecture/2026-09-18-contract-differences-ink-178.md)，进入受影响任务前需裁决。
 
-工程理由见 [事务与幂等笔记](../architecture/2026-09-18-r1-platform-atomic-command-boundary.md)。
+工程理由见 [事务与幂等笔记](../architecture/2026-09-18-platform-atomic-command-boundary.md)。
