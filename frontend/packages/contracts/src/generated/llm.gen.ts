@@ -469,6 +469,13 @@ export interface components {
             locator: string;
             version: string;
         };
+        /** @description A deployment-managed credential reference. Plaintext keys and legacy encrypted locators cannot be written. */
+        KeySecretRef: {
+            /** @enum {string} */
+            kind: "env" | "secret_store";
+            locator: string;
+            version: string;
+        };
         KeyInput: {
             channel_id: components["schemas"]["UUID"];
             title: string;
@@ -722,13 +729,6 @@ export interface components {
         };
         UpstreamModelListPage: {
             items: components["schemas"]["UpstreamModelItem"][];
-        };
-        /** @description A deployment-managed credential reference. Plaintext keys and legacy encrypted locators cannot be written. */
-        KeySecretRef: {
-            /** @enum {string} */
-            kind: "env" | "secret_store";
-            locator: string;
-            version: string;
         };
     };
     responses: {
