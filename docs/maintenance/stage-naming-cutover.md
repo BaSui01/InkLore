@@ -15,11 +15,11 @@
 
 ## 1. 扩展流历史表改名（既有库必需）
 
-> ⚠️ **必须先改名，再跑任何 `migrate` 子命令。**
-> `cmd/migrate -cmd status` 会经 `StatusIn → AppliedRecordsIn → EnsureVersionTableIn` 对目标表执行
-> `CREATE TABLE IF NOT EXISTS`。若先跑 status，新表会被**提前创建**，下面的守卫条件随之失效，
-> 改名被跳过；随后的部署会对新表重放扩展流迁移，遇到非幂等的 DDL（如
-> `000001_platform_mail_settings` 的 `CREATE TABLE`）即 fail-closed 拒绝启动。
+> ⚠️ **推荐顺序：先查旧表 → 改名 → 再跑 `migrate`。**
+> 自 2026-11-13 起，扩展流迁移带 fail-closed 前置检查（`GuardExtensionHistory`）：只要旧表仍持有记录，
+> `up` 与 `status` 都会**拒绝执行**并给出改名指引，且**不会**提前创建目标历史表。
+> 因此顺序错误不再造成损坏，但拒绝信息仍需按本节步骤处理。历史版本没有该守卫时，先跑 status 会
+> 经 `StatusIn → AppliedRecordsIn → EnsureVersionTableIn` 建出空表、跳过改名，随后的部署会重放扩展流迁移。
 
 ### 步骤 1：直接检查旧表（不要跑 status）
 
@@ -49,13 +49,14 @@ END
 $$;
 ```
 
-### 步骤 3：改名完成后才跑 status 复验
+### 步骤 3：改名完成后跑 status 复验
 
 ```bash
 go run ./cmd/migrate -cmd status
 ```
 
 期望：`[main]` 17 条与 `[extensions]` 7 条全部「已应用」，且**零新应用**。
+若改名尚未执行，命令会以退出码 1 拒绝并打印旧表名、记录数与改名 SQL——那是守卫在工作，不是状态损坏。
 
 ### 回滚
 
@@ -112,5 +113,5 @@ ALTER TABLE :schema.schema_migrations_extensions RENAME TO schema_migrations_pos
 
 ## 4. 为什么这两件事不放进代码
 
-- **表改名**：代码无法在启动前安全地自证「旧表存在且新表不存在」并自动改名——多实例并发启动会互相竞争，且 `status`/`up` 自身会创建新表（见第 1 节的顺序要求）。因此交由维护者在维护窗口执行一次。
+- **表改名本身仍不自动执行**：多实例并发启动会互相竞争，且改名属于破坏性 DDL，不应由进程在启动时自作主张。代码只做到「检测 + 拒绝」：`GuardExtensionHistory` 在扩展流读写之前检查旧表是否仍持有记录，命中即 fail-closed（错误值 `ErrLegacyExtensionHistory`，CLI 直接回显可操作提示），且检查发生在建表之前，不会污染数据库状态。这是 ADR-0060 于 2026-11-13 修订后的边界。
 - **前缀改名**：这是滚动升级的**状态交接**问题而非命名问题。在代码里静默改名会直接放大超限风险（PR #140 审查中指出的 P1 项）；可行路径只有「保持共享命名空间」或「采用真正的 drain + 窗口等待」。

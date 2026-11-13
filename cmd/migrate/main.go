@@ -14,6 +14,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -24,10 +25,6 @@ import (
 	"InkLore/migrations"
 	"InkLore/migrations/extensions"
 )
-
-// extensionTable 是扩展流的独立历史表；主流
-// schema_migrations 保持恰好 17 条既定记录，不被扩展流改写。
-const extensionTable = "schema_migrations_extensions"
 
 func main() {
 	configPath := flag.String("config", config.DefaultPath, "配置文件路径")
@@ -78,8 +75,12 @@ func main() {
 		}
 		fmt.Printf("up 完成（主流）：新应用 %d 条，跳过 %d 条\n", len(result.Applied), len(result.Skipped))
 
-		postResult, postErr := database.UpIn(ctx, db, extensions.FS(), extensions.Dir, extensionTable)
+		postResult, postErr := database.UpExtensions(ctx, db, extensions.FS(), extensions.Dir)
 		if postErr != nil {
+			if errors.Is(postErr, database.ErrLegacyExtensionHistory) {
+				fail(1, "%v", postErr)
+				return
+			}
 			fail(1, "extension migration refused; verify database identity, migration checksums and PostgreSQL prerequisites")
 			return
 		}
@@ -114,7 +115,7 @@ func main() {
 			}
 			fmt.Printf("  %s_%s  %s\n", row.Version, row.Name, state)
 		}
-		postRows, postStatusErr := database.StatusIn(ctx, db, extensions.FS(), extensions.Dir, extensionTable)
+		postRows, postStatusErr := database.StatusExtensions(ctx, db, extensions.FS(), extensions.Dir)
 		if postStatusErr != nil {
 			fail(1, "读取扩展迁移状态失败: %v", postStatusErr)
 		}

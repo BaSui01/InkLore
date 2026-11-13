@@ -5,8 +5,8 @@
 主流迁移的版本、文件名与校验和必须保持不变。
 
 既有环境若仍在使用旧表名 `schema_migrations_post_r1`，必须先按
-[切换指引](../../docs/maintenance/stage-naming-cutover.md) 完成一次幂等改名再运行迁移：目标版本表的创建是
-`CREATE TABLE IF NOT EXISTS`，顺序错误会让本目录的扩展迁移被当作未应用。
+[切换指引](../../docs/maintenance/stage-naming-cutover.md) 完成一次幂等改名再运行迁移：迁移前置检查
+（`GuardExtensionHistory`）在旧表仍持有记录时 fail-closed 拒绝扩展流，且不会提前创建目标历史表。
 
 ## 邮件与 OTP（INK-273 第一阶段）
 
