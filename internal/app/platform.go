@@ -28,13 +28,13 @@ import (
 	"InkLore/internal/platform/scope"
 	"InkLore/internal/platform/uow"
 	"InkLore/internal/platform/version"
-	"InkLore/migrations/r1"
+	"InkLore/migrations"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 )
 
-// Platform owns the R1 shared dependencies. Domain ports are wired only by app.
+// Platform owns the shared platform dependencies. Domain ports are wired only by app.
 type Platform struct {
 	Files                      *files.Service
 	Notifications              *notifications.Service
@@ -52,7 +52,7 @@ type Platform struct {
 	CreatorOrigin, AdminOrigin string
 }
 
-// NewWithConfig builds only the R1 runtime. Retired routes are not mounted.
+// NewWithConfig builds the platform and domain runtime. Retired routes are not mounted.
 func NewWithConfig(cfg *config.Config) (*App, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("configuration is required")
@@ -68,7 +68,7 @@ func NewWithConfig(cfg *config.Config) (*App, error) {
 	defer cancel()
 	db, err := database.Open(ctx, database.OptionsFromConfig(cfg))
 	if err != nil {
-		return nil, fmt.Errorf("R1 PostgreSQL unavailable")
+		return nil, fmt.Errorf("PostgreSQL unavailable")
 	}
 	success := false
 	defer func() {
@@ -77,11 +77,11 @@ func NewWithConfig(cfg *config.Config) (*App, error) {
 		}
 	}()
 	if migrateOnStart(cfg) {
-		if _, err = database.Up(ctx, db, r1.FS(), r1.Dir); err != nil {
+		if _, err = database.Up(ctx, db, migrations.FS(), migrations.Dir); err != nil {
 			return nil, err
 		}
 	} else {
-		if err := database.Verify(ctx, db, r1.FS(), r1.Dir); err != nil {
+		if err := database.Verify(ctx, db, migrations.FS(), migrations.Dir); err != nil {
 			return nil, err
 		}
 	}
@@ -184,7 +184,7 @@ func platformConfig() ([]string, error) {
 			return nil, fmt.Errorf("%s requires at least 32 bytes from environment", name)
 		}
 		if seen[key] {
-			return nil, fmt.Errorf("R1 signing keys must be independent")
+			return nil, fmt.Errorf("signing keys must be independent")
 		}
 		seen[key] = true
 	}

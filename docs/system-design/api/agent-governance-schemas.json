@@ -843,7 +843,7 @@
       "additionalProperties": false
      }
     ],
-    "description": "R1受控Draft2020-12文档。登记时编译全部提交关键字，拒绝未支持关键字，不默默忽略；深度16/32KiB/本地ref。"
+    "description": "受控 Draft2020-12 文档。登记时编译全部提交关键字，拒绝未支持关键字，不默默忽略；深度16/32KiB/本地ref。"
    },
    "ToolInput": {
     "type": "object",

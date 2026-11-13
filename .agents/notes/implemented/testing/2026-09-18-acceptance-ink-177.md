@@ -33,27 +33,27 @@ Scope: 原 docs/acceptance-INK-177.md 的历史验收证据与迁移
 
 ### 实现与运行路径
 
-- [离线迁移转换工具](../../../../cmd/migrate/r1migration/main.go)：独立于日常在线服务与基础 DDL 迁移工具，专为旧系统（Legacy）向 R1 全量 14+74 张表进行离线数据抽取、格式清洗、确定性映射与写入验证。
-- [UUIDv4 确定性映射表](../../../../cmd/migrate/r1migration/mapping.go)：严格遵循 RFC 4122 与 R1 物理表 CHECK 约束（第 15 位为 '4'，第 20 位为 '8'/'9'/'a'/'b'）。通过加盐 SHA-256 命名空间算法，保证演练与实切时旧数据 ID 映射至完全一致的 R1 UUID，杜绝多次重放产生的 ID 漂移与外键悬空。
-- [正文清洗与模型转换](../../../../cmd/migrate/r1migration/transformer.go)：
+- `cmd/migrate/r1migration/main.go`：独立于日常在线服务与基础 DDL 迁移工具，专为旧系统（Legacy）向 R1 全量 14+74 张表进行离线数据抽取、格式清洗、确定性映射与写入验证。
+- `cmd/migrate/r1migration/mapping.go`：严格遵循 RFC 4122 与 R1 物理表 CHECK 约束（第 15 位为 '4'，第 20 位为 '8'/'9'/'a'/'b'）。通过加盐 SHA-256 命名空间算法，保证演练与实切时旧数据 ID 映射至完全一致的 R1 UUID，杜绝多次重放产生的 ID 漂移与外键悬空。
+- `cmd/migrate/r1migration/transformer.go`：
   - 清洗章节正文所有 Windows \r 回车符，满足 R1 约束 `position(E'\r' in body)=0`；
   - 精确计算 UTF-8 字符码点（Rune）字数与 SHA-256 内容哈希；
   - 针对旧库无卷散章，自动合成默认正文卷，严格满足 `content_chapters.volume_id NOT NULL` 约束；
   - 同步生成平台资源授权投影 `platform_resource_scopes` 与版本证明 `platform_resource_revisions`。
-- [事实账本一致性核算引擎](../../../../cmd/migrate/r1migration/ledger.go)：
+- `cmd/migrate/r1migration/ledger.go`：
   - 核算每个已确认章节的 `current_version_id == confirmed_version_id` 与 SHA-256 哈希；
   - 将旧版 `fact_ledger` 记录平滑迁移至 `worldview_fact_ledger_events`，生成连续自增的 `seq` 与 `world_revision`；
   - 为每条事实事件生成独立加盐哈希载荷 `worldview_fact_payloads` 与有效头指针 `worldview_fact_heads`；
   - 针对缺乏显式事实事件的已确认章节，自动追加章节里程碑确认事件，确保出版级网文事实不可变溯源。
-- [全量数据门禁验证器](../../../../cmd/migrate/r1migration/validator.go)：
+- `cmd/migrate/r1migration/validator.go`：
   - 零遗漏核算（旧数据条目 = R1 导入条目 + 明确废弃条目）；
   - 全外键跨表引用可达性验证；
   - 租户作用域（Tenant Scoping）隔离验证，确保跨租户串扰记录为 0；
   - 全量 UUIDv4 格式物理约束复核。
-- [双端静态资源指纹校验器](../../../../cmd/migrate/r1migration/bundlehash.go)：
+- `cmd/migrate/r1migration/bundlehash.go`：
   - 独立校验创作者工作台（Creator Studio :3000）与系统管理端（Admin Console :3001）的入口文件与静态 Bundle 哈希；
   - 严禁创作者工作台包含管理端入口 `admin.html` 或管理端专属路由，捍卫双端物理隔离铁律。
-- [旧无用代码清理清单登记](../../../../cmd/migrate/r1migration/deadcode.go)：
+- `cmd/migrate/r1migration/deadcode.go`：
   - 登记 4 类共 13 项待清理资产（旧 internal/novel 领域包、旧 000001~000018 迁移、7 张明确废弃数据表、旧废弃 HTTP 路由）；
   - 静态检查确认 7 个 R1 业务域无任何反向依赖 `internal/novel`。
 
@@ -67,10 +67,10 @@ go build ./...
 go build ./cmd/migrate/...
 
 # 2. 执行离线数据模型映射、账本一致性核算、全量门禁与双端 bundlehash 校验演练
-go run ./cmd/migrate/r1migration -sample=true -dry-run=true -report=docs/system-design/implementation/r1-migration-report.json
+go run ./cmd/migrate/r1migration -sample=true -dry-run=true -report=docs/system-design/implementation/migration-report.json
 
 # 3. 验证机器报告已生成且通过
-Get-Content docs/system-design/implementation/r1-migration-report.json
+Get-Content docs/system-design/implementation/migration-report.json
 
 # 4. 代码架构与无测试文件红线检查
 node scripts/check-project-skills.mjs

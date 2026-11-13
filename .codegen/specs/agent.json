@@ -6442,49 +6442,109 @@
         ],
         "additionalProperties": false
       },
-      "SafeInputSchema": {
+      "CatalogTaskPolicy": {
         "type": "object",
-        "maxProperties": 4,
         "properties": {
-          "type": {
+          "policy_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "policy_version_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "task_key": {
             "type": "string",
-            "enum": [
-              "object"
-            ]
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_]*$"
           },
-          "properties": {
-            "type": "object",
-            "maxProperties": 24,
-            "propertyNames": {
-              "pattern": "^[a-zA-Z][a-zA-Z0-9_]{0,63}$"
-            },
-            "additionalProperties": {
-              "$ref": "#/components/schemas/SafeInputField"
-            }
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
           },
-          "required": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "task_kinds": {
             "type": "array",
-            "maxItems": 24,
+            "minItems": 1,
+            "maxItems": 16,
             "uniqueItems": true,
             "items": {
               "type": "string",
+              "minLength": 1,
               "maxLength": 64
             }
           },
-          "additionalProperties": {
-            "type": "boolean",
-            "enum": [
-              false
-            ]
+          "input_schema": {
+            "$ref": "#/components/schemas/SafeInputSchema"
+          },
+          "budget": {
+            "type": "object",
+            "properties": {
+              "max_output_tokens": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 16384
+              },
+              "timeout_seconds": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 180
+              }
+            },
+            "required": [
+              "max_output_tokens",
+              "timeout_seconds"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
-          "type",
-          "properties",
-          "additionalProperties"
+          "policy_id",
+          "policy_version_id",
+          "task_key",
+          "title",
+          "version",
+          "task_kinds",
+          "input_schema",
+          "budget"
         ],
-        "additionalProperties": false,
-        "description": "仅白名单标量/有界enum字段；服务端投影去除内部字段，不含远程引用/default/条件/组合schema。"
+        "additionalProperties": false
+      },
+      "CatalogTaskPolicyPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/CatalogTaskPolicy"
+            }
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "has_more"
+        ],
+        "additionalProperties": false
       },
       "Question": {
         "type": "object",
@@ -6644,6 +6704,50 @@
           "answer"
         ],
         "additionalProperties": false
+      },
+      "SafeInputSchema": {
+        "type": "object",
+        "maxProperties": 4,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "object"
+            ]
+          },
+          "properties": {
+            "type": "object",
+            "maxProperties": 24,
+            "propertyNames": {
+              "pattern": "^[a-zA-Z][a-zA-Z0-9_]{0,63}$"
+            },
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SafeInputField"
+            }
+          },
+          "required": {
+            "type": "array",
+            "maxItems": 24,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "maxLength": 64
+            }
+          },
+          "additionalProperties": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "properties",
+          "additionalProperties"
+        ],
+        "additionalProperties": false,
+        "description": "仅白名单标量/有界enum字段；服务端投影去除内部字段，不含远程引用/default/条件/组合schema。"
       },
       "SafeInputField": {
         "type": "object",
@@ -6822,110 +6926,6 @@
         "required": [
           "value",
           "label_key"
-        ],
-        "additionalProperties": false
-      },
-      "CatalogTaskPolicy": {
-        "type": "object",
-        "properties": {
-          "policy_id": {
-            "$ref": "#/components/schemas/UUID"
-          },
-          "policy_version_id": {
-            "$ref": "#/components/schemas/UUID"
-          },
-          "task_key": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
-            "pattern": "^[a-z][a-z0-9_]*$"
-          },
-          "title": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 120
-          },
-          "version": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "task_kinds": {
-            "type": "array",
-            "minItems": 1,
-            "maxItems": 16,
-            "uniqueItems": true,
-            "items": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            }
-          },
-          "input_schema": {
-            "$ref": "#/components/schemas/SafeInputSchema"
-          },
-          "budget": {
-            "type": "object",
-            "properties": {
-              "max_output_tokens": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 16384
-              },
-              "timeout_seconds": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 180
-              }
-            },
-            "required": [
-              "max_output_tokens",
-              "timeout_seconds"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "policy_id",
-          "policy_version_id",
-          "task_key",
-          "title",
-          "version",
-          "task_kinds",
-          "input_schema",
-          "budget"
-        ],
-        "additionalProperties": false
-      },
-      "CatalogTaskPolicyPage": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "maxItems": 100,
-            "items": {
-              "$ref": "#/components/schemas/CatalogTaskPolicy"
-            }
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 2048
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "has_more": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "items",
-          "next_cursor",
-          "has_more"
         ],
         "additionalProperties": false
       },

@@ -1,4 +1,4 @@
--- INK-141 R1. PG16. Apply after platform.sql. Domain owner: llm.
+-- INK-141 既有基线 DDL；PG16 方言。在 platform.sql 之后执行。领域 Owner：llm。
 -- No plaintext credentials. Immutable versions/pricing/usage are INSERT-only.
 BEGIN;
 

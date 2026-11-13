@@ -1,4 +1,4 @@
--- R1角色权限设计。部署创建实际LOGIN账号后分别GRANT这些NOLOGIN角色；不在文件中放密码。
+-- 角色权限设计。部署创建实际 LOGIN 账号后分别 GRANT 这些 NOLOGIN 角色；不在文件中放密码。
 DO $$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='inklore_runtime') THEN CREATE ROLE inklore_runtime NOLOGIN; END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='inklore_retention') THEN CREATE ROLE inklore_retention NOLOGIN; END IF;

@@ -11,7 +11,7 @@ database privileges and Creator/Admin origins have been verified.
   `private` branch, the production DB, or a shared Redis.
 - PostgreSQL: existing Supabase project `pgsql` (Tokyo) has a private
   `inklore_ci` schema with 17 source-verified migrations and 80 tables.
-  It contains no business data as of the inspection. Do **not** rerun R1
+  It contains no business data as of the inspection. Do **not** rerun main-stream
   migrations or seed users automatically.
 - The Supabase `anon`, `authenticated` and `service_role` roles have
   no USAGE on `inklore_ci`. The application must use a separate,

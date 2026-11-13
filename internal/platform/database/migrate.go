@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io/fs"
 	"path"
@@ -15,15 +16,24 @@ import (
 )
 
 const (
-	// migrationTable 记录冻结 R1 流已应用的迁移版本，是幂等执行的唯一依据。
+	// migrationTable 记录主流已应用的迁移版本，是幂等执行的唯一依据。
 	migrationTable = "schema_migrations"
+	// ExtensionHistoryTable 是扩展流的独立历史表：主流 schema_migrations 保持恰好
+	// 17 条既定记录，扩展流的元数据不写进主流。
+	ExtensionHistoryTable = "schema_migrations_extensions"
+	// legacyExtensionHistoryTable 是扩展流去阶段化之前的旧历史表名。
+	//
+	// 扩展流的读写路径不使用这个名字：只有 GuardExtensionHistory 的前置检查读它一次，
+	// 用来在改名尚未完成时拒绝执行，避免已冻结的扩展迁移被当作未应用重放
+	// （见 ADR-0060 的 2026-11-13 修订）。
+	legacyExtensionHistoryTable = "schema_migrations_post_r1"
 	// downMarker 分隔同一个迁移文件中的升级段与降级段。
 	downMarker = "-- +migrate Down"
 )
 
 // createMigrationTableSQLFor 为指定历史表生成建表语句。
 // 表结构使用 TIMESTAMPTZ，遵循全栈北京时间契约；独立迁移流使用独立历史表，
-// 避免污染冻结 R1 流的既定历史。
+// 避免污染主流的既定历史。
 func createMigrationTableSQLFor(table string) string {
 	return "CREATE TABLE IF NOT EXISTS " + table + " (" +
 		"version TEXT PRIMARY KEY, " +
@@ -126,7 +136,7 @@ func LoadMigrations(fsys fs.FS, dir string) ([]Migration, error) {
 	return result, nil
 }
 
-// EnsureVersionTable 创建默认（冻结 R1 流）迁移版本表（幂等）。
+// EnsureVersionTable 创建主流迁移版本表（幂等）。
 func EnsureVersionTable(ctx context.Context, db *gorm.DB) error {
 	return EnsureVersionTableIn(ctx, db, migrationTable)
 }
@@ -142,7 +152,7 @@ func EnsureVersionTableIn(ctx context.Context, db *gorm.DB, table string) error 
 	return nil
 }
 
-// AppliedRecords 返回冻结 R1 流已应用的迁移版本 → 记录。
+// AppliedRecords 返回主流已应用的迁移版本 → 记录。
 func AppliedRecords(ctx context.Context, db *gorm.DB) (map[string]AppliedRecord, error) {
 	return AppliedRecordsIn(ctx, db, migrationTable)
 }
@@ -166,6 +176,64 @@ func AppliedRecordsIn(ctx context.Context, db *gorm.DB, table string) (map[strin
 	return indexed, nil
 }
 
+// ErrLegacyExtensionHistory 表示扩展流历史表尚未按 ADR-0060 改名：GuardExtensionHistory
+// 据此 fail-closed 拒绝执行，调用方可用 errors.Is 判定并把可操作提示直接交给运维。
+var ErrLegacyExtensionHistory = errors.New("扩展流历史表尚未完成改名")
+
+// GuardExtensionHistory 在读写扩展流历史表之前执行 fail-closed 前置检查。
+//
+// 目标历史表按 CREATE TABLE IF NOT EXISTS 建表：若某个既有库仍停留在改名前的旧表名，
+// 读到的就是一张刚建出来的空表，已冻结的扩展迁移会被当作未应用而重放。因此这里先确认
+// 旧表不再持有任何记录；一旦发现记录就拒绝执行并给出改名指引，而不是等重放中途才失败。
+//
+// 旧表名经 to_regclass 按当前 search_path 解析，与迁移自身的目标 schema 一致：
+// search_path 内的旧表只要还有记录就拒绝——宁可多看一次，也不静默重放。
+func GuardExtensionHistory(ctx context.Context, db *gorm.DB) error {
+	if db == nil {
+		return fmt.Errorf("数据库未初始化")
+	}
+	var existing string
+	if err := db.WithContext(ctx).
+		Raw("SELECT COALESCE(to_regclass(?)::text, '')", legacyExtensionHistoryTable).
+		Row().Scan(&existing); err != nil {
+		return fmt.Errorf("检查扩展流历史表失败: %w", err)
+	}
+	if existing == "" {
+		return nil
+	}
+	var records int64
+	if err := db.WithContext(ctx).Table(legacyExtensionHistoryTable).Count(&records).Error; err != nil {
+		return fmt.Errorf("读取扩展流历史表失败: %w", err)
+	}
+	if records == 0 {
+		return nil
+	}
+	return fmt.Errorf(
+		"%w：旧表 %s 仍有 %d 条记录；请先按 docs/maintenance/stage-naming-cutover.md 执行一次 "+
+			"ALTER TABLE %s RENAME TO %s，再运行 migrate",
+		ErrLegacyExtensionHistory, legacyExtensionHistoryTable, records,
+		legacyExtensionHistoryTable, ExtensionHistoryTable,
+	)
+}
+
+// UpExtensions 应用扩展流迁移，并在动手前执行 fail-closed 前置检查。
+// 扩展流只应经此入口（或 StatusExtensions）访问，避免绕过改名检查重放冻结迁移。
+func UpExtensions(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string) (UpResult, error) {
+	if err := GuardExtensionHistory(ctx, db); err != nil {
+		return UpResult{}, err
+	}
+	return UpIn(ctx, db, fsys, dir, ExtensionHistoryTable)
+}
+
+// StatusExtensions 返回扩展流迁移的应用状态，读取前同样先做检查：
+// 状态查询会按需创建目标历史表，检查必须发生在那之前。
+func StatusExtensions(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string) ([]StatusRow, error) {
+	if err := GuardExtensionHistory(ctx, db); err != nil {
+		return nil, err
+	}
+	return StatusIn(ctx, db, fsys, dir, ExtensionHistoryTable)
+}
+
 // Up 应用全部未执行的迁移。
 //
 // 幂等：已应用且校验和一致的迁移直接跳过；已应用但校验和变化则报错，
@@ -174,7 +242,7 @@ func Up(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string) (UpResult, err
 	return UpIn(ctx, db, fsys, dir, migrationTable)
 }
 
-// UpIn 把迁移应用到指定流的历史表，供冻结 R1 之外的扩展流复用同一套
+// UpIn 把迁移应用到指定流的历史表，供扩展流复用同一套
 // 幂等、校验和与并发锁语义。
 func UpIn(ctx context.Context, db *gorm.DB, fsys fs.FS, dir, table string) (UpResult, error) {
 	var result UpResult
@@ -214,7 +282,7 @@ func upLocked(ctx context.Context, db *gorm.DB, fsys fs.FS, dir, table string) (
 	for version, existing := range applied {
 		m, ok := known[version]
 		if !ok || existing.Name != m.Name || existing.Checksum != m.Checksum {
-			return result, fmt.Errorf("migration stream mismatch at version %s; use a separate R1 database", version)
+			return result, fmt.Errorf("migration stream mismatch at version %s; use a separate database", version)
 		}
 	}
 	for _, m := range migrations {
@@ -347,7 +415,7 @@ func applyDown(ctx context.Context, db *gorm.DB, m Migration, table string) erro
 	})
 }
 
-// Status 返回冻结 R1 流全部迁移脚本的应用状态。
+// Status 返回主流全部迁移脚本的应用状态。
 func Status(ctx context.Context, db *gorm.DB, fsys fs.FS, dir string) ([]StatusRow, error) {
 	return StatusIn(ctx, db, fsys, dir, migrationTable)
 }

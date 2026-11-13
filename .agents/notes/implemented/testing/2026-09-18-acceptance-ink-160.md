@@ -34,7 +34,7 @@ Scope: docs/acceptance-INK-160.md 的历史验收记录与迁移
 ### 实现与运行路径
 
 - [R1组合根](../../../../internal/app/platform.go)：`cmd/server → app.New → config.BootstrapR1 → app.NewWithConfig`，装配UoW/scope/idempotency。目前仅挂载healthz/readyz，旧业务路由不挂载；旧构造器保留为未调用代码，旧import尚未清理。
-- [迁移](../../../../migrations/r1/000001_platform.sql)逐行等于冻结platform.sql；server与cmd/migrate使用同一独立流，不混跑旧18条迁移。Up持PG事务锁并校验所有版本、名称和checksum；Status/Verify拒绝混流或漂移。Verify验证迁移元数据，不声称检测任意手工表结构篡改。
+- [迁移](../../../../migrations/000001_platform.sql)逐行等于冻结platform.sql；server与cmd/migrate使用同一独立流，不混跑旧18条迁移。Up持PG事务锁并校验所有版本、名称和checksum；Status/Verify拒绝混流或漂移。Verify验证迁移元数据，不声称检测任意手工表结构篡改。
 - [UoW](../../../../internal/platform/uow/uow.go)通过不透明context共享事务；嵌套失败/取消和panic不能留下半账。[Recoverable](../../../../internal/platform/uow/recoverable.go)只隔离确定性命令失败，致命故障仍阻止根提交。
 - [scope](../../../../internal/platform/scope/scope.go)验证当前用户、租户、成员、会话、audience及owner；父作品→子scope固定锁序；投影CAS、历史revision/hash与码点长度证明；当前权限与软删优先于历史证明。
 - [幂等](../../../../internal/platform/idempotency/executor.go)前置授权→非阻塞事务advisory锁→持锁再授权→claim/replay→命令；业务和结果同提交，成功及确定性409/422重放原封包，5xx不缓存，过期processing不抢占。
@@ -93,6 +93,6 @@ UoW context同步使用、不逃逸、不并发。Authorize必须绑定实际请
 
 ### 未覆盖与后续
 
-未做真实模型调用、账号登录/refresh/CSRF/审计业务、文件和作业运行、七域业务、双端浏览器、生产部署、旧库导入或容量恢复验收；这些属于后续任务。R1源契约未改，改密幂等头与缺失错误响应差异记录于 [INK-178](../architecture/2026-09-18-r1-contract-differences-ink-178.md)，进入受影响任务前需裁决。
+未做真实模型调用、账号登录/refresh/CSRF/审计业务、文件和作业运行、七域业务、双端浏览器、生产部署、旧库导入或容量恢复验收；这些属于后续任务。R1源契约未改，改密幂等头与缺失错误响应差异记录于 [INK-178](../architecture/2026-09-18-contract-differences-ink-178.md)，进入受影响任务前需裁决。
 
-工程理由见 [事务与幂等笔记](../architecture/2026-09-18-r1-platform-atomic-command-boundary.md)。
+工程理由见 [事务与幂等笔记](../architecture/2026-09-18-platform-atomic-command-boundary.md)。

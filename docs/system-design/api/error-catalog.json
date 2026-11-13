@@ -1,5 +1,5 @@
 {
- "version": "R1",
+ "version": "1.0",
  "generated_by": "tools/build-contracts.cjs",
  "description": "HTTP applies before response headers. In SSE the same semantic error is delivered in run.failed; HTTP remains 200.",
  "domains": {

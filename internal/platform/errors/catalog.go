@@ -1,4 +1,4 @@
-// Code generated from the frozen R1 error catalog; DO NOT EDIT.
+// Code generated from the error catalog; DO NOT EDIT.
 package errors
 
 var contractStatus = map[string]int{
