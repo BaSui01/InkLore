@@ -653,6 +653,8 @@ export interface components {
             resource_type: "chapter" | "novel" | "analysis" | "report" | "rewrite";
             source_revision: components["schemas"]["Revision"];
             source_hash?: string;
+            /** @description True only when a Run's full or selected scope was durably persisted. */
+            selection_scope_verified?: boolean;
             /** @description Unicode码点半开选区；start<end且≤源正文长度，绑定source_revision/hash；省略表示全章。 */
             selection?: {
                 start_offset: number;
@@ -861,7 +863,8 @@ export interface components {
             status: components["schemas"]["RunStatus"];
             node_count: number;
             duration_ms: number;
-            cost_micros: number;
+            /** @description Actual persisted receipt total; null when billing evidence is unavailable. Missing receipts do not prove zero cost. */
+            cost_micros: number | null;
             error_code: string | null;
         };
         CancelRun: {

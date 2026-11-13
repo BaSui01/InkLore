@@ -1365,7 +1365,7 @@ type ArtifactPage struct {
 
 // AuditRun defines model for AuditRun.
 type AuditRun struct {
-	CostMicros int          `json:"cost_micros"`
+	CostMicros *int          `json:"cost_micros"`
 	CreatedAt  Timestamp    `json:"created_at"`
 	DurationMs int          `json:"duration_ms"`
 	ErrorCode  string       `json:"error_code"`
@@ -1820,6 +1820,7 @@ type Resource struct {
 		StartOffset int    `json:"start_offset"`
 	} `json:"selection,omitempty"`
 	SourceHash     *string  `json:"source_hash,omitempty"`
+	SelectionScopeVerified *bool `json:"selection_scope_verified,omitempty"`
 	SourceRevision Revision `json:"source_revision"`
 }
 
