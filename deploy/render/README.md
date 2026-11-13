@@ -77,7 +77,7 @@ still apply, and the platform may suspend free services when exceeded.
    persistence and SSE reconnect. Render's static CDN is not a guaranteed
    WebSocket gateway; test WebSocket upgrades separately against the
    real public Web Service endpoint and the protected origin contract.
-   Retain GitHub Actions' isolated PG17/Redis7 suite for deterministic
+   Retain GitHub Actions' isolated PG18/Redis7 suite for deterministic
    fault, concurrency and Worker recovery behavior.
 8. Inspect Render's monthly included usage after each iteration.
    Never enable paid upgrades automatically.

@@ -67,10 +67,10 @@ go build ./...
 go build ./cmd/migrate/...
 
 # 2. 执行离线数据模型映射、账本一致性核算、全量门禁与双端 bundlehash 校验演练
-go run ./cmd/migrate/r1migration -sample=true -dry-run=true -report=docs/system-design/implementation/r1-migration-report.json
+go run ./cmd/migrate/r1migration -sample=true -dry-run=true -report=docs/system-design/implementation/migration-report.json
 
 # 3. 验证机器报告已生成且通过
-Get-Content docs/system-design/implementation/r1-migration-report.json
+Get-Content docs/system-design/implementation/migration-report.json
 
 # 4. 代码架构与无测试文件红线检查
 node scripts/check-project-skills.mjs
