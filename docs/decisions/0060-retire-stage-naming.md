@@ -55,7 +55,7 @@ R1 是 2026-09 重构阶段的名称，阶段工作早已结束，但命名渗�
 
 实施边界：**生产 Supabase staging 库**的 `schema_migrations_post_r1` 改名需由维护者在维护窗口执行（一次幂等 ALTER TABLE RENAME）。扩展流的读写路径不使用旧表名，只在迁移前置检查里读一次（`GuardExtensionHistory`）：旧表仍持有记录时 fail-closed 拒绝并给出改名指引，不会重放已冻结的扩展迁移；扩展流入口收敛为 `UpExtensions` / `StatusExtensions`，检查发生在建表之前，因此 `status` 也不会再提前创建目标历史表。本任务未访问任何远程数据库。
 
-> **2026-11-13 修订**：本 ADR 原文为「代码侧不再读取旧表名」。用户裁定改为 fail-closed 守卫——静默重放冻结迁移的风险高于多读一次旧表名。
+> **2026-11-13 修订**：本 ADR 原文为「代码侧不再读取旧表名」。用户裁定改为 fail-closed 守卫——静默重放冻结迁移的风险高于多读一次旧表名。改动与验证见 [工程笔记](../../.agents/notes/implemented/architecture/2026-11-13-extension-history-fail-closed.md)。
 
 ## 后续与关联
 
