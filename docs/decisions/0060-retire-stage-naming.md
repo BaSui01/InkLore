@@ -17,7 +17,7 @@ R1 是 2026-09 重构阶段的名称，阶段工作早已结束，但命名渗�
 ## 决策
 
 1. **主流统一**：`migrations/r1/*.sql` 17 条**字节不变**移动到 `migrations/` 根（`git mv`，R100 相似度）；删除 18 个旧血统死文件与 `migrations/r1/migrations.go`。包收敛为唯一的 `InkLore/migrations`。因为文件名与字节不变，`LoadMigrations` 解析出的 version/name/checksum 与已应用库 `schema_migrations` 记录**逐条相同**，既有库（含本地与 staging）零影响。
-2. **扩展流去阶段化并保留独立性**：`migrations/post_r1/` → `migrations/extensions/`（包名 `extensions`），历史表 `schema_migrations_post_r1` → `schema_migrations_extensions`（常量 `extensionTable`）。选择保留独立历史表而非合并进主流，是因为主流 17 条受校验和保护，合并需重编号并改写存量库记录，收益为零、风险为实。存量库只需一次幂等 `ALTER TABLE ... RENAME TO schema_migrations_extensions`（本地已执行；其它环境由维护者执行）。
+2. **扩展流去阶段化并保留独立性**：`migrations/post_r1/` → `migrations/extensions/`（包名 `extensions`），历史表 `schema_migrations_post_r1` → `schema_migrations_extensions`（常量 `database.ExtensionHistoryTable`）。选择保留独立历史表而非合并进主流，是因为主流 17 条受校验和保护，合并需重编号并改写存量库记录，收益为零、风险为实。存量库只需一次幂等 `ALTER TABLE ... RENAME TO schema_migrations_extensions`（本地已执行；其它环境由维护者执行）；未完成改名的存量库在扩展流迁移时会被 **fail-closed 拒绝**（见下「验证与实施边界」的 2026-11-13 修订），不会静默重放已冻结的扩展迁移。
 3. **删除 `cmd/migrate/r1migration/`**。旧库数据迁移如未来需要，以中性命名、按当前 UUID 方言重新立项。
 4. **去阶段化措辞**：错误文案与注释按机制描述；archguard 规则编号 `R1–R5` → `G1–G5`（保留既有编号序列与语义，本仓历史无 R4）；契约 `agent-r1x-schemas.json` → `agent-policy-schemas.json`（`agent-schemas.json` 的 4 处 `$ref` 同步，按目录枚举生成，重生成通过）；内部 context key → `request_id`/`error_code`；错误目录 `version` → `1.0`；`docs/system-design/data/*.sql` 设计资料头注释中性化。**Redis 键前缀不改**（见保留项：它们是跨版本协调状态）。
 5. **保留（不可改）**：
@@ -53,7 +53,9 @@ R1 是 2026-09 重构阶段的名称，阶段工作早已结束，但命名渗�
 - `node docs/system-design/tools/build-contracts.cjs`（246 operations，issues 空）、`check-design.cjs`（77 tables，无 issue/warning）、`scripts/check-platform-contracts.mjs`（102 条错误映射一致）均退出 0；
 - `node scripts/generate-request-schemas.mjs` 与 `node scripts/codegen.mjs` 重生成通过。
 
-实施边界：**生产 Supabase staging 库**的 `schema_migrations_post_r1` 改名需由维护者在维护窗口执行（一次幂等 ALTER TABLE RENAME），代码侧不再读取旧表名；本任务未访问任何远程数据库。
+实施边界：**生产 Supabase staging 库**的 `schema_migrations_post_r1` 改名需由维护者在维护窗口执行（一次幂等 ALTER TABLE RENAME）。扩展流的读写路径不使用旧表名，只在迁移前置检查里读一次（`GuardExtensionHistory`）：旧表仍持有记录时 fail-closed 拒绝并给出改名指引，不会重放已冻结的扩展迁移；扩展流入口收敛为 `UpExtensions` / `StatusExtensions`，检查发生在建表之前，因此 `status` 也不会再提前创建目标历史表。本任务未访问任何远程数据库。
+
+> **2026-11-13 修订**：本 ADR 原文为「代码侧不再读取旧表名」。用户裁定改为 fail-closed 守卫——静默重放冻结迁移的风险高于多读一次旧表名。改动与验证见 [工程笔记](../../.agents/notes/implemented/architecture/2026-11-13-extension-history-fail-closed.md)。
 
 ## 后续与关联
 

@@ -31,7 +31,7 @@ import (
 	gormlog "gorm.io/gorm/logger"
 )
 
-// Enable only in the disposable PG17/Redis7 runner. HTTP fixtures below verify
+// Enable only in the disposable PG18/Redis7 runner. HTTP fixtures below verify
 // protocol/accounting behavior, and do not count as live-provider acceptance.
 type runtimeFixture struct {
 	db                                  *gorm.DB
