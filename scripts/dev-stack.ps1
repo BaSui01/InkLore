@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    本地开发基础设施（PostgreSQL 16 + pgvector、Redis 7）的一键生命周期管理。
+    本地开发基础设施（PostgreSQL 18 + pgvector、Redis 7）的一键生命周期管理。
 
 .DESCRIPTION
     解决两个反复出现的本地环境问题（INK-107）：
