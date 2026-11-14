@@ -19,6 +19,7 @@ import {
   isTerminalEvent,
   parseSeq,
   ApiError,
+  NetworkError,
 } from "@inklore/contracts";
 import { AuthSession } from "../http/session";
 import { RunEventBuffer } from "./buffer";
@@ -30,6 +31,7 @@ export type ConnectionState = "idle" | "connecting" | "open" | "reconnecting" | 
 export interface StreamSubscribeOptions {
   runId: string;
   lastSeq?: Seq | number;
+  buffer?: RunEventBuffer;
   onEvent?: (event: RunEventEnvelope) => void;
   onConnection?: (state: ConnectionState) => void;
   onError?: (error: Error) => void;
@@ -66,9 +68,11 @@ export class StreamClient {
    */
   subscribe(options: StreamSubscribeOptions): StreamSubscription {
     const { runId } = options;
-    const buffer = new RunEventBuffer(runId);
+    const buffer = options.buffer?.runId === runId ? options.buffer : new RunEventBuffer(runId);
 
     let isDisposed = false;
+    let refreshedAfter401 = false;
+    const initialEpoch = this.session.getSessionEpoch();
     let abortController: AbortController | null = null;
     let keepaliveTimer: ReturnType<typeof setTimeout> | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -109,13 +113,8 @@ export class StreamClient {
       if (isDisposed) return;
 
       clearTimers();
-      abortController = new AbortController();
-
-      if (options.signal) {
-        options.signal.addEventListener("abort", () => {
-          cleanup();
-        }, { once: true });
-      }
+      const controller = new AbortController();
+      abortController = controller;
 
       setConnectionState(reconnectAttempts === 0 ? "connecting" : "reconnecting");
 
@@ -139,11 +138,23 @@ export class StreamClient {
           method: "GET",
           headers,
           credentials: "same-origin",
-          signal: abortController.signal,
+          signal: controller.signal,
         });
 
-        // 401 触发单飞刷新一次
+        if (isDisposed) return;
+        if (this.session.getSessionEpoch() !== initialEpoch) {
+          buffer.clear(); cleanup();
+          options.onError?.(new ApiError({ httpStatus: 403, code: "auth.session_epoch_mismatch" }));
+          return;
+        }
+        // One refresh attempt per connection; an unauthorised replay must stop.
         if (res.status === 401) {
+          if (refreshedAfter401) {
+            buffer.clear(); cleanup();
+            options.onError?.(new ApiError({ httpStatus: 401, code: "auth.unauthenticated" }));
+            return;
+          }
+          refreshedAfter401 = true;
           try {
             await this.session.refresh();
             if (!isDisposed) {
@@ -161,11 +172,12 @@ export class StreamClient {
         }
 
         // 403 禁止访问
-        if (res.status === 403) {
-          setConnectionState("closed");
+        if (res.status === 403 || res.status === 404) {
+          buffer.clear();
+          cleanup();
           options.onError?.(new ApiError({
-            httpStatus: 403,
-            code: "auth.forbidden",
+            httpStatus: res.status,
+            code: res.status === 404 ? "agent.not_found" : "auth.forbidden",
             message_key: "errors.auth.forbidden",
           }));
           return;
@@ -187,6 +199,7 @@ export class StreamClient {
         }
 
         setConnectionState("open");
+        refreshedAfter401 = false;
         reconnectAttempts = 0; // 连接成功重置退避计数
         resetKeepaliveTimer();
 
@@ -195,9 +208,8 @@ export class StreamClient {
           res.body,
           (envelope) => {
             resetKeepaliveTimer();
-            if (envelope.seq > currentSeq) {
-              currentSeq = envelope.seq;
-            }
+            if (isDisposed || this.session.getSessionEpoch() !== initialEpoch || envelope.run_id !== runId || envelope.seq <= currentSeq) return;
+            currentSeq = envelope.seq;
 
             const pushed = buffer.push(envelope);
             if (pushed) {
@@ -214,7 +226,7 @@ export class StreamClient {
             // 收到心跳注释行
             resetKeepaliveTimer();
           },
-          abortController.signal
+          controller.signal
         );
 
         // 流正常读完 (EOF) 但未收到终态事件 -> 判定为 disconnected 并重连
@@ -222,11 +234,8 @@ export class StreamClient {
           scheduleReconnect();
         }
       } catch (err: any) {
-        if (isDisposed || abortController.signal.aborted) {
-          return;
-        }
-
-        options.onError?.(err);
+        if (isDisposed || options.signal?.aborted) return;
+        options.onError?.(controller.signal.aborted ? new NetworkError("Run stream heartbeat timed out") : err);
         scheduleReconnect();
       }
     };
@@ -256,6 +265,7 @@ export class StreamClient {
 
     const cleanup = () => {
       isDisposed = true;
+      options.signal?.removeEventListener("abort", cleanup);
       clearTimers();
       if (abortController) {
         abortController.abort();
@@ -264,8 +274,10 @@ export class StreamClient {
       setConnectionState("closed");
     };
 
-    // 立即发起首次连接
-    connect();
+    // One abort listener for the subscription, independent of reconnect count.
+    options.signal?.addEventListener("abort", cleanup, { once: true });
+    if (options.signal?.aborted) cleanup();
+    else void connect();
 
     return {
       unsubscribe: cleanup,

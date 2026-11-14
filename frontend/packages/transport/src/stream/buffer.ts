@@ -17,6 +17,7 @@ import {
   NodeUpdatedPayload,
   ToolCompletedPayload,
   ApprovalRequiredPayload,
+  ToolStartedPayload,
 } from "@inklore/contracts";
 
 export const MAX_BUFFER_EVENTS = 2000;
@@ -30,6 +31,7 @@ export interface AggregatedRunState {
   activeTools: Map<string, { toolName: string; startedAt: number; summary?: string }>;
   completedTools: ToolCompletedPayload[];
   activeApproval: ApprovalRequiredPayload | null;
+  pendingQuestionId: string | null;
   nodeStates: Map<string, NodeUpdatedPayload>;
   usage: UsageUpdatedPayload | null;
   isCompleted: boolean;
@@ -49,6 +51,7 @@ export class RunEventBuffer {
   private activeTools = new Map<string, { toolName: string; startedAt: number; summary?: string }>();
   private completedTools: ToolCompletedPayload[] = [];
   private activeApproval: ApprovalRequiredPayload | null = null;
+  private pendingQuestionId: string | null = null;
   private nodeStates = new Map<string, NodeUpdatedPayload>();
   private usage: UsageUpdatedPayload | null = null;
   private isCompleted = false;
@@ -73,7 +76,7 @@ export class RunEventBuffer {
     }
 
     const eventJson = JSON.stringify(event);
-    const eventSize = eventJson.length;
+    const eventSize = new TextEncoder().encode(eventJson).byteLength;
 
     this.events.push(event);
     this.lastSeq = event.seq;
@@ -107,10 +110,10 @@ export class RunEventBuffer {
         break;
       }
       case "tool.started": {
-        const p = payload as { tool_call_id: string; tool_name: string };
-        if (p?.tool_call_id) {
-          this.activeTools.set(p.tool_call_id, {
-            toolName: p.tool_name,
+        const p = payload as ToolStartedPayload;
+        if (p?.invocation_id) {
+          this.activeTools.set(p.invocation_id, {
+            toolName: p.tool_id,
             startedAt: Date.now(),
           });
         }
@@ -118,14 +121,22 @@ export class RunEventBuffer {
       }
       case "tool.completed": {
         const p = payload as ToolCompletedPayload;
-        if (p?.tool_call_id) {
-          this.activeTools.delete(p.tool_call_id);
+        if (p?.invocation_id) {
+          this.activeTools.delete(p.invocation_id);
           this.completedTools.push(p);
         }
         break;
       }
       case "approval.required": {
         this.activeApproval = payload as ApprovalRequiredPayload;
+        break;
+      }
+      case "question.required": {
+        this.pendingQuestionId = (payload as { question_id: string }).question_id;
+        break;
+      }
+      case "question.answered": {
+        if (this.pendingQuestionId === (payload as { question_id: string }).question_id) this.pendingQuestionId = null;
         break;
       }
       case "node.updated": {
@@ -136,7 +147,14 @@ export class RunEventBuffer {
         break;
       }
       case "usage.updated": {
-        this.usage = payload as UsageUpdatedPayload;
+        const update = payload as UsageUpdatedPayload;
+        this.usage = this.usage ? {
+          ...update,
+          input_tokens: this.usage.input_tokens + update.input_tokens,
+          output_tokens: this.usage.output_tokens + update.output_tokens,
+          cost_micros: this.usage.cost_micros + update.cost_micros,
+          estimated: this.usage.estimated || update.estimated,
+        } : { ...update };
         break;
       }
       case "run.succeeded":
@@ -150,13 +168,25 @@ export class RunEventBuffer {
   }
 
   private enforceLimits(): void {
+    let removed = false;
     while (this.events.length > MAX_BUFFER_EVENTS || this.currentBytes > MAX_BUFFER_BYTES) {
-      const removed = this.events.shift();
-      if (!removed) break;
+      const oldest = this.events.shift();
+      if (!oldest) break;
+      this.currentBytes -= new TextEncoder().encode(JSON.stringify(oldest)).byteLength;
+      removed = true;
+    }
+    if (removed) {
       this.isTruncated = true;
-      this.currentBytes -= JSON.stringify(removed).length;
+      // Rebuild only retained display data. Dropping an event without dropping
+      // its aggregate would leave unbounded text/tool memory behind.
+      this.textAccumulator = ""; this.reasoningSummary = "";
+      this.activeTools.clear(); this.completedTools = []; this.nodeStates.clear();
+      this.usage = null; this.activeApproval = null; this.pendingQuestionId = null;
+      for (const event of this.events) this.aggregate(event);
     }
   }
+
+  markTruncated(): void { this.isTruncated = true; }
 
   /** 获取最新游标 seq */
   getLastSeq(): Seq | 0 {
@@ -183,6 +213,7 @@ export class RunEventBuffer {
       activeTools: new Map(this.activeTools),
       completedTools: [...this.completedTools],
       activeApproval: this.activeApproval ? { ...this.activeApproval } : null,
+      pendingQuestionId: this.pendingQuestionId,
       nodeStates: new Map(this.nodeStates),
       usage: this.usage ? { ...this.usage } : null,
       isCompleted: this.isCompleted,
@@ -201,6 +232,7 @@ export class RunEventBuffer {
     this.activeTools.clear();
     this.completedTools = [];
     this.activeApproval = null;
+    this.pendingQuestionId = null;
     this.nodeStates.clear();
     this.usage = null;
     this.isCompleted = false;

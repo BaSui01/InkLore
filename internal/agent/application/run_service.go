@@ -107,8 +107,8 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 	}
 
 	// Validate task_kind and task_key
-	if in.TaskKind == "" || in.TaskKey == "" {
-		return nil, d.ErrValidationFailed(map[string]any{"reason": "task_kind and task_key are required"})
+	if !d.IsCreatorTaskKind(in.TaskKind) || (in.TaskPolicyVersionID == "" && in.TaskKey == "") || (in.TaskPolicyVersionID != "" && !scope.ValidID(in.TaskPolicyVersionID)) {
+		return nil, d.ErrValidationFailed(map[string]any{"reason": "task_kind and published task policy are required"})
 	}
 
 	// Resource validation
@@ -136,6 +136,13 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 		})
 	}
 
+	// Selection bounds and digest must be frozen with the chapter revision.
+	if selection := in.Resource.Selection; selection != nil {
+		if in.Resource.ResourceType != "chapter" || selection.StartOffset < 0 || selection.EndOffset <= selection.StartOffset || selection.EndOffset > 200000 ||
+			in.Resource.SourceHash == nil || selection.SourceHash != *in.Resource.SourceHash {
+			return nil, d.ErrValidationFailed(map[string]any{"reason": "invalid chapter selection binding"})
+		}
+	}
 	// Verify and prepare source snapshot
 	sourceRevision := in.Resource.SourceRevision
 	sourceHash := ""
@@ -222,30 +229,32 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 	deadLine := now.Add(DefaultRunDeadline)
 
 	run := &d.AgentRun{
-		ID:                  runID,
-		TenantID:            p.TenantID,
-		CreatedAt:           now,
-		UpdatedAt:           now,
-		Revision:            1,
-		OwnerUserID:         p.UserID,
-		Kind:                "creator",
-		TaskKind:            in.TaskKind,
-		TaskKey:             in.TaskKey,
-		ResourceType:        &in.Resource.ResourceType,
-		ResourceID:          &in.Resource.ResourceID,
-		NovelID:             in.Resource.NovelID,
-		SourceRevision:      &sourceRevision,
-		SourceHash:          &sourceHash,
-		Instruction:         in.Instruction,
-		DefinitionVersionID: defVerID,
-		WorkflowVersionID:   wfVerID,
-		PolicyVersionID:     "",
-		Status:              d.RunStatusQueued,
-		NextSeq:             2, // Seq 1 is run.started
-		RetainedFromSeq:     1,
-		DeadlineAt:          deadLine,
-		Retryable:           false,
-		UsageReceiptIDs:     []string{},
+		ID:                     runID,
+		TenantID:               p.TenantID,
+		CreatedAt:              now,
+		UpdatedAt:              now,
+		Revision:               1,
+		OwnerUserID:            p.UserID,
+		Kind:                   "creator",
+		TaskKind:               in.TaskKind,
+		TaskKey:                in.TaskKey,
+		ResourceType:           &in.Resource.ResourceType,
+		ResourceID:             &in.Resource.ResourceID,
+		NovelID:                in.Resource.NovelID,
+		SourceRevision:         &sourceRevision,
+		SourceHash:             &sourceHash,
+		Selection:              in.Resource.Selection,
+		SelectionScopeVerified: true,
+		Instruction:            in.Instruction,
+		DefinitionVersionID:    defVerID,
+		WorkflowVersionID:      wfVerID,
+		PolicyVersionID:        "",
+		Status:                 d.RunStatusQueued,
+		NextSeq:                2, // Seq 1 is run.started
+		RetainedFromSeq:        1,
+		DeadlineAt:             deadLine,
+		Retryable:              false,
+		UsageReceiptIDs:        []string{},
 	}
 
 	// Build nodes
@@ -295,9 +304,26 @@ func (s *RunService) CreateRun(ctx context.Context, p identity.Principal, in d.C
 
 	// In single UoW transaction: enqueue job, create run + nodes + run.started event
 	err = s.manager.Within(ctx, func(tx context.Context) error {
-		policyVersionID, err := s.gateway.ResolvePolicy(tx, p.TenantID, in.TaskKey)
-		if err != nil {
-			return err
+		var policyVersionID string
+		if in.TaskPolicyVersionID != "" {
+			resolver, ok := s.gateway.(d.CreatorPolicyPort)
+			if !ok {
+				return d.ErrInvalidConfiguration(map[string]any{"reason": "creator policy resolver is unavailable"})
+			}
+			policy, err := resolver.LockCreatorTaskPolicy(tx, p, in.TaskPolicyVersionID, in.TaskKind)
+			if err != nil {
+				return err
+			}
+			policyVersionID = policy.PolicyVersionID
+			run.TaskKey = policy.TaskKey
+		} else {
+			// Internal maintenance callers retain the legacy task-key boundary.
+			// Creator HTTP requires an explicit immutable version before dispatch.
+			var err error
+			policyVersionID, err = s.gateway.ResolvePolicy(tx, p.TenantID, in.TaskKey)
+			if err != nil {
+				return err
+			}
 		}
 		if policyVersionID == "" {
 			return d.ErrInvalidConfiguration(map[string]any{"reason": "enabled llm policy is required for task_key"})
@@ -606,11 +632,13 @@ func (s *RunService) buildRunView(run *d.AgentRun, nodes []d.AgentRunNode) *d.Ru
 	var resRef *d.ResourceRef
 	if run.ResourceID != nil && run.ResourceType != nil && run.SourceRevision != nil {
 		resRef = &d.ResourceRef{
-			ResourceID:     *run.ResourceID,
-			ResourceType:   *run.ResourceType,
-			SourceRevision: *run.SourceRevision,
-			NovelID:        run.NovelID,
-			SourceHash:     run.SourceHash,
+			ResourceID:             *run.ResourceID,
+			ResourceType:           *run.ResourceType,
+			SourceRevision:         *run.SourceRevision,
+			NovelID:                run.NovelID,
+			SourceHash:             run.SourceHash,
+			Selection:              run.Selection,
+			SelectionScopeVerified: run.SelectionScopeVerified,
 		}
 	}
 

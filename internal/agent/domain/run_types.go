@@ -116,48 +116,51 @@ type Selection struct {
 
 // ResourceRef represents target resource binding for an agent run.
 type ResourceRef struct {
-	ResourceID     string     `json:"resource_id"`
-	ResourceType   string     `json:"resource_type"`
-	SourceRevision int64      `json:"source_revision"`
-	NovelID        *string    `json:"novel_id,omitempty"`
-	SourceHash     *string    `json:"source_hash,omitempty"`
-	Selection      *Selection `json:"selection,omitempty"`
+	ResourceID             string     `json:"resource_id"`
+	ResourceType           string     `json:"resource_type"`
+	SourceRevision         int64      `json:"source_revision"`
+	NovelID                *string    `json:"novel_id,omitempty"`
+	SourceHash             *string    `json:"source_hash,omitempty"`
+	Selection              *Selection `json:"selection,omitempty"`
+	SelectionScopeVerified bool       `json:"selection_scope_verified,omitempty"`
 }
 
 // AgentRun is the aggregate root for an agent run instance.
 type AgentRun struct {
-	ID                  string     `json:"id"`
-	TenantID            string     `json:"tenant_id"`
-	CreatedAt           time.Time  `json:"created_at"`
-	UpdatedAt           time.Time  `json:"updated_at"`
-	Revision            int64      `json:"revision"`
-	OwnerUserID         string     `json:"owner_user_id"`
-	PlatformJobID       string     `json:"platform_job_id"`
-	Kind                string     `json:"kind"` // creator | diagnostic
-	TaskKind            string     `json:"task_kind"`
-	DiagnosticProbeKey  *string    `json:"diagnostic_probe_key,omitempty"`
-	TaskKey             string     `json:"task_key"`
-	ResourceType        *string    `json:"resource_type,omitempty"`
-	ResourceID          *string    `json:"resource_id,omitempty"`
-	NovelID             *string    `json:"novel_id,omitempty"`
-	ChapterID           *string    `json:"chapter_id,omitempty"`
-	SourceRevision      *int64     `json:"source_revision,omitempty"`
-	SourceHash          *string    `json:"source_hash,omitempty"`
-	Instruction         string     `json:"instruction"`
-	DefinitionVersionID *string    `json:"definition_version_id,omitempty"`
-	WorkflowVersionID   *string    `json:"workflow_version_id,omitempty"`
-	PolicyVersionID     string     `json:"policy_version_id"`
-	Status              RunStatus  `json:"status"`
-	NextSeq             int64      `json:"next_seq"`
-	RetainedFromSeq     int64      `json:"retained_from_seq"`
-	DeadlineAt          time.Time  `json:"deadline_at"`
-	StartedAt           *time.Time `json:"started_at,omitempty"`
-	FinishedAt          *time.Time `json:"finished_at,omitempty"`
-	ErrorCode           *string    `json:"error_code,omitempty"`
-	TerminalReason      *string    `json:"terminal_reason,omitempty"`
-	Retryable           bool       `json:"retryable"`
-	UsageReceiptIDs     []string   `json:"usage_receipt_ids"`
-	DeletedAt           *time.Time `json:"deleted_at,omitempty"`
+	ID                     string     `json:"id"`
+	TenantID               string     `json:"tenant_id"`
+	CreatedAt              time.Time  `json:"created_at"`
+	UpdatedAt              time.Time  `json:"updated_at"`
+	Revision               int64      `json:"revision"`
+	OwnerUserID            string     `json:"owner_user_id"`
+	PlatformJobID          string     `json:"platform_job_id"`
+	Kind                   string     `json:"kind"` // creator | diagnostic
+	TaskKind               string     `json:"task_kind"`
+	DiagnosticProbeKey     *string    `json:"diagnostic_probe_key,omitempty"`
+	TaskKey                string     `json:"task_key"`
+	ResourceType           *string    `json:"resource_type,omitempty"`
+	ResourceID             *string    `json:"resource_id,omitempty"`
+	NovelID                *string    `json:"novel_id,omitempty"`
+	ChapterID              *string    `json:"chapter_id,omitempty"`
+	SourceRevision         *int64     `json:"source_revision,omitempty"`
+	SourceHash             *string    `json:"source_hash,omitempty"`
+	Selection              *Selection `json:"selection,omitempty"`
+	SelectionScopeVerified bool       `json:"selection_scope_verified"`
+	Instruction            string     `json:"instruction"`
+	DefinitionVersionID    *string    `json:"definition_version_id,omitempty"`
+	WorkflowVersionID      *string    `json:"workflow_version_id,omitempty"`
+	PolicyVersionID        string     `json:"policy_version_id"`
+	Status                 RunStatus  `json:"status"`
+	NextSeq                int64      `json:"next_seq"`
+	RetainedFromSeq        int64      `json:"retained_from_seq"`
+	DeadlineAt             time.Time  `json:"deadline_at"`
+	StartedAt              *time.Time `json:"started_at,omitempty"`
+	FinishedAt             *time.Time `json:"finished_at,omitempty"`
+	ErrorCode              *string    `json:"error_code,omitempty"`
+	TerminalReason         *string    `json:"terminal_reason,omitempty"`
+	Retryable              bool       `json:"retryable"`
+	UsageReceiptIDs        []string   `json:"usage_receipt_ids"`
+	DeletedAt              *time.Time `json:"deleted_at,omitempty"`
 }
 
 // AgentRunNode represents a single executable node of a run.
@@ -473,14 +476,15 @@ type ArtifactPage struct {
 // Input DTOs
 
 type CreateRunInput struct {
-	TaskKind     string       `json:"task_kind"`
-	TaskKey      string       `json:"task_key"`
-	Resource     *ResourceRef `json:"resource"`
-	Instruction  string       `json:"instruction"`
-	DefinitionID string       `json:"definition_id"`
-	WorkflowID   *string      `json:"workflow_id,omitempty"`
-	ModelID      *string      `json:"model_id,omitempty"`
-	ModelKey     *string      `json:"model_key,omitempty"`
+	TaskPolicyVersionID string       `json:"task_policy_version_id"`
+	TaskKind            string       `json:"task_kind"`
+	TaskKey             string       `json:"-"`
+	Resource            *ResourceRef `json:"resource"`
+	Instruction         string       `json:"instruction"`
+	DefinitionID        string       `json:"definition_id"`
+	WorkflowID          *string      `json:"workflow_id,omitempty"`
+	ModelID             *string      `json:"-"`
+	ModelKey            *string      `json:"-"`
 }
 
 type CancelRunInput struct {

@@ -153,6 +153,8 @@ type RunRepository interface {
 	GetRunOnly(ctx context.Context, tenantID, runID string) (*AgentRun, error)
 	FindRunIDByNode(ctx context.Context, tenantID, nodeID string) (string, error)
 	ListRunsByOwner(ctx context.Context, tenantID, ownerID, status string, query ListQuery) ([]RunSummaryView, *string, bool, error)
+	ListAuditRuns(ctx context.Context, tenantID string, query ListQuery) ([]AuditRunRecord, bool, error)
+	GetAuditRun(ctx context.Context, tenantID, runID string) (*AuditRunRecord, error)
 	CountActiveRunsByOwner(ctx context.Context, tenantID, ownerID string) (int, error)
 	UpdateRunStatus(ctx context.Context, tenantID, runID string, expectedRev int64, newStatus RunStatus) (*AgentRun, error)
 	AppendUsageReceipt(ctx context.Context, tenantID, runID string, expectedRev int64, receiptID string) error
